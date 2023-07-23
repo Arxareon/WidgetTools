@@ -7,9 +7,10 @@ $addons = @()
 #List of addon names specifying the folder when inserted into $pathFile to copy to (will also be used to append the addonNameSpace - addon name w/o spaces)
 $addons += "Remaining XP"
 $addons += "Movement Speed"
-$addons += "Better UI Edit Mode"
 $addons += "Party Targets"
 $addons += "RP Keyboard"
+$addons += "Screenshot Viewer"
+$addons += "Better UI Edit Mode"
 
 
 <# INSTALLATION #>
