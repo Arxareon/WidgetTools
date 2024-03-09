@@ -1001,7 +1001,14 @@
 ---@field tooltip? itemTooltipTextData List of text lines to be added to the tooltip of the item displayed when mousing over the frame<ul><li>***Note:*** Item tooltips are not available for classic dropdowns.</li></ul>
 ---@field onSelect? function The function to be called when the item is selected by the user
 
----@class selectorCreationData
+---@class selectorCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
+---@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
+---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+---@field selected? integer The index of the item to be set as selected on load | ***Default:*** nil *(no selection)*
+---@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
+---@field onItemsUpdated? function Function to call when the list of selector items have been updated
 
 
 ---@class selectorCreationData_base : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
@@ -1009,6 +1016,7 @@
 ---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
 ---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
 ---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+---@field selected? integer The index of the item to be set as selected on load | ***Default:*** nil *(no selection)*
 ---@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
 ---@field onItemsUpdated? function Function to call when the list of selector items have been updated
 
@@ -1017,7 +1025,6 @@
 
 ---@class radioSelectorCreationData : selectorCreationData_base, clearableSelector
 ---@field items? (selectorItem|radioButton)[] Table containing subtables with data used to create item widgets, or already existing radio buttons
----@field selected? integer The index of the item to be set as selected on load | ***Default:*** nil *(no selection)*
 ---@field onSelection? fun(index?: integer) The function to be called after a radio button was clicked and an item was selected, or the input was cleared by the user<hr><p>@*param* `index`? integer — The index of the currently selected item</p><ul><li>***Note:*** A custom [OnAttributeChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnAttributeChanged) event will also be invoked whenever an item is selected *(see below)*.</li></ul>
 ---@field listeners? table<string|SelectorAttributes, fun(state: boolean)|fun(value: selectorAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **selector.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "selected"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `value` selectorAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 ---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil</p>
