@@ -2566,7 +2566,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do texture:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then texture:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else texture:HookScript(key, value) end
+		end end
 
 		--[ Texture Updates ]
 
@@ -2656,7 +2659,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do frame:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else frame:HookScript(key, value) end
+		end end
 
 		--Pass global events to handlers
 		frame:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
@@ -2815,7 +2821,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do panel:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then panel:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else panel:HookScript(key, value) end
+		end end
 
 		--[ Initialization ]
 
@@ -3732,7 +3741,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.scriptEvents then for key, value in pairs(t.scriptEvents) do button.frame:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then button.frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else button.frame:HookScript(key, value) end
+		end end
 
 		--| UX
 
@@ -3976,7 +3988,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.scriptEvents then for key, value in pairs(t.scriptEvents) do button:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then button:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else button:HookScript(key, value) end
+		end end
 
 		--| UX
 
@@ -4271,8 +4286,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.scriptEvents then for key, value in pairs(t.scriptEvents) do
-			if key == "OnClick" then toggle.button:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then toggle.button:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			elseif key == "OnClick" then toggle.button:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
 			else toggle.button:HookScript(key, value) end
 		end end
 
@@ -5508,7 +5524,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do selector.frame:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then selector.frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else selector.frame:HookScript(key, value) end
+		end end
 
 		--| Tooltip
 
@@ -6103,11 +6122,13 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do selector.dropdown:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then selector.dropdown:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else selector.dropdown:HookScript(key, value) end
+		end end
 
-		--| Text update
-
-		--Handle updates
+		--Pass global events to handlers
+		selector.list:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
 
 		--| UX
 
@@ -6120,10 +6141,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 		end
 
-		--Pass global events to handlers
-		selector.list:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
-
-		selector.toggle.frame:HookScript("OnClick", function()
+		--Toggle the menu
+		selector.toggle.setListener("trigger", function()
 			local state = not selector.list:IsVisible()
 
 			wt.SetVisibility(selector.list, state)
@@ -6555,7 +6574,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--Register script event handlers
 		if t.events then for key, value in pairs(t.events) do
-			if key == "OnChar" then textbox.editbox:SetScript("OnChar", function(self, char) value(self, char, self:GetText()) end)
+			if key == "attribute" then textbox.editbox:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			elseif key == "OnChar" then textbox.editbox:SetScript("OnChar", function(self, char) value(self, char, self:GetText()) end)
 			elseif key == "OnTextChanged" then textbox.editbox:SetScript("OnTextChanged", function(self, user) value(self, user, self:GetText()) end)
 			elseif key == "OnEnterPressed" then textbox.editbox:SetScript("OnEnterPressed", function(self) value(self, self:GetText()) end)
 			else textbox.editbox:HookScript(key, value) end
@@ -7515,7 +7535,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do numeric.slider:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then numeric.slider:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else numeric.slider:HookScript(key, value) end
+		end end
 
 		--| UX
 
@@ -8032,7 +8055,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Events ]
 
 		--Register script event handlers
-		if t.events then for key, value in pairs(t.events) do colorPicker.frame:HookScript(key, value) end end
+		if t.events then for key, value in pairs(t.events) do
+			if key == "attribute" then colorPicker.frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+			else colorPicker.frame:HookScript(key, value) end
+		end end
 
 		--| UX
 

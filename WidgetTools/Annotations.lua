@@ -462,7 +462,7 @@
 ---@field color? colorData Apply the specified color to the texture
 ---@field edges? edgeCoordinates Edge coordinate offsets
 ---@field vertices? vertexCoordinates Vertex coordinate offsets<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, **t.edges** will be used first ignoring **t.vertices**.</li></ul>
----@field events? table<ScriptRegion, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the texture object and the functions to assign as event handlers called when they trigger
+---@field events? table<ScriptRegion, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the texture object and the functions to assign as event handlers called when they trigger
 
 ---@class textureUpdateData
 ---@field position? positionData Parameters to call [Region:SetPoint(...)](https://wowpedia.fandom.com/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** **t.position**
@@ -618,7 +618,7 @@
 ---@field append? boolean When setting the name, append **t.name** to the name of **t.parent** instead | ***Default:*** true if **t.name** ~= nil and **t.parent** ~= nil and **t.parent** ~= UIParent
 ---@field customizable? boolean Create the frame with `BackdropTemplateMixin and "BackdropTemplate"` to be easily customizable | ***Default:*** false<ul><li>***Note:*** You may use ***WidgetToolbox*.SetBackdrop(...)** to set up the backdrop quickly.</li></ul>
 ---@field size? sizeData_zeroDefault ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
----@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://wowpedia.fandom.com/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://wowpedia.fandom.com/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
 ---@field onEvent? table<WowEvent, fun(self: Frame, ...: any)> Table of key, value pairs that holds global event tags & their corresponding event handlers to be registered for the frame<ul><li>***Note:*** You may want to include [Frame:UnregisterEvent(...)](https://wowpedia.fandom.com/wiki/API_Frame_UnregisterEvent) to prevent the handler function to be executed again.</li><li>***Example:*** "[ADDON_LOADED](https://wowpedia.fandom.com/wiki/ADDON_LOADED)" is fired repeatedly after each addon. To call the handler only after one specified addon is loaded, you may check the parameter the handler is called with. It's a good idea to unregister the event to prevent repeated calling for every other addon after the specified one has been loaded already.<pre>```function(self, addon)```<br>&#9;```if addon ~= "AddonNameSpace" then return end --Replace "AddonNameSpace" with the namespace of the specific addon to watch```<br>&#9;```self:UnregisterEvent("ADDON_LOADED")```<br>&#9;```--Do something```<br>```end```</pre></li></ul>
 
 --| ScrollFrame
@@ -688,7 +688,7 @@
 ---@field size? sizeData_panel
 ---@field background? backdropBackgroundData_panel Table containing the parameters used for the background
 ---@field border? backdropBorderData_panel Table containing the parameters used for the border
----@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the panel and the functions to assign as event handlers called when they trigger
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the panel and the functions to assign as event handlers called when they trigger
 ---@field initialize? fun(container?: panel, width: number, height: number) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? panel ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p>
 
 --| Context Menu
@@ -814,6 +814,10 @@
 ---|"Numeric"
 ---|"ColorPicker"
 
+---@class attributeEventData
+---@field name string
+---@field handler fun(...: any)
+
 --[ Button ]
 
 ---@alias ButtonType
@@ -833,10 +837,12 @@
 
 ---@alias ButtonEventHandler
 ---|ButtonEventHandler_enabled
+---|ButtonEventHandler_trigger
 ---|fun(self: ButtonType, ...: any)
 
 ---@class buttonEventListeners
 ---@field enabled? ButtonEventHandler_enabled[] List of functions to call in order when an "enabled" event is invoked after **button.setEnabled(...)** was called
+---@field trigger? ButtonEventHandler_trigger[] List of functions to call in order when a "trigger" event is invoked after **button.trigger(...)** was called
 ---@field [string]? fun(self: ButtonType, ...: any)[] List of functions to call in order when a custom event created via **button.createEvent(...)** is invoked
 
 --| Constructors
@@ -850,7 +856,7 @@
 ---@field h? number Height | ***Default:*** 22
 
 ---@class buttonScriptEvents
----@field scriptEvents? table<ScriptButton, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** **t.action** will automatically be called when an "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" event triggers, there is no need to register it here as well.</li></ul>
+---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** **t.action** will automatically be called when an "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" event triggers, there is no need to register it here as well.</li></ul>
 
 ---@class simpleButtonCreationData : actionButtonCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, buttonScriptEvents, liteObject
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Button"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
@@ -915,7 +921,7 @@
 ---@class checkboxCreationData : toggleCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData_checkbox
----@field scriptEvents? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
+---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
 
 ---@class sizeData_radioButton
 ---@field w? number Width | ***Default:***  **t.label** and 160 or **t.size.h**
@@ -924,7 +930,7 @@
 ---@class radioButtonCreationData : checkboxCreationData
 ---@field size? sizeData_radioButton
 ---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** false<ul><li>***Note:*** The radio button will be registered for "RightButtonUp" triggers to call "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" events with **button** = "RightButton".</li></ul>
----@field events? table<ScriptButton, fun(self: radioButton, state: boolean, button?: string, down?: boolean)> Table of key, value pairs of the names of script event handlers to be set for the radio button and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
+---@field events? table<ScriptButton, fun(self: radioButton, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the radio button and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
 
 --[ Selector ]
 
@@ -1050,7 +1056,7 @@
 ---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
 ---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
 ---@field selected? integer The index of the item to be set as selected on load | ***Default:*** nil *(no selection)*
----@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
 ---@field onItemsUpdated? function Function to call when the list of selector items have been updated
 ---@field default? integer Default value of the widget
 
@@ -1061,7 +1067,7 @@
 ---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
 ---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
 ---@field selections? boolean[] Ordered list of item states to set on load | ***Default:*** nil *(no selected items)*<ul><li>**[*index*]** boolean? — If true, this item will be set as selected | ***Default:*** false</li></ul>
----@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
 ---@field onItemsUpdated? function Function to call when the list of selector items have been updated
 ---@field default? boolean[] Default value of the widget
 
@@ -1145,7 +1151,7 @@
 ---@field keepFocused? boolean Keep the editbox focused while its being shown | ***Default:*** false
 ---@field unfocusOnEnter? boolean Whether to automatically clear the focus from the editbox when the ENTER key is pressed | ***Default:*** true
 ---@field resetCursor? boolean If true, set the cursor position to the beginning of the string after setting the text via **textbox.setText(...)** | ***Default:*** true
----@field events? table<ScriptEditBox, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the editbox frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnChar](https://wowpedia.fandom.com/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `user` string ― True if the value was changed by the user, false if it was done programmatically</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnEnterPressed](https://wowpedia.fandom.com/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
+---@field events? table<ScriptEditBox, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the editbox frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnChar](https://wowpedia.fandom.com/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `user` string ― True if the value was changed by the user, false if it was done programmatically</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnEnterPressed](https://wowpedia.fandom.com/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
 ---@field listeners? table<string|TextboxAttributes, fun(state: boolean)|fun(value: textboxAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **textbox.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "changed"<p>Invoked after **textbox.setText(...)** was called or an "[OnTextChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnTextChanged)" event triggered</p><hr><p>@*param* `value` textboxAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 ---@field getData? fun(): text: string|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `text` string|nil | ***Default:*** ""</p>
 ---@field saveData? fun(text: string) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `text` string</p>
@@ -1195,7 +1201,7 @@
 ---@field sideButtons? boolean Whether or not to add increase/decrease buttons next to the slider to change the value by the increment set in **t.step** | ***Default:*** true
 ---@field step? number Add/subtract this much when clicking the increase/decrease buttons | ***Default:*** **t.increment** or (t.max - t.min) / 10
 ---@field altStep? number If set, add/subtract this much when clicking the increase/decrease buttons while holding ALT | ***Default:*** *no alternative step value*
----@field events? table<ScriptSlider, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
+---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
 ---@field listeners? table<string|NumericAttributes, fun(state: boolean)|fun(value: numericAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **numeric.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "changed"<p>Invoked after **numeric.setValue(...)** was called, the increase or decrease button was clicked, or a custom value was entered via the value box</p><hr><p>@*param* `value` numericAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 ---@field getData? fun(): value: number|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` number|nil | ***Default:*** **t.min**</p>
 ---@field saveData? fun(value: number) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value` number</p>
@@ -1222,7 +1228,7 @@
 ---@field color? colorData_whiteDefault Values to use as the starting color | ***Default:*** **t.getData()**<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
 ---@field onColorUpdate? fun(r: number, g: number, b: number, a?: number) The function to be called when the color is changed by user interaction<hr><p>@*param* `r` number ― Red | ***Range:*** (0, 1)</p><p>@*param* `g` number ― Green | ***Range:*** (0, 1)</p><p>@*param* `b` number ― Blue | ***Range:*** (0, 1)</p><p>@*param* `a`? number ― Opacity | ***Range:*** (0, 1) | ***Default:*** 1</p>
 ---@field onCancel? function The function to be called when the color change is cancelled (after calling **t.onColorUpdate**)
----@field events? table<ScriptFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
 ---@field listeners? table<string|ColorPickerAttributes, fun(state: boolean)|fun(value: colorPickerAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **colorPicker.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "active"<p>Invoked after **colorPicker.pickerButton** was clicked</p><hr><p>@*param* `state` boolean ― Whether this color picker is the active one the [ColorPickerFrame](https://wowpedia.fandom.com/wiki/Using_the_ColorPickerFrame) has been opened for</p><p></p></li><li>**type** == "colored"<p>Invoked after **colorPicker.setColor(...)** was called</p><hr><p>@*param* `value` colorPickerAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 ---@field getData? fun(): color: optionalColorData|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `color` optionalColorData|nil | ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *(white)*</p>
 ---@field saveData? fun(color: colorData) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `color` colorData</p>
