@@ -864,6 +864,11 @@
 ---@field size? sizeData_button
 ---@field font? labelFontOptions List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 
+---@class customButtonCreationData
+---@field backdrop? backdropData Parameters to set the custom backdrop with
+---@field backdropUpdates? table<AnyScriptType, backdropUpdateRule> Table of key, value pairs containing the list of events to set listeners for assigned to **t.backdropUpdates[*key*].frame**, linking backdrop changes to it, modifying the specified parameters on trigger
+--- - ***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **t.backdropUpdates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!
+
 ---@class contextButtonCreationData : contextMenuItem, titledObject_base, tooltipDescribableObject, contextItemLabelJustify, buttonScriptEvents, togglableObject
 ---@field font? labelFontOptions_small Table of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 

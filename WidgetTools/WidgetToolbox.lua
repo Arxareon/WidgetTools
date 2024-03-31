@@ -3846,14 +3846,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	end
 
 	---Create a Blizzard button frame with custom GUI and enhanced widget functionality
-	---@param t? simpleButtonCreationData Parameters are to be provided in this table
+	---@param t? customButtonCreationData Parameters are to be provided in this table
 	---@param widget? toggle Reference to an already existing action button to set up as a custom button instead of creating a new base widget
 	---***
-	---@return simpleButton|actionButton button References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
+	---@return customButton|actionButton button References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button) (inheriting [BackdropTemplate](https://warcraft.wiki.gg/wiki/BackdropTemplate)), utility functions and more wrapped in a table
 	function wt.CreateCustomButton(t, widget)
 		t = t or {}
 
-		---@class simpleButton : actionButton
+		---@class customButton : actionButton
 		local button = widget and widget.isType and widget.isType("ActionButton") and widget or wt.CreateActionButton(t)
 
 		if WidgetToolsDB.lite and t.lite ~= false then return button end
@@ -3885,6 +3885,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			button.label:SetText(title)
 		end
+
+		--| Backdrop
+
+		wt.SetBackdrop(button.frame, t.backdrop, t.backdropUpdates)
 
 		--| Shared setup
 
@@ -5817,6 +5821,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ Dropdown List ]
 
+		local open = false
+
 		selector.list = wt.CreatePanel({
 			parent = selector.dropdown,
 			label = false,
@@ -5831,10 +5837,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 			border =  { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } },
 			size = { w = t.width, h = 12 + #t.items * 16 },
-			events = {
-				OnShow = function() selector.invoke("open")(true) end,
-				OnHide = function() selector.invoke("open")(false) end,
-			},
 			initialize = function(panel) wt.CreateRadioSelector({
 				parent = panel,
 				name = name,
@@ -5857,9 +5859,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			}, selector) end,
 		})
 
-		--[ Toggle Button ]
-
-		local open = false
+		--| Toggle button
 
 		selector.toggle = wt.CreateCustomButton({
 			parent = selector.dropdown,
@@ -5877,72 +5877,72 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				highlight = "GameFontHighlightSmall",
 				disabled = "GameFontDisableSmall",
 			},
+			backdrop = {
+				background = {
+					texture = {
+						size = 5,
+						insets = { l = 3, r = 3, t = 3, b = 3 },
+					},
+					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+				},
+				border = {
+					texture = { width = 14, },
+					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+				}
+			},
+			backdropUpdates = {
+				OnEnter = { rule = function()
+					return IsMouseButtonDown() and {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+					} or (open and {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					} or {
+						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					})
+				end },
+				OnLeave = { rule = function()
+					if open then return {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.6, g = 0.6, b = 0.6, a = 0.9 } }
+					} end
+					return {}, true
+				end },
+				OnMouseDown = { rule = function(self)
+					return self:IsEnabled() and {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+					} or {}
+				end },
+				OnMouseUp = { rule = function(_, button)
+					if button == "LeftButton" then return {} end
+
+					return (open and {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					} or {
+						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					})
+				end },
+				OnAttributeChanged = { trigger = selector.dropdown, rule = function(_, attribute, state)
+					if attribute ~= "open" then return {} end
+
+					if selector.toggle.frame:IsMouseOver() then return state and {
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					} or {
+						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					} end
+					return {}, true
+				end },
+			},
 			events = { OnMouseUp = function(_, button, isInside)
 				if t.clearable and button == "RightButton" and isInside and selector.toggle.frame:IsEnabled() then selector.setText(nil, true) end
 			end, },
 			dependencies = t.dependencies
-		})
-
-		wt.SetBackdrop(selector.toggle.frame, {
-			background = {
-				texture = {
-					size = 5,
-					insets = { l = 3, r = 3, t = 3, b = 3 },
-				},
-				color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
-			},
-			border = {
-				texture = { width = 14, },
-				color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
-			}
-		}, {
-			OnEnter = { rule = function()
-				return IsMouseButtonDown() and {
-					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-				} or (open and {
-					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				} or {
-					background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				})
-			end },
-			OnLeave = { rule = function()
-				if open then return {
-					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-					border = { color = { r = 0.6, g = 0.6, b = 0.6, a = 0.9 } }
-				} end
-				return {}, true
-			end },
-			OnMouseDown = { rule = function(self)
-				return self:IsEnabled() and {
-					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-				} or {}
-			end },
-			OnMouseUp = { rule = function(_, button)
-				if button == "LeftButton" then return {} end
-
-				return (open and {
-					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				} or {
-					background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				})
-			end },
-			OnAttributeChanged = { trigger = selector.dropdown, rule = function(_, attribute, state)
-				if attribute ~= "open" then return {} end
-
-				if selector.toggle.frame:IsMouseOver() then return state and {
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				} or {
-					background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				} end
-				return {}, true
-			end },
 		})
 
 		--[ Cycle Buttons ]
@@ -5957,7 +5957,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				color = wt.PackColor(GameFontDisable:GetTextColor()),
 			})
 
-			--[ Previous Item ]
+			--| Previous item
 
 			--Define the dependency rule
 			previousDependencies = { { frame = selector, evaluate = function(value)
@@ -5981,6 +5981,43 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					highlight = "ChatFontSmall",
 					disabled = "ChatFontSmallDisabled",
 				},
+				backdrop = {
+					background = {
+						texture = {
+							size = 5,
+							insets = { l = 3, r = 3, t = 3, b = 3 },
+						},
+						color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+					},
+					border = {
+						texture = { width = 12, },
+						color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+					}
+				},
+				backdropUpdates = {
+					OnEnter = { rule = function()
+						return IsMouseButtonDown() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						}
+					end },
+					OnLeave = { rule = function() return {}, true end },
+					OnMouseDown = { rule = function(self)
+						return self:IsEnabled() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {}
+					end },
+					OnMouseUp = { rule = function(self)
+						return self:IsEnabled() and self:IsMouseOver() and {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						} or {}
+					end },
+				},
 				action = function()
 					local selected = selector.getSelected()
 
@@ -5989,44 +6026,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				dependencies = previousDependencies
 			})
 
-			wt.SetBackdrop(selector.previous.frame, {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
-				}
-			}, {
-				OnEnter = { rule = function()
-					return IsMouseButtonDown() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					}
-				end },
-				OnLeave = { rule = function() return {}, true end },
-				OnMouseDown = { rule = function(self)
-					return self:IsEnabled() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {}
-				end },
-				OnMouseUp = { rule = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					} or {}
-				end },
-			})
-
-			--[ Next Item ]
+			--| Next item
 
 			--Define the dependency rule
 			nextDependencies = { { frame = selector, evaluate = function(value)
@@ -6050,49 +6050,49 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					highlight = "ChatFontSmall",
 					disabled = "ChatFontSmallDisabled",
 				},
+				backdrop = {
+					background = {
+						texture = {
+							size = 5,
+							insets = { l = 3, r = 3, t = 3, b = 3 },
+						},
+						color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+					},
+					border = {
+						texture = { width = 12, },
+						color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+					}
+				},
+				backdropUpdates = {
+					OnEnter = { rule = function()
+						return IsMouseButtonDown() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						}
+					end },
+					OnLeave = { rule = function() return {}, true end },
+					OnMouseDown = { rule = function(self)
+						return self:IsEnabled() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {}
+					end },
+					OnMouseUp = { rule = function(self)
+						return self:IsEnabled() and self:IsMouseOver() and {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						} or {}
+					end },
+				},
 				action = function()
 					local selected = selector.getSelected()
 
 					selector.setText(selected and selected + 1 or 1, true)
 				end,
 				dependencies = nextDependencies
-			})
-
-			wt.SetBackdrop(selector.next.frame, {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
-				}
-			}, {
-				OnEnter = { rule = function()
-					return IsMouseButtonDown() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					}
-				end },
-				OnLeave = { rule = function() return {}, true end },
-				OnMouseDown = { rule = function(self)
-					return self:IsEnabled() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {}
-				end },
-				OnMouseUp = { rule = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					} or {}
-				end },
 			})
 		end
 
@@ -6119,6 +6119,18 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if not silent then selector.invoke("labeled")(text) end
 		end
 
+		---Toggle the dropdown menu
+		---@param state? boolean ***Default:*** not **selector.list:IsVisible()**
+		function selector.toggleMenu(state)
+			if state == nil then open = not selector.list:IsVisible() else open = state end
+
+			wt.SetVisibility(selector.list, open)
+
+			if open then selector.list:RegisterEvent("GLOBAL_MOUSE_DOWN") else selector.list:UnregisterEvent("GLOBAL_MOUSE_UP") end
+
+			selector.invoke("open")(open)
+		end
+
 		--[ Events ]
 
 		--Register script event handlers
@@ -6132,24 +6144,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| UX
 
-		---Close the menu
-		local function close()
-			if t.autoClose ~= false and open then
-				selector.list:UnregisterEvent("GLOBAL_MOUSE_UP")
-
-				selector.list:Hide()
-			end
-		end
-
-		--Toggle the menu
-		selector.toggle.setListener("trigger", function()
-			local state = not selector.list:IsVisible()
-
-			wt.SetVisibility(selector.list, state)
-
-			if state then selector.list:RegisterEvent("GLOBAL_MOUSE_DOWN") end
-		end)
-
 		function selector.list:GLOBAL_MOUSE_DOWN()
 			if selector.toggle.frame:IsMouseOver() then return end
 
@@ -6160,13 +6154,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function selector.list:GLOBAL_MOUSE_UP(button)
 			if (button ~= "LeftButton" and button ~= "RightButton") or selector.list:IsMouseOver() then return end
 
-			selector.list:UnregisterEvent("GLOBAL_MOUSE_UP")
-
-			selector.list:Hide()
+			selector.toggleMenu(false)
 		end
 
 		--Handle updates
-		selector.setListener("selected", close, 1)
+		selector.toggle.setListener("trigger", function() selector.toggleMenu() end)
 		selector.setListener("selected", function() selector.setText() end, 1)
 		selector.setListener("open", function(state) if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end end)
 
@@ -6199,7 +6191,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		updateState(nil, selector.isEnabled())
 
 		--Set up starting selection
-		close(nil, selector.getSelected())
 		selector.setText(t.defaultText)
 
 		return selector
@@ -6539,7 +6530,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	--| GUI
 
 	---Set the parameters of a GUI textbox widget frame
-	---@param textbox textbox|multilineEditbox
+	---@param textbox editbox|customEditbox|multilineEditbox
 	---@param t textboxCreationData
 	local function SetUpEditboxFrame(textbox, t)
 
@@ -6582,9 +6573,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end end
 
 		--| UX
-
-		--Inherit setter
-		textbox.editbox.setText = textbox.setText
 
 		---Update the widget UI based on the text value
 		---@param _ toggle
@@ -6640,7 +6628,47 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		updateText(nil, textbox.getText())
 	end
 
-	---Create a default Blizzard editbox GUI frame with enhanced widget functionality
+	---Set the parameters of a single-line GUI textbox widget frame
+	---@param textbox editbox|customEditbox
+	---@param t textboxCreationData
+	local function SetUpSingleLineEditbox(textbox, t)
+
+		--Set as single line
+		textbox.editbox:SetMultiLine(false)
+
+		--| Position
+
+		if t.arrange then textbox.frame.arrangementInfo = t.arrange else wt.SetPosition(textbox.frame, t.position) end
+		textbox.editbox:SetPoint("BOTTOMRIGHT")
+
+		--| Label
+
+		local title = t.title or t.name or "Text Box"
+
+		textbox.label = wt.AddTitle({
+			parent = textbox.frame,
+			title = t.label ~= false and {
+				offset = { x = -1, },
+				text = title,
+			} or nil,
+		})
+
+		--| Shared setup
+
+		SetUpEditboxFrame(textbox, t)
+
+		--[ Events ]
+
+		--| Tooltip
+
+		if t.tooltip then wt.AddTooltip(textbox.editbox, {
+			title = t.tooltip.title or title,
+			lines = t.default and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. tostring(t.default) }) or t.tooltip.lines,
+			anchor = "ANCHOR_RIGHT",
+		}) end
+	end
+
+	---Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
 	---***
 	---@param t? editboxCreationData Parameters are to be provided in this table
 	---@param widget? selector Reference to an already existing selector to set up as a radio selector instead of creating a new base widget
@@ -6662,60 +6690,71 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		textbox.frame = wt.CreateFrame("Frame", name, t.parent)
 		textbox.editbox = wt.CreateFrame("EditBox", name .. "EditBox", textbox.frame, custom or "InputBoxTemplate")
 
-		--Set as single line
-		textbox.editbox:SetMultiLine(false)
-
-		--| Position & dimensions
+		--| Dimensions
 
 		t.size = t.size or {}
 		t.size.w = t.size.w or 180
 		t.size.h = t.size.h or 18
-		local templateOffsetX = custom and 0 or 6
-		local templateOffsetY = custom and 0 or 1
-		local titleOffset = t.label ~= false and -18 or 0
 
-		if t.arrange then textbox.frame.arrangementInfo = t.arrange else wt.SetPosition(textbox.frame, t.position) end
-		textbox.editbox:SetPoint("BOTTOMRIGHT")
-
-		textbox.frame:SetSize(t.size.w, t.size.h - titleOffset)
-		textbox.editbox:SetSize(t.size.w - templateOffsetX, t.size.h - templateOffsetY)
-
-		--| Label
-
-		local title = t.title or t.name or "Text Box"
-
-		textbox.label = wt.AddTitle({
-			parent = textbox.frame,
-			title = t.label ~= false and {
-				offset = { x = -1, },
-				text = title,
-			} or nil,
-		})
+		textbox.frame:SetSize(t.size.w, t.size.h - (t.label ~= false and -18 or 0))
+		textbox.editbox:SetSize(t.size.w - 6, t.size.h - 1)
 
 		--| Shared setup
 
-		SetUpEditboxFrame(textbox, t)
-
-		--[ Events ]
-
-		--Custom behavior
-		if custom then
-			textbox.editbox:HookScript("OnEditFocusGained", function(self) self:HighlightText() end)
-			textbox.editbox:HookScript("OnEditFocusLost", function(self) self:ClearHighlightText() end)
-		end
-
-		--| Tooltip
-
-		if t.tooltip then wt.AddTooltip(textbox.editbox, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. tostring(t.default) }) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
+		SetUpSingleLineEditbox(textbox, t)
 
 		return textbox
 	end
 
-	---Create a default Blizzard multiline editbox GUI frame with enhanced widget functionality
+	---Create a single-line Blizzard editbox frame with custom GUI and enhanced widget functionality
+	---***
+	---@param t? customEditboxCreationData Parameters are to be provided in this table
+	---@param widget? selector Reference to an already existing selector to set up as a radio selector instead of creating a new base widget
+	---***
+	---@return customEditbox|textbox textbox Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
+	function wt.CreateCustomEditbox(t, widget)
+		t = t or {}
+
+		---@class customEditbox : textbox
+		local textbox = widget and widget.isType and widget.isType("Textbox") and widget or wt.CreateTextbox(t)
+
+		if WidgetToolsDB.lite and t.lite ~= false then return textbox end
+
+		--[ Frame Setup ]
+
+		local name = (t.append ~= false and t.parent and t.parent~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Textbox")
+
+		textbox.frame = wt.CreateFrame("Frame", name, t.parent)
+		textbox.editbox = wt.CreateFrame("EditBox", name .. "EditBox", textbox.frame, BackdropTemplateMixin and "BackdropTemplate")
+
+		--| Dimensions
+
+		t.size = t.size or {}
+		t.size.w = t.size.w or 180
+		t.size.h = t.size.h or 18
+
+		textbox.frame:SetSize(t.size.w, t.size.h - (t.label ~= false and -18 or 0))
+		textbox.editbox:SetSize(t.size.w, t.size.h)
+
+		--| Backdrop
+
+		wt.SetBackdrop(textbox.editbox, t.backdrop, t.backdropUpdates)
+
+		--| Shared setup
+
+		SetUpSingleLineEditbox(textbox, t)
+
+		--[ Events ]
+
+		--| UX
+
+		textbox.editbox:HookScript("OnEditFocusGained", function(self) self:HighlightText() end)
+		textbox.editbox:HookScript("OnEditFocusLost", function(self) self:ClearHighlightText() end)
+
+		return textbox
+	end
+
+	---Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
 	---***
 	---@param t? multilineTextboxCreationData Parameters are to be provided in this table
 	---***
@@ -6789,7 +6828,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Shared setup
 
-		SetUpEditboxFrame(textbox, t)
+		SetUpEditboxFrame(textbox, t) --CHECK if it should be after [ Events ], so resizes are handled on initialization
 
 		--[ Events ]
 
@@ -7312,7 +7351,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			local matchPattern = "(" .. (t.increment < 0 and "-?" or "") .. "[%d]*)" .. (decimals > 0 and "([%.]?" .. decimalPattern .. ")" or "") .. ".*"
 			local replacePattern = "%1" .. (decimals > 0 and "%2" or "")
 
-			numeric.valueBox = wt.CreateEditbox({
+			numeric.valueBox = wt.CreateCustomEditbox({
 				parent = numeric.frame,
 				name = "ValueBox",
 				label = false,
@@ -7326,7 +7365,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					relativePoint = "BOTTOM",
 				},
 				size = { w = 64, },
-				customizable = true,
 				text = tostring(wt.Round(numeric.slider:GetValue(), decimals)):gsub(matchPattern, replacePattern),
 				font = {
 					normal = "GameFontHighlightSmall",
@@ -7334,6 +7372,23 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				},
 				justify = { h = "CENTER", },
 				maxLetters = tostring(math.floor(t.increment)):len() + (decimals + (decimals > 0 and 1 or 0)) + (t.increment < 0 and 1 or 0),
+				backdrop = {
+					background = {
+						texture = {
+							size = 5,
+							insets = { l = 3, r = 3, t = 3, b = 3 },
+						},
+						color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
+					},
+					border = {
+						texture = { width = 12, },
+						color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
+					}
+				},
+				backdropUpdates = {
+					OnEnter = { rule = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end },
+					OnLeave = {},
+				},
 				events = {
 					OnChar = function(self, _, text) self:SetText(text:gsub(matchPattern, replacePattern)) end,
 					OnEnterPressed = function(self)
@@ -7344,23 +7399,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					end,
 					OnEscapePressed = function(self) self.setText(tostring(wt.Round(numeric.slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 				},
-			}).editbox
-
-			wt.SetBackdrop(numeric.valueBox, {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
-				}
-			}, {
-				OnEnter = { rule = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end },
-				OnLeave = {},
 			})
 
 			--Handle updates
@@ -7396,45 +7434,45 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					highlight = "GameFontHighlightMedium",
 					disabled = "GameFontDisableMed2",
 				},
+				backdrop = {
+					background = {
+						texture = {
+							size = 5,
+							insets = { l = 3, r = 3, t = 3, b = 3 },
+						},
+						color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+					},
+					border = {
+						texture = { width = 12, },
+						color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+					}
+				},
+				backdropUpdates = {
+					OnEnter = { rule = function()
+						return IsMouseButtonDown() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						}
+					end },
+					OnLeave = { rule = function() return {}, true end },
+					OnMouseDown = { rule = function(self)
+						return self:IsEnabled() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {}
+					end },
+					OnMouseUp = { rule = function(self)
+						return self:IsEnabled() and self:IsMouseOver() and {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						} or {}
+					end },
+				},
 				action = function() numeric.decrease(IsAltKeyDown(), true) end,
 				dependencies = { { frame = numeric.slider, evaluate = function(value) return value > t.increment end }, }
-			})
-
-			wt.SetBackdrop(numeric.decrease.frame, {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
-				}
-			}, {
-				OnEnter = { rule = function()
-					return IsMouseButtonDown() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					}
-				end },
-				OnLeave = { rule = function() return {}, true end },
-				OnMouseDown = { rule = function(self)
-					return self:IsEnabled() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {}
-				end },
-				OnMouseUp = { rule = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					} or {}
-				end },
 			})
 
 			--| Increase
@@ -7462,45 +7500,45 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					highlight = "GameFontHighlightMedium",
 					disabled = "GameFontDisableMed2",
 				},
+				backdrop = {
+					background = {
+						texture = {
+							size = 5,
+							insets = { l = 3, r = 3, t = 3, b = 3 },
+						},
+						color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+					},
+					border = {
+						texture = { width = 12, },
+						color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+					}
+				},
+				backdropUpdates = {
+					OnEnter = { rule = function()
+						return IsMouseButtonDown() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						}
+					end },
+					OnLeave = { rule = function() return {}, true end },
+					OnMouseDown = { rule = function(self)
+						return self:IsEnabled() and {
+							background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+							border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+						} or {}
+					end },
+					OnMouseUp = { rule = function(self)
+						return self:IsEnabled() and self:IsMouseOver() and {
+							background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+							border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+						} or {}
+					end },
+				},
 				action = function() numeric.increase(IsAltKeyDown(), true) end,
 				dependencies = { { frame = numeric.slider, evaluate = function(value) return value < t.increment end }, }
-			})
-
-			wt.SetBackdrop(numeric.increase.frame, {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
-				}
-			}, {
-				OnEnter = { rule = function()
-					return IsMouseButtonDown() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					}
-				end },
-				OnLeave = { rule = function() return {}, true end },
-				OnMouseDown = { rule = function(self)
-					return self:IsEnabled() and {
-						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
-						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-					} or {}
-				end },
-				OnMouseUp = { rule = function(self)
-					return self:IsEnabled() and self:IsMouseOver() and {
-						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
-						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-					} or {}
-				end },
 			})
 		end
 
@@ -7919,14 +7957,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param state boolean
 		local function setLock(state)
 			colorPicker.button.frame:EnableMouse(state)
-			colorPicker.hexBox:EnableMouse(state)
+			colorPicker.hexBox.editbox:EnableMouse(state)
 
 			--| Fade inactive color pickers
 
 			local opacity = (state or colorPicker.isActive()) and 1 or 0.4
 
 			colorPicker.label:SetAlpha(opacity)
-			colorPicker.hexBox:SetAlpha(opacity)
+			colorPicker.hexBox.editbox:SetAlpha(opacity)
 		end
 
 		if not t.color and t.getData then t.color = wt.Clone(t.getData()) else t.color = {} end
@@ -7941,44 +7979,44 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			},
 			position = { offset = { y = -14 } },
 			size = { w = 34, h = 22 },
-		}, colorPicker.button) end
-
-		wt.SetBackdrop(colorPicker.button.frame, {
-			background = {
-				texture = {
-					size = 5,
-					insets = { l = 2.5, r = 2.5, t = 2.5, b = 2.5 },
+			backdrop = {
+				background = {
+					texture = {
+						size = 5,
+						insets = { l = 2.5, r = 2.5, t = 2.5, b = 2.5 },
+					},
+					color = { r = t.color.r or 1, g = t.color.g or 1, b = t.color.b or 1, a = t.color.a or 1 }
 				},
-				color = { r = t.color.r or 1, g = t.color.g or 1, b = t.color.b or 1, a = t.color.a or 1 }
+				border = {
+					texture = { width = 11, },
+					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
+				}
 			},
-			border = {
-				texture = { width = 11, },
-				color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
-			}
-		}, {
-			OnEnter = { rule = function()
-				return IsMouseButtonDown() and {
-					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-				} or {
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				}
-			end },
-			OnLeave = { rule = function()
-				return {
-					border = { color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 } }
-				}
-			end },
-			OnMouseDown = { rule = function()
-				return {
-					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
-				}
-			end },
-			OnMouseUp = { rule = function(self)
-				return self:IsMouseOver() and {
-					border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
-				} or {}
-			end },
-		})
+			backdropUpdates = {
+				OnEnter = { rule = function()
+					return IsMouseButtonDown() and {
+						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+					} or {
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					}
+				end },
+				OnLeave = { rule = function()
+					return {
+						border = { color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 } }
+					}
+				end },
+				OnMouseDown = { rule = function()
+					return {
+						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+					}
+				end },
+				OnMouseUp = { rule = function(self)
+					return self:IsMouseOver() and {
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					} or {}
+				end },
+			},
+		}, colorPicker.button) end
 
 		colorPicker.button.gradient = wt.CreateTexture({
 			parent = colorPicker.button.frame,
@@ -8004,7 +8042,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| HEX textbox
 
-		colorPicker.hexBox = wt.CreateEditbox({
+		colorPicker.hexBox = wt.CreateCustomEditbox({
 			parent = colorPicker.frame,
 			name = "HEXBox",
 			title = ns.toolboxStrings.color.hex.label,
@@ -8018,34 +8056,33 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			},
 			size = { w = t.width - colorPicker.button.frame:GetWidth(), h = colorPicker.button.frame:GetHeight() },
 			insets = { l = 6, },
-			customizable = true,
 			font = {
 				normal = "GameFontWhiteSmall",
 				disabled = "GameFontDisableSmall",
 			},
 			maxLetters = 7 + (t.color.a and 2 or 0),
+			backdrop = {
+				background = {
+					texture = {
+						size = 5,
+						insets = { l = 3, r = 3, t = 3, b = 3 },
+					},
+					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
+				},
+				border = {
+					texture = { width = 12, },
+					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
+				}
+			},
+			backdropUpdates = {
+				OnEnter = { rule = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end },
+				OnLeave = {},
+			},
 			events = {
 				OnChar = function(self, _, text) self.setText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
 				OnEnterPressed = function(_, text) colorPicker.setColor(wt.PackColor(wt.HexToColor(text)), true) end,
 				OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorPicker.getColor())) end,
 			},
-		}).editbox
-
-		wt.SetBackdrop(colorPicker.hexBox, {
-			background = {
-				texture = {
-					size = 5,
-					insets = { l = 3, r = 3, t = 3, b = 3 },
-				},
-				color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
-			},
-			border = {
-				texture = { width = 12, },
-				color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
-			}
-		}, {
-			OnEnter = { rule = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end },
-			OnLeave = {},
 		})
 
 		--| RGBA textboxes
