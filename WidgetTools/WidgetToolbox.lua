@@ -5811,6 +5811,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--[ Dropdown List ]
 
 		local open = false
+		t.listeners = t.listeners or {}
+		t.listeners.updated = t.listeners.updated or {}
+		table.insert(t.listeners.updated, { handler = function() selector.list:SetHeight(#t.items * 16 + 12) end, callIndex = 1 })
 
 		selector.list = wt.CreatePanel({
 			parent = selector.dropdown,
@@ -5835,13 +5838,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				width = t.width - 12,
 				items = t.items,
 				clearable = t.clearable,
-				onItemsUpdated = function() selector.list:SetHeight(#t.items * 16 + 12) end,
+				listeners = t.listeners,
 				dependencies = t.dependencies,
 				optionsKey = t.optionsKey,
 				getData = t.getData,
 				saveData = t.saveData,
-				onLoad = t.onLoad,
-				onSave = t.onSave,
 				instantSave = t.instantSave,
 				onChange = t.onChange,
 				default = t.default,
@@ -8851,7 +8852,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								width = 180,
 								items = t.accountData.profiles,
 								selected = t.characterData.activeProfile,
-								onSelection = activateProfile,
+								listeners = { selected = { { handler = activateProfile, }, }, },
 							})
 
 							dataManagement.profiles.new = wt.CreateSimpleButton({
@@ -8991,7 +8992,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								scrollToTop = false,
 								unfocusOnEnter = false,
 								optionsKey = addon .. "Backup",
-								onLoad = dataManagement.refreshBackupBox,
+								listeners = { loaded = { { handler = dataManagement.refreshBackupBox, }, }, },
 							})
 
 							dataManagement.backup.compact = wt.CreateCheckbox({
@@ -9084,7 +9085,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 										scrollToTop = false,
 										unfocusOnEnter = false,
 										optionsKey = addon .. "Backup",
-										onLoad = dataManagement.refreshAllProfilesBackupBox,
+										listeners = { loaded = { { handler = dataManagement.refreshAllProfilesBackupBox, }, }, },
 									})
 
 									wt.CreateSimpleButton({
@@ -9439,7 +9440,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						arrange = {},
 						width = 180,
 						items = panel.presetList,
-						onSelection = applyPreset,
+						listeners = { selected = { { handler = applyPreset, }, }, },
 						optionsKey = t.optionsKey,
 						onLoad = function(self) self.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end,
 					})
@@ -9541,14 +9542,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				panel.position = { offset = {}, }
 				local previousAnchor = t.getData().position.anchor
 
-				panel.position.relativePoint = wt.CreateSpecialSelector("anchor", {
+				panel.position.relativePoint = wt.CreateSpecialRadioSelector("anchor", {
 					parent = panelFrame,
 					name = "RelativePoint",
 					title = ns.toolboxStrings.position.relativePoint.label,
 					tooltip = { lines = { { text = ns.toolboxStrings.position.relativePoint.tooltip:gsub("#FRAME", t.frameName), }, } },
 					arrange = {},
 					width = 140,
-					onSelection = t.presets and function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end or nil,
+					listeners = t.presets and { selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.relativePoint end,
@@ -9561,14 +9562,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					default = t.defaultsTable.position.relativePoint,
 				})
 
-				panel.position.anchor = wt.CreateSpecialSelector("anchor", {
+				panel.position.anchor = wt.CreateSpecialRadioSelector("anchor", {
 					parent = panelFrame,
 					name = "AnchorPoint",
 					title = ns.toolboxStrings.position.anchor.label,
 					tooltip = { lines = { { text = ns.toolboxStrings.position.anchor.tooltip:gsub("#FRAME", t.frameName), }, } },
 					arrange = { newRow = false, },
 					width = 140,
-					onSelection = t.presets and function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end or nil,
+					listeners = t.presets and { selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.anchor end,
@@ -9758,14 +9759,16 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				if t.getData().layer and next(t.getData().layer) then
 					panel.layer = {}
 
-					if t.getData().layer.strata then panel.layer.strata = wt.CreateSpecialSelector("frameStrata", {
+					if t.getData().layer.strata then panel.layer.strata = wt.CreateSpecialRadioSelector("frameStrata", {
 						parent = panelFrame,
 						name = "FrameStrata",
 						title = ns.toolboxStrings.layer.strata.label,
 						tooltip = { lines = { { text = ns.toolboxStrings.layer.strata.tooltip:gsub("#FRAME", t.frameName), }, } },
 						arrange = {},
 						width = 140,
-						onSelection = t.presets and function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end or nil,
+						listeners = t.presets and {
+							selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, },
+						} or nil,
 						dependencies = t.dependencies,
 						optionsKey = t.optionsKey,
 						getData = function() return t.getData().layer.strata end,

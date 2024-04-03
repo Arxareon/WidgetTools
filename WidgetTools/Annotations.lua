@@ -1155,7 +1155,7 @@
 ---@field enabled? selectorEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **selector.setEnabled(...)** was called
 ---@field loaded? selectorEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
 ---@field saved? selectorEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
----@field selected? SelectorEventHandler_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
+---@field selected? selectorEventListener_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
 ---@field updated? selectorEventListener_updated[] List of functions to call in order when an "updated" events are invoked after **selector.updatedItems(...)** was called
 ---@field [string]? selectorEventListener_any[] List of functions to call in order when a custom event is invoked
 
