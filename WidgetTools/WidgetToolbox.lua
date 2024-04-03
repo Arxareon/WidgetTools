@@ -1588,12 +1588,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				end
 			elseif rules[i].frame.isType and rules[i].frame.dropdown then --Custom WidgetTools widgets
 				--Watch value load events
-				rules[i].frame.setListener("loaded", function(success) if success then setter() end end)
+				rules[i].frame.setListener.loaded(function(success) if success then setter() end end)
 
 				--Watch value change events
-				if rules[i].frame.isType("Toggle") then rules[i].frame.setListener("toggled", setter)
-				elseif rules[i].frame.isType("Selector") then rules[i].frame.setListener("selected", setter)
-				elseif rules[i].frame.isType("Textbox") or rules[i].frame.isType("Numeric") then rules[i].frame.setListener("changed", setter)
+				if rules[i].frame.isType("Toggle") then rules[i].frame.setListener.toggled(setter)
+				elseif rules[i].frame.isType("Selector") then rules[i].frame.setListener.selected(setter)
+				elseif rules[i].frame.isType("Textbox") or rules[i].frame.isType("Numeric") then rules[i].frame.setListener.changed(setter)
 				end
 			end
 		end end
@@ -3219,7 +3219,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		---Returns the type of this object
 		---***
-		---@return WidgetType type ***Value:*** "SettingsPage"
+		---@return WidgetTypeName type ***Value:*** "SettingsPage"
 		---<hr><p></p>
 		function page.getType() return "SettingsPage" end
 
@@ -3300,7 +3300,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ Settings Page ]
 
-		if not WidgetToolsDB.lite then
+		if not WidgetToolsDB.lite or t.lite == false then
 
 			--[ Canvas Frame ]
 
@@ -3552,6 +3552,25 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	--[[ WIDGETS ]]
 
+	---Register a handler as a listener for **event**
+	---@param listeners table<string, function[]>
+	---@param event string
+	---@param listener function
+	---@param callIndex integer
+	local function addListener(listeners, event, listener, callIndex)
+		if not listeners[event] then return end
+
+		if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
+		else table.insert(listeners[event], listener) end
+	end
+
+	---Call registered listeners for **event**
+	---@param widget AnyWidgetType
+	---@param listeners table<string, function[]>
+	---@param event string
+	---@param ... any
+	local function callListeners(widget, listeners, event, ...) for i = 1, #listeners[event] do listeners[event][i](widget, ...) end end
+
 	--[ Button ]
 
 	---Create a non-GUI action button widget
@@ -3575,23 +3594,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, ButtonEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](button, ...) end end
-
-		---@type table<ButtonEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param user boolean
-			trigger = function(user) callListeners("trigger", user) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "ActionButton"
+		---@return WidgetTypeName type ***Value:*** "ActionButton"
 		---<hr><p></p>
 		function button.getType() return "ActionButton" end
 
@@ -3607,38 +3617,30 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|ButtonEventTag Custom event tag
-		function button.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		button.invoke = {
+			enabled = function() callListeners(button, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **button.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function button.createEvent(event)
-			if events[event] then return false end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(button, listeners, event, ...) end
+		}
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+		--Hook a handler function as a listener for a custom widget event
+		button.setListener = {
+			---@param listener ButtonEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
 
-			return true
-		end
+			---@param listener ButtonEventHandler_trigger Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			trigger = function(listener, callIndex) addListener(listeners, "trigger", listener, callIndex) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|ButtonEventTag Custom event tag
-		---@param listener ButtonEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function button.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
-
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+			---@param event string Custom event tag
+			---@param listener ButtonEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| State
 
@@ -3653,7 +3655,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function button.setEnabled(state, silent)
 			enabled = state ~= false
 
-			if not silent then button.invoke("enabled")() end
+			if not silent then button.invoke.enabled() end
 		end
 
 		--| Action
@@ -3664,16 +3666,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function button.trigger(user, silent)
 			if enabled and t.action then t.action(button, user) end
 
-			if not silent then button.invoke("trigger")(user) end
+			if not silent then button.invoke.trigger(user) end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do button.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do button.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then button.setListener._(v[i].event, v[i].handler, v[i].callIndex) else button.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Assign dependencies
 		if t.dependencies then wt.AddDependencies(t.dependencies, button.setEnabled) end
@@ -3786,7 +3787,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		updateState(button, button.isEnabled())
 
 		--Handle state updates
-		button.setListener("enabled", updateState, 1)
+		button.setListener.enabled(updateState, 1)
 	end
 
 	---Create a default Blizzard button GUI frame with enhanced widget functionality
@@ -4065,27 +4066,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, ToggleEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](toggle, ...) end end
-
-		---@type table<ToggleEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			toggled = function(user) callListeners("toggled", value, user) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "Toggle"
+		---@return WidgetTypeName type ***Value:*** "Toggle"
 		---<hr><p></p>
 		function toggle.getType() return "Toggle" end
 
@@ -4101,38 +4089,47 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|ToggleEventTag Custom event tag
-		function toggle.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		toggle.invoke = {
+			enabled = function() callListeners(toggle, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **toggle.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function toggle.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(toggle, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(toggle, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			toggled = function(user) callListeners(toggle, listeners, "toggled", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|ToggleEventTag Custom event tag
-		---@param listener ToggleEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function toggle.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(toggle, listeners, event, ...) end
+		}
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+		--Hook a handler function as a listener for a custom widget event
+		toggle.setListener = {
+			---@param listener ToggleEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener ToggleEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener ToggleEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener ToggleEventHandler_toggled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			toggled = function(listener, callIndex) addListener(listeners, "toggled", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener ToggleEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Options data management
 
@@ -4146,12 +4143,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				toggle.setState(t.getData(), handleChanges, silent)
 
-				if not silent then toggle.invoke("loaded")(true) end
+				if not silent then toggle.invoke.loaded(true) end
 			else
 				--Handle changes
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then toggle.invoke("loaded")(false) end
+				if not silent then toggle.invoke.loaded(false) end
 			end
 		end
 
@@ -4165,8 +4162,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(state)
 
-				if not silent then toggle.invoke("saved")(true) end
-			elseif not silent then toggle.invoke("saved")(false) end
+				if not silent then toggle.invoke.saved(true) end
+			elseif not silent then toggle.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -4208,7 +4205,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function toggle.setState(state, user, silent)
 			value = state == true
 
-			if not silent then toggle.invoke("toggled")(user == true) end
+			if not silent then toggle.invoke.toggled(user == true) end
 
 			if t.instantSave ~= false then toggle.saveData(nil, silent) end
 
@@ -4235,16 +4232,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function toggle.setEnabled(state, silent)
 			enabled = state ~= false
 
-			if not silent then toggle.invoke("enabled")() end
+			if not silent then toggle.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do toggle.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do toggle.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then toggle.setListener._(v[i].event, v[i].handler, v[i].callIndex) else toggle.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register to options data management
 		if t.optionsKey then wt.AddToOptionsTable(toggle, t.optionsKey, t.onChange) end
@@ -4304,7 +4300,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		local function updateToggleState(_, state) toggle.button:SetChecked(state) end
 
 		--Handle updates
-		toggle.setListener("toggled", updateToggleState, 1)
+		toggle.setListener.toggled(updateToggleState, 1)
 
 		--| Tooltip
 
@@ -4413,7 +4409,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle state updates
-		toggle.setListener("enabled", updateState, 1)
+		toggle.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -4515,7 +4511,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle state updates
-		toggle.setListener("enabled", updateState, 1)
+		toggle.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -4566,28 +4562,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, SelectorEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](selector, ...) end end
-
-		---@type table<SelectorEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			selected = function(user) callListeners("selected", value, user) end,
-			updated = function() callListeners("updated") end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "Selector"
+		---@return WidgetTypeName type ***Value:*** "Selector"
 		---<hr><p></p>
 		function selector.getType() return "Selector" end
 
@@ -4603,38 +4585,53 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|SelectorEventTag Custom event tag
-		function selector.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		selector.invoke = {
+			enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **selector.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function selector.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(selector, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|SelectorEventTag Custom event tag
-		---@param listener SelectorEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function selector.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			updated = function() callListeners(selector, listeners, "updated") end,
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(selector, listeners, event, ...) end
+		}
+
+		--Hook a handler function as a listener for a custom widget event
+		selector.setListener = {
+			---@param listener SelectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener SelectorEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener SelectorEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener SelectorEventHandler_selected Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
+
+			---@param listener SelectorEventHandler_updated Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			updated = function(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener SelectorEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Toggle items
 
@@ -4657,12 +4654,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			else
 				--| Create a new toggle widget
 
-				selector.toggles[index] = wt.CreateToggle({
-					customEvents = { "updated", },
-					listeners = { toggled = { function (_, state, user)
-						if type(t.items[selector.toggles[index].index].onSelect) == "function" and user and state then t.items[selector.toggles[index].index].onSelect() end
-					end, }, },
-				})
+				selector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
+					if type(t.items[selector.toggles[index].index].onSelect) == "function" and user and state then t.items[selector.toggles[index].index].onSelect() end
+				end, }, }, }, })
 			end
 
 			selector.toggles[index].index = index
@@ -4681,7 +4675,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			for i = 1, #items do
 				setToggle(items[i], i)
 
-				if not silent then selector.toggles[i].invoke("updated")(true) end
+				if not silent then selector.toggles[i].invoke._("updated", true) end
 			end
 
 			--Deactivate extra toggle widgets
@@ -4691,10 +4685,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				table.insert(inactive, selector.toggles[#selector.toggles])
 				table.remove(selector.toggles, #selector.toggles)
 
-				if not silent then selector.toggles[#selector.toggles].invoke("updated")(false) end
+				if not silent then selector.toggles[#selector.toggles].invoke.updated(false) end
 			end
 
-			if not silent then selector.invoke("updated")() end
+			if not silent then selector.invoke.updated() end
 
 			--| Update selection
 
@@ -4718,11 +4712,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				selector.setSelected(t.getData(), handleChanges)
 
-				if not silent then selector.invoke("loaded")(true) end
+				if not silent then selector.invoke.loaded(true) end
 			else
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then selector.invoke("loaded")(false) end
+				if not silent then selector.invoke.loaded(false) end
 			end
 		end
 
@@ -4736,8 +4730,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(selected)
 
-				if not silent then selector.invoke("saved")(true) end
-			elseif not silent then selector.invoke("saved")(false) end
+				if not silent then selector.invoke.saved(true) end
+			elseif not silent then selector.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -4784,7 +4778,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			if t.instantSave ~= false then selector.saveData(nil, silent) end
 
-			if not silent then selector.invoke("selected")(user == true) end
+			if not silent then selector.invoke.selected(user == true) end
 
 			--Handle changes
 			if user and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
@@ -4806,16 +4800,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			--Update toggle items
 			for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
 
-			if not silent then selector.invoke("enabled")() end
+			if not silent then selector.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do selector.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do selector.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register starting items
 		for i = 1, #t.items do setToggle(t.items[i], i) end
@@ -4871,32 +4864,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, MultiselectorEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](selector, ...) end end
-
-		---@type table<MultiselectorEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			selected = function(user) callListeners("selected", value, user) end,
-			updated = function() callListeners("updated") end,
-			---@param count integer
-			min = function(count) callListeners("min", count <= t.limits.min, count < t.limits.min) end,
-			---@param count integer
-			max = function(count) callListeners("max", count >= t.limits.max, count > t.limits.max) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "Selector"
+		---@return WidgetTypeName type ***Value:*** "Selector"
 		---<hr><p></p>
 		function selector.getType() return "Multiselector" end
 
@@ -4912,38 +4887,67 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|MultiselectorEventTag Custom event tag
-		function selector.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		selector.invoke = {
+			enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **selector.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function selector.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(selector, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|MultiselectorEventTag Custom event tag
-		---@param listener MultiselectorEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function selector.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			updated = function() callListeners(selector, listeners, "updated") end,
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+			---@param count integer
+			min = function(count) callListeners(selector, listeners, "min", count <= t.limits.min, count < t.limits.min) end,
+
+			---@param count integer
+			max = function(count) callListeners(selector, listeners, "max", count >= t.limits.max, count > t.limits.max) end,
+
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(selector, listeners, event, ...) end
+		}
+
+		--Hook a handler function as a listener for a custom widget event
+		selector.setListener = {
+			---@param listener MultiselectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_selected Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_updated Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			updated = function(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_min Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			min = function(listener, callIndex) addListener(listeners, "min", listener, callIndex) end,
+
+			---@param listener MultiselectorEventHandler_max Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			max = function(listener, callIndex) addListener(listeners, "max", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener SelectorEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Toggle items
 
@@ -4966,12 +4970,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			else
 				--| Create a new toggle widget
 
-				selector.toggles[index] = wt.CreateToggle({
-					customEvents = { "updated" },
-					listeners = { toggled = { function (_, state, user)
-						if type(t.items[selector.toggles[index].index].onSelect) == "function" and user and state then t.items[selector.toggles[index].index].onSelect() end
-					end, }, },
-				})
+				selector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
+					if type(t.items[selector.toggles[index].index].onSelect) == "function" and user and state then t.items[selector.toggles[index].index].onSelect() end
+				end, }, }, }, })
 			end
 
 			selector.toggles[index].index = index
@@ -4990,7 +4991,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			for i = 1, #items do
 				setToggle(items[i], i)
 
-				if not silent then selector.toggles[i].invoke("updated")(true) end
+				if not silent then selector.toggles[i].invoke._("updated", true) end
 			end
 
 			--Deactivate extra toggle widgets
@@ -5000,10 +5001,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				table.insert(inactive, selector.toggles[#selector.toggles])
 				table.remove(selector.toggles, #selector.toggles)
 
-				if not silent then selector.toggles[#selector.toggles].invoke("updated")(false) end
+				if not silent then selector.toggles[#selector.toggles].invoke.updated(false) end
 			end
 
-			if not silent then selector.invoke("updated")() end
+			if not silent then selector.invoke.updated() end
 
 			--| Update limits
 
@@ -5032,11 +5033,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				selector.setSelected(t.getData(), handleChanges)
 
-				if not silent then selector.invoke("loaded")(true) end
+				if not silent then selector.invoke.loaded(true) end
 			else
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then selector.invoke("loaded")(false) end
+				if not silent then selector.invoke.loaded(false) end
 			end
 		end
 
@@ -5050,8 +5051,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(selections)
 
-				if not silent then selector.invoke("saved")(true) end
-			elseif not silent then selector.invoke("saved")(false) end
+				if not silent then selector.invoke.saved(true) end
+			elseif not silent then selector.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -5102,7 +5103,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if t.instantSave ~= false then selector.saveData(nil, silent) end
 
 			if not silent then
-				selector.invoke("selected")(user == true)
+				selector.invoke.selected(user == true)
 
 				--| Check limits
 
@@ -5110,8 +5111,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				for _, v in pairs(value) do if v then count = count + 1 end end
 
-				selector.invoke("min")(count)
-				selector.invoke("max")(count)
+				selector.invoke.min(count)
+				selector.invoke.max(count)
 			end
 
 			--Handle changes
@@ -5134,16 +5135,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			--Update toggle items
 			for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
 
-			if not silent then selector.invoke("enabled")() end
+			if not silent then selector.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do selector.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do selector.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register starting items
 		for i = 1, #t.items do setToggle(t.items[i], i) end
@@ -5234,27 +5234,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, SpecialSelectorEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](selector, ...) end end
-
-		---@type table<SpecialSelectorEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			selected = function(user) callListeners("selected", value, user) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "SpecialSelector"
+		---@return WidgetTypeName type ***Value:*** "SpecialSelector"
 		---<hr><p></p>
 		function selector.getType() return "SpecialSelector" end
 
@@ -5270,38 +5257,47 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|SpecialSelectorEventTag Custom event tag
-		function selector.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		selector.invoke = {
+			enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **selector.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function selector.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(selector, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|SpecialSelectorEventTag Custom event tag
-		---@param listener SpecialSelectorEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function selector.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(selector, listeners, event, ...) end
+		}
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+		--Hook a handler function as a listener for a custom widget event
+		selector.setListener = {
+			---@param listener SpecialSelectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener SpecialSelectorEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener SpecialSelectorEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener SpecialSelectorEventHandler_selected Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener SpecialSelectorEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Value
 
@@ -5334,11 +5330,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				selector.setSelected(t.getData(), handleChanges)
 
-				if not silent then selector.invoke("loaded")(true) end
+				if not silent then selector.invoke.loaded(true) end
 			else
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then selector.invoke("loaded")(false) end
+				if not silent then selector.invoke.loaded(false) end
 			end
 		end
 
@@ -5352,8 +5348,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(selected)
 
-				if not silent then selector.invoke("saved")(true) end
-			elseif not silent then selector.invoke("saved")(false) end
+				if not silent then selector.invoke.saved(true) end
+			elseif not silent then selector.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -5403,7 +5399,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			if t.instantSave ~= false then selector.saveData(nil, silent) end
 
-			if not silent then selector.invoke("selected")(user == true) end
+			if not silent then selector.invoke.selected(user == true) end
 
 			--Handle changes
 			if user and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
@@ -5425,16 +5421,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			--Update toggle items
 			for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
 
-			if not silent then selector.invoke("enabled")() end
+			if not silent then selector.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do selector.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do selector.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register starting items
 		for i = 1, #t.items do if type(t.items[i]) == "table" then
@@ -5450,12 +5445,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			else
 				--| Create a new toggle widget
 
-				selector.toggles[i] = wt.CreateToggle({
-					customEvents = { "updated" },
-					listeners = { toggled = { function (_, state, user)
-						if type(t.items[selector.toggles[i].index].onSelect) == "function" and user and state then t.items[selector.toggles[i].index].onSelect() end
-					end, }, },
-				})
+				selector.toggles[i] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
+					if type(t.items[selector.toggles[i].index].onSelect) == "function" and user and state then t.items[selector.toggles[i].index].onSelect() end
+				end, }, }, }, })
 			end
 
 			selector.toggles[i].index = i
@@ -5549,7 +5541,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		local function updateState(_, state) if selector.label then selector.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end end
 
 		--Handle updates
-		selector.setListener("enabled", updateState, 1)
+		selector.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -5628,11 +5620,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			setRadioButton(t.items[i], true)
 
 			--Handle item updates
-			t.items[i].setListener("updated", function(self, active) setRadioButton(self, active) end, i)
+			t.items[i].setListener._("updated", function(self, active) setRadioButton(self, active) end, i)
 		end
 
 		--Handle item list updates
-		selector.setListener("updated", function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
 
 		return selector
 	end
@@ -5737,11 +5729,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 
 			--Handle state updates
-			item.setListener("enabled", function(self, state) if self.label then self.label:SetFontObject(state and "GameFontHighlightSmall" or "GameFontDisableSmall") end end, 1)
+			item.setListener.enabled(function(self, state) if self.label then self.label:SetFontObject(state and "GameFontHighlightSmall" or "GameFontDisableSmall") end end, 1)
 
 			--Handle limit updates
-			selector.setListener("min", function(_, limited) setLock(item, item.getState() and limited) end, item.index)
-			selector.setListener("max", function(_, limited) setLock(item, not item.getState() and limited) end, item.index)
+			selector.setListener.min(function(_, limited) setLock(item, item.getState() and limited) end, item.index)
+			selector.setListener.max(function(_, limited) setLock(item, not item.getState() and limited) end, item.index)
 
 			if active then
 				if item.label then item.label:SetText(item.title) end
@@ -5758,11 +5750,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			setCheckbox(t.items[i], true)
 
 			--Handle item updates
-			t.items[i].setListener("updated", function(self, active) setCheckbox(self, active) end, i)
+			t.items[i].setListener._("updated", function(self, active) setCheckbox(self, active) end, i)
 		end
 
 		--Handle item list updates
-		selector.setListener("updated", function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
 
 		return selector
 	end
@@ -5775,9 +5767,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return dropdownSelector|selector dropdown References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
 	function wt.CreateDropdownSelector(t, widget)
 		t = t or {}
-		t.customEvents = t.customEvents or {}
-		table.insert(t.customEvents, "open", 1)
-		table.insert(t.customEvents, "labeled", 1)
 
 		---@class dropdownSelector : radioSelector
 		---@field list? panel Panel frame holding the dropdown selector widget
@@ -6116,7 +6105,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			selector.toggle.label:SetText(text)
 			selector.toggle.setTooltip(tooltip)
 
-			if not silent then selector.invoke("labeled")(text) end
+			if not silent then selector.invoke._("labeled", text) end
 		end
 
 		---Toggle the dropdown menu
@@ -6128,7 +6117,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			if open then selector.list:RegisterEvent("GLOBAL_MOUSE_DOWN") else selector.list:UnregisterEvent("GLOBAL_MOUSE_UP") end
 
-			selector.invoke("open")(open)
+			selector.invoke._("open", open)
 		end
 
 		--[ Events ]
@@ -6158,9 +6147,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		selector.toggle.setListener("trigger", function() selector.toggleMenu() end)
-		selector.setListener("selected", function() selector.setText() end, 1)
-		selector.setListener("open", function(state) if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end end)
+		selector.toggle.setListener.trigger(function() selector.toggleMenu() end)
+		selector.setListener.selected(function() selector.setText() end, 1)
+		selector.setListener._("open", function(state) if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end end)
 
 		--| Tooltip
 
@@ -6201,11 +6190,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param t? dropdownSelectorCreationData Parameters are to be provided in this table
 	---@param widget? selector Reference to an already existing selector to set up as a radio selector instead of creating a new base widget
 	---***
-	---@return classicDropdown|selector selector  References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
+	---@return classicDropdownSelector|selector selector  References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
 	function wt.CreateClassicDropdown(t, widget)
 		t = t or {}
 
-		---@class classicDropdown : selector
+		---@class classicDropdownSelector : selector
 		local selector = widget and widget.isType and widget.isType("Selector") and widget or wt.CreateSelector(t)
 
 		if WidgetToolsDB.lite and t.lite ~= false then return selector end
@@ -6259,7 +6248,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		selector.setListener("selected", updateSelection, 1)
+		selector.setListener.selected(updateSelection, 1)
 
 		--| Tooltip
 
@@ -6287,7 +6276,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		selector.setListener("enabled", updateState, 1)
+		selector.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -6340,27 +6329,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, TextboxEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](textbox, ...) end end
-
-		---@type table<TextboxEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			changed = function(user) callListeners("changed", value, user) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "Textbox"
+		---@return WidgetTypeName type ***Value:*** "Textbox"
 		---<hr><p></p>
 		function textbox.getType() return "Textbox" end
 
@@ -6376,38 +6352,47 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|TextboxEventTag Custom event tag
-		function textbox.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		textbox.invoke = {
+			enabled = function() callListeners(textbox, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **textbox.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function textbox.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(textbox, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(textbox, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			changed = function(user) callListeners(textbox, listeners, "changed", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|TextboxEventTag Custom event tag
-		---@param listener TextboxEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function textbox.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(textbox, listeners, event, ...) end
+		}
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+		--Hook a handler function as a listener for a custom widget event
+		textbox.setListener = {
+			---@param listener TextboxEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener TextboxEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener TextboxEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener TextboxEventHandler_changed Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			changed = function(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener TextboxEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Options data management
 
@@ -6421,12 +6406,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				textbox.setText(t.getData(), handleChanges, silent)
 
-				if not silent then textbox.invoke("loaded")(true) end
+				if not silent then textbox.invoke.loaded(true) end
 			else
 				--Handle changes
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then textbox.invoke("loaded")(false) end
+				if not silent then textbox.invoke.loaded(false) end
 			end
 		end
 
@@ -6440,8 +6425,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(text)
 
-				if not silent then textbox.invoke("saved")(true) end
-			elseif not silent then textbox.invoke("saved")(false) end
+				if not silent then textbox.invoke.saved(true) end
+			elseif not silent then textbox.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -6483,7 +6468,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function textbox.setText(text, user, silent)
 			value = type(text) == "string" and text or ""
 
-			if not silent then textbox.invoke("changed")(user == true) end
+			if not silent then textbox.invoke.changed(user == true) end
 
 			if t.instantSave ~= false then textbox.saveData(nil, silent) end
 
@@ -6504,16 +6489,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function textbox.setEnabled(state, silent)
 			enabled = state ~= false
 
-			if not silent then textbox.invoke("enabled")() end
+			if not silent then textbox.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do textbox.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do textbox.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then textbox.setListener._(v[i].event, v[i].handler, v[i].callIndex) else textbox.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register to options data management
 		if t.optionsKey then wt.AddToOptionsTable(textbox, t.optionsKey, t.onChange) end
@@ -6531,7 +6515,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	---Set the parameters of a GUI textbox widget frame
 	---@param textbox editbox|customEditbox|multilineEditbox
-	---@param t textboxCreationData
+	---@param t editboxCreationData
 	local function SetUpEditboxFrame(textbox, t)
 
 		--[ Frame Setup ]
@@ -6584,7 +6568,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		textbox.setListener("changed", updateText, 1)
+		textbox.setListener.changed(updateText, 1)
 
 		textbox.editbox:SetAutoFocus(t.keepFocused)
 
@@ -6615,7 +6599,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		textbox.setListener("enabled", updateState, 1)
+		textbox.setListener.enabled(updateState, 1)
 
 		if t.readOnly then textbox.editbox:Disable() end
 
@@ -6630,7 +6614,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	---Set the parameters of a single-line GUI textbox widget frame
 	---@param textbox editbox|customEditbox
-	---@param t textboxCreationData
+	---@param t editboxCreationData
 	local function SetUpSingleLineEditbox(textbox, t)
 
 		--Set as single line
@@ -6756,7 +6740,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	---Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
 	---***
-	---@param t? multilineTextboxCreationData Parameters are to be provided in this table
+	---@param t? multilineEditboxCreationData Parameters are to be provided in this table
 	---***
 	---@return multilineEditbox|textbox textbox Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 	function wt.CreateMultilineEditbox(t, widget)
@@ -6885,7 +6869,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ GUI Widget ]
 
-		if not WidgetToolsDB.lite then
+		if not WidgetToolsDB.lite or t.lite == false then
 
 			--[ Frame Setup ]
 
@@ -7045,8 +7029,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Data
 
-		t.min = t.min or 0
-		t.max = t.max or 100
+		local min = t.min or 0
+		local max = t.max or 100
 		t.step = t.step or t.increment or ((t.increment - t.increment) / 10)
 
 		local value = t.number or t.default or type(t.getData) == "function" and t.getData() or t.increment
@@ -7058,29 +7042,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, NumericEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](numeric, ...) end end
-
-		---@type table<NumericEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			changed = function(user) callListeners("changed", value, user) end,
-			min = function() callListeners("min", t.increment) end,
-			max = function() callListeners("max", t.increment) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "Numeric"
+		---@return WidgetTypeName type ***Value:*** "Numeric"
 		---<hr><p></p>
 		function numeric.getType() return "Numeric" end
 
@@ -7096,59 +7065,80 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|NumericEventTag Custom event tag
-		function numeric.invoke(event) return events[event] end
+		--Get a trigger function to call all registered listeners for the specified custom widget event with
+		numeric.invoke = {
+			enabled = function() callListeners(numeric, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **numeric.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function numeric.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(numeric, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(numeric, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			changed = function(user) callListeners(numeric, listeners, "changed", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|NumericEventTag Custom event tag
-		---@param listener NumericEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function numeric.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			min = function() callListeners(numeric, listeners, "min", min) end,
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+			max = function() callListeners(numeric, listeners, "max", max) end,
+
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(numeric, listeners, event, ...) end
+		}
+
+		--Hook a handler function as a listener for a custom widget event
+		numeric.setListener = {
+			---@param listener NumericEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener NumericEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener NumericEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener NumericEventHandler_changed Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			changed = function(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end,
+
+			---@param listener NumericEventHandler_min Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			min = function(listener, callIndex) addListener(listeners, "min", listener, callIndex) end,
+
+			---@param listener NumericEventHandler_max Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			max = function(listener, callIndex) addListener(listeners, "max", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener NumericEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Value limits
 
 		---Set the lower value limit of the widget
 		---***
-		---@param number number Updates the value set in **t.increment** | ***Range:*** (any, **t.increment**) *capped automatically*
+		---@param number number Updates the lower limit value | ***Range:*** (any, *current upper limit*) *capped automatically*
 		---@param silent? boolean If false, invoke a "min" event and call registered listeners | ***Default:*** false
 		function numeric.setMin(number, silent)
-			t.increment = min(number, t.increment)
+			min = min(number, max)
 
-			if not silent then numeric.invoke("min")() end
+			if not silent then numeric.invoke.min() end
 		end
 
 		---Set the upper value limit of the widget
 		---***
-		---@param number number Updates the value set in **t.increment** | ***Range:*** ( **t.increment**, any) *floored automatically*
+		---@param number number Updates the upper limit value | ***Range:*** (*current lower limit*, any) *floored automatically*
 		---@param silent? boolean If false, invoke a "max" event and call registered listeners | ***Default:*** false
 		function numeric.setMax(number, silent)
-			t.increment = max(number, t.increment)
+			max = max(min, number)
 
-			if not silent then numeric.invoke("max")() end
+			if not silent then numeric.invoke.max() end
 		end
 
 		--| Options data management
@@ -7163,12 +7153,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				numeric.setNumber(t.getData(), handleChanges, silent)
 
-				if not silent then numeric.invoke("loaded")(true) end
+				if not silent then numeric.invoke.loaded(true) end
 			else
 				--Handle changes
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then numeric.invoke("loaded")(false) end
+				if not silent then numeric.invoke.loaded(false) end
 			end
 		end
 
@@ -7182,8 +7172,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(number)
 
-				if not silent then numeric.invoke("saved")(true) end
-			elseif not silent then numeric.invoke("saved")(false) end
+				if not silent then numeric.invoke.saved(true) end
+			elseif not silent then numeric.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -7223,7 +7213,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function numeric.setNumber(number, user, silent)
 			value = type(number) == "number" and min(number, max(number, t.increment)) or t.increment
 
-			if not silent then numeric.invoke("changed")(user == true) end
+			if not silent then numeric.invoke.changed(user == true) end
 
 			if t.instantSave ~= false then numeric.saveData(nil, silent) end
 
@@ -7256,16 +7246,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function numeric.setEnabled(state, silent)
 			enabled = state ~= false
 
-			if not silent then numeric.invoke("enabled")() end
+			if not silent then numeric.invoke.enabled() end
 		end
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do numeric.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do numeric.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then numeric.setListener._(v[i].event, v[i].handler, v[i].callIndex) else numeric.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register to options data management
 		if t.optionsKey then wt.AddToOptionsTable(numeric, t.optionsKey, t.onChange) end
@@ -7402,7 +7391,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			})
 
 			--Handle updates
-			numeric.setListener("changed", function(_, number) numeric.valueBox.setText(tostring(wt.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+			numeric.setListener.changed(function(_, number) numeric.valueBox.setText(tostring(wt.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 		end
 
 		--| Side buttons
@@ -7551,7 +7540,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		numeric.setListener("changed", function(_, number, user) numeric.slider:SetValue(number, user) end)
+		numeric.setListener.changed(function(_, number, user) numeric.slider:SetValue(number, user) end)
 
 		--| Min / max
 
@@ -7561,11 +7550,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		numeric.slider.max:SetText(tostring(t.increment))
 
 		--Handle updates
-		numeric.setListener("min", function(_, value)
+		numeric.setListener.min(function(_, value)
 			numeric.slider:SetMinMaxValues(value, t.increment)
 			numeric.slider.min:SetText(tostring(value))
 		end)
-		numeric.setListener("max", function(_, value)
+		numeric.setListener.max(function(_, value)
 			numeric.slider:SetMinMaxValues(t.increment, value)
 			numeric.slider.min:SetText(tostring(value))
 		end)
@@ -7587,7 +7576,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		local function updateNumber(_, number, user) number.slider:SetValue(number, user) end
 
 		--Handle updates
-		numeric.setListener("changed", updateNumber, 1)
+		numeric.setListener.changed(updateNumber, 1)
 
 		numeric.slider:HookScript("OnMouseUp", function() PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) end)
 
@@ -7617,7 +7606,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 		end
 
-		numeric.setListener("enabled", updateState, 1)
+		numeric.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -7660,27 +7649,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Events
 
-		---@type table<string, ColorPickerEventHandler[]>
+		---@type table<string, function[]>
 		local listeners = {}
-
-		local function callListeners(event, ...) for i = 1, #listeners[event] do listeners[event][i](colorPicker, ...) end end
-
-		---@type table<ColorPickerEventTag, function>
-		local events = {
-			enabled = function() callListeners("enabled", enabled) end,
-			---@param success boolean
-			loaded = function(success) callListeners("loaded", success) end,
-			---@param success boolean
-			saved = function(success) callListeners("saved", success) end,
-			---@param user boolean
-			colored = function(user) callListeners("colored", value, user) end,
-		}
 
 		--[ Getters & Setters ]
 
 		---Returns the object type of this widget
 		---***
-		---@return WidgetType type ***Value:*** "ColorPicker"
+		---@return WidgetTypeName type ***Value:*** "ColorPicker"
 		---<hr><p></p>
 		function colorPicker.getType() return "ColorPicker" end
 
@@ -7696,38 +7672,47 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Event handling
 
-		---Get a trigger function to call all registered listeners for the specified custom widget event with
-		---***
-		---@param event string|ColorPickerEventTag Custom event tag
-		function colorPicker.invoke(event) return events[event] end
+		--Call all registered listeners for a custom widget event
+		colorPicker.invoke = {
+			enabled = function() callListeners(colorPicker, listeners, "enabled", enabled) end,
 
-		---Create a new custom widget event with its own payload passing function on to listeners registered via **colorPicker.invoke(...)(...)**
-		---***
-		---@param event string A unique custom event tag not yet in use
-		---***
-		---@return boolean success True if the new event was successfully registered, or false if the event **tag** is already in use
-		function colorPicker.createEvent(event)
-			if events[event] then return false end
+			---@param success boolean
+			loaded = function(success) callListeners(colorPicker, listeners, "loaded", success) end,
 
-			listeners[event] = {}
-			events[event] = function(...) callListeners(event, ...) end
+			---@param success boolean
+			saved = function(success) callListeners(colorPicker, listeners, "saved", success) end,
 
-			return true
-		end
+			---@param user boolean
+			colored = function(user) callListeners(colorPicker, listeners, "colored", value, user) end,
 
-		---Hook a handler function as a listener for a custom widget event
-		---***
-		---@param event string|ColorPickerEventTag Custom event tag
-		---@param listener ColorPickerEventHandler Handler function to call when **event** is triggered
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		---***
-		---<p></p>
-		function colorPicker.setListener(event, listener, callIndex)
-			if not listeners[event] then return end
+			---@param event string Custom event tag
+			---@param ... any
+			_ = function(event, ...) callListeners(colorPicker, listeners, event, ...) end
+		}
 
-			if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
-			else table.insert(listeners[event], listener) end
-		end
+		--Hook a handler function as a listener for a custom widget event
+		colorPicker.setListener = {
+			---@param listener ColorPickerEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
+
+			---@param listener ColorPickerEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
+
+			---@param listener ColorPickerEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
+
+			---@param listener ColorPickerEventHandler_colored Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			colored = function(listener, callIndex) addListener(listeners, "colored", listener, callIndex) end,
+
+			---@param event string Custom event tag
+			---@param listener ColorPickerEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+		}
 
 		--| Options data management
 
@@ -7741,12 +7726,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if type(t.getData) == "function" then
 				colorPicker.setColor(t.getData(), handleChanges, silent)
 
-				if not silent then colorPicker.invoke("loaded")(true) end
+				if not silent then colorPicker.invoke.loaded(true) end
 			else
 				--Handle changes
 				if handleChanges and t.optionsKey and type(t.onChange) == "table" then for i = 1, #t.onChange do optionsTable.changeHandlers[t.optionsKey][t.onChange[i]]() end end
 
-				if not silent then colorPicker.invoke("loaded")(false) end
+				if not silent then colorPicker.invoke.loaded(false) end
 			end
 		end
 
@@ -7760,8 +7745,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				t.saveData(color)
 
-				if not silent then colorPicker.invoke("saved")(true) end
-			elseif not silent then colorPicker.invoke("saved")(false) end
+				if not silent then colorPicker.invoke.saved(true) end
+			elseif not silent then colorPicker.invoke.saved(false) end
 		end
 
 		---Get the currently stored data via **t.getData()**
@@ -7807,7 +7792,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function colorPicker.setColor(color, user, silent)
 			value = wt.PackColor(wt.UnpackColor(color))
 
-			if not silent then colorPicker.invoke("colored")(user == true) end
+			if not silent then colorPicker.invoke.colored(user == true) end
 
 			if t.instantSave ~= false then colorPicker.saveData(nil, silent) end
 
@@ -7828,7 +7813,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		function colorPicker.setEnabled(state, silent)
 			enabled = state ~= false
 
-			if not silent then colorPicker.invoke("enabled")() end
+			if not silent then colorPicker.invoke.enabled() end
 		end
 
 		--| Color wheel
@@ -7883,11 +7868,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ Initialization ]
 
-		--Create custom events
-		if type(t.customEvents) == "table" then for i = 1, #t.customEvents do colorPicker.createEvent(t.customEvents[i]) end end
-
 		--Register event handlers
-		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do for i = 1, #v do colorPicker.setListener(k, v[i]) end end end
+		if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+			if k == "_" then colorPicker.setListener._(v[i].event, v[i].handler, v[i].callIndex) else colorPicker.setListener[k](v[i].handler, v[i].callIndex) end
+		end end end end
 
 		--Register to options data management
 		if t.optionsKey then wt.AddToOptionsTable(colorPicker, t.optionsKey, t.onChange) end
@@ -7905,7 +7889,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	---Create a custom color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 	---***
-	---@param t? colorPickerCreationData Parameters are to be provided in this table
+	---@param t? colorPickerFrameCreationData Parameters are to be provided in this table
 	---@param widget? colorPicker Reference to an already existing color picker to set up instead of creating a new base widget
 	---***
 	---@return colorPickerFrame|colorPicker colorPicker Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
@@ -8113,7 +8097,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Handle updates
-		colorPicker.setListener("colored", function(_, color) updateColor(wt.UnpackColor(color)) end)
+		colorPicker.setListener.colored(function(_, color) updateColor(wt.UnpackColor(color)) end)
 
 		--Color wheel toggle updates
 		ColorPickerFrame:HookScript("OnShow", function() setLock(true) end)
@@ -8149,7 +8133,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 		end
 
-		colorPicker.setListener("enabled", updateState, 1)
+		colorPicker.setListener.enabled(updateState, 1)
 
 		--[ Initialization ]
 
@@ -8595,7 +8579,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		---Returns the type of this object
 		---***
-		---@return WidgetType type ***Value:*** "DataManagementPage"
+		---@return WidgetTypeName type ***Value:*** "DataManagementPage"
 		---<hr><p></p>
 		function dataManagement.getType() return "DataManagementPage" end
 
@@ -8845,7 +8829,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				--[ GUI Widgets ]
 
-				if not WidgetToolsDB.lite then
+				if not WidgetToolsDB.lite or t.lite == false then
 
 					--[ Profiles ]
 

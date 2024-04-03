@@ -21,7 +21,6 @@
 ---|Texture
 ---|FontString
 
-
 ---@alias AnyScriptType
 ---|"OnLoad"
 ---|"OnShow"
@@ -104,6 +103,28 @@
 ---|"addon"
 ---|"mawpower"
 
+---@class attributeEventData
+---@field name string
+---@field handler fun(...: any)
+
+---@alias WidgetTypeName
+---|"SettingsPage"
+---|"DataManagementPage"
+---|"ActionButton"
+---|"Toggle"
+---|"Selector"
+---|"Multiselector"
+---|"Textbox"
+---|"Numeric"
+---|"ColorPicker"
+
+---@alias AnyWidgetType
+---|actionButton
+---|toggle
+---|selector
+---|textbox
+---|numeric
+---|colorPicker
 
 --[[ TABLE MANAGEMENT ]]
 
@@ -234,7 +255,7 @@
 --| Strata & Level
 
 ---@class visibleObject_base
----@field visible? boolean Whether the frame is visible on load or not | ***Default:*** true
+---@field visible? boolean Whether to make the frame visible during initialization or not | ***Default:*** true
 ---@field frameStrata? FrameStrata Pin the frame to the specified strata
 ---@field frameLevel? integer The ordering level of the frame within its strata to set
 ---@field keepOnTop? boolean Whether to raise the frame level on mouse interaction | ***Default:*** false
@@ -316,6 +337,10 @@
 ---@field trigger? AnyFrameObject Reference to the frame to add the listener script to | ***Default:*** **frame**
 ---@field rule? fun(self: Frame, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil Evaluate the event and specify the backdrop updates to set, or, if nil, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `self` AnyFrameObject ― Reference to **updates[*key*].frame**</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** nil *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://wowpedia.fandom.com/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://wowpedia.fandom.com/wiki/API_Frame_GetBackdropColor) and **frame**:[GetBackdropBorderColor()](https://wowpedia.fandom.com/wiki/API_Frame_GetBackdropBorderColor) | ***Default:*** false</p>
 
+---@class customizableObject
+---@field backdrop? backdropData Parameters to set the custom backdrop with
+---@field backdropUpdates? table<AnyScriptType, backdropUpdateRule> Table of key, value pairs containing the list of events to set listeners for assigned to **t.backdropUpdates[*key*].frame**, linking backdrop changes to it, modifying the specified parameters on trigger
+--- - ***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **t.backdropUpdates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!
 
 --[[ FONT & TEXT ]]
 
@@ -545,7 +570,7 @@
 ---@field evaluate? fun(value?: any): evaluation: boolean Call this function to evaluate the current value of the specified frame, enabling the dependant widget when true, or disabling it when false is returned | ***Default:*** *no evaluation, only for checkboxes*<ul><li>***Note:*** **evaluate** must be defined if the [FrameType](https://wowpedia.fandom.com/wiki/API_CreateFrame#Frame_types) if **frame** is not "CheckButton".</li><li>***Overloads:***</li><ul><li>function(`value`: boolean) -> `evaluation`: boolean — If **frame** is recognized as a checkbox</li><li>function(`value`: string) -> `evaluation`: boolean — If **frame** is recognized as an editbox</li><li>function(`value`: number) -> `evaluation`: boolean — If **frame** is recognized as a slider</li><li>function(`value`: integer) -> `evaluation`: boolean — If **frame** is recognized as a dropdown or selector</li><li>function(`value`: nil) -> `evaluation`: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*</li></ul></ul>
 
 ---@class togglableObject
----@field disabled? boolean If true, set the state of this widget to be disabled on load | ***Default:*** false<ul><li>***Note:*** Dependency rule evaluations may re-enable the widget.</li></ul>
+---@field disabled? boolean If true, set the state of this widget to be disabled during initialization | ***Default:*** false<ul><li>***Note:*** Dependency rule evaluations may re-enable the widget.</li></ul>
 ---@field dependencies? dependencyRule[] Automatically enable or disable the widget based on the set of rules described in subtables
 
 
@@ -694,7 +719,7 @@
 --| Context Menu
 
 ---@class togglableObject_contextMenu
----@field disabled? boolean If true, deactivate the context menu on load | ***Default:*** false<ul><<li>***Note:*** Dependency rule evaluations may re-enable the widget.</li></ul>
+---@field disabled? boolean If true, deactivate the context menu during initialization | ***Default:*** false<ul><<li>***Note:*** Dependency rule evaluations may re-enable the widget.</li></ul>
 ---@field dependencies? dependencyRule[] Automatically activate or deactivate the context menu based on the set of rules described in subtables
 
 ---@class contextMenuCreationData : namedChildObject, togglableObject_contextMenu
@@ -761,7 +786,7 @@
 ---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 ---@field onDefaults? fun(user: boolean) Called after options data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 
----@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsPageEvents, initializableContainer
+---@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsPageEvents, initializableContainer, liteObject
 ---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** true if **t.name** ~= nil
 ---@field appendOptions? boolean When setting the name of the canvas frame, append "Options" at the end as well | ***Default:*** true
 ---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
@@ -776,7 +801,7 @@
 ---@field changelog? { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 ---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** true
 
----@class dataManagementPageCreationData : settingsPageCreationData_base, settingsPageEvents
+---@class dataManagementPageCreationData : settingsPageCreationData_base, settingsPageEvents, liteObject
 ---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** "Profiles"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field title? string Text to be shown as the title of the settings page | ***Default:*** "Data Management"
 ---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** *describing profiles & backup*
@@ -803,31 +828,25 @@
 
 --[[ WIDGETS ]]
 
----@alias WidgetType
----|"SettingsPage"
----|"DataManagementPage"
----|"ActionButton"
----|"Toggle"
----|"Selector"
----|"Multiselector"
----|"Textbox"
----|"Numeric"
----|"ColorPicker"
+---@class eventTag
+---@field event string Custom event tag
 
----@class attributeEventData
----@field name string
----@field handler fun(...: any)
+---@class eventHandlerIndex
+---@field callIndex? integer Set when to call **handler** in the execution order | ***Default:*** *placed at the end of the current list*
 
 --[ Button ]
 
 ---@alias ButtonType
 ---|actionButton
 ---|simpleButton
+---|customButton
 
 ---@alias ButtonEventTag
----|string
 ---|"enabled"
 ---|"trigger"
+---|string
+
+--| Event handlers
 
 ---@alias ButtonEventHandler_enabled
 ---|fun(self: ButtonType, state: boolean) Called when an "enabled" event is invoked after **button.setEnabled(...)** was called<hr><p>@*param* `self` ButtonType ― Reference to the widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
@@ -835,21 +854,24 @@
 ---@alias ButtonEventHandler_trigger
 ---|fun(self: ButtonType) Called when a "trigger" event is invoked after **button.trigger(...)** was called<hr><p>@*param* `self` ButtonType ― Reference to the widget</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
 
----@alias ButtonEventHandler
----|ButtonEventHandler_enabled
----|ButtonEventHandler_trigger
----|fun(self: ButtonType, ...: any)
+---@alias ButtonEventHandler_any
+---|fun(self: ButtonType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ButtonType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
+--| Parameters
+
+---@class buttonEventListener_enabled : eventHandlerIndex
+---@field handler ButtonEventHandler_enabled Handler function to register for call
+
+---@class buttonEventListener_trigger : eventHandlerIndex
+---@field handler ButtonEventHandler_trigger Handler function to register for call
+
+---@class buttonEventListener_any : eventTag, eventHandlerIndex
+---@field handler ButtonEventHandler_any Handler function to register for call
 
 ---@class buttonEventListeners
----@field enabled? ButtonEventHandler_enabled[] List of functions to call in order when an "enabled" event is invoked after **button.setEnabled(...)** was called
----@field trigger? ButtonEventHandler_trigger[] List of functions to call in order when a "trigger" event is invoked after **button.trigger(...)** was called
----@field [string]? fun(self: ButtonType, ...: any)[] List of functions to call in order when a custom event created via **button.createEvent(...)** is invoked
-
---| Constructors
-
----@class actionButtonCreationData : togglableObject
----@field action? fun(self: actionButton, user?: boolean) Function to call when the button is triggered (clicked by the user or triggered programmatically)<ul><li>***Note:*** This function will be called when an "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" script event happens, there's no need to register it again under **t.events.OnClick**.</li></ul><hr><p>@*param* `self` actionButton — Reference to the button widget</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** false</p>
----@field listeners? buttonEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+---@field enabled? buttonEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **button.setEnabled(...)** was called
+---@field trigger? buttonEventListener_trigger[] List of functions to call in order when a "trigger" event is invoked after **button.trigger(...)** was called
+---@field _? buttonEventListener_any[] List of functions to call in order when a custom event is invoked
 
 ---@class sizeData_button
 ---@field w? number Width | ***Default:*** 80
@@ -858,16 +880,19 @@
 ---@class buttonScriptEvents
 ---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** **t.action** will automatically be called when an "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" event triggers, there is no need to register it here as well.</li></ul>
 
+--| Constructors
+
+---@class actionButtonCreationData : togglableObject
+---@field action? fun(self: actionButton, user?: boolean) Function to call when the button is triggered (clicked by the user or triggered programmatically)<ul><li>***Note:*** This function will be called when an "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" script event happens, there's no need to register it again under **t.events.OnClick**.</li></ul><hr><p>@*param* `self` actionButton — Reference to the button widget</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** false</p>
+---@field listeners? buttonEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+
 ---@class simpleButtonCreationData : actionButtonCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, buttonScriptEvents, liteObject
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Button"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field titleOffset? offsetData Offset the position of the label of the button
 ---@field size? sizeData_button
 ---@field font? labelFontOptions List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 
----@class customButtonCreationData
----@field backdrop? backdropData Parameters to set the custom backdrop with
----@field backdropUpdates? table<AnyScriptType, backdropUpdateRule> Table of key, value pairs containing the list of events to set listeners for assigned to **t.backdropUpdates[*key*].frame**, linking backdrop changes to it, modifying the specified parameters on trigger
---- - ***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **t.backdropUpdates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!
+---@class customButtonCreationData : simpleButtonCreationData, customizableObject
 
 ---@class contextButtonCreationData : contextMenuItem, titledObject_base, tooltipDescribableObject, contextItemLabelJustify, buttonScriptEvents, togglableObject
 ---@field font? labelFontOptions_small Table of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
@@ -880,57 +905,73 @@
 ---|radioButton
 
 ---@alias ToggleEventTag
----|string
 ---|"enabled"
 ---|"loaded"
 ---|"toggled"
+---|string
+
+--| Event handlers
 
 ---@alias ToggleEventHandler_enabled
 ---|fun(self: ToggleType, state: boolean) Called when an "enabled" event is invoked after **toggle.setEnabled(...)** was called<hr><p>@*param* `self` ToggleType ― Reference to the button widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 ---@alias ToggleEventHandler_loaded
----|fun(self: ToggleType, success: boolean, state?: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ToggleType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p><p>@*param* `state`? boolean ― The loaded value returned on success</p>
+---|fun(self: ToggleType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ToggleType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 ---@alias ToggleEventHandler_saved
----|fun(self: ToggleType, success: boolean, state?: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ToggleType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p><p>@*param* `state`? boolean ― The saved value returned on success</p>
+---|fun(self: ToggleType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ToggleType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 ---@alias ToggleEventHandler_toggled
 ---|fun(self: ToggleType, state: boolean, user: boolean) Called when an "toggled" event is invoked after **toggle.setState(...)** was called<hr><p>@*param* `self` ToggleType ― Reference to the toggle widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
 
----@alias ToggleEventHandler
----|ToggleEventHandler_enabled
----|ToggleEventHandler_loaded
----|ToggleEventHandler_saved
----|ToggleEventHandler_toggled
----|fun(self: ToggleType, ...: any)
+---@alias ToggleEventHandler_any
+---|fun(self: ToggleType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ToggleType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
+--| Parameters
+
+---@class toggleEventListener_enabled : eventHandlerIndex
+---@field handler ToggleEventHandler_enabled Handler function to register for call
+
+---@class toggleEventListener_loaded : eventHandlerIndex
+---@field handler ToggleEventHandler_loaded Handler function to register for call
+
+---@class toggleEventListener_saved : eventHandlerIndex
+---@field handler ToggleEventHandler_saved Handler function to register for call
+
+---@class toggleEventListener_toggled : eventHandlerIndex
+---@field handler ToggleEventHandler_toggled Handler function to register for call
+
+---@class toggleEventListener_any : eventTag, eventHandlerIndex
+---@field handler ToggleEventHandler_any Handler function to register for call
 
 ---@class toggleEventListeners
----@field enabled? ToggleEventHandler_enabled[] List of functions to call in order when an "enabled" event is invoked after **toggle.setEnabled(...)** was called
----@field loaded? ToggleEventHandler_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
----@field saved? ToggleEventHandler_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
----@field toggled? ToggleEventHandler_toggled[] List of functions to call in order when an "toggled" event is invoked after **toggle.setState(...)** was called
----@field [string]? fun(self: ToggleType, ...: any)[] List of functions to call in order when a custom event created via **toggle.createEvent(...)** is invoked
-
---| Constructors
-
----@class toggleCreationData : togglableObject, optionsWidget
----@field listeners? toggleEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
----@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** false</p>
----@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
----@field default? boolean Default value of the widget
+---@field enabled? toggleEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **toggle.setEnabled(...)** was called
+---@field loaded? toggleEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? toggleEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field toggled? toggleEventListener_toggled[] List of functions to call in order when an "toggled" event is invoked after **toggle.setState(...)** was called
+---@field [string]? toggleEventListener_any[] List of functions to call in order when a custom event is invoked
 
 ---@class sizeData_checkbox
 ---@field w? number Width | ***Default:*** **t.label** and 180 or **t.size.h**
 ---@field h? number Height | ***Default:*** 26
 
----@class checkboxCreationData : toggleCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field size? sizeData_checkbox
----@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
-
 ---@class sizeData_radioButton
 ---@field w? number Width | ***Default:***  **t.label** and 160 or **t.size.h**
 ---@field h? number Height | ***Default:*** 16
+
+--| Constructors
+
+---@class toggleCreationData : togglableObject, optionsWidget
+---@field state? boolean The starting state of the widget to set during initialization
+---@field listeners? toggleEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** false</p>
+---@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
+---@field default? boolean Default value of the widget
+
+---@class checkboxCreationData : toggleCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
+---@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field size? sizeData_checkbox
+---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
 
 ---@class radioButtonCreationData : checkboxCreationData
 ---@field size? sizeData_radioButton
@@ -942,17 +983,25 @@
 ---@alias SelectorType
 ---|selector
 ---|radioSelector
----|specialSelector
+---|dropdownSelector
+---|classicDropdownSelector
 
 ---@alias MultiselectorType
 ---|multiselector
 ---|checkboxSelector
 
----@alias SelectorEventTag
----|string
+---@alias SpecialSelectorType
+---|selector
+---|specialSelector
+
+---@alias SpecialSelectorEventTag
 ---|"enabled"
 ---|"loaded"
 ---|"selected"
+---|string
+
+---@alias SelectorEventTag
+---|SpecialSelectorEventTag
 ---|"updated"
 
 ---@alias MultiselectorEventTag
@@ -964,14 +1013,16 @@
 ---|SelectorEventTag
 ---|"open"
 
+--| Event handlers
+
 ---@alias SelectorEventHandler_enabled
 ---|fun(self: SelectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 ---@alias SelectorEventHandler_loaded
----|fun(self: SelectorType, success: boolean, selected?: integer) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p><p>@*param* `selected`? integer ― The loaded value returned on success</p>
+---|fun(self: SelectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 ---@alias SelectorEventHandler_saved
----|fun(self: SelectorType, success: boolean, selected?: integer) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p><p>@*param* `selected`? integer ― The saved value returned on success</p>
+---|fun(self: SelectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 ---@alias SelectorEventHandler_selected
 ---|fun(self: SelectorType, selected?: integer, user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
@@ -979,17 +1030,20 @@
 ---@alias SelectorEventHandler_updated
 ---|fun(self: SelectorType) Called when an "updated" event is invoked after **selector.updatedItems(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p>
 
+---@alias SelectorEventHandler_any
+---|fun(self: SelectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SelectorType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
 ---@alias MultiselectorEventHandler_enabled
 ---|fun(self: MultiselectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 ---@alias MultiselectorEventHandler_loaded
----|fun(self: MultiselectorType, success: boolean, selections?: boolean[]) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p><p>@*param* `selections`? boolean[] ― The loaded value returned on success</p>
+---|fun(self: MultiselectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 ---@alias MultiselectorEventHandler_saved
----|fun(self: MultiselectorType, success: boolean, selections?: boolean[]) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p><p>@*param* `selections`? boolean[] ― The saved value returned on success</p>
+---|fun(self: MultiselectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 ---@alias MultiselectorEventHandler_selected
----|fun(self: MultiselectorType, selections?: boolean[], user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
+---|fun(self: MultiselectorType, selections?: boolean[], user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states<ul><li>**[*index*]** boolean? — Whether this item is currently selected or not | ***Default:*** false</li></ul></p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
 
 ---@alias MultiselectorEventHandler_updated
 ---|fun(self: MultiselectorType) Called when an "updated" event is invoked after **selector.updatedItems(...)** was called<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p>
@@ -1000,41 +1054,23 @@
 ---@alias MultiselectorEventHandler_max
 ---|fun(self: MultiselectorType, limited: boolean, over: boolean) Called when a "max" event is invoked after an upper limit update occurs<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `limited` boolean ― True, if the number of selected items is equal to higher than the specified upper limit</p><p>@*param* `over` boolean ― True, if the number of selected items is over the specified upper limit</p>
 
----@alias SelectorEventHandler
----|SelectorEventHandler_enabled
----|SelectorEventHandler_loaded
----|SelectorEventHandler_saved
----|SelectorEventHandler_selected
----|SelectorEventHandler_updated
----|fun(self: SelectorType, ...: any)
+---@alias MultiselectorEventHandler_any
+---|fun(self: MultiselectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` MultiselectorType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
 
----@alias MultiselectorEventHandler
----|MultiselectorEventHandler_enabled
----|MultiselectorEventHandler_loaded
----|MultiselectorEventHandler_saved
----|MultiselectorEventHandler_selected
----|MultiselectorEventHandler_updated
----|MultiselectorEventHandler_min
----|MultiselectorEventHandler_max
----|fun(self: MultiselectorType, ...: any)
+---@alias SpecialSelectorEventHandler_enabled
+---|fun(self: SpecialSelectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
----@class selectorEventListeners
----@field enabled? SelectorEventHandler_enabled[] List of functions to call in order when an "enabled" event is invoked after **selector.setEnabled(...)** was called
----@field loaded? SelectorEventHandler_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
----@field saved? SelectorEventHandler_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
----@field selected? SelectorEventHandler_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
----@field updated? SelectorEventHandler_updated[] List of functions to call in order when an "updated" events are invoked after **selector.updatedItems(...)** was called
----@field [string]? fun(self: SelectorType, ...: any)[] List of functions to call in order when a custom event created via **selector.createEvent(...)** is invoked
+---@alias SpecialSelectorEventHandler_loaded
+---|fun(self: SpecialSelectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
+---@alias SpecialSelectorEventHandler_saved
+---|fun(self: SpecialSelectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
----@class selectorAttributeValueData : attributeValueData_base
----@field selected? integer The index of the currently selected item
+---@alias SpecialSelectorEventHandler_selected
+---|fun(self: SpecialSelectorType, selected?: AnchorPoint|JustifyH|JustifyV|FrameStrata, user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
 
----@class multiSelectorAttributeValueData : attributeValueData_base
----@field selected? boolean[] List of item states in order<ul><li>**[*index*]** boolean? — Whether this item is currently selected or not | ***Default:*** false</li></ul>
-
----@class specialSelectorAttributeValueData : attributeValueData_base
----@field selected? AnchorPoint|JustifyH|JustifyV|FrameStrata The currently selected value
+---@alias SpecialSelectorEventHandler_any
+---|fun(self: SpecialSelectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SpecialSelectorType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
 
 --| Data value types
 
@@ -1047,72 +1083,140 @@
 ---@class wrappedSpecialData
 ---@field value? integer|AnchorPoint|JustifyH|JustifyV|FrameStrata ***Default:*** nil *(no selection)*
 
---| Constructors
+--| Parameters
 
 ---@class selectorItem
 ---@field title? string Text to be shown on the right of the item to represent the item within the selector frame (if **t.labels** is true)
 ---@field tooltip? itemTooltipTextData List of text lines to be added to the tooltip of the item displayed when mousing over the frame<ul><li>***Note:*** Item tooltips are not available for classic dropdowns.</li></ul>
 ---@field onSelect? function The function to be called when the item is selected by the user
 
----@class selectorCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
----@field items? (selectorItem|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
----@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
----@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
----@field selected? integer The index of the item to be set as selected on load | ***Default:*** nil *(no selection)*
----@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
----@field onItemsUpdated? function Function to call when the list of selector items have been updated
----@field default? integer Default value of the widget
-
----@class multiselectorCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
----@field items? (selectorItem|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
----@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
----@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
----@field selections? boolean[] Ordered list of item states to set on load | ***Default:*** nil *(no selected items)*<ul><li>**[*index*]** boolean? — If true, this item will be set as selected | ***Default:*** false</li></ul>
----@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
----@field onItemsUpdated? function Function to call when the list of selector items have been updated
----@field default? boolean[] Default value of the widget
-
----@class clearableSelector
----@field clearable? boolean Whether the selector input should be clearable by right clicking on its radio buttons or not (the functionality of **setSelected** called with nil to clear the input will not be affected) | ***Default:*** false
-
----@class radioSelectorCreationData : selectorCreationData, clearableSelector
----@field items? (selectorItem|selectorRadioButton)[] Table containing subtables with data used to create item widgets, or already existing radio buttons
----@field onSelection? fun(index?: integer) The function to be called after a radio button was clicked and an item was selected, or the input was cleared by the user<hr><p>@*param* `index`? integer — The index of the currently selected item</p><ul><li>***Note:*** A custom [OnAttributeChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnAttributeChanged) event will also be invoked whenever an item is selected *(see below)*.</li></ul>
----@field listeners? table<string|SelectorAttributes, fun(state: boolean)|fun(value: selectorAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **selector.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "selected"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `value` selectorAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
----@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** nil *(no selection)*</p>
----@field saveData? fun(selected?: integer) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selected`? integer</p>
----@field onLoad? fun(self: radioSelector|dropdownSelector, selected?: integer) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` selector|dropdown ― Reference to the widget</p><hr><p>@*param* `value`? integer ― The loaded value</p>
----@field onSave? fun(self: radioSelector|dropdownSelector, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` selector|dropdown ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
----@field default? integer Default value of the widget
-
 ---@class limitValues
 ---@field min? integer The minimal number of items that need to be selected at all times | ***Default:*** 1
 ---@field max? integer The maximal number of items that can be selected at once | ***Default:*** #**t.items** *(all items)*
 
----@class checkboxSelectorCreationData : selectorCreationData
+---@class selectorEventListener_enabled : eventHandlerIndex
+---@field handler SelectorEventHandler_enabled Handler function to register for call
+
+---@class selectorEventListener_loaded : eventHandlerIndex
+---@field handler SelectorEventHandler_loaded Handler function to register for call
+
+---@class selectorEventListener_saved : eventHandlerIndex
+---@field handler SelectorEventHandler_saved Handler function to register for call
+
+---@class selectorEventListener_selected : eventHandlerIndex
+---@field handler SelectorEventHandler_selected Handler function to register for call
+
+---@class selectorEventListener_updated : eventHandlerIndex
+---@field handler SelectorEventHandler_updated Handler function to register for call
+
+---@class selectorEventListener_any : eventTag, eventHandlerIndex
+---@field handler SelectorEventHandler_any Handler function to register for call
+
+---@class multiselectorEventListener_enabled : eventHandlerIndex
+---@field handler MultiselectorEventHandler_enabled Handler function to register for call
+
+---@class multiselectorEventListener_loaded : eventHandlerIndex
+---@field handler MultiselectorEventHandler_loaded Handler function to register for call
+
+---@class multiselectorEventListener_saved : eventHandlerIndex
+---@field handler MultiselectorEventHandler_saved Handler function to register for call
+
+---@class multiselectorEventListener_selected : eventHandlerIndex
+---@field handler MultiselectorEventHandler_selected Handler function to register for call
+
+---@class multiselectorEventListener_updated : eventHandlerIndex
+---@field handler MultiselectorEventHandler_updated Handler function to register for call
+
+---@class multiselectorEventListener_min : eventHandlerIndex
+---@field handler MultiselectorEventHandler_min Handler function to register for call
+
+---@class multiselectorEventListener_max : eventHandlerIndex
+---@field handler MultiselectorEventHandler_max Handler function to register for call
+
+---@class multiselectorEventListener_any : eventTag, eventHandlerIndex
+---@field handler MultiselectorEventHandler_any Handler function to register for call
+
+---@class specialSelectorEventListener_enabled : eventHandlerIndex
+---@field handler SpecialSelectorEventHandler_enabled Handler function to register for call
+
+---@class specialSelectorEventListener_loaded : eventHandlerIndex
+---@field handler SpecialSelectorEventHandler_loaded Handler function to register for call
+
+---@class specialSelectorEventListener_saved : eventHandlerIndex
+---@field handler SpecialSelectorEventHandler_saved Handler function to register for call
+
+---@class specialSelectorEventListener_selected : eventHandlerIndex
+---@field handler SpecialSelectorEventHandler_selected Handler function to register for call
+
+---@class specialSelectorEventListener_any : eventTag, eventHandlerIndex
+---@field handler SpecialSelectorEventHandler_any Handler function to register for call
+
+---@class selectorEventListeners
+---@field enabled? selectorEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **selector.setEnabled(...)** was called
+---@field loaded? selectorEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? selectorEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field selected? SelectorEventHandler_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
+---@field updated? selectorEventListener_updated[] List of functions to call in order when an "updated" events are invoked after **selector.updatedItems(...)** was called
+---@field [string]? selectorEventListener_any[] List of functions to call in order when a custom event is invoked
+
+---@class multiselectorEventListeners
+---@field enabled? multiselectorEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **selector.setEnabled(...)** was called
+---@field loaded? multiselectorEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? multiselectorEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field selected? multiselectorEventListener_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
+---@field updated? multiselectorEventListener_updated[] List of functions to call in order when an "updated" events are invoked after **selector.updatedItems(...)** was called
+---@field min? multiselectorEventListener_min[] List of functions to call in order when a "min" event is invoked after a lower limit update occurs
+---@field max? multiselectorEventListener_max[] List of functions to call in order when a "max" event is invoked after an upper limit update occurs
+---@field [string]? multiselectorEventListener_any[] List of functions to call in order when a custom event is invoked
+
+---@class specialSelectorEventListeners
+---@field enabled? specialSelectorEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **selector.setEnabled(...)** was called
+---@field loaded? specialSelectorEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? specialSelectorEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field selected? specialSelectorEventListener_selected[] List of functions to call in order when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
+---@field [string]? specialSelectorEventListener_any[] List of functions to call in order when a custom event is invoked
+
+--| Constructors
+
+---@class selectorCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
+---@field items? (selectorItem|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
+---@field selected? integer The index of the item to be set as selected during initialization | ***Default:*** nil *(no selection)*
+---@field listeners? selectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** nil *(no selection)*</p>
+---@field saveData? fun(selected?: integer) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selected`? integer</p>
+---@field default? integer Default value of the widget
+
+---@class multiselectorCreationData : togglableObject, optionsWidget
+---@field items? (selectorItem|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
 ---@field limits? limitValues Parameters to specify the limits of the number of selectable items
----@field items? (selectorItem|selectorCheckbox)[] Table containing subtables with data used to create item widgets, or already existing checkboxes
----@field selections? boolean[] List of item states to set in order | ***Default:*** nil *(no selected items)*<ul><li>**[*index*]** boolean? — Whether this item should be set as selected or not | ***Default:*** false</li></ul>
----@field onSelection? fun(selections?: boolean[]) The function to be called after a checkbox was clicked and an item was selected, or the input was cleared by the user<hr><p>@*param* `selections`? boolean[] — List of current item states in order</p><ul><li>***Note:*** A custom [OnAttributeChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnAttributeChanged) event will also be invoked whenever an item is selected *(see below)*.</li></ul>
----@field listeners? table<string|MultipleSelectorAttributes, fun(state: boolean)|fun(value: multiSelectorAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **selector.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "min"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `min` boolean — Whether **t.limits.min** ha been reached</p><p></p></li><li>**type** == "max"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `max` boolean — Whether **t.limits.max** ha been reached</p><p></p></li><li>**type** == "selected"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `value` multiSelectorAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
+---@field selections? boolean[] Ordered list of item states to set during initialization | ***Default:*** nil *(no selected items)*<ul><li>**[*index*]** boolean? — If true, this item will be set as selected | ***Default:*** false</li></ul>
+---@field listeners? multiselectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 ---@field getData? fun(): selections: boolean[]|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selections` boolean[]|nil | ***Default:*** nil *(no selection)*</p>
 ---@field saveData? fun(selections?: boolean[]) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selections`? boolean[]</p>
----@field onLoad? fun(self: checkboxSelector, selections?: boolean[]) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` multiSelector ― Reference to the widget</p><hr><p>@*param* `selections`? boolean[] ― The loaded value</p>
----@field onSave? fun(self: checkboxSelector, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` multiSelector ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
 ---@field default? boolean[] Default value of the widget
 
----@class specialSelectorCreationData : selectorCreationData_base, clearableSelector
----@field selected? integer The item to be set as selected on load | ***Default:*** 0
----@field onSelection? fun(selected?: AnchorPoint|JustifyH|JustifyV|FrameStrata) The function to be called after a radio button was clicked and an item was selected, or the input was cleared by the user<hr><p>@*param* `selected`? AnchorPoint|JustifyH|JustifyV|FrameStrata — The currently selected item</p><ul><li>***Note:*** A custom [OnAttributeChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnAttributeChanged) event will also be invoked whenever an item is selected *(see below)*.</li></ul>
----@field listeners? table<string|SelectorAttributes, fun(state: boolean)|fun(value: specialSelectorAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **selector.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "selected"<p>Invoked after **selector.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `value` specialSelectorAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
+---@class radioSelectorCreationData : selectorCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
+---@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+---@field items? (selectorItem|selectorRadioButton)[] Table containing subtables with data used to create item widgets, or already existing radio buttons
+---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
+---@field clearable? boolean Whether the selector input should be clearable by right clicking on its radio buttons or not (the functionality of **setSelected** called with nil to clear the input will not be affected) | ***Default:*** false
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
+
+---@class checkboxSelectorCreationData : multiselectorCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
+---@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+---@field items? (selectorItem|selectorCheckbox)[] Table containing subtables with data used to create item widgets, or already existing checkboxes
+---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** true
+---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
+
+---@class specialSelectorCreationData : radioSelectorCreationData
+---@field selected? integer The item to be set as selected during initialization | ***Default:*** 0
+---@field listeners? specialSelectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 ---@field getData? fun(): value: integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** nil *(no selection)*</p>
 ---@field saveData? fun(value?: AnchorPoint|JustifyH|JustifyV|FrameStrata) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
----@field onLoad? fun(self: specialSelector, value?: AnchorPoint|JustifyH|JustifyV|FrameStrata) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` specialSelector ― Reference to the widget</p><hr><p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata ― The loaded value</p>
----@field onSave? fun(self: specialSelector, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` specialSelector ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
 ---@field default? AnchorPoint|JustifyH|JustifyV|FrameStrata Default value of the widget
 
 ---@class dropdownSelectorCreationData : radioSelectorCreationData, widgetWidthValue
@@ -1120,19 +1224,61 @@
 ---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** ""
 ---@field autoClose? boolean Close the dropdown menu after an item is selected by the user | ***Default:*** true
 ---@field cycleButtons? boolean Add previous & next item buttons next to the dropdown | ***Default:*** true
----@field listeners? table<string|DropdownAttributes, fun(state: boolean)|fun(value: selectorAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **dropdown.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "open"<p>Invoked when the dropdown menu is opened or closed</p><hr><p>@*param* `state` boolean ― Whether the dropdown menu is open or not</p><p></p></li><li>**type** == "selected"<p>Invoked after **dropdown.setSelected(...)** was called or an option was clicked or cleared</p><hr><p>@*param* `value` selectorAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 
 --[ Textbox ]
 
----@alias TextboxAttributes
+---@alias TextboxType
+---|textbox
+---|editbox
+---|customEditbox
+---|multilineEditbox
+
+---@alias TextboxEventTag
 ---|"enabled"
 ---|"loaded"
 ---|"changed"
+---|string
 
----@class textboxAttributeValueData : attributeValueData_base
----@field text string
+--| Event handlers
 
---| Constructors
+---@alias TextboxEventHandler_enabled
+---|fun(self: TextboxType, state: boolean) Called when an "enabled" event is invoked after **textbox.setEnabled(...)** was called<hr><p>@*param* `self` TextboxType ― Reference to the button widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+---@alias TextboxEventHandler_loaded
+---|fun(self: TextboxType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` TextboxType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+
+---@alias TextboxEventHandler_saved
+---|fun(self: TextboxType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` TextboxType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+
+---@alias TextboxEventHandler_changed
+---|fun(self: TextboxType, text: string, user: boolean) Called when an "changed" event is invoked after **textbox.setText(...)** was called<hr><p>@*param* `self` TextboxType ― Reference to the toggle widget</p><p>@*param* `text` string ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
+
+---@alias TextboxEventHandler_any
+---|fun(self: TextboxType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` TextboxType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
+--| Parameters
+
+---@class textboxEventListener_enabled : eventHandlerIndex
+---@field handler TextboxEventHandler_enabled Handler function to register for call
+
+---@class textboxEventListener_loaded : eventHandlerIndex
+---@field handler TextboxEventHandler_loaded Handler function to register for call
+
+---@class textboxEventListener_saved : eventHandlerIndex
+---@field handler TextboxEventHandler_saved Handler function to register for call
+
+---@class textboxEventListener_changed : eventHandlerIndex
+---@field handler TextboxEventHandler_changed Handler function to register for call
+
+---@class textboxEventListener_any : eventTag, eventHandlerIndex
+---@field handler TextboxEventHandler_any Handler function to register for call
+
+---@class textboxEventListeners
+---@field enabled? textboxEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **textbox.setEnabled(...)** was called
+---@field loaded? textboxEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? textboxEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field changed? textboxEventListener_changed[] List of functions to call in order when a "changed" event is invoked after **textbox.setText(...)** was called
+---@field [string]? textboxEventListener_any[] List of functions to call in order when a custom event is invoked
 
 ---@class labelFontOptions_editbox
 ---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "*default font based on the frame template*
@@ -1142,13 +1288,21 @@
 ---@field w? number Width | ***Default:***  180
 ---@field h? number Height | ***Default:*** 18
 
----@class textboxCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
+--| Constructors
+
+---@class textboxCreationData : togglableObject, optionsWidget
+---@field text? string The starting text to be set during initialization
+---@field color? colorData Apply the specified color to all text in the editbox (overriding all font objects set in **t.font**)
+---@field listeners? textboxEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+---@field getData? fun(): text: string|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `text` string|nil | ***Default:*** ""</p>
+---@field saveData? fun(text: string) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `text` string</p>
+---@field default? string Default value of the widget
+
+---@class editboxCreationData : textboxCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Text Box"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field text? string Text to be shown inside editbox, loaded whenever the text box is shown
 ---@field size? sizeData_editbox
 ---@field insets? insetData Table containing padding values by which to offset the position of the text in the editbox
 ---@field font? labelFontOptions_editbox List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
----@field color? colorData Apply the specified color to all text in the editbox (overriding all font objects set in **t.font**)
 ---@field justify? justifyData_left Set the justification of the text (overriding all font objects set in **t.font**)
 ---@field maxLetters? number The value to set by [EditBox:SetMaxLetters()](https://wowpedia.fandom.com/wiki/API_EditBox_SetMaxLetters) | ***Default:*** 0 (*no limit*)
 ---@field readOnly? boolean The text will be uneditable if true | ***Default:*** false
@@ -1157,20 +1311,18 @@
 ---@field unfocusOnEnter? boolean Whether to automatically clear the focus from the editbox when the ENTER key is pressed | ***Default:*** true
 ---@field resetCursor? boolean If true, set the cursor position to the beginning of the string after setting the text via **textbox.setText(...)** | ***Default:*** true
 ---@field events? table<ScriptEditBox, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the editbox frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnChar](https://wowpedia.fandom.com/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `user` string ― True if the value was changed by the user, false if it was done programmatically</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnEnterPressed](https://wowpedia.fandom.com/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
----@field listeners? table<string|TextboxAttributes, fun(state: boolean)|fun(value: textboxAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **textbox.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "changed"<p>Invoked after **textbox.setText(...)** was called or an "[OnTextChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnTextChanged)" event triggered</p><hr><p>@*param* `value` textboxAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
----@field getData? fun(): text: string|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `text` string|nil | ***Default:*** ""</p>
----@field saveData? fun(text: string) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `text` string</p>
 ---@field onLoad? fun(self: textbox|multilineEditbox, text?: string) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` textbox|multilineTextbox ― Reference to the widget</p><hr><p>@*param* `text`? string ― The loaded value</p>
 ---@field onSave? fun(self: textbox|multilineEditbox, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` textbox|multilineTextbox ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
----@field default? string Default value of the widget
 
----@class multilineTextboxCreationData : textboxCreationData, scrollSpeedData
+---@class customEditboxCreationData : editboxCreationData, customizableObject
+
+---@class multilineEditboxCreationData : editboxCreationData, scrollSpeedData
 ---@field size? sizeData
 ---@field charCount? boolean Show or hide the remaining number of characters | ***Default:*** **t.maxLetters** > 0
 ---@field scrollToTop? boolean Automatically scroll to the top when the text is loaded or changed while not being actively edited | ***Default:*** false
 ---@field scrollEvents? table<ScriptScrollFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the scroll frame of the editbox and the functions to assign as event handlers called when they trigger
 
----@class copyboxCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base
+---@class copyboxCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Copy Box"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData_editbox
 ---@field layer? DrawLayer
@@ -1183,64 +1335,162 @@
 
 --[ Numeric ]
 
----@alias NumericAttributes
+---@alias NumericType
+---|numeric
+---|numericSlider
+
+---@alias NumericEventTag
 ---|"enabled"
 ---|"loaded"
 ---|"changed"
+---|"min"
+---|"max"
+---|string
 
----@class numericAttributeValueData : attributeValueData_base
----@field value number
+--| Event handlers
+
+---@alias NumericEventHandler_enabled
+---|fun(self: NumericType, state: boolean) Called when an "enabled" event is invoked after **numeric.setEnabled(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the button widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+---@alias NumericEventHandler_loaded
+---|fun(self: NumericType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` NumericType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+
+---@alias NumericEventHandler_saved
+---|fun(self: NumericType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` NumericType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+
+---@alias NumericEventHandler_changed
+---|fun(self: NumericType, number: number, user: boolean) Called when an "changed" event is invoked after **numeric.setNumber(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
+
+---@alias NumericEventHandler_min
+---|fun(self: NumericType, min: number) Called when an "min" event is invoked after **numeric.setMin(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current lower limit of the number value of the widget</p>
+
+---@alias NumericEventHandler_max
+---|fun(self: NumericType, max: number) Called when an "max" event is invoked after **numeric.setMax(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current upper limit of the number value of the widget</p>
+
+---@alias NumericEventHandler_any
+---|fun(self: NumericType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` NumericType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
+--| Parameters
+
+---@class numericEventListener_enabled : eventHandlerIndex
+---@field handler NumericEventHandler_enabled Handler function to register for call
+
+---@class numericEventListener_loaded : eventHandlerIndex
+---@field handler NumericEventHandler_loaded Handler function to register for call
+
+---@class numericEventListener_saved : eventHandlerIndex
+---@field handler NumericEventHandler_saved Handler function to register for call
+
+---@class numericEventListener_changed : eventHandlerIndex
+---@field handler NumericEventHandler_changed Handler function to register for call
+
+---@class numericEventListener_min : eventHandlerIndex
+---@field handler NumericEventHandler_min Handler function to register for call
+
+---@class numericEventListener_max : eventHandlerIndex
+---@field handler NumericEventHandler_max Handler function to register for call
+
+---@class numericEventListener_any : eventTag, eventHandlerIndex
+---@field handler NumericEventHandler_any Handler function to register for call
+
+---@class numericEventListeners
+---@field enabled? numericEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **numeric.setEnabled(...)** was called
+---@field loaded? numericEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? numericEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field changed? numericEventListener_changed[] List of functions to call in order when a "changed" event is invoked after **numeric.setNumber(...)** was called
+---@field min? numericEventListener_min[] List of functions to call in order when a "min" event is invoked after **numeric.setMin(...)** was called
+---@field max? numericEventListener_max[] List of functions to call in order when a "max" event is invoked after **numeric.setMax(...)** was called
+---@field [string]? numericEventListener_any[] List of functions to call in order when a custom event is invoked
 
 --| Constructor
 
----@class numericValueData
-
----@class numericSliderCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, widgetWidthValue, visibleObject_base, togglableObject, optionsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Slider"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@class numericCreationData : togglableObject, optionsWidget
+---@field number number The starting value of the widget to set during initialization
+---@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* **t.min**, **t.max** *or* **t.increment**
 ---@field min? number Lower numeric value limit | ***Range:*** (any, **t.max**) | ***Default:*** 0
 ---@field max? number Upper numeric value limit | ***Range:*** (**t.min**, any) | ***Default:*** 100
 ---@field increment? number Size of value increment | ***Default:*** *the value can be freely changed (within range)*
----@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* **t.min**, **t.max** *or* **t.increment**
----@field value numericValueData
----@field valueBox? boolean Whether or not should the slider have an [EditBox](https://wowpedia.fandom.com/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
----@field sideButtons? boolean Whether or not to add increase/decrease buttons next to the slider to change the value by the increment set in **t.step** | ***Default:*** true
----@field step? number Add/subtract this much when clicking the increase/decrease buttons | ***Default:*** **t.increment** or (t.max - t.min) / 10
----@field altStep? number If set, add/subtract this much when clicking the increase/decrease buttons while holding ALT | ***Default:*** *no alternative step value*
----@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
----@field listeners? table<string|NumericAttributes, fun(state: boolean)|fun(value: numericAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **numeric.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "changed"<p>Invoked after **numeric.setValue(...)** was called, the increase or decrease button was clicked, or a custom value was entered via the value box</p><hr><p>@*param* `value` numericAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
+---@field step? number Add/subtract this much when calling **numeric.increase(...)** or **numeric.decrease(...)** | ***Default:*** **t.increment** or (t.max - t.min) / 10
+---@field altStep? number If set, add/subtract this much when calling **numeric.increase(...)** or **numeric.decrease(...)** with **alt** == true | ***Default:*** *no alternative step value*
+---@field listeners? numericEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 ---@field getData? fun(): value: number|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` number|nil | ***Default:*** **t.min**</p>
 ---@field saveData? fun(value: number) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value` number</p>
----@field onLoad? fun(self: numericSlider, value?: number) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` numericSlider ― Reference to the widget</p><hr><p>@*param* `value`? number ― The loaded value</p>
----@field onSave? fun(self: numericSlider, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` numericSlider ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
 ---@field default? number Default value of the widget
+
+---@class numericSliderCreationData : numericCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, widgetWidthValue, visibleObject_base, liteObject
+---@field name? string Unique string used to set the frame name | ***Default:*** "Slider"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field valueBox? boolean Whether or not should the slider have an [EditBox](https://wowpedia.fandom.com/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
+---@field sideButtons? boolean Whether or not to add increase/decrease buttons next to the slider to change the value by the increment set in **t.step** | ***Default:*** true
+---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://wowpedia.fandom.com/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
 
 --[ Color Picker ]
 
----@alias ColorPickerAttributes
+---@alias ColorPickerType
+---|colorPicker
+---|colorPickerFrame
+
+---@alias ColorPickerEventTag
 ---|"enabled"
 ---|"loaded"
----|"active"
+---|"saved"
 ---|"colored"
+---|string
 
----@class colorPickerAttributeValueData : attributeValueData_base
----@field color colorData Table containing the applied color values
+--| Event handlers
+
+---@alias ColorPickerEventHandler_enabled
+---|fun(self: ColorPickerType, state: boolean) Called when an "enabled" event is invoked after **colorPicker.setEnabled(...)** was called<hr><p>@*param* `self` ColorPickerType ― Reference to the button widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+---@alias ColorPickerEventHandler_loaded
+---|fun(self: ColorPickerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ColorPickerType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+
+---@alias ColorPickerEventHandler_saved
+---|fun(self: ColorPickerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ColorPickerType ― Reference to the widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+
+---@alias ColorPickerEventHandler_colored
+---|fun(self: ColorPickerType, color: colorData, user: boolean) Called when an "colored" event is invoked after **colorPicker.setColor(...)** was called<hr><p>@*param* `self` ColorPickerType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was invoked by an action taken by the user</p>
+
+---@alias ColorPickerEventHandler_any
+---|fun(self: ColorPickerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ColorPickerType ― Reference to the widget</p><p>@*param* `...` any — Any leftover arguments</p>
+
+--| Parameters
+
+---@class colorPickerEventListener_enabled : eventHandlerIndex
+---@field handler ColorPickerEventHandler_enabled Handler function to register for call
+
+---@class colorPickerEventListener_loaded : eventHandlerIndex
+---@field handler ColorPickerEventHandler_loaded Handler function to register for call
+
+---@class colorPickerEventListener_saved : eventHandlerIndex
+---@field handler ColorPickerEventHandler_saved Handler function to register for call
+
+---@class colorPickerEventListener_colored : eventHandlerIndex
+---@field handler ColorPickerEventHandler_colored Handler function to register for call
+
+---@class colorPickerEventListener_any : eventTag, eventHandlerIndex
+---@field handler ColorPickerEventHandler_any Handler function to register for call
+
+---@class colorPickerEventListeners
+---@field enabled? colorPickerEventListener_enabled[] List of functions to call in order when an "enabled" event is invoked after **colorPicker.setEnabled(...)** was called
+---@field loaded? colorPickerEventListener_loaded[] List of functions to call in order when an "loaded" event is invoked after the data of this widget has been loaded from storage
+---@field saved? colorPickerEventListener_saved[] List of functions to call in order when an "saved" event is invoked after the data of this widget has been saved to storage
+---@field colored? colorPickerEventListener_colored[] List of functions to call in order when a "colored" event is invoked after **colorPicker.setColor(...)** was called
+---@field [string]? colorPickerEventListener_any[] List of functions to call in order when a custom event is invoked
 
 --| Constructor
 
----@class colorPickerCreationData : labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, togglableObject, optionsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Color Picker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
----@field color? colorData_whiteDefault Values to use as the starting color | ***Default:*** **t.getData()**<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
----@field onColorUpdate? fun(r: number, g: number, b: number, a?: number) The function to be called when the color is changed by user interaction<hr><p>@*param* `r` number ― Red | ***Range:*** (0, 1)</p><p>@*param* `g` number ― Green | ***Range:*** (0, 1)</p><p>@*param* `b` number ― Blue | ***Range:*** (0, 1)</p><p>@*param* `a`? number ― Opacity | ***Range:*** (0, 1) | ***Default:*** 1</p>
+---@class colorPickerCreationData : togglableObject, optionsWidget
+---@field color? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** **t.getData()**<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
+---@field listeners? colorPickerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 ---@field onCancel? function The function to be called when the color change is cancelled (after calling **t.onColorUpdate**)
----@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
----@field listeners? table<string|ColorPickerAttributes, fun(state: boolean)|fun(value: colorPickerAttributeValueData)|fun(...: any)> Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger<ul><li>***Overloads:***<ul><li>**type** == "enabled"<p>Invoked after **colorPicker.setEnabled(...)** was called</p><hr><p>@*param* `state` boolean ― Whether the widget is enabled</p><p></p></li><li>**type** == "loaded"<p>Invoked when options data is loaded automatically</p><hr><p>@*param* `state` boolean ― Called evoking handlers after the widget's value has been successfully loaded with the value of true</p><p></p></li><li>**type** == "active"<p>Invoked after **colorPicker.pickerButton** was clicked</p><hr><p>@*param* `state` boolean ― Whether this color picker is the active one the [ColorPickerFrame](https://wowpedia.fandom.com/wiki/Using_the_ColorPickerFrame) has been opened for</p><p></p></li><li>**type** == "colored"<p>Invoked after **colorPicker.setColor(...)** was called</p><hr><p>@*param* `value` colorPickerAttributeValueData ― Payload of the event wrapped in a table</p></li></ul></li></ul></li></ul>
 ---@field getData? fun(): color: optionalColorData|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `color` optionalColorData|nil | ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *(white)*</p>
 ---@field saveData? fun(color: colorData) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `color` colorData</p>
----@field onLoad? fun(self: colorPicker, color?: colorData) Function to be be called after the data of this widget has been loaded (when settings are opened or changes/defaults are reset)<hr><p>@*param* `self` colorPicker ― Reference to the widget</p><hr><p>@*param* `color`? colorData ― The loaded value</p>
----@field onSave? fun(self: colorPicker, data?: any) Function to be be called on options data update (after the data of this widget has been saved to storage)<hr><p>@*param* `self` colorPicker ― Reference to the widget</p><hr><p>@*param* `data`? any ― The saved value | ***Default:*** *the current value of the widget*</p>
 ---@field default? colorData Default value of the widget
 
+---@class colorPickerFrameCreationData : colorPickerCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject
+---@field name? string Unique string used to set the frame name | ***Default:*** "Color Picker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
+---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
 
 --[[ POSITION OPTIONS ]]
 
