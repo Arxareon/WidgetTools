@@ -1557,7 +1557,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				end
 			elseif rules[i].frame.isType then --Custom WidgetTools widgets
 				if rules[i].frame.isType("Toggle") then
-					if rules[i].evaluate then state = rules[i].evaluate(rules[i].frame.getText()) else state = rules[i].frame.getText() end
+					if rules[i].evaluate then state = rules[i].evaluate(rules[i].frame.getState()) else state = rules[i].frame.getState() end
 				elseif rules[i].frame.isType("Selector") then state = rules[i].evaluate(rules[i].frame.getSelected())
 				elseif rules[i].frame.isType("Textbox") then state = rules[i].evaluate(rules[i].frame.getText())
 				elseif rules[i].frame.isType("Numeric") then state = rules[i].evaluate(rules[i].frame.getValue())
@@ -2385,12 +2385,20 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		return t.name, font
 	end
 
-	--Create a custom disabled font for Classic
-	if wt.classic then wt.CreateFont({
-		name = "GameFontDisableMed2",
-		template = "GameFontHighlightMedium",
-		color = wt.PackColor(GameFontDisable:GetTextColor()),
-	}) end
+	--| Create custom fonts for classic
+
+	if wt.classic then
+		wt.CreateFont({
+			name = "GameFontDisableMed2",
+			template = "GameFontHighlightMedium",
+			color = wt.PackColor(GameFontDisable:GetTextColor()),
+		})
+
+		wt.CreateFont({
+			name = "NumberFont_Shadow_Large",
+			font = { path = "Fonts/ARIALN.TTF", size = 20, style = "OUTLINE" },
+		})
+	end
 
 	--[ Text ]
 
@@ -3558,7 +3566,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param listener function
 	---@param callIndex integer
 	local function addListener(listeners, event, listener, callIndex)
-		if not listeners[event] then return end
+		listeners[event] = type(listeners[event]) == "table" and listeners[event] or {}
 
 		if type(callIndex) == "number" then table.insert(listeners[event], min(wt.Round(callIndex), #listeners[event] + 1), listener)
 		else table.insert(listeners[event], listener) end
@@ -3569,7 +3577,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param listeners table<string, function[]>
 	---@param event string
 	---@param ... any
-	local function callListeners(widget, listeners, event, ...) for i = 1, #listeners[event] do listeners[event][i](widget, ...) end end
+	local function callListeners(widget, listeners, event, ...)
+		if type(listeners[event]) ~= "table" then return end
+
+		for i = 1, #listeners[event] do listeners[event][i](widget, ...) end
+	end
 
 	--[ Button ]
 
@@ -5615,16 +5627,16 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 		end
 
-		--Set up starting items
-		for i = 1, #t.items do
-			setRadioButton(t.items[i], true)
+		--Set up current items
+		for i = 1, #selector.toggles do
+			setRadioButton(selector.toggles[i], true)
 
 			--Handle item updates
-			t.items[i].setListener._("updated", function(self, active) setRadioButton(self, active) end, i)
+			selector.toggles[i].setListener._("updated", function(self, active) setRadioButton(self, active) end, i)
 		end
 
 		--Handle item list updates
-		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#selector.toggles) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
 
 		return selector
 	end
@@ -5746,15 +5758,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Set up starting items
-		for i = 1, #t.items do
-			setCheckbox(t.items[i], true)
+		for i = 1, #selector.toggles do
+			setCheckbox(selector.toggles[i], true)
 
 			--Handle item updates
-			t.items[i].setListener._("updated", function(self, active) setCheckbox(self, active) end, i)
+			selector.toggles[i].setListener._("updated", function(self, active) setCheckbox(self, active) end, i)
 		end
 
 		--Handle item list updates
-		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#t.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+		selector.setListener.updated(function() selector.frame:SetHeight(math.ceil((#selector.toggles) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
 
 		return selector
 	end
@@ -7030,11 +7042,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Data
 
-		local min = t.min or 0
-		local max = t.max or 100
+		local limitMin = t.min or 0
+		local limitMax = t.max or 100
 		t.step = t.step or t.increment or ((t.increment - t.increment) / 10)
-
-		local value = t.number or t.default or type(t.getData) == "function" and t.getData() or t.increment
+		local value = t.number or t.default or type(t.getData) == "function" and t.getData() or 0
 		local snapshot
 
 		--| State
@@ -7079,9 +7090,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			---@param user boolean
 			changed = function(user) callListeners(numeric, listeners, "changed", value, user) end,
 
-			min = function() callListeners(numeric, listeners, "min", min) end,
+			min = function() callListeners(numeric, listeners, "min", limitMin) end,
 
-			max = function() callListeners(numeric, listeners, "max", max) end,
+			max = function() callListeners(numeric, listeners, "max", limitMax) end,
 
 			---@param event string Custom event tag
 			---@param ... any
@@ -7127,7 +7138,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param number number Updates the lower limit value | ***Range:*** (any, *current upper limit*) *capped automatically*
 		---@param silent? boolean If false, invoke a "min" event and call registered listeners | ***Default:*** false
 		function numeric.setMin(number, silent)
-			min = min(number, max)
+			limitMin = min(number, limitMax)
 
 			if not silent then numeric.invoke.min() end
 		end
@@ -7137,7 +7148,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param number number Updates the upper limit value | ***Range:*** (*current lower limit*, any) *floored automatically*
 		---@param silent? boolean If false, invoke a "max" event and call registered listeners | ***Default:*** false
 		function numeric.setMax(number, silent)
-			max = max(min, number)
+			limitMax = max(limitMin, number)
 
 			if not silent then numeric.invoke.max() end
 		end
@@ -7169,7 +7180,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** false
 		function numeric.saveData(number, silent)
 			if t.saveData then
-				number = type(number) == "number" and min(number, max(number, t.increment)) or value
+				number = type(number) == "number" and min(max(limitMin, number), limitMax) or value
 
 				t.saveData(number)
 
@@ -7212,7 +7223,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---***
 		---@param number? number A valid number value within the specified **t.increment**, **t.increment** range | ***Default:*** **t.increment**
 		function numeric.setNumber(number, user, silent)
-			value = type(number) == "number" and min(number, max(number, t.increment)) or t.increment
+			value = type(number) == "number" and min(max(limitMin, number), limitMax) or value
 
 			if not silent then numeric.invoke.changed(user == true) end
 

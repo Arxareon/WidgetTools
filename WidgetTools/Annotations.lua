@@ -12,6 +12,11 @@
 ---|"RALT"
 ---|"any"
 
+---@alias FontFlags
+---|"MONOCHROME"
+---|"OUTLINE"
+---|"THICK"
+
 ---@alias AnyFrameObject
 ---|Frame
 ---|Button
@@ -300,7 +305,7 @@
 ---@field b? number Bottom | ***Default:*** 0
 
 ---@class backdropBackgroundTextureData
----@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/ChatFrame/ChatFrameBackground"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga).</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
+---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/ChatFrame/ChatFrameBackground"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use "\\\\".</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
 ---@field size number Size of a single background tile square
 ---@field tile? boolean Whether to repeat the texture to fill the entire size of the frame | ***Default:*** true
 ---@field insets? insetData Offset the position of the background texture from the edges of the frame inward
@@ -314,7 +319,7 @@
 ---@field color? colorData Apply the specified color to the background texture | ***Default:*** **backdrop.background.color** if **fill** == true *(if it's false, keep the currently set values of **frame**:[GetBackdropColor()](https://wowpedia.fandom.com/wiki/API_Frame_GetBackdropColor))*
 
 ---@class backdropBorderTextureData
----@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/Tooltips/UI-Tooltip-Border"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga).</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
+---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/Tooltips/UI-Tooltip-Border"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use "\\\\".</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
 ---@field width number Width of the backdrop edge
 
 ---@class backdropBorderData
@@ -356,12 +361,12 @@
 ---@field h? string Horizontal alignment: "LEFT"|"RIGHT"|"CENTER" | ***Default:*** "CENTER"
 
 ---@class fontData
----@field path string Path to the font file relative to the WoW client directory<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
+---@field path string Path to the font file relative to the WoW client directory<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Fonts/Font.ttf), otherwise use "\\\\".</li><li>***Note*** **File format:** Font files must be in TTF or OTF format.</li></ul>
 ---@field size number The default display size of the new font object
----@field style? string Comma separated string of styling flags: "OUTLINE"|"THICKOUTLINE"|"THINOUTLINE"|"MONOCHROME" .. | ***Default:*** *style defined by the template*
+---@field style TBFFlags|FontFlags Comma separated string of font styling flags
 
 ---@class fontCreationData
----@field name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Fonts/Font.ttf).</li><li>***Note*** **File format:** Font files must be in TTF or OTF format.</li></ul>
+---@field name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
 ---@field template? FontObject An existing [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object to copy as a baseline
 ---@field font? fontData Table containing font properties used for [SetFont](https://wowpedia.fandom.com/wiki/API_FontInstance_SetFont) (overriding **t.template**)
 ---@field color? colorData_whiteDefault Apply the specified color to the font (overriding **t.template**)
@@ -477,7 +482,7 @@
 ---@field parent AnyFrameObject Reference to the frame to set as the parent of the new texture
 ---@field name? string String appended to the name of **t.parent** used to set the name of the new texture | ***Default:*** "Texture"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData ***Default:*** *size of* **parent**
----@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/ChatFrame/ChatFrameBackground"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga).</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
+---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/ChatFrame/ChatFrameBackground"<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use "\\\\".</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
 ---@field layer? DrawLayer
 ---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (-8, 7)
 ---@field tile? tileData Set the tiling behaviour of the texture | ***Default:*** *no tiling*
@@ -492,7 +497,7 @@
 ---@class textureUpdateData
 ---@field position? positionData Parameters to call [Region:SetPoint(...)](https://wowpedia.fandom.com/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** **t.position**
 ---@field size? sizeData | ***Default:*** **t.size**
----@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** **t.path**<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga).</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
+---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** **t.path**<ul><li>***Note:*** The use of "/" as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use "\\\\".</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li><ul>
 ---@field layer? DrawLayer | ***Default:*** **t.layer**
 ---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (-8, 7) | ***Default:*** **t.level**
 ---@field tile? tileData Set the tiling behaviour of the texture | ***Default:*** **t.tile**
@@ -1405,7 +1410,7 @@
 --| Constructor
 
 ---@class numericCreationData : togglableObject, optionsWidget
----@field number number The starting value of the widget to set during initialization
+---@field number? number The starting value of the widget to set during initialization
 ---@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* **t.min**, **t.max** *or* **t.increment**
 ---@field min? number Lower numeric value limit | ***Range:*** (any, **t.max**) | ***Default:*** 0
 ---@field max? number Upper numeric value limit | ***Range:*** (**t.min**, any) | ***Default:*** 100
