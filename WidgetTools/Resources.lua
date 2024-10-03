@@ -87,7 +87,7 @@ ns.changelog = {
 		"Under the hood improvements.",
 	},
 	{
-		"#V_Version 2.0_# #H_(7/24/2024)_#",
+		"#V_Version 2.0_# #H_(10/3/2024)_#",
 		"#N_New:_#",
 		"Added Cataclysm Classic 4.4.0, vanilla Classic 1.15.3 & The War Within 11.0.2 support.",
 		"A new Lite mode has been introduced. When enabled, no settings managed by Widget Tools will be loaded for addons built with Widget Tools saving resources in the process. Disable to access addon settings again.",
@@ -160,7 +160,7 @@ local english = {
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
-		open = "Click to open the settings page.",
+		open = "Click to open specific settings.",
 		lite = "Lite mode is enabled. Click to disable.",
 	},
 	lite = {
