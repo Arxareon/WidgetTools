@@ -87,7 +87,7 @@ ns.changelog = {
 		"Under the hood improvements.",
 	},
 	{
-		"#V_Version 2.0_# #H_(10/3/2024)_#",
+		"#V_Version 2.0_# #H_(10/9/2024)_#",
 		"#N_New:_#",
 		"Added Cataclysm Classic 4.4.0, vanilla Classic 1.15.3 & The War Within 11.0.2 support.",
 		"A new Lite mode has been introduced. When enabled, no settings managed by Widget Tools will be loaded for addons built with Widget Tools saving resources in the process. Disable to access addon settings again.",
@@ -118,24 +118,24 @@ local english = {
 	},
 	specifications = {
 		title = "Specifications",
-		description = "Specifications",
+		description = "Tune & toggle select optional features.",
 		general = {
 			title = "General",
-			description = "General Options",
+			description = "Options affecting all reliant addons.",
 			lite = {
 				label = "Lite Mode",
-				tooltip = "Disable the settings UI of Widget Tools and ALL other addons the settings of which it empowers to conserve some resources.\nAddon settings data will still be saved and loaded and chat control is still available for addons that use it.\n\nTo turn lite mode off and settings back on, click on Widget Tools within the AddOns list under the calendar button in the header of the Minimap.",
+				tooltip = "Disable the settings UI of ALL addons using Widget Toolboxes to conserve some resources.\nAddon settings data will still be saved & loaded, and chat control will remain available for addons that use it.\n\nTo turn lite mode off and settings back on, click on Widget Tools within the AddOns list under the calendar button in the header of the Minimap.",
 				warning = "When #ADDON is in lite mode, the settings UI for dependant addons will not be loaded.\n\nAre you sure you want to turn on lite mode and disable full settings functionality?",
 				accept = "Enable Lite Mode",
 			},
 			positioningAids = {
 				label = "Positioning Visual Aids",
-				tooltip = "Display visual aids when positioning frames wia settings widgets of addons which use Widget Tools under the hood.",
+				tooltip = "Display visual aids when positioning frames wia settings widgets of addons which use Widget Toolboxes under the hood.",
 			},
 		},
 		dev = {
 			title = "Development Tools",
-			description = "Useful tools and options for developers.",
+			description = "Useful tools and nobs for developers.",
 			frameAttributes = {
 				enabled = {
 					label = "Resize Frame Attributes Table",

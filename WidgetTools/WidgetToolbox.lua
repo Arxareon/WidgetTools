@@ -116,8 +116,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			warningSingle = "Are you sure you want to reset the settings on page #PAGE to defaults?\n\n#DISMISS",
 		},
 		value = {
-			revert = "Revert Change",
+			revert = "Revert Changes",
 			restore = "Restore Default",
+			note = "Right-click to reset or revert changes.",
 		},
 		points = {
 			left = "Left",
@@ -312,7 +313,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		example = "Example",
 		separator = ",", --Thousand separator character
 		decimal = ".", --Decimal character
-	} --ADD tooltip lines about the existence of & how to access the menus
+	}
 
 	--Load the current localization
 	local function loadLocale()
@@ -3998,18 +3999,26 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(toggle.button, {
-			title = t.tooltip.title or title,
-			lines = t.default ~= nil and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default ~= nil then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
 				(t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66"
-			) }) or t.tooltip.lines,
-			anchor = "ANCHOR_NONE",
-			position = {
-				anchor = "BOTTOMLEFT",
-				relativeTo = toggle.button,
-				relativePoint = "TOPRIGHT",
-			},
-		}, { triggers = { toggle.frame, }, }) end
+			) }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default ~= nil and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(toggle.button, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_NONE",
+				position = {
+					anchor = "BOTTOMLEFT",
+					relativeTo = toggle.button,
+					relativePoint = "TOPRIGHT",
+				},
+			}, { triggers = { toggle.frame, }, })	
+		end
 
 		--| Utility menu
 
@@ -4020,6 +4029,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				if t.default ~= nil then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() toggle.resetData() end }) end
 			end, condition = toggle.isEnabled })
 
+			--Add trigger
 			toggle.button:HookScript("OnMouseUp", function(_, button, isInside) if toggle.isEnabled() and isInside and button == "RightButton" then menu.open() end end)
 		end
 
@@ -4098,18 +4108,26 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(toggle.frame, {
-			title = t.tooltip.title or title,
-			lines = t.default ~= nil and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default ~= nil then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
 				(t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66"
-			) }) or t.tooltip.lines,
-			anchor = "ANCHOR_NONE",
-			position = {
-				anchor = "BOTTOMLEFT",
-				relativeTo = toggle.button,
-				relativePoint = "TOPRIGHT",
-			},
-		}, { triggers = { toggle.button, }, }) end
+			) }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default ~= nil and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(toggle.frame, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_NONE",
+				position = {
+					anchor = "BOTTOMLEFT",
+					relativeTo = toggle.button,
+					relativePoint = "TOPRIGHT",
+				},
+			}, { triggers = { toggle.button, }, })
+		end
 
 		--| Utility menu
 
@@ -4120,6 +4138,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				if t.default ~= nil then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() toggle.resetData() end }) end
 			end, condition = toggle.isEnabled })
 
+			--Add trigger
 			toggle.button:HookScript("OnMouseUp", function(_, button, isInside) if toggle.isEnabled() and isInside and button == "RightButton" then menu.open() end end)
 		end
 
@@ -5489,21 +5508,31 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(selector.frame, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, {
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, {
 				text = ns.toolboxStrings.default .. WrapTextInColorCode(t.items[t.default].title or tostring(t.default), "FFFFFFFF")
-			}) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
+			}) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(selector.frame, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			})
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = selector.frame, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
-		end, condition = selector.isEnabled }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = selector.frame, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
+			end, condition = selector.isEnabled })
+		end
 
 		return selector
 	end
@@ -5648,27 +5677,39 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		local defaultValue = ns.toolboxStrings.default
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then
+				local defaultValue = ns.toolboxStrings.default
 
-		for i = 1, #t.default do
-			defaultValue = defaultValue .. "\n" .. WrapTextInColorCode(t.items[i].title, "FFFFFFFF") .. WrapTextInColorCode(": ", "FF999999") .. WrapTextInColorCode(
-				(t.default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default[i] and "FFAAAAFF" or "FFFFAA66"
-			)
+				for i = 1, #t.default do
+					defaultValue = defaultValue .. "\n" .. WrapTextInColorCode(t.items[i].title, "FFFFFFFF") .. WrapTextInColorCode(": ", "FF999999") .. WrapTextInColorCode(
+						(t.default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default[i] and "FFAAAAFF" or "FFFFAA66"
+					)
+				end
+
+				table.insert(t.tooltip.lines, { text = defaultValue })
+			end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(selector.frame, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			})
 		end
-
-		if t.tooltip then wt.AddTooltip(selector.frame, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, { text = defaultValue }) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = selector.frame, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
-		end, condition = selector.isEnabled }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = selector.frame, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
+			end, condition = selector.isEnabled })
+		end
 
 		return selector
 	end
@@ -6070,21 +6111,31 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(selector.dropdown, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, {
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, {
 				text = ns.toolboxStrings.default .. WrapTextInColorCode(t.items[t.default].title or tostring(t.default), "FFFFFFFF")
-			}) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
+			}) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(selector.dropdown, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			})
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = selector.dropdown, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
-		end, condition = selector.isEnabled }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = selector.dropdown, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() selector.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() selector.resetData() end }) end
+			end, condition = selector.isEnabled })
+		end
 
 		--| State
 
@@ -6468,19 +6519,29 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(textbox.editbox, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(textbox.editbox, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			})
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = textbox.editbox, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() textbox.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() textbox.resetData() end }) end
-		end, condition = function() return textbox.isEnabled() and not t.readOnly end }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = textbox.editbox, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() textbox.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() textbox.resetData() end }) end
+			end, condition = function() return textbox.isEnabled() and not t.readOnly end })
+		end
 	end
 
 	---Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
@@ -6675,19 +6736,29 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(textbox.scrollFrame, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}, { triggers = { textbox.frame, textbox.editbox }, }) end
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(textbox.scrollFrame, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			}, { triggers = { textbox.frame, textbox.editbox }, })
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = textbox.frame, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() textbox.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() textbox.resetData() end }) end
-		end, condition = function() return textbox.isEnabled() and not t.readOnly end }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = textbox.frame, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() textbox.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() textbox.resetData() end }) end
+			end, condition = function() return textbox.isEnabled() and not t.readOnly end })
+		end
 
 		return textbox
 	end
@@ -7386,19 +7457,29 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(numeric.slider, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(tostring(t.default), "FFDDDD55") }) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}, { triggers = { numeric.frame } }) end
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(tostring(t.default), "FFDDDD55") }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(numeric.slider, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			}, { triggers = { numeric.frame } })
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = numeric.frame, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() numeric.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() numeric.resetData() end }) end
-		end, condition = numeric.isEnabled }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = numeric.frame, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() numeric.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() numeric.resetData() end }) end
+			end, condition = numeric.isEnabled })
+		end
 
 		--| State
 
@@ -7923,21 +8004,29 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Tooltip
 
-		if t.tooltip then wt.AddTooltip(colorPicker.frame, {
-			title = t.tooltip.title or title,
-			lines = t.default and table.insert(t.tooltip.lines, {
-				text = ns.toolboxStrings.default .. WrapTextInColorCode(wt.ColorToHex(wt.UnpackColor(t.default)), "FFFFFFFF")
-			}) or t.tooltip.lines,
-			anchor = "ANCHOR_RIGHT",
-		}) end
+		if t.tooltip then
+			--Add tooltip lines
+			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(wt.ColorToHex(wt.UnpackColor(t.default)), "FFFFFFFF") }) end
+			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+			}) end
+
+			wt.AddTooltip(colorPicker.frame, {
+				title = t.tooltip.title or title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			})
+		end
 
 		--| Utility menu
 
-		if t.utilityMenu ~= false then wt.CreateContextMenu({ parent = colorPicker.frame, initialize = function(menu)
-			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() colorPicker.revertData() end })
-			if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() colorPicker.resetData() end }) end
-		end, condition = function() return colorPicker.isEnabled() and not ColorPickerFrame:IsVisible() end }) end
+		if t.utilityMenu ~= false then
+			wt.CreateContextMenu({ parent = colorPicker.frame, initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = title })
+				wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.revert, action = function() colorPicker.revertData() end })
+				if t.default then wt.CreateMenuButton(menu, { title = ns.toolboxStrings.value.restore, action = function() colorPicker.resetData() end }) end
+			end, condition = function() return colorPicker.isEnabled() and not ColorPickerFrame:IsVisible() end })
+		end
 
 		--| State
 
