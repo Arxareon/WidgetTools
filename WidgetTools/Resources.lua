@@ -87,7 +87,7 @@ ns.changelog = {
 		"Under the hood improvements.",
 	},
 	{
-		"#V_Version 2.0_# #H_(10/9/2024)_#",
+		"#V_Version 2.0_# #H_(10/31/2024)_#",
 		"#N_New:_#",
 		"Added Cataclysm Classic 4.4.0, vanilla Classic 1.15.3 & The War Within 11.0.2 support.",
 		"A new Lite mode has been introduced. When enabled, no settings managed by Widget Tools will be loaded for addons built with Widget Tools saving resources in the process. Disable to access addon settings again.",
@@ -118,19 +118,19 @@ local english = {
 	},
 	specifications = {
 		title = "Specifications",
-		description = "Tune & toggle select optional features.",
+		description = "Tune & toggle select optional features. Type /wt in chat to use chat commands.",
 		general = {
 			title = "General",
 			description = "Options affecting all reliant addons.",
 			lite = {
 				label = "Lite Mode",
-				tooltip = "Disable the settings UI of ALL addons using Widget Toolboxes to conserve some resources.\nAddon settings data will still be saved & loaded, and chat control will remain available for addons that use it.\n\nTo turn lite mode off and settings back on, click on Widget Tools within the AddOns list under the calendar button in the header of the Minimap.",
-				warning = "When #ADDON is in lite mode, the settings UI for dependant addons will not be loaded.\n\nAre you sure you want to turn on lite mode and disable full settings functionality?",
+				tooltip = "Disable the settings of ALL addons using Widget Toolboxes to conserve resources and make the interface load faster.\nAddon settings data will still be saved & loaded in the background, and chat control will remain available for addons that use it.\n\nTo turn Lite Mode off and settings back on, use the #COMMAND chat command, or click on Widget Tools within the AddOns list under the calendar button in the header of the Minimap (not available in Classic)",
+				warning = "When #ADDON is in Lite Mode, the settings UI for dependant addons will not be loaded.\n\nAre you sure you want to turn on Lite Mode and disable full settings functionality?",
 				accept = "Enable Lite Mode",
 			},
 			positioningAids = {
 				label = "Positioning Visual Aids",
-				tooltip = "Display visual aids when positioning frames wia settings widgets of addons which use Widget Toolboxes under the hood.",
+				tooltip = "Display visual aids when positioning frames wia settings widgets of addons which use Widget Toolboxes under the hood.\n\nNot yet available in Classic.", --TODO fix in Classic
 			},
 		},
 		dev = {
@@ -164,7 +164,7 @@ local english = {
 		lite = "Lite mode is enabled. Click to disable.",
 	},
 	lite = {
-		warning = "#ADDON is in lite mode, the settings UI for dependant addons have not been loaded.\n\nDo you wish to turn off lite mode to reenable settings with full functionality?",
+		warning = "#ADDON is in Lite Mode, the settings UI for dependant addons have not been loaded.\n\nDo you wish to turn off Lite Mode to reenable settings with full functionality?",
 		accept = "Disable Lite Mode",
 	},
 	date = "#MONTH/#DAY/#YEAR",

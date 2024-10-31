@@ -393,15 +393,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param outputTable table Table to put the formatted output lines in
 	---@param name? any Value to print out as name string | ***Default:*** **object** as string
 	---@param blockrule? fun(key: integer|string): boolean Manually filter further exploring subtables under specific keys, skipping it if the value returned is true
+	---@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
 	---@param digTables? boolean ***Default:*** true
 	---@param digFrames? boolean ***Default:*** false
-	---@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
 	---@param currentKey? string
 	---@param currentLevel? integer
 	local function getDumpOutput(object, outputTable, name, blockrule, depth, digTables, digFrames, currentKey, currentLevel)
 		--Check whether the current key is to be skipped
 		local skip = false
-		if currentKey and blockrule then skip = blockrule(currentKey) end
+		if currentKey and type(blockrule) == "function" then skip = blockrule(currentKey) end
 
 		--Calculate indentation based on the current depth level
 		currentLevel = currentLevel or 0
@@ -440,8 +440,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---***
 	---@param object any Object to dump out
 	---@param name? string A name to print out | ***Default:*** *the dumped object will not be named* | ***Default:*** true
-	---@param digTables? boolean If true, explore and dump the non-subtable values of table objects | ***Default:*** true
-	---@param digFrames? boolean If true, explore and dump the insides of objects recognized as frames | ***Default:*** false
+	---@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
 	---@param blockrule? fun(key: integer|string): boolean Manually filter further exploring subtables under specific keys, skipping it if the value returned is true
 	--- - ***Example:*** **Match:** Skip a specific matching key
 	--- 	```
@@ -471,7 +470,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	--- 		return false --or true to invert the functionality and treat the blocklist as an allowlist
 	--- 	end
 	--- 	```
-	---@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
+	---@param digTables? boolean If true, explore and dump the non-subtable values of table objects | ***Default:*** true
+	---@param digFrames? boolean If true, explore and dump the insides of objects recognized as frames | ***Default:*** false
 	---@param linesPerMessage? integer Print the specified number of output lines in a single chat message to be able to display more message history and allow faster scrolling | ***Default:*** 2
 	--- - ***Note:*** Set to 0 to print all lines in a single message.
 	function wt.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
@@ -1815,9 +1815,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param keywords string[] List of keywords to register
 	--- - ***Note:*** A slash character (`"/"`) will appended before each keyword specified here.
 	---@param commands chatCommandData[] Indexed table with the list of commands to register under the specified **keywords**
-	---@param defaultHandler? fun(command: string, ...: string) Default handler function to call when no matching command was typed after the keyword (separated by a space character)<hr><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p>
+	---@param defaultHandler? fun(commandManager: commandManager, command: string, ...: string) Default handler function to call when no matching command was typed after the keyword (separated by a space character)<hr><p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p>
 	---***
-	---@return table commandManager Table containing command handler functions
+	---@return commandManager commandManager Table containing command handler functions
 	--- - ***Note:*** Annotate `@type commandManager` for detailed field descriptions.
 	function wt.RegisterChatCommands(addon, keywords, commands, defaultHandler)
 		addon = addon:upper()
@@ -1870,7 +1870,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			table.remove(payload, 1)
 
 			--Find and handle the specific command or call the default handler script
-			if not commandManager.handleCommand(command, unpack(payload)) and defaultHandler then defaultHandler(unpack(payload)) end
+			if not commandManager.handleCommand(command, unpack(payload)) and defaultHandler then defaultHandler(commandManager, command, unpack(payload)) end
 		end
 
 		return commandManager
@@ -2709,7 +2709,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		scrollFrame:SetScrollChild(scrollChild)
 
 		--Update scroll speed
-		t.scrollSpeed = t.scrollSpeed or 0.25
+		t.scrollSpeed = (t.scrollSpeed or 0.25) * (wt.classic and 0.1 or 1)
 
 		--Override the built-in update function
 		scrollFrame.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way
@@ -3357,7 +3357,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -3694,7 +3694,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -3980,18 +3980,18 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end)
 
 		--Linked mouse interactions
-		toggle.frame:HookScript("OnEnter", function() if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnEnter", function() if toggle.isEnabled() then
 			toggle.button.HoverBackground:Show()
 			if IsMouseButtonDown("LeftButton") then toggle.button:SetButtonState("PUSHED") end
 		end end)
-		toggle.frame:HookScript("OnLeave", function() if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnLeave", function() if toggle.isEnabled() then
 			toggle.button.HoverBackground:Hide()
 			toggle.button:SetButtonState("NORMAL")
 		end end)
-		toggle.frame:HookScript("OnMouseDown", function(_, button) if toggle.button:IsEnabled() and button == "LeftButton" or (button == "RightButton") then
+		toggle.frame:HookScript("OnMouseDown", function(_, button) if toggle.isEnabled() and button == "LeftButton" or (button == "RightButton") then
 			toggle.button:SetButtonState("PUSHED")
 		end end)
-		toggle.frame:HookScript("OnMouseUp", function(_, button, isInside) if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnMouseUp", function(_, button, isInside) if toggle.isEnabled() then
 			toggle.button:SetButtonState("NORMAL")
 
 			if isInside and button == "LeftButton" then toggle.button:Click(button) end
@@ -4206,18 +4206,18 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end)
 
 		--Linked mouse interactions
-		toggle.frame:HookScript("OnEnter", function() if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnEnter", function() if toggle.isEnabled() then
 			toggle.button:LockHighlight()
 			if IsMouseButtonDown("LeftButton") or (IsMouseButtonDown("RightButton")) then toggle.button:SetButtonState("PUSHED") end
 		end end)
-		toggle.frame:HookScript("OnLeave", function() if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnLeave", function() if toggle.isEnabled() then
 			toggle.button:UnlockHighlight()
 			toggle.button:SetButtonState("NORMAL")
 		end end)
-		toggle.frame:HookScript("OnMouseDown", function(_, button) if toggle.button:IsEnabled() and button == "LeftButton" or (button == "RightButton") then
+		toggle.frame:HookScript("OnMouseDown", function(_, button) if toggle.isEnabled() and button == "LeftButton" or (button == "RightButton") then
 			toggle.button:SetButtonState("PUSHED")
 		end end)
-		toggle.frame:HookScript("OnMouseUp", function(_, button, isInside) if toggle.button:IsEnabled() then
+		toggle.frame:HookScript("OnMouseUp", function(_, button, isInside) if toggle.isEnabled() then
 			toggle.button:SetButtonState("NORMAL")
 
 			if isInside and button == "LeftButton" or (button == "RightButton") then toggle.button:Click(button) end
@@ -4430,7 +4430,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -4755,7 +4755,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -5012,7 +5012,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -5682,7 +5682,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			if t.default then
 				local defaultValue = ns.toolboxStrings.default
 
-				for i = 1, #t.default do
+				for i = 1, #t.items do
 					defaultValue = defaultValue .. "\n" .. WrapTextInColorCode(t.items[i].title, "FFFFFFFF") .. WrapTextInColorCode(": ", "FF999999") .. WrapTextInColorCode(
 						(t.default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default[i] and "FFAAAAFF" or "FFFFAA66"
 					)
@@ -6168,7 +6168,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		return selector
 	end
 
-	--[ Text Box ]
+	--[ Textbox ]
 
 	---Create a non-GUI textbox widget with data management logic
 	---***
@@ -6194,7 +6194,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -6521,8 +6521,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		if t.tooltip then
 			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+			if t.default and t.readOnly ~= true then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
+			if t.utilityMenu ~= false and t.readOnly ~= true then table.insert(t.tooltip.lines, {
 				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
 			}) end
 
@@ -6738,8 +6738,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		if t.tooltip then
 			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+			if t.default and t.readOnly ~= true then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
+			if t.utilityMenu ~= false and t.readOnly ~= true then table.insert(t.tooltip.lines, {
 				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
 			}) end
 
@@ -6870,7 +6870,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		return copybox
 	end
 
-	--[ Slider ]
+	--[ Numeric ]
 
 	---Create a non-GUI numeric widget with data management logic
 	---***
@@ -6907,7 +6907,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -7543,7 +7543,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| State
 
-		local enabled = t.disabled ~= false
+		local enabled = t.disabled ~= true
 
 		--| Events
 
@@ -8071,6 +8071,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		t = t or {}
 		local data = {
+			title = wt.Clear(C_AddOns.GetAddOnMetadata(addon, "Title")):sub(1, -2),
 			version = C_AddOns.GetAddOnMetadata(addon, "Version"),
 			day = C_AddOns.GetAddOnMetadata(addon, "X-Day"),
 			month = C_AddOns.GetAddOnMetadata(addon, "X-Month"),
@@ -8089,7 +8090,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		return wt.CreateSettingsPage(addon, not WidgetToolsDB.lite and next(data) and {
 			register = t.register,
-			name = t.name or C_AddOns.GetAddOnMetadata(addon, "Title"),
+			name = t.name or data.title,
 			description = t.description or C_AddOns.GetAddOnMetadata(addon, "Notes"),
 			static = t.static ~= false,
 			initialize = function(canvas)
@@ -8100,7 +8101,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					parent = canvas,
 					name = "About",
 					title = ns.toolboxStrings.about.title,
-					description = ns.toolboxStrings.about.description:gsub("#ADDON", C_AddOns.GetAddOnMetadata(addon, "Title")),
+					description = ns.toolboxStrings.about.description:gsub("#ADDON", data.title),
 					arrange = {},
 					size = { h = 258 },
 					initialize = function(panel)
@@ -8337,7 +8338,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 										parent = canvas,
 										name = addon .. "Changelog",
 										append = false,
-										title = ns.toolboxStrings.about.fullChangelog.label:gsub("#ADDON", C_AddOns.GetAddOnMetadata(addon, "Title")),
+										title = ns.toolboxStrings.about.fullChangelog.label:gsub("#ADDON", data.title),
 										position = { anchor = "BOTTOMRIGHT", },
 										keepInBounds = true,
 										size = { w = 678, h = 610 },
@@ -8348,7 +8349,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 											wt.CreateMultilineEditbox({
 												parent = windowPanel,
 												name = "FullChangelog",
-												title = ns.toolboxStrings.about.fullChangelog.label:gsub("#ADDON", C_AddOns.GetAddOnMetadata(addon, "Title")),
+												title = ns.toolboxStrings.about.fullChangelog.label:gsub("#ADDON", data.title),
 												label = false,
 												tooltip = { lines = { { text = ns.toolboxStrings.about.fullChangelog.tooltip, }, } },
 												arrange = {},
@@ -9121,7 +9122,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ Visual Aids ]
 
-		if WidgetToolsDB.positioningAids then
+		if WidgetToolsDB.positioningAids and not wt.classic then --TODO fix in Classic
 			positioningVisualAids.frame = positioningVisualAids.frame or wt.CreateBaseFrame({
 				name = "WidgetToolsPositioningVisualAids",
 				position = { anchor = "CENTER", },
