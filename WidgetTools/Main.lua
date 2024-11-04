@@ -56,6 +56,9 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 	--Addon title
 	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(ns.name))):gsub("^%s*(.-)%s*$", "%1")
 
+	---@type chatCommandManager
+	local chatCommands
+
 	--[ Data ]
 
 	--Loaded DB reference
@@ -100,19 +103,23 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 					local silentSave = false
 
 					local enableLitePopup = wt.CreatePopupDialogueData(ns.name, "ENABLE_LITE_MODE", {
-						text = ns.strings.specifications.general.lite.warning:gsub("#ADDON", addonTitle),
-						accept = ns.strings.specifications.general.lite.accept,
+						text = ns.strings.lite.enable.warning:gsub("#ADDON", addonTitle),
+						accept = ns.strings.lite.enable.accept,
 						onAccept = function()
 							liteToggle.setState(true)
 							liteToggle.saveData(nil, silentSave)
+
+							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
 					local disableLitePopup = wt.CreatePopupDialogueData(ns.name, "DISABLE_LITE_MODE", {
-						text = ns.strings.lite.warning:gsub("#ADDON", addonTitle),
-						accept = ns.strings.lite.accept,
+						text = ns.strings.lite.disable.warning:gsub("#ADDON", addonTitle),
+						accept = ns.strings.lite.disable.accept,
 						onAccept = function()
 							liteToggle.setState(false)
 							liteToggle.saveData(nil, silentSave)
+
+							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
@@ -426,40 +433,45 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 
 	--[[ CHAT CONTROL ]]
 
-	local addonTitleChat = wt.Color(CreateSimpleTextureMarkup(ns.textures.logo) .. "" .. addonTitle .. ": ", ns.colors.gold[1])
+	chatCommands = wt.RegisterChatCommands(ns.name, { ns.chat.keyword }, {
+		commands = {
+			{
+				command = ns.chat.commands.about,
+				description = ns.strings.chat.about.description,
+				handler = mainPage.open,
+			},
+			{
+				command = ns.chat.commands.lite,
+				description = ns.strings.chat.lite.description,
+				handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
+			},
+			{
+				command = ns.chat.commands.dump,
+				description = ns.strings.chat.dump.description,
+				handler = function() wt.Dump(WidgetToolsDB, "WidgetToolsDB") end,
+			},
+			{
+				command = ns.chat.commands.run,
+				description = ns.strings.chat.run.description:gsub("#EXAMPLE", wt.Color("/wt run Dump { 1, \"a\", true, { print, UIParent, { 2 } } }; \"T\"; _; 2", ns.colors.grey[2])),
+				handler = function(f, ...) return type(wt[f]) == "function", f, ... end,
+				success = ns.strings.chat.run.success,
+				error = ns.strings.chat.run.error,
+				onSuccess = function(f, ...)
+					local p = strsplittable(";", table.concat({ ... }, " "), nil)
 
-	wt.RegisterChatCommands(ns.name, { "wt" }, { --REPLACE w/ command string reference
-		{
-			command = "help", --REPLACE w/ command string reference
-			handler = function() print("" .. addonTitleChat:gsub(": ", wt.Color(" chat command list:", ns.colors.gold[2]))) end,
-			help = true,
-		},
-		{
-			command = "lite", --REPLACE w/ command string reference
-			handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
-			onHelp = function() print("    /wt lite" .. wt.Color(" - Toggle Lite Mode: to load dependant addon settings or not", ns.colors.grey[1])) end, --REPLACE w/ localized string reference
-		},
-		{
-			command = "dump", --REPLACE w/ command string reference
-			handler = function() wt.Dump(WidgetToolsDB, "WidgetToolsDB") end,
-			onHelp = function() print("    /wt dump" .. wt.Color(" - Dump the WidgetTools addon data", ns.colors.grey[1])) end, --REPLACE w/ localized string reference
-		},
-		{
-			command = "run", --REPLACE w/ command string reference
-			handler = function(f, ...) return type(wt[f]) == "function", f, ... end,
-			onSuccess = function(f, ...)
-				print(addonTitleChat .. "Run command initiated successfully.") --REPLACE w/ localized string reference
+					for i = 1, #p do _, p[i] = pcall(loadstring("return " .. p[i])) end
 
-				local p = strsplittable(";", table.concat({ ... }, " "), nil)
-
-				for i = 1, #p do _, p[i] = pcall(loadstring("return " .. p[i])) end
-
-				wt[f](unpack(p))
-			end,
-			onError = function() print(addonTitleChat .. "Run command failed.") end, --REPLACE w/ localized string reference
-			onHelp = function() print("    /wt run" .. wt.Color(" - Run a WidgetToolbox function with any parameters (separated by a semicolon [;] character after the name of the function).\nExample: ", ns.colors.grey[1]) .. wt.Color("/wt run Dump { 0, \"This is a test.\", true }; \"Test dump\"", ns.colors.grey[2])) end, --REPLACE w/ localized string reference
+					wt[f](unpack(p))
+				end,
+			},
 		},
-	}, function(commandManager) commandManager.handleCommand("help") end) --REPLACE w/ command string reference
+		colors = {
+			title = ns.colors.gold[1],
+			content = ns.colors.gold[2],
+			command = { r = 1, g = 1, b = 1, },
+			description = ns.colors.grey[1]
+		},
+	})
 
 
 	--[[ ADDON COMPARTMENT ]]

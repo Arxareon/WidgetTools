@@ -24,8 +24,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	WidgetTools.frame:UnregisterEvent("ADDON_LOADED")
 
-	--[ Wrapper Table ]
-
 	---@class wt
 	local wt = ns.WidgetToolbox
 
@@ -36,6 +34,16 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	--\n represents the newline character
 
 	local english = {
+		chat = {
+			welcome = {
+				thanks = "Thank you for using #ADDON!",
+				hint = "Type #KEYWORD to see the chat command list.",
+				keywords = "#KEYWORD or #KEYWORD_ALTERNATE",
+			},
+			help = {
+				list = "#ADDON chat command list:",
+			},
+		},
 		popupInput = {
 			title = "Specify the text",
 			tooltip = "Press " .. KEY_ENTER .. " to accept the specified text or " .. KEY_ESCAPE .. " to dismiss it."
@@ -112,8 +120,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				label = "Restore Defaults",
 				tooltip = "Restore all settings on this page (or the whole category) to default values.",
 			},
-			warning = "Are you sure you want to reset the settings on page #PAGE, or all settings in the whole #CATEGORY category to defaults?\n\n#DISMISS",
-			warningSingle = "Are you sure you want to reset the settings on page #PAGE to defaults?\n\n#DISMISS",
+			warning = "Are you sure you want to reset the settings on page #PAGE or all settings in the whole #CATEGORY category to defaults?",
+			warningSingle = "Are you sure you want to reset the settings on page #PAGE to defaults?",
 		},
 		value = {
 			revert = "Revert Changes",
@@ -201,7 +209,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			},
 			delete = {
 				tooltip = "Delete the currently active profile.",
-				warning = "Are you sure you want to remove the currently active profile and permanently delete all settings data stored in it?"
+				warning = "Are you sure you want to remove the #PROFILE #ADDON settings profile and permanently delete all settings data stored in it?"
+			},
+			reset = {
+				warning = "Are you sure you want to override the #PROFILE #ADDON settings profile with default values?",
 			},
 		},
 		backup = {
@@ -237,7 +248,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				tooltip = "Dismiss all changes made to the string, and reset it to contain the currently stored data.",
 			},
 			import = "Load the string",
-			warning = "Are you sure you want to attempt to load the currently inserted string?\n\n#DISMISS\n\nIf you've copied it from an online source or someone else has sent it to you, only load it after you've checked the code inside and you know what you are doing.\n\nIf don't trust the source, you may want to cancel to prevent any unwanted actions.",
+			warning = "Are you sure you want to attempt to load the currently inserted string?\n\nAll unsaved changes will be dismissed.\n\nIf you've copied it from an online source or someone else has sent it to you, only load it after you've checked the code inside and you know what you are doing.\n\nIf don't trust the source, you may want to cancel to prevent any unwanted actions.",
 			error = "The provided backup string could not be validated and no data was loaded. It might be missing some characters or errors may have been introduced if it was edited.",
 		},
 		position = {
@@ -285,12 +296,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			save = {
 				label = "Update #CUSTOM Preset",
 				tooltip = "Save the current position and visibility of #FRAME to the #CUSTOM preset.",
-				warning = "Are you sure you want to override the #CUSTOM Preset with the current customizations?\n\nThe #CUSTOM preset is account-wide.",
+				warning = "Are you sure you want to override the #CUSTOM preset with the current values in the currently active settings profile?",
 			},
 			reset = {
 				label = "Reset #CUSTOM Preset",
 				tooltip = "Override currently saved #CUSTOM preset data with the default values, then apply it.",
-				warning = "Are you sure you want to override the #CUSTOM Preset with the default values?\n\nThe #CUSTOM preset is account-wide.",
+				warning = "Are you sure you want to override the #CUSTOM preset with the default values in the currently active settings profile?",
 			},
 		},
 		layer = {
@@ -307,7 +318,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				tooltip = "The exact position of #FRAME above and under other frames within the same #STRATA stack.",
 			},
 		},
-		dismiss = "All unsaved changes will be dismissed.",
 		date = "#MONTH/#DAY/#YEAR",
 		override = "Override",
 		example = "Example",
@@ -331,9 +341,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Fill static & internal references
 
-		ns.toolboxStrings.settings.warning = ns.toolboxStrings.settings.warning:gsub("#DISMISS", ns.toolboxStrings.dismiss)
-		ns.toolboxStrings.settings.warningSingle = ns.toolboxStrings.settings.warningSingle:gsub("#DISMISS", ns.toolboxStrings.dismiss)
-		ns.toolboxStrings.backup.warning = ns.toolboxStrings.backup.warning:gsub("#DISMISS", ns.toolboxStrings.dismiss)
 		ns.toolboxStrings.backup.box.tooltip[3] = ns.toolboxStrings.backup.box.tooltip[3]:gsub("#LOAD", ns.toolboxStrings.backup.load.label)
 		ns.toolboxStrings.position.keepInPlace.tooltip = ns.toolboxStrings.position.keepInPlace.tooltip:gsub("#ANCHOR", ns.toolboxStrings.position.anchor.label)
 		ns.toolboxStrings.position.offsetX.tooltip = ns.toolboxStrings.position.offsetX.tooltip:gsub("#ANCHOR", ns.toolboxStrings.position.anchor.label)
@@ -790,8 +797,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---Get an assembled & fully formatted string of a string table (changelog) that meets the specifications
 	---***
 	---@param changelog { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included
-	--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
-	--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+	--- - ***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.
+	--- - ***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).
 	--- - ***Examples:***
 	--- 	- **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
 	--- 	- **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
@@ -813,7 +820,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--Assemble the changelog
 		local c = ""
 
-		for i = #changelog, 1, -1 do
+		for i = 1, #changelog do
 			local firstLine = latest and 2 or 1
 
 			for j = firstLine, #changelog[i] do
@@ -1812,23 +1819,74 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---Register a list of chat keywords and related commands for use
 	---***
 	---@param addon string The name of the addon's folder (the addon namespace not the display title)
-	---@param keywords string[] List of keywords to register
-	--- - ***Note:*** A slash character (`"/"`) will appended before each keyword specified here.
-	---@param commands chatCommandData[] Indexed table with the list of commands to register under the specified **keywords**
-	---@param defaultHandler? fun(commandManager: commandManager, command: string, ...: string) Default handler function to call when no matching command was typed after the keyword (separated by a space character)<hr><p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p>
+	---@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands<ul><li>***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.</li></ul>
+	---@param t chatCommandManagerCreationData Parameters are to be provided in this table
 	---***
-	---@return commandManager commandManager Table containing command handler functions
-	--- - ***Note:*** Annotate `@type commandManager` for detailed field descriptions.
-	function wt.RegisterChatCommands(addon, keywords, commands, defaultHandler)
+	---@return chatCommandManager manager Table containing command handler functions
+	function wt.RegisterChatCommands(addon, keywords, t)
+		t = t or {}
+
+		local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+		logo = logo and (CreateSimpleTextureMarkup(logo, 9) .. " ") or ""
+		local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+		local branding = logo .. addonTitle .. ": "
+
+		---@class chatCommandManager
+		local manager = {}
+
 		addon = addon:upper()
 
-		---@class commandManager
-		local commandManager = {}
-
 		--Register the keywords
-		for i = 1, #keywords do _G["SLASH_" .. addon .. i] = "/" .. keywords[i] end
+		for i = 1, #keywords do
+			keywords[i] = "/" .. keywords[i]
+			_G["SLASH_" .. addon .. i] = keywords[i]
+		end
 
-		--| Create a command handler utility
+		--| Utilities
+
+		---Print out a formatted chat message
+		---@param message string Message content
+		---@param title? string Title to start the message with | ***Default:*** *(**addon** title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of **addon**, a logo will also be included at the start of the message.</li></ul>
+		---@param contentColor? chatCommandColorNames|colorData ***Default:*** "content"
+		---@param titleColor? chatCommandColorNames|colorData ***Default:*** "title"
+		function manager.print(message, title, titleColor, contentColor)
+			title = type(title) == "string" or branding
+			titleColor = type(titleColor) == "table" and titleColor or t.colors[type(titleColor) == "string" and titleColor or "title"]
+			contentColor = type(contentColor) == "table" and contentColor or t.colors[type(contentColor) == "string" and contentColor or "content"]
+
+			if type(message) == "string" then print(wt.Color(title, titleColor) .. wt.Color(message, contentColor)) end
+		end
+
+		--Print a welcome message with a hint about chat keywords
+		function manager.welcome()
+			local keyword = wt.Color(keywords[1], t.colors.command)
+			if #keywords > 1 then
+				if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. wt.Color(keywords[i], t.colors.command) end end
+				keyword = ns.toolboxStrings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", wt.Color(keywords[#keywords], t.colors.command)):gsub("#KEYWORD", keyword)
+			end
+
+			print(wt.Color(ns.toolboxStrings.chat.welcome.thanks:gsub("#ADDON", wt.Color(addonTitle, t.colors.title)), t.colors.content))
+			print(wt.Color(ns.toolboxStrings.chat.welcome.hint:gsub("#KEYWORD", keyword), t.colors.description))
+
+			if type(t.onWelcome) == "function" then t.onWelcome() end
+		end
+
+		--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
+		function manager.help()
+			print(wt.Color(ns.toolboxStrings.chat.help.list:gsub("#ADDON", wt.Color(logo  .. addonTitle, t.colors.title)), t.colors.content))
+
+			for i = 1, #t.commands do
+				if not t.commands[i].hidden then
+					local description = type(t.commands[i].description) == "function" and t.commands[i].description() or t.commands[i].description
+
+					print(wt.Color("    " .. keywords[1] .. " ".. t.commands[i].command, t.colors.command) .. (
+						type(description) == "string" and wt.Color(" • " .. description, t.colors.description) or ""
+					))
+				end
+
+				if type(t.commands[i].onHelp) == "function" then t.commands[i].onHelp() end
+			end
+		end
 
 		---Find and a specific command by its name and call its handler script
 		---***
@@ -1836,25 +1894,34 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
 		---***
 		---@return boolean # Whether the command was found and the handler called successfully
-		function commandManager.handleCommand(command, ...)
+		function manager.handleCommand(command, ...)
 			--Find the command
-			for i = 1, #commands do if command == commands[i].command then
-				--Call the command handler
-				if commands[i].handler then
-					local results = { commands[i].handler(...) }
+			for i = 1, #t.commands do if command == t.commands[i].command then
+				--Call command handler
+				if t.commands[i].handler then
+					local results = { t.commands[i].handler(manager, ...) }
 
-					--Call success/error handlers
-					if commands[i].onSuccess and results[1] == true then
-						table.remove(results, 1)
-						commands[i].onSuccess(unpack(results))
-					elseif commands[i].onError and results[1] == false then
-						table.remove(results, 1)
-						commands[i].onError(unpack(results))
+					--Response
+					if results[1] == true then
+						local message = type(t.commands[i].success) == "function" and t.commands[i].success(unpack(results, 2)) or t.commands[i].success
+
+						--Print response message
+						if type(message) == "string" then manager.print(message) end
+
+						--Call handler
+						if type(t.commands[i].onSuccess) == "function" then t.commands[i].onSuccess(manager, unpack(results, 2)) end
+					elseif results[1] == false then
+						local message = type(t.commands[i].error) == "function" and t.commands[i].error(unpack(results, 2)) or t.commands[i].error
+
+						--Print response message
+						if type(message) == "string" then manager.print(message) end
+
+						--Call handler
+						if type(t.commands[i].onError) == "function" then t.commands[i].onError(manager, unpack(results, 2)) end
 					end
 				end
 
-				--Call help handlers
-				if commands[i].help then for j = 1, #commands do if commands[j].onHelp then commands[j].onHelp() end end end
+				if t.commands[i].help then manager.help(t.listHelpCommands) end
 
 				return true
 			end end
@@ -1867,13 +1934,17 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		SlashCmdList[addon] = function(line)
 			local payload = { strsplit(" ", line) }
 			local command = payload[1]
-			table.remove(payload, 1)
 
 			--Find and handle the specific command or call the default handler script
-			if not commandManager.handleCommand(command, unpack(payload)) and defaultHandler then defaultHandler(commandManager, command, unpack(payload)) end
+			if not manager.handleCommand(command, unpack(payload, 2)) then
+				if type(t.defaultHandler) == "function" then t.defaultHandler(manager, command, unpack(payload, 2)) end
+
+				--List (non-hidden) commands
+				manager.help()
+			end
 		end
 
-		return commandManager
+		return manager
 	end
 
 
@@ -2102,6 +2173,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---***
 	---@return string key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 	function wt.CreatePopupDialogueData(addon, name, t)
+		t = t or {}
+
 		local key = addon:upper() .. "_" .. name:gsub("%s+", "_"):upper()
 
 		--Create the popup dialogue
@@ -2125,9 +2198,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---Update already existing popup dialogue data
 	---***
 	---@param key string The unique identifier key representing the defaults warning popup dialogue in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
-	---@param t popupDialogueData Parameters are to be provided in this table
+	---@param t? popupDialogueData Parameters are to be provided in this table
+	---@return string|nil key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide), or nil if no popup has been registered with the provided **key**
 	function wt.UpdatePopupDialogueData(key, t)
 		if not StaticPopupDialogs[key] then return end
+
+		t = t or {}
 
 		--Create the popup dialogue
 		if t.text then StaticPopupDialogs[key].text = t.text end
@@ -2137,6 +2213,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		if t.onAccept then StaticPopupDialogs[key].OnAccept = t.onAccept end
 		if t.onCancel then StaticPopupDialogs[key].OnCancel = t.onCancel end
 		if t.onAlt then StaticPopupDialogs[key].OnAlt = t.onAlt end
+
+		return key
 	end
 
 	--| Input Box
@@ -2355,6 +2433,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return string name, Font font
 	---<hr><p></p>
 	function wt.CreateFont(t)
+		t = t or {}
+
 		if _G[t.name] then return t.name, _G[t.name] end
 
 		--[ Font Setup ]
@@ -2405,6 +2485,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param t textCreationData Parameters are to be provided in this table
 	---@return FontString|nil text
 	function wt.CreateText(t)
+		t = t or {}
+
 		if not t.parent then return end
 
 		local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
@@ -2434,6 +2516,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return FontString|nil title
 	---@return FontString|nil description
 	function wt.AddTitle(t)
+		t = t or {}
+
 		if not t.parent then return end
 
 		--Title
@@ -2480,6 +2564,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param updates? table<AnyScriptType, textureUpdateRule> Table of key, value pairs containing the list of events to link texture changes to, and what parameters to change
 	---@return Texture|nil texture
 	function wt.CreateTexture(t, updates)
+		t = t or {}
+
 		if not t.parent then return end
 
 		local texture = t.parent:CreateTexture((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Texture"))
@@ -2573,6 +2659,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param t lineCreationData Parameters are to be provided in this table
 	---@return Line|nil line
 	function wt.CreateLine(t)
+		t = t or {}
+
 		if not t.parent then return end
 
 		t.startPosition.offset = t.startPosition.offset or {}
@@ -2971,8 +3059,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		local width, height = 0, 0
 		local defaultsWarning
 
-		--[ Wrapper Table ]
-
 		---@class settingsPage
 		---@field canvas? Frame The settings page canvas frame to house the options widgets
 		---@field category? table The registered settings category page
@@ -3226,8 +3312,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		t = t or {}
 
-		--[ Wrapper Table ]
-
 		---@class optionsCategory
 		---@field pages settingsPage[]
 		local category = { pages = {} }
@@ -3347,8 +3431,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return actionButton button Reference to the new action button widget, utility functions and more wrapped in a table
 	function wt.CreateActionButton(t)
 		t = t or {}
-
-		--[ Wrapper Table ]
 
 		---@class actionButton
 		local button = {}
@@ -4973,8 +5055,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return multiselector selector Reference to the new multiselector widget, utility functions and more wrapped in a table
 	function wt.CreateMultiselector(t)
 		t = t or {}
-
-		--[ Wrapper Table ]
 
 		---@class multiselector
 		local selector = {}
@@ -6772,8 +6852,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		t = t or {}
 		t.value = t.value or ""
 
-		--[ Wrapper Table ]
-
 		---@class copybox
 		local copybox = {}
 
@@ -8452,9 +8530,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	function wt.CreateDataManagementPage(addon, t)
 		if not addon or not C_AddOns.IsAddOnLoaded(addon) or not t.accountData or not t.characterData or not t.settingsData or not t.defaultsTable then return end
 
-		local addonTitle = C_AddOns.GetAddOnMetadata(addon, "Title")
-
-		--[ Wrapper Table ]
+		local addonTitle = wt.Clear(C_AddOns.GetAddOnMetadata(addon, "Title"))
 
 		---@class dataManagementPage
 		---@field profiles? table Collection of profiles settings widgets
@@ -8497,6 +8573,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			initialize = function(canvas)
 
 				--[ Profile Management ]
+
+				--Profile delete confirmation
+				local deleteProfilePopup = wt.CreatePopupDialogueData(addon, "DELETE_PROFILE", { accept = DELETE, })
+
+				--Profile reset confirmation
+				local resetProfilePopup = wt.CreatePopupDialogueData(addon, "RESET_PROFILE")
 
 				--| Utilities
 
@@ -8581,7 +8663,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					t.characterData.activeProfile = index
 
 					--Call listener
-					if t.onProfileActivated then t.onProfileActivated(t.characterData.activeProfile) end
+					if t.onProfileActivated then t.onProfileActivated(t.accountData.profiles[index].title, index) end
 
 					return t.characterData.activeProfile
 				end
@@ -8589,11 +8671,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				---Activate the specified settings profile
 				---***
 				---@param index integer Index of the profile to set as the currently active settings profile
+				---@return boolean # True on success, false if the operation failed
 				function dataManagement.activateProfile(index)
-					if not activateProfile(index) then return end
+					if not activateProfile(index) then return false end
 
 					--Update dropdown selection
 					if dataManagement.profiles then dataManagement.profiles.apply.setText(index) end
+
+					return true
 				end
 
 				---Create a new settings profile
@@ -8617,7 +8702,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					if dataManagement.profiles then dataManagement.profiles.apply.updateItems(t.accountData.profiles) end
 
 					--Call listener
-					if t.onProfileCreated then t.onProfileCreated(index) end
+					if t.onProfileCreated then t.onProfileCreated(t.accountData.profiles[index].title, index) end
 
 					--Activate the new profile
 					if apply ~= false then dataManagement.activateProfile(index) end
@@ -8626,38 +8711,64 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				---Delete the specified profile
 				---***
 				---@param index? integer Index of the profile to delete the data and dropdown item of | ***Default:*** **t.characterData.activeProfile**
-				function dataManagement.deleteProfile(index)
-					if index and not t.accountData.profiles[index] then return end
+				---@param unsafe? boolean If false, show a popup confirmation before attempting to delete the specified profile | ***Default:*** false
+				---@return boolean # True on success, false if the operation failed
+				function dataManagement.deleteProfile(index, unsafe)
+					if index and not t.accountData.profiles[index] then return false end
 
 					index = index or t.characterData.activeProfile
 					local title = t.accountData.profiles[index].title
 
-					--Delete profile data
-					table.remove(t.accountData.profiles, index)
+					local delete = function()
+						--Delete profile data
+						table.remove(t.accountData.profiles, index)
 
-					--Update dropdown items
-					if dataManagement.profiles then dataManagement.profiles.apply.updateItems(t.accountData.profiles) end
+						--Update dropdown items
+						if dataManagement.profiles then dataManagement.profiles.apply.updateItems(t.accountData.profiles) end
 
-					--Call listener
-					if t.onProfileDeleted then t.onProfileDeleted(title, index) end
+						--Call listener
+						if t.onProfileDeleted then t.onProfileDeleted(title, index) end
 
-					--Activate the replacement profile
-					if t.characterData.activeProfile == index then activateProfile(index) end
+						--Activate the replacement profile
+						if t.characterData.activeProfile == index then activateProfile(index) end
+					end
+
+					if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialogueData(deleteProfilePopup, {
+						text = ns.toolboxStrings.profiles.delete.warning:gsub("#PROFILE", t.accountData.profiles[index].title):gsub("#ADDON", addonTitle),
+						onAccept = delete,
+					})) end
+
+					return true
 				end
 
-				---Restore the specified profile data to default values
+				---Reset the specified profile data to default values
 				---***
 				---@param index? integer Index of the profile to restore to defaults | ***Default:*** **t.characterData.activeProfile**
-				function dataManagement.resetProfile(index)
-					if index and not t.accountData.profiles[index] then return end
+				---@param unsafe? boolean If false, show a popup confirmation before attempting to reset the specified profile | ***Default:*** false
+				---@return boolean # True on success, false if the operation failed
+				function dataManagement.resetProfile(index, unsafe)
+					if index and not t.accountData.profiles[index] then return false end
 
 					index = index or t.characterData.activeProfile
 
-					--Update the profile in storage (without breaking table references)
-					wt.CopyValues(t.accountData.profiles[index].data, t.defaultsTable)
+					local function reset()
+						if index and not t.accountData.profiles[index] then return end
 
-					--Call listener
-					if t.onProfileReset then t.onProfileReset(t.characterData.activeProfile) end
+						index = index or t.characterData.activeProfile
+
+						--Update the profile in storage (without breaking table references)
+						wt.CopyValues(t.accountData.profiles[index].data, t.defaultsTable)
+
+						--Call listener
+						if t.onProfileReset then t.onProfileReset(t.accountData.profiles[index].title, index) end
+					end
+
+					if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialogueData(resetProfilePopup, {
+						text = ns.toolboxStrings.profiles.reset.warning:gsub("#PROFILE", t.accountData.profiles[index].title):gsub("#ADDON", addonTitle),
+						onAccept = reset,
+					}))end
+
+					return true
 				end
 
 				---Load profiles data
@@ -8800,12 +8911,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								end,
 							})
 
-							local deleteProfilePopup = wt.CreatePopupDialogueData(addon, "DELETE_PROFILE", {
-								text = ns.toolboxStrings.profiles.delete.warning,
-								accept = DELETE,
-								onAccept = function() dataManagement.deleteProfile() end,
-							})
-
 							dataManagement.profiles.delete = wt.CreateSimpleButton({
 								parent = panel,
 								name = "Delete",
@@ -8816,7 +8921,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 									offset = { x = -12, y = -30 }
 								},
 								size = { w = 72, h = 26 },
-								action = function() StaticPopup_Show(deleteProfilePopup) end,
+								action = function() dataManagement.deleteProfile() end,
 								dependencies = { { frame = dataManagement.profiles.apply, evaluate = function() return #t.accountData.profiles > 1 end }, }
 							})
 						end,
@@ -8898,6 +9003,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								onChange = { RefreshBackupBox = dataManagement.refreshBackupBox },
 								listeners = { loaded = { { handler = function() dataManagement.backupAllProfiles.compact.button:SetChecked(t.settingsData.compactBackup) end, }, }, },
 								events = { OnClick = function(_, state) dataManagement.backupAllProfiles.compact.button:SetChecked(state) end },
+								utilityMenu = false,
 							})
 
 							local importPopup = wt.CreatePopupDialogueData(addon, "IMPORT", {
@@ -9037,6 +9143,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 									dataManagement.backup.compact.toggleState(true)
 									dataManagement.refreshAllProfilesBackupBox()
 								end },
+								utilityMenu = false,
 							})
 
 							local allProfilesImportPopup = wt.CreatePopupDialogueData(addon, "IMPORT_AllProfiles", {
@@ -9112,8 +9219,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@return positionPanel|nil table Components of the options panel wrapped in a table
 	function wt. CreatePositionOptions(addon, t)
 		if not addon or not C_AddOns.IsAddOnLoaded(addon) then return end
-
-		--[ Wrapper Table ]
 
 		---@class positionPanel
 		---@field layer? table
