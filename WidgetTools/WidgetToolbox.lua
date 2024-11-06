@@ -209,10 +209,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			},
 			delete = {
 				tooltip = "Delete the currently active profile.",
-				warning = "Are you sure you want to remove the #PROFILE #ADDON settings profile and permanently delete all settings data stored in it?"
+				warning = "Are you sure you want to remove the currently active #PROFILE #ADDON settings profile and permanently delete all settings data stored in it?"
 			},
 			reset = {
-				warning = "Are you sure you want to override the #PROFILE #ADDON settings profile with default values?",
+				warning = "Are you sure you want to override the currently active #PROFILE #ADDON settings profile with default values?",
 			},
 		},
 		backup = {
@@ -296,12 +296,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			save = {
 				label = "Update #CUSTOM Preset",
 				tooltip = "Save the current position and visibility of #FRAME to the #CUSTOM preset.",
-				warning = "Are you sure you want to override the #CUSTOM preset with the current values in the currently active settings profile?",
+				warning = "Are you sure you want to override the #CUSTOM preset with the current values?",
 			},
 			reset = {
 				label = "Reset #CUSTOM Preset",
 				tooltip = "Override currently saved #CUSTOM preset data with the default values, then apply it.",
-				warning = "Are you sure you want to override the #CUSTOM preset with the default values in the currently active settings profile?",
+				warning = "Are you sure you want to override the #CUSTOM preset with the default values?",
 			},
 		},
 		layer = {
@@ -350,10 +350,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		ns.toolboxStrings.layer.level.tooltip = ns.toolboxStrings.layer.level.tooltip:gsub("#STRATA", ns.toolboxStrings.layer.strata.label)
 		-- ns.toolboxStrings.about.changelog.tooltip = ns.toolboxStrings.about.changelog.tooltip .. "\n\nThe changelog is only available in English for now." --TODO reinstate when more languages are added
 		-- ns.toolboxStrings.about.fullChangelog.tooltip = ns.toolboxStrings.about.fullChangelog.tooltip .. "\n\nThe changelog is only available in English for now."
-
-		--| Add extra strings
-
-		ns.toolboxStrings.default = "\n" .. WrapTextInColorCode(DEFAULT .. ": ", "FF66FF66")
 	end
 
 	loadLocale()
@@ -361,7 +357,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 	--[[ UTILITIES ]]
 
-	--Classic vs Dragonflight code separation
+	--Classic vs Retail code separation
 	wt.classic = select(4, GetBuildInfo()) < 100000
 
 	---Check if a table is a frame (or a backdrop object)
@@ -825,7 +821,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			for j = firstLine, #changelog[i] do
 				c = c .. (j > firstLine and "\n\n" or "") .. changelog[i][j]:gsub(
-					"#V_(.-)_#", (i < #changelog and "\n\n\n" or "") .. "|c" .. highlight .. "• %1|r"
+					"#V_(.-)_#", (i > 1 and "\n\n\n" or "") .. "|c" .. highlight .. "• %1|r"
 				):gsub(
 					"#N_(.-)_#", "|c".. new .. "%1|r"
 				):gsub(
@@ -1745,7 +1741,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		page.canvas.OnCommit = function() page.save(true) end
 		page.canvas.OnRefresh = function() page.load(nil, true) end
-		page.canvas.OnDefault = function() page.defaults(true) end
+		page.canvas.OnDefault = function() page.default(true) end
 
 		if parent then page.category = Settings.RegisterCanvasLayoutSubcategory(parent.category, page.canvas, title)
 		else page.category = Settings.RegisterCanvasLayoutCategory(page.canvas, title) end
@@ -1827,9 +1823,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		t = t or {}
 
 		local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-		logo = logo and (CreateSimpleTextureMarkup(logo, 9) .. " ") or ""
 		local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-		local branding = logo .. addonTitle .. ": "
+		local branding = (logo and (CreateSimpleTextureMarkup(logo, 9) .. " ") or "") .. addonTitle .. ": "
 
 		---@class chatCommandManager
 		local manager = {}
@@ -1865,7 +1860,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				keyword = ns.toolboxStrings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", wt.Color(keywords[#keywords], t.colors.command)):gsub("#KEYWORD", keyword)
 			end
 
-			print(wt.Color(ns.toolboxStrings.chat.welcome.thanks:gsub("#ADDON", wt.Color(addonTitle, t.colors.title)), t.colors.content))
+			print(wt.Color(ns.toolboxStrings.chat.welcome.thanks:gsub(
+				"#ADDON", wt.Color(addonTitle, t.colors.title) .. (logo and " " .. CreateSimpleTextureMarkup(logo) or "")
+			), t.colors.content))
 			print(wt.Color(ns.toolboxStrings.chat.welcome.hint:gsub("#KEYWORD", keyword), t.colors.description))
 
 			if type(t.onWelcome) == "function" then t.onWelcome() end
@@ -1949,6 +1946,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 
 	--[[ RESOURCES ]]
+
+	--Addon title
+	ns.title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(ns.name))):gsub("^%s*(.-)%s*$", "%1")
 
 	--[ Data ]
 
@@ -2108,6 +2108,25 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--Display or update the displayed tooltip
 		tooltipData.tooltip:Show()
 		tooltipData.tooltip:SetScale(UIParent:GetScale())
+	end
+
+	---Add default value and utility menu hint tooltip lines to widget tooltip tables
+	---@param t optionsFrame|tooltipDescribableObject Parameters are to be provided in this table
+	---@param default? string Default value, formatted | ***Default:*** ""
+	function wt.AddWidgetTooltipLines(t, default)
+		if type(t) ~= "table" or (t.showDefault == false and t.utilityMenu == false) or type(t.tooltip) ~= "table" then return end
+
+		local hadLines = type(t.tooltip.lines) == "table" and next(t.tooltip.lines) or false
+
+		if not hadLines then t.tooltip.lines = { { text = " " } } end
+
+		if t.showDefault ~= false then table.insert(t.tooltip.lines, {
+			text = (hadLines and "\n" or "") .. WrapTextInColorCode(DEFAULT .. ": ", "FF66FF66") .. (type(default) == "string" and default or "")
+		}) end
+		if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
+			text = (t.showDefault == false and "\n" or "") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
+		})
+		end
 	end
 
 	--[ Addon Compartment ]
@@ -2302,6 +2321,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					},
 					arrange = {},
 					value = t.text,
+					showDefault = false,
 					utilityMenu = false,
 				})
 
@@ -2797,7 +2817,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		scrollFrame:SetScrollChild(scrollChild)
 
 		--Update scroll speed
-		t.scrollSpeed = (t.scrollSpeed or 0.25) * (wt.classic and 0.1 or 1)
+		t.scrollSpeed = (t.scrollSpeed or 0.25)
 
 		--Override the built-in update function
 		scrollFrame.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way
@@ -3092,7 +3112,13 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---Open the Settings window to this category page
 		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
 		function page.open()
-			if WidgetToolsDB.lite or not page.category then return end --ADD: tip about lite mode, how to disable it
+			if WidgetToolsDB.lite or not page.category then
+				print(CreateSimpleTextureMarkup(ns.textures.logo, 9) .. " " .. ns.title .. " " .. ns.strings.chat.lite.reminder:gsub(
+					"#COMMAND", "/" .. ns.chat.keyword .. ns.chat.commands.lite
+				))
+
+				return
+			end
 
 			Settings.OpenToCategory(page.category:GetID())
 		end
@@ -3139,12 +3165,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---Call to reset all options in this category page to their default values
 		---***
 		---@param user? boolean Whether to mark the call as being the result of a user interaction | ***Default:*** false
-		function page.defaults(user)
+		function page.default(user)
 			--Update with default values
 			if t.optionsKeys then for i = 1, #t.optionsKeys do wt.ResetOptionsData(t.optionsKeys[i]) end end
 
 			--Call listener
-			if t.onDefaults then t.onDefaults(user == true) end
+			if t.onDefault then t.onDefault(user == true, false) end
 		end
 
 		--[ Settings Page ]
@@ -3224,10 +3250,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				disabled = t.static,
 			})
 
-			defaultsWarning = wt.CreatePopupDialogueData(addon, (t.name or "") .. "_Defaults", {
+			defaultsWarning = wt.CreatePopupDialogueData(addon, (t.name or "") .. "DEFAULT", {
 				text = ns.toolboxStrings.settings.warningSingle:gsub("#PAGE", wt.Color(title, colors.highlight)),
 				accept = ACCEPT,
-				onAccept = function() page.defaults(true) end
+				onAccept = function() page.default(true) end,
 			})
 
 			wt.CreateSimpleButton({
@@ -3334,21 +3360,21 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---Call to reset all options to their default values for all pages in this category
 		---***
 		---@param user? boolean Whether to mark the call as being the result of a user interaction | ***Default:*** false
-		---@param callListeners? boolean If true, call the **onDefaults** listeners (if set) of each individual category page separately | ***Default:*** false
+		---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** false
 		function category.defaults(user, callListeners)
 			for i = 1, #category.pages do
 				local optionsKeys = category.pages[i].getProperty("optionsKeys")
-				local onDefaults = category.pages[i].getProperty("onDefaults")
+				local onDefault = not callListeners and category.pages[i].getProperty("onDefault") or nil
 
 				--Update with default values
 				if optionsKeys then for i = 1, #optionsKeys do wt.ResetOptionsData(optionsKeys[i]) end end
 
 				--Call listeners
-				if callListeners and onDefaults then onDefaults(user == true) end
+				if type(onDefault) == "function" then onDefault(user == true, true) end
 			end
 
 			--Call listener
-			if t.onDefaults then t.onDefaults(user == true) end
+			if type(t.onDefaults) == "function" then t.onDefaults(user == true) end
 		end
 
 		--[ Category Pages ]
@@ -3368,8 +3394,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			text = ns.toolboxStrings.settings.warning:gsub("#CATEGORY", wt.Color(parentTitle, colors.highlight)):gsub("#PAGE", wt.Color(parentTitle, colors.highlight)),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
-			onAccept = category.defaults,
-			onAlt = function() parent.defaults(true) end
+			onAccept = function() category.defaults(true) end,
+			onAlt = function() parent.default(true) end,
 		})
 
 		--| Subcategories
@@ -3388,8 +3414,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				),
 				accept = ALL_SETTINGS,
 				alt = CURRENT_SETTINGS,
-				onAccept = category.defaults,
-				onAlt = function() pages[i].defaults(true) end
+				onAccept = function() category.defaults(true) end,
+				onAlt = function() pages[i].default(true) end,
 			})
 		end end
 
@@ -3768,7 +3794,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Data
 
-		local default = t.default == true
+		t.default = t.default == true
+		local default = t.default
 		local value = t.value
 		if type(value) ~= "boolean" and type(t.getData) == "function" then value = t.getData() end
 		if type(value) ~= "boolean" then value = default end
@@ -4019,6 +4046,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Label
 
+		t.font = t.font or {}
+		t.font.normal = t.font.normal or "GameFontHighlight"
+		t.font.highlight = t.font.highlight or "GameFontNormal"
+		t.font.disabled = t.font.disabled or "GameFontDisable"
+
 		local title = t.title or t.name or "Toggle"
 
 		toggle.label = wt.AddTitle({
@@ -4027,6 +4059,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				offset = { x = t.size.h * (30 / 29) + 6, },
 				text = title,
 				anchor = "LEFT",
+				font = t.font.normal,
 			} or nil,
 		})
 
@@ -4082,14 +4115,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default ~= nil then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
-				(t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66"
-			) }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default ~= nil and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then
+				defaultValue = WrapTextInColorCode((t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66")
+			end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(toggle.button, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -4099,7 +4130,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					relativeTo = toggle.button,
 					relativePoint = "TOPRIGHT",
 				},
-			}, { triggers = { toggle.frame, }, })	
+			}, { triggers = { toggle.frame, }, })
 		end
 
 		--| Utility menu
@@ -4124,7 +4155,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			toggle.button:SetEnabled(state)
 			toggle.button:EnableMouse(state)
 
-			if toggle.label then toggle.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
+			if toggle.label then toggle.label:SetFontObject(state and t.font.normal or t.font.disabled) end
 		end
 
 		--Handle widget updates
@@ -4191,14 +4222,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default ~= nil then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(
-				(t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66"
-			) }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default ~= nil and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then
+				defaultValue = WrapTextInColorCode((t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66")
+			end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(toggle.frame, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -4256,13 +4285,18 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Label
 
+		t.font = t.font or {}
+		t.font.normal = t.font.normal or "GameFontHighlight"
+		t.font.highlight = t.font.highlight or "GameFontNormal"
+		t.font.disabled = t.font.disabled or "GameFontDisable"
+
 		local title = t.title or t.name or "Toggle"
 
 		if t.label ~= false then
 			toggle.label = _G[name .. "CheckboxText"]
 
 			toggle.label:SetPoint("LEFT", toggle.button, "RIGHT", 2, 0)
-			toggle.label:SetFontObject("GameFontHighlight")
+			toggle.label:SetFontObject(t.font.normal)
 
 			toggle.label:SetText(title)
 		else _G[name .. "CheckboxText"]:Hide() end
@@ -4313,7 +4347,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		local function updateState(_, state)
 			toggle.button:SetEnabled(state)
 
-			if toggle.label then toggle.label:SetFontObject(state and "GameFontHighlight" or "GameFontDisable") end
+			if toggle.label then toggle.label:SetFontObject(state and t.font.normal or t.font.disabled) end
 		end
 
 		--Handle widget updates
@@ -5545,6 +5579,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						if button == "LeftButton" then selector.setSelected(item.index, true)
 						elseif t.clearable and button == "RightButton" and not selector.getSelected() then selector.setSelected(nil, true) end
 					end, },
+					showDefault = false,
 					utilityMenu = false,
 				}, item)
 			elseif active then
@@ -5589,14 +5624,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, {
-				text = ns.toolboxStrings.default .. WrapTextInColorCode(t.items[t.default].title or tostring(t.default), "FFFFFFFF")
-			}) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then defaultValue = WrapTextInColorCode(t.default and t.items[t.default].title or tostring(t.default), "FFFFFFFF") end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(selector.frame, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -5672,11 +5703,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param limited boolean
 		local function setLock(item, limited)
 			if limited then
-				item.button:SetButtonState("DISABLED")
-				item.button:UnlockHighlight()
+				item.setEnabled(false, true)
 				item.button:SetAlpha(0.4)
 			elseif selector.isEnabled() then
-				item.button:SetButtonState("NORMAL")
+				item.setEnabled(true, true)
 				item.button:SetAlpha(1)
 			end
 		end
@@ -5701,16 +5731,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					},
 					size = { w = (t.width and t.columns == 1) and t.width or 160, h = 16 },
 					events = { OnClick = function(self) selector.setSelected(item.index, self:GetChecked(), true) end, },
-					listeners = { enabled = { { handler = function(self, state)
-						if self.label then self.label:SetFontObject(state and "GameFontHighlightSmall" or "GameFontDisableSmall") end
-					end, callIndex = 1 }, }, },
+					showDefault = false,
 					utilityMenu = false,
 				}, item)
 
-				if item.label then
-					item.label:SetFontObject("GameFontHighlightSmall")
-					item.label:SetIgnoreParentAlpha(true)
-				end
+				if item.label then item.label:SetIgnoreParentAlpha(true) end
 
 				--Handle limit updates
 				selector.setListener.limited(function(_, min, max)
@@ -5758,22 +5783,17 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default then
-				local defaultValue = ns.toolboxStrings.default
-
+			local defaultValue
+			if t.showDefault ~= false then
+				defaultValue = ""
 				for i = 1, #t.items do
 					defaultValue = defaultValue .. "\n" .. WrapTextInColorCode(t.items[i].title, "FFFFFFFF") .. WrapTextInColorCode(": ", "FF999999") .. WrapTextInColorCode(
 						(t.default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default[i] and "FFAAAAFF" or "FFFFAA66"
 					)
 				end
-
-				table.insert(t.tooltip.lines, { text = defaultValue })
 			end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(selector.frame, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -6192,14 +6212,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, {
-				text = ns.toolboxStrings.default .. WrapTextInColorCode(t.items[t.default].title or tostring(t.default), "FFFFFFFF")
-			}) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then defaultValue = WrapTextInColorCode(t.default and t.items[t.default].title or tostring(t.default), "FFFFFFFF") end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(selector.dropdown, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -6267,7 +6283,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Data
 
-		local default = type(t.default) == "string" and t.default or ""
+		t.default = type(t.default) == "string" and t.default or ""
+		local default = t.default
 		local value = type(t.value) == "string" and t.value or type(t.getData) == "function" and t.getData() or nil
 		value = type(value) == "string" and value or default
 		local snapshot = value
@@ -6600,12 +6617,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default and t.readOnly ~= true then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
-			if t.utilityMenu ~= false and t.readOnly ~= true then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then defaultValue = WrapTextInColorCode(t.default, "FF55DD55") end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(textbox.editbox, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -6817,11 +6832,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default and t.readOnly ~= true then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(t.default, "FF55DD55") }) end
-			if t.utilityMenu ~= false and t.readOnly ~= true then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			if t.readOnly ~= true then
+				local defaultValue
+				if t.showDefault ~= false then defaultValue = WrapTextInColorCode(t.default, "FF55DD55") end
+
+				wt.AddWidgetTooltipLines(t, defaultValue)
+			end
 
 			wt.AddTooltip(textbox.scrollFrame, {
 				title = t.tooltip.title or title,
@@ -6898,9 +6914,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			--| Textbox
 
-			t.font = t.font or {}
-			t.font.normal = t.font.normal or "GameFontNormalSmall"
-			t.font.disabled = t.font.disabled or "GameFontNormalSmall"
+			t.font = t.font or "GameFontNormalSmall"
 			t.color = t.color or { r = 0.6, g = 0.8, b = 1, a = 1 }
 			t.colorOnMouse = t.colorOnMouse or { r = 0.8, g = 0.95, b = 1, a = 1 }
 
@@ -6912,7 +6926,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				tooltip = { lines = { { text = ns.toolboxStrings.copyBox, }, } },
 				position = { anchor = "BOTTOMLEFT", },
 				size = t.size,
-				font = t.font,
+				font = { normal = t.font, disabled = t.font },
 				color = t.color,
 				justify = { h = t.justify, },
 				events = {
@@ -6941,6 +6955,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					end,
 				},
 				value = t.value,
+				showDefault = false,
 				utilityMenu = false,
 			})
 		end
@@ -6976,7 +6991,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		---@param v any
 		---@return number|nil
 		local function verify(v)
-			return Clamp(type(v) == "number" and v or default, limitMin, limitMax)
+			v = Clamp(type(v) == "number" and v or default, limitMin, limitMax)
+
+			return v
 		end
 
 		default = verify(t.default)
@@ -7346,6 +7363,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					OnEscapePressed = function(self) self.setText(tostring(wt.Round(numeric.slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 				},
 				value = tostring(numeric.getNumber()):gsub(matchPattern, replacePattern),
+				showDefault = false,
 				utilityMenu = false,
 			})
 
@@ -7380,7 +7398,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				font = {
 					normal = "GameFontHighlightMedium",
 					highlight = "GameFontHighlightMedium",
-					disabled = "GameFontDisableMed2",
+					disabled = "GameFontDisableMed2"
 				},
 				backdrop = {
 					background = {
@@ -7536,11 +7554,12 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(tostring(t.default), "FFDDDD55") }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			if t.readOnly ~= true then
+				local defaultValue
+				if t.showDefault ~= false then defaultValue = WrapTextInColorCode(tostring(t.default), "FFDDDD55") end
+
+				wt.AddWidgetTooltipLines(t, defaultValue)
+			end
 
 			wt.AddTooltip(numeric.slider, {
 				title = t.tooltip.title or title,
@@ -7615,6 +7634,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Data
 
 		local default = wt.PackColor(wt.UnpackColor(t.default))
+		wt.CopyValues(wt.AddMissing(wt.RemoveMismatch(wt.RemoveEmpty(t.default), default), default), default)
 		local value = t.value or type(t.getData) == "function" and t.getData() or nil
 		value = wt.PackColor(wt.UnpackColor(value))
 		local snapshot = value
@@ -8042,6 +8062,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				OnEnterPressed = function(_, text) colorPicker.setColor(wt.PackColor(wt.HexToColor(text)), true) end,
 				OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorPicker.getColor())) end,
 			},
+			showDefault = false,
 			utilityMenu = false,
 		})
 
@@ -8083,12 +8104,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		--| Tooltip
 
 		if t.tooltip then
-			--Add tooltip lines
-			if t.default then table.insert(t.tooltip.lines, { text = ns.toolboxStrings.default .. WrapTextInColorCode(wt.ColorToHex(wt.UnpackColor(t.default)), "FFFFFFFF") }) end
-			if t.utilityMenu ~= false then table.insert(t.tooltip.lines, {
-				text = (t.default and "" or "\n") .. ns.toolboxStrings.value.note, font = GameFontNormalTiny, color = ns.colors.grey[1],
-			}) end
+			local defaultValue
+			if t.showDefault ~= false then defaultValue = "|TInterface/ChatFrame/ChatFrameBackground:12:12:0:0:16:16:0:16:0:16:" .. (t.default.r * 255) .. ":" .. (t.default.g * 255) .. ":" .. (t.default.b * 255) .. "|t " .. WrapTextInColorCode(wt.ColorToHex(wt.UnpackColor(t.default)), "FFFFFFFF") end
 
+			wt.AddWidgetTooltipLines(t, defaultValue)
 			wt.AddTooltip(colorPicker.frame, {
 				title = t.tooltip.title or title,
 				lines = t.tooltip.lines,
@@ -8569,7 +8588,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			onSave = t.onSave,
 			onLoad = t.onLoad,
 			onCancel = t.onCancel,
-			onDefault = t.onDefaults,
+			onDefault = t.onDefault,
 			initialize = function(canvas)
 
 				--[ Profile Management ]
@@ -8734,7 +8753,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					end
 
 					if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialogueData(deleteProfilePopup, {
-						text = ns.toolboxStrings.profiles.delete.warning:gsub("#PROFILE", t.accountData.profiles[index].title):gsub("#ADDON", addonTitle),
+						text = ns.toolboxStrings.profiles.delete.warning:gsub("#PROFILE", wt.Color(t.accountData.profiles[index].title, colors.highlight)):gsub("#ADDON", addonTitle),
 						onAccept = delete,
 					})) end
 
@@ -8764,7 +8783,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					end
 
 					if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialogueData(resetProfilePopup, {
-						text = ns.toolboxStrings.profiles.reset.warning:gsub("#PROFILE", t.accountData.profiles[index].title):gsub("#ADDON", addonTitle),
+						text = ns.toolboxStrings.profiles.reset.warning:gsub("#PROFILE", wt.Color(t.accountData.profiles[index].title, colors.highlight)):gsub("#ADDON", addonTitle),
 						onAccept = reset,
 					}))end
 
@@ -8851,7 +8870,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								width = 180,
 								items = t.accountData.profiles,
 								selected = t.characterData.activeProfile,
-								listeners = { selected = { { handler = activateProfile, }, }, },
+								listeners = { selected = { { handler = function(_, index) activateProfile(index) end, }, }, },
 							})
 
 							dataManagement.profiles.new = wt.CreateSimpleButton({
@@ -8864,7 +8883,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 									offset = { x = -312, y = -30 }
 								},
 								size = { w = 112, h = 26 },
-								action = function() dataManagement.newProfile(nil, #t.accountData.profiles) end,
+								action = function() dataManagement.newProfile(nil, #t.accountData.profiles + 1) end,
 							})
 
 							dataManagement.profiles.duplicate = wt.CreateSimpleButton({
@@ -8986,6 +9005,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								unfocusOnEnter = false,
 								optionsKey = addon .. "Backup",
 								listeners = { loaded = { { handler = dataManagement.refreshBackupBox, }, }, },
+								showDefault = false,
 							})
 
 							dataManagement.backup.compact = wt.CreateCheckbox({
@@ -9003,6 +9023,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								onChange = { RefreshBackupBox = dataManagement.refreshBackupBox },
 								listeners = { loaded = { { handler = function() dataManagement.backupAllProfiles.compact.button:SetChecked(t.settingsData.compactBackup) end, }, }, },
 								events = { OnClick = function(_, state) dataManagement.backupAllProfiles.compact.button:SetChecked(state) end },
+								showDefault = false,
 								utilityMenu = false,
 							})
 
@@ -9082,6 +9103,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 										unfocusOnEnter = false,
 										optionsKey = addon .. "Backup",
 										listeners = { loaded = { { handler = dataManagement.refreshAllProfilesBackupBox, }, }, },
+										showDefault = false,
 									})
 
 									wt.CreateSimpleButton({
@@ -9143,10 +9165,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 									dataManagement.backup.compact.toggleState(true)
 									dataManagement.refreshAllProfilesBackupBox()
 								end },
+								showDefault = false,
 								utilityMenu = false,
 							})
 
-							local allProfilesImportPopup = wt.CreatePopupDialogueData(addon, "IMPORT_AllProfiles", {
+							local allProfilesImportPopup = wt.CreatePopupDialogueData(addon, "IMPORT_ALL", {
 								text = ns.toolboxStrings.backup.warning,
 								accept = ns.toolboxStrings.backup.import,
 								onAccept = function()
@@ -9209,7 +9232,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	--| Positioning
 
 	local positioningVisualAids = {}
-	if WidgetToolsDB.lite then WidgetToolsDB.positioningAids = false end
+
+	if WidgetToolsDB.lite or wt.classic then WidgetToolsDB.positioningAids = false end --TODO fix in Classic
 
 	---Create and set up position options for a specified frame within a panel frame
 	---***
@@ -9227,7 +9251,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--[ Visual Aids ]
 
-		if WidgetToolsDB.positioningAids and not wt.classic then --TODO fix in Classic
+		if WidgetToolsDB.positioningAids then
 			positioningVisualAids.frame = positioningVisualAids.frame or wt.CreateBaseFrame({
 				name = "WidgetToolsPositioningVisualAids",
 				position = { anchor = "CENTER", },
@@ -9352,7 +9376,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						end
 
 						--Position
-						if panel.presetList[i].data.position then
+						if type(panel.presetList[i].data.position) == "table" then
 							--Update the frame
 							wt.SetPosition(t.frame, panel.presetList[i].data.position, true)
 
@@ -9369,14 +9393,14 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						end
 
 						--Keep in bounds
-						if panel.presetList[i].data.keepInBounds then
+						if panel.presetList[i].data.keepInBounds ~= nil then
 							t.frame:SetClampedToScreen(panel.presetList[i].data.keepInBounds) --Update the frame
 							t.getData().keepInBounds = panel.presetList[i].data.keepInBounds --Update the storage
 							if panel.position.keepInBounds then panel.position.keepInBounds.loadData(false) end --Update the options widget
 						end
 
 						--Screen Layer
-						if panel.presetList[i].data.layer then
+						if type(panel.presetList[i].data.layer) == "table" then
 							--Frame strata
 							if panel.presetList[i].data.layer.strata then
 								t.frame:SetFrameStrata(panel.presetList[i].data.layer.strata) --Update the frame
@@ -9385,7 +9409,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 							end
 
 							--Keep on top
-							if panel.presetList[i].data.layer.keepOnTop then
+							if panel.presetList[i].data.layer.keepOnTop ~= nil then
 								t.frame:SetToplevel(panel.presetList[i].data.layer.keepOnTop) --Update the frame
 								t.getData().layer.keepOnTop = panel.presetList[i].data.layer.keepOnTop --Update the storage
 								if panel.layer.keepOnTop then panel.layer.keepOnTop.loadData(false) end --Update the options widget
@@ -9434,9 +9458,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						arrange = {},
 						width = 180,
 						items = panel.presetList,
-						listeners = { selected = { { handler = applyPreset, }, }, },
+						listeners = {
+							loaded = t.presets and { { handler = function(self) self.setText(ns.toolboxStrings.presets.apply.select) end, }, } or nil,
+							selected = { { handler = applyPreset, }, },
+						},
 						optionsKey = t.optionsKey,
-						onLoad = function(self) self.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end,
 					})
 
 					--[ Custom Preset ]
@@ -9485,17 +9511,17 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 							wt.CopyValues(t.presets.custom.getData(), panel.presetList[t.presets.custom.index].data)
 							if t.presets.custom.getData() then wt.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
-							--Apply the custom preset
-							panel.applyPreset(t.presets.custom.index)
-
 							--Call the specified handler
 							if t.presets.custom.onReset then t.presets.custom.onReset() end
+
+							--Apply the custom preset
+							panel.applyPreset(t.presets.custom.index)
 						end
 
 						--| Options Widgets
 
-						local savePopup = wt.CreatePopupDialogueData(addon, "SAVEPRESET", {
-							text = ns.toolboxStrings.presets.save.warning:gsub("#CUSTOM", panel.presetList[t.presets.custom.index].title),
+						local savePopup = wt.CreatePopupDialogueData(addon, "SAVE_PRESET", {
+							text = ns.toolboxStrings.presets.save.warning:gsub("#CUSTOM", wt.Color(panel.presetList[t.presets.custom.index].title, colors.highlight)),
 							accept = ns.toolboxStrings.override,
 							onAccept = panel.saveCustomPreset,
 						})
@@ -9513,8 +9539,8 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 							dependencies = t.dependencies
 						})
 
-						local resetPopup = wt.CreatePopupDialogueData(addon, "RESETPRESET", {
-							text = ns.toolboxStrings.presets.reset.warning:gsub("#CUSTOM", panel.presetList[t.presets.custom.index].title),
+						local resetPopup = wt.CreatePopupDialogueData(addon, "RESET_PRESET", {
+							text = ns.toolboxStrings.presets.reset.warning:gsub("#CUSTOM", wt.Color(panel.presetList[t.presets.custom.index].title, colors.highlight)),
 							accept = ns.toolboxStrings.override,
 							onAccept = panel.resetCustomPreset,
 						})
@@ -9543,7 +9569,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					tooltip = { lines = { { text = ns.toolboxStrings.position.relativePoint.tooltip:gsub("#FRAME", t.frameName), }, } },
 					arrange = {},
 					width = 140,
-					listeners = t.presets and { selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, }, } or nil,
+					listeners = t.presets and { selected = { { handler = function(_, _, user)
+						if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+					end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.relativePoint end,
@@ -9563,7 +9591,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					tooltip = { lines = { { text = ns.toolboxStrings.position.anchor.tooltip:gsub("#FRAME", t.frameName), }, } },
 					arrange = { newRow = false, },
 					width = 140,
-					listeners = t.presets and { selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, }, } or nil,
+					listeners = t.presets and { selected = { { handler = function(_, _, user)
+						if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+					end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.anchor end,
@@ -9627,6 +9657,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					optionsKey = t.optionsKey,
 					getData = function() return t.settingsData.keepInPlace end,
 					saveData = function(state) t.settingsData.keepInPlace = state end,
+					default = true,
+					showDefault = false,
+					utilityMenu = false,
 				})
 
 				panel.position.offset.x = wt.CreateNumericSlider({
@@ -9640,9 +9673,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					fractional = 2,
 					step = 1,
 					altStep = 25,
-					events = t.presets and {
-						OnValueChanged = function(_, _, user) if user then panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end end,
-					} or nil,
+					listeners = t.presets and { changed = { { handler = function(_, _, user)
+						if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+					end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.offset.x end,
@@ -9665,9 +9698,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					fractional = 2,
 					step = 1,
 					altStep = 25,
-					events = t.presets and {
-						OnValueChanged = function(_, _, user) if user then panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end end,
-					} or nil,
+					listeners = t.presets and { changed = { { handler = function(_, _, user)
+						if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+					end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().position.offset.y end,
@@ -9685,6 +9718,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					title = ns.toolboxStrings.position.keepInBounds.label,
 					tooltip = { lines = { { text = ns.toolboxStrings.position.keepInBounds.tooltip:gsub("#FRAME", t.frameName), }, } },
 					arrange = { newRow = false, },
+					listeners = t.presets and { toggled = { { handler = function(_, _, user)
+						if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+					end, }, }, } or nil,
 					dependencies = t.dependencies,
 					optionsKey = t.optionsKey,
 					getData = function() return t.getData().keepInBounds end,
@@ -9764,9 +9800,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						tooltip = { lines = { { text = ns.toolboxStrings.layer.strata.tooltip:gsub("#FRAME", t.frameName), }, } },
 						arrange = {},
 						width = 140,
-						listeners = t.presets and {
-							selected = { { handler = function() panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end, }, },
-						} or nil,
+						listeners = t.presets and { selected = { { handler = function(_, _, user)
+							if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+						end, }, }, } or nil,
 						dependencies = t.dependencies,
 						optionsKey = t.optionsKey,
 						getData = function() return t.getData().layer.strata end,
@@ -9784,6 +9820,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						title = ns.toolboxStrings.layer.keepOnTop.label,
 						tooltip = { lines = { { text = ns.toolboxStrings.layer.keepOnTop.tooltip:gsub("#FRAME", t.frameName), }, } },
 						arrange = { newRow = false, },
+						listeners = t.presets and { toggled = { { handler = function(_, _, user)
+							if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+						end, }, }, } or nil,
 						dependencies = t.dependencies,
 						optionsKey = t.optionsKey,
 						getData = function() return t.getData().layer.keepOnTop end,
@@ -9805,9 +9844,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						max = 10000,
 						step = 1,
 						altStep = 100,
-						events = t.presets and {
-							OnValueChanged = function(_, _, user) if user then panel.presets.apply.setText(nil, nil, ns.toolboxStrings.presets.apply.select) end end,
-						} or nil,
+						listeners = t.presets and { changed = { { handler = function(_, _, user)
+							if user then panel.presets.apply.setText(ns.toolboxStrings.presets.apply.select) end
+						end, }, }, } or nil,
 						dependencies = t.dependencies,
 						optionsKey = t.optionsKey,
 						getData = function() return t.getData().layer.level end,
@@ -9844,6 +9883,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						-- panel.position.relativeTo.loadData(false)
 						panel.position.offset.x.loadData(false)
 						panel.position.offset.y.loadData(false)
+
+						--Update the positioning visual aids
+						if WidgetToolsDB.positioningAids then positioningVisualAids.update(t.frame, t.getData().position) end
 
 						--Call the specified handler
 						if t.setMovable.events.onStop then t.setMovable.events.onStop() end

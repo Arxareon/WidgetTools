@@ -381,11 +381,19 @@
 ---@field wrap? boolean Whether or not to allow the text lines to wrap (overriding **t.font**) | ***Default:*** true
 
 ---@class labelFontOptions
+---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "GameFontHighlight"
+---@field disabled? string Name of the font to be used when the widget is disabled | ***Default:*** "GameFontDisable"
+
+---@class labelFontOptions_highlight
 ---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "GameFontNormal"
 ---@field highlight? string Name of the font to be used when the widget is being hovered | ***Default:*** "GameFontHighlight"
 ---@field disabled? string Name of the font to be used when the widget is disabled | ***Default:*** "GameFontDisable"
 
 ---@class labelFontOptions_small
+---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "GameFontHighlightSmall"
+---@field disabled? string Name of the font to be used when the widget is disabled | ***Default:*** "GameFontDisableSmall"
+
+---@class labelFontOptions_small_highlight
 ---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "GameFontNormalSmall"
 ---@field highlight? string Name of the font to be used when the widget is being hovered | ***Default:*** "GameFontHighlightSmall"
 ---@field disabled? string Name of the font to be used when the widget is disabled | ***Default:*** "GameFontDisableSmall"
@@ -616,6 +624,7 @@
 ---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** true<ul><li>***Note:*** Any unsaved data will be saved when ***WidgetToolbox*.SaveOptionsData(optionsKey)** is executed.</li></ul>
 
 ---@class optionsFrame
+---@field showDefault? boolean If true, show the default value of the widget in its tooltip | ***Default:*** true
 ---@field utilityMenu? boolean If true, assign a context menu to the options widget frame to allow for quickly resetting changes or the default value | ***Default:*** true
 
 
@@ -815,7 +824,7 @@
 ---@field onLoad? fun(user: boolean) Called after the data of the options widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 ---@field onSave? fun(user: boolean) Called after the data of the options widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 ---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
----@field onDefaults? fun(user: boolean) Called after options data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+---@field onDefault? fun(user: boolean, category: boolean) Called after options data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*optionsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
 
 ---@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsPageEvents, initializableContainer, liteObject
 ---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** true if **t.name** ~= nil
@@ -921,10 +930,10 @@
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Button"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field titleOffset? offsetData Offset the position of the label of the button
 ---@field size? sizeData_button
----@field font? labelFontOptions List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
+---@field font? labelFontOptions_highlight List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 
 ---@class customButtonCreationData : simpleButtonCreationData, customizableObject
----@field font? labelFontOptions_small Table of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
+---@field font? labelFontOptions_small_highlight Table of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 
 --[ Toggle ]
 
@@ -1000,6 +1009,7 @@
 ---@class checkboxCreationData : toggleCreationData, labeledChildObject, tooltipDescribableObject, arrangeableObject, positionableObject, visibleObject_base, liteObject, optionsFrame
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData_checkbox
+---@field font? labelFontOptions List of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 ---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://wowpedia.fandom.com/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the toggle frame</p><p>@*param* `state` boolean ― The checked state of the toggle frame</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** false</p></li></ul>
 
 ---@class radioButtonCreationData : checkboxCreationData
@@ -1314,7 +1324,7 @@
 ---@field [string]? textboxEventListener_any[] List of functions to call in order when a custom event is invoked
 
 ---@class labelFontOptions_editbox
----@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** "*default font based on the frame template*
+---@field normal? string Name of the font to be used when the widget is in its regular state | ***Default:*** *default font based on the frame template*
 ---@field disabled? string Name of the font to be used when the widget is disabled | ***Default:*** *default font based on the frame template*
 
 ---@class sizeData_editbox
@@ -1359,7 +1369,7 @@
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Copy Box"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData_editbox
 ---@field layer? DrawLayer
----@field font? string Name of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object to be used for the [FontString](https://wowpedia.fandom.com/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontNormal"<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
+---@field font? string Name of the [Font](https://wowpedia.fandom.com/wiki/UIOBJECT_Font) object to be used for the [FontString](https://wowpedia.fandom.com/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontNormalSmall"<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 ---@field color? colorData Apply the specified color to the text (overriding **t.font**)
 ---@field justify? string Set the horizontal alignment of the label: "LEFT"|"RIGHT"|"CENTER" (overriding **t.font**) | ***Default:*** "LEFT"
 ---@field flipOnMouse? boolean Hide/Reveal the editbox on mouseover instead of after a click | ***Default:*** false
@@ -1548,8 +1558,8 @@
 ---@field index? integer Index of the custom preset modifiable by the user | ***Default:*** 1
 ---@field getData fun(): table Return a reference to the table within the SavedVariables(PerCharacter) addon database where the custom preset data is committed to when the custom preset is saved
 ---@field defaultsTable table Reference to the table containing the default custom preset values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.presets.custom.getData()*.</li></ul>
----@field onSave? function Called when the accept button is pressed when saving the custom preset or by calling **saveCustomPreset** *(see below)*
----@field onReset? function Called when the accept button is pressed when resetting the custom preset or by calling **resetCustomPreset** *(see below)*
+---@field onSave? function Called after saving the custom preset
+---@field onReset? function Called after resetting the custom preset before it is applied
 
 ---@class presetItemList
 ---@field items presetItemData[] Table containing the dropdown items described within subtables

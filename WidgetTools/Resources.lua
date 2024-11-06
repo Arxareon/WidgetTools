@@ -16,13 +16,15 @@ local root = "Interface/AddOns/" .. ns.name .. "/"
 
 ns.changelog = {
 	{
-		"#V_Version 2.0_# #H_(11/4/2024)_#",
+		"#V_Version 2.0_# #H_(11/6/2024)_#",
 		"#N_New:_#",
-		"Added Cataclysm Classic 4.4.0, vanilla Classic 1.15.3 & The War Within 11.0.2 support.",
+		"Added Cataclysm Classic 4.4.1, vanilla Classic 1.15.4 & The War Within 11.0.5 support.",
 		"A new Lite mode has been introduced. When enabled, no settings managed by Widget Tools will be loaded for addons built with Widget Tools saving resources in the process. Disable to access addon settings again.",
 		"An option to enable positioning visual aids for addons built with Widget Tools have been added.",
 		"Added an option for developers to make the Frame Attributes window (TableAttributeDisplay Frame) wider.",
+		"Added chat commands for Widget Tools, use: #H_/wt_# to access.",
 		"#H_#C_Changes_# & #F_Fixes_#:_#",
+		"The look of checkboxes have been updated to match the new settings style.",
 		"Significant under the hood improvements & fixes.",
 		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
@@ -178,8 +180,7 @@ local english = {
 		lite = {
 			description = "Toggle Lite Mode: to load dependant addon settings or not",
 			response = "Lite Mode will be #STATE after the interface is reloaded.",
-			reminder = "Widget Tools is in Lite Mode, settings for dependant addons have not been loaded.\n#DISABLE",
-			disable = "Type #COMMAND to disable Lite Mode.",
+			reminder = "Lite Mode is enabled, settings for dependant addons have not been loaded.\nType #COMMAND to disable Lite Mode.",
 		},
 		dump = {
 			description = "List out the Widget Tools settings data",
