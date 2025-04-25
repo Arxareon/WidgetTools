@@ -92,6 +92,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 		description = ns.strings.specifications.description,
 		storage = { { storageTable = WidgetToolsDB, defaultsTable = ns.defaults, }, },
 		dataManagement = {},
+		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			wt.CreatePanel({
 				parent = canvas,
@@ -99,6 +100,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 				title = ns.strings.specifications.general.title,
 				description = ns.strings.specifications.general.description,
 				arrange = {},
+				arrangement = {},
 				initialize = function(panel)
 					local silentSave = false
 
@@ -168,11 +170,9 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 							category = category,
 							key = keys[1],
 						},
-						default = not wt.classic, --TODO fix in Classic
-						disabled = wt.classic, --TODO fix in Classic
+						default = true,
 					})
 				end,
-				arrangement = {}
 			})
 
 			wt.CreatePanel({
@@ -181,6 +181,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 				title = ns.strings.specifications.dev.title,
 				description = ns.strings.specifications.dev.description,
 				arrange = {},
+				arrangement = {},
 				initialize = function(panel)
 					local toggle = wt.CreateCheckbox({
 						parent = panel,
@@ -238,10 +239,8 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 						},
 					})
 				end,
-				arrangement = {}
 			})
 		end,
-		arrangement = {}
 	})
 
 	--| Addons Page
@@ -255,6 +254,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 		scroll = { speed = 0.2 },
 		static = true,
 		dataManagement = {},
+		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			--List Toolbox versions in use
 			for k, v in wt.SortedPairs(registry.addons) do
@@ -264,6 +264,11 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 					title = ns.strings.addons.toolbox:gsub("#VERSION", ns.strings.about.version:gsub("#VERSION", WrapTextInColorCode(k, "FFFFFFFF"))),
 					arrange = {},
 					size = { h = 32 },
+					arrangement = {
+						margins = { t = 28, },
+						gaps = 24,
+						flip = true,
+					},
 					initialize = function(toolboxPanel, width)
 						--List reliant addons
 						for i = 1, #v do if C_AddOns.IsAddOnLoaded(v[i]) then
@@ -275,6 +280,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 								arrange = {},
 								size = { w = width - 40, h = 48 },
 								background = { color = { r = 0.1, g = 0.1, b = 0.1, a = 0.6 } },
+								arrangement = { flip = true },
 								initialize = function(addonPanel)
 									local logo = wt.CreateTexture({
 										parent = addonPanel,
@@ -316,12 +322,7 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 										name = "Toggle",
 										title = ns.strings.about.toggle.label,
 										tooltip = { lines = { { text = ns.strings.about.toggle.tooltip, }, } },
-										position = {
-											anchor = "BOTTOMRIGHT",
-											relativeTo = addonPanel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = -12, }
-										},
+										arrange = {},
 										size = { w = 80, h = 20 },
 										getData = function() return C_AddOns.GetAddOnEnableState(v[i]) > 0 end,
 										saveData = function(state) toggleAddon(state) end,
@@ -404,11 +405,6 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 							})
 						end end
 					end,
-					arrangement = { parameters = {
-						margins = { t = 28, },
-						gaps = 24,
-						flip = true,
-					}, }
 				})
 			end
 
@@ -441,10 +437,9 @@ function WidgetTools.frame:PLAYER_ENTERING_WORLD()
 						font = "GameFontDisableSmall",
 						justify = { h = "LEFT", },
 					})
-				end
+				end,
 			})
 		end,
-		arrangement = {}
 	})
 
 

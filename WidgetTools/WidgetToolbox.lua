@@ -1274,17 +1274,16 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	---@param t? arrangementData Arrange the child frames of **container** based on the specifications provided in this table
 	function wt.ArrangeContent(container, t)
 		t = t or {}
-		t.parameters = t.parameters or {}
-		t.parameters.margins = t.parameters.margins or {}
-		t.parameters.margins = { l = t.parameters.margins.l or 12, r = t.parameters.margins.r or 12, t = t.parameters.margins.t or 12, b = t.parameters.margins.b or 12 }
-		if t.parameters.flip then
-			local temp = t.parameters.margins.l
-			t.parameters.margins.l = t.parameters.margins.r
-			t.parameters.margins.r = temp
+		t.margins = t.margins or {}
+		t.margins = { l = t.margins.l or 12, r = t.margins.r or 12, t = t.margins.t or 12, b = t.margins.b or 12 }
+		if t.flip then
+			local temp = t.margins.l
+			t.margins.l = t.margins.r
+			t.margins.r = temp
 		end
-		t.parameters.gaps = t.parameters.gaps or 8
-		local flipper = t.parameters.flip and -1 or 1
-		local height = t.parameters.margins.t
+		t.gaps = t.gaps or 8
+		local flipper = t.flip and -1 or 1
+		local height = t.margins.t
 		local frames = { container:GetChildren() }
 
 		--Assemble the arrangement descriptions
@@ -1330,10 +1329,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			end
 
 			--Increase the content height by the space between rows
-			height = height + (i > 1 and t.parameters.gaps or 0)
+			height = height + (i > 1 and t.gaps or 0)
 
 			--First frame goes to the top left (or right if flipped)
-			frames[t.order[i][1]]:SetPoint(t.parameters.flip and "TOPRIGHT" or "TOPLEFT", t.parameters.margins.l * flipper, -height)
+			frames[t.order[i][1]]:SetPoint(t.flip and "TOPRIGHT" or "TOPLEFT", t.margins.l * flipper, -height)
 
 			--Place the rest of the frames
 			if #t.order[i] > 1 then
@@ -1345,15 +1344,15 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 				if #t.order[i] > 2 then
 					--Last frame goes to the top right (or left if flipped)
-					frames[t.order[i][#t.order[i]]]:SetPoint(t.parameters.flip and "TOPLEFT" or "TOPRIGHT", -t.parameters.margins.r * flipper, -height)
+					frames[t.order[i][#t.order[i]]]:SetPoint(t.flip and "TOPLEFT" or "TOPRIGHT", -t.margins.r * flipper, -height)
 
 					--Fill the space between the main anchor points with the remaining frames
 					if #t.order[i] > 3 then
 						local shift = odd and 0 or 0.5
 						local w = container:GetWidth() / 2
 						local n = (#t.order[i] - (odd and 1 or 0)) / 2 - shift
-						local leftFillWidth = (w - frames[t.order[i][1]]:GetWidth() / 2 - t.parameters.margins.l) / -n * flipper
-						local rightFillWidth = (w - frames[t.order[i][#t.order[i]]]:GetWidth() / 2 - t.parameters.margins.r) / n * flipper
+						local leftFillWidth = (w - frames[t.order[i][1]]:GetWidth() / 2 - t.margins.l) / -n * flipper
+						local rightFillWidth = (w - frames[t.order[i][#t.order[i]]]:GetWidth() / 2 - t.margins.r) / n * flipper
 
 						--Fill the left half
 						local last = math.floor(#t.order[i] / 2)
@@ -1371,7 +1370,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		end
 
 		--Set the height of the container frame
-		if t.parameters.resize ~= false then container:SetHeight(height + t.parameters.margins.b) end
+		if t.resize ~= false then container:SetHeight(height + t.margins.b) end
 	end
 
 	---Set the movability of a frame based in the specified values
@@ -1855,7 +1854,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
 		local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-		local branding = (logo and (wt.Texture(logo, 9) .. " ") or "") .. addonTitle .. ": "
+		local branding = (logo and (wt.Texture(logo, 11, 11) .. " ") or "") .. addonTitle .. ": "
 
 		---@class chatCommandManager
 		local manager = {}
@@ -2330,6 +2329,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			frameStrata = "DIALOG",
 			keepOnTop = true,
 			background = { color = { a = 0.9 }, },
+			arrangement = {},
 			initialize = function(panel)
 
 				--[ Textbox ]
@@ -2375,7 +2375,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					action = cancel,
 				})
 			end,
-			arrangement = {}
 		})
 
 		--| Position & dimensions
@@ -2847,7 +2846,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 		t.scrollSpeed = (t.scrollSpeed or 0.25)
 
 		--Override the built-in update function
-		scrollFrame.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way
+		scrollFrame.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way to overriding the built-in update function
 			local height = scrollFrame:GetHeight()
 			scrollFrame.ScrollBar.panExtentPercentage = height * t.scrollSpeed / math.abs(scrollChild:GetHeight() - height)
 		end
@@ -2941,7 +2940,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			t.initialize(panel, t.size.w, t.size.h, t.name or "Panel")
 
 			--Arrange content
-			if t.arrangement then wt.ArrangeContent(panel, wt.AddMissing(t.arrangement, { parameters = { margins = { t = t.description and 30 or nil, }, }, })) end
+			if t.arrangement then wt.ArrangeContent(panel, wt.AddMissing(t.arrangement, { margins = { t = t.description and 30 or nil, }, })) end
 		end
 
 		return panel
@@ -3316,7 +3315,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 			--| Title & description
 
-			local title = t.title or wt.Clear(C_AddOns.GetAddOnMetadata(addon, "title")):gsub("^%s*(.-)%s*$", "%1")
+			local title = t.title or C_AddOns.GetAddOnMetadata(addon, "title")
 
 			--Title & description
 			page.title, page.description = wt.AddTitle({
@@ -3439,11 +3438,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			t.initialize(page.scroller or page.canvas, width, height, (t.dataManagement or {}).category, (t.dataManagement or {}).keys, t.name or addon)
 
 			--Arrange content
-			if t.arrangement and page.canvas then wt.ArrangeContent(page.scroller or page.canvas, wt.AddMissing(t.arrangement, { parameters = {
+			if t.arrangement and page.canvas then wt.ArrangeContent(page.scroller or page.canvas, wt.AddMissing(t.arrangement, {
 				margins = { l = 10, r = 10, t = t.scroll and 78 or 82, b = t.scroll and 10 or 22 },
 				gaps = 32,
 				resize = t.scroll ~= nil
-			}, })) end
+			})) end
 		end
 
 		return page
@@ -8315,7 +8314,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		t = t or {}
 		local data = {
-			title = wt.Clear(C_AddOns.GetAddOnMetadata(addon, "Title")):sub(1, -2),
+			title = C_AddOns.GetAddOnMetadata(addon, "Title"),
 			version = C_AddOns.GetAddOnMetadata(addon, "Version"),
 			day = C_AddOns.GetAddOnMetadata(addon, "X-Day"),
 			month = C_AddOns.GetAddOnMetadata(addon, "X-Month"),
@@ -8338,6 +8337,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			title = t.title or data.title,
 			description = t.description or C_AddOns.GetAddOnMetadata(addon, "Notes"),
 			static = t.static ~= false,
+			arrangement = {},
 			initialize = function(canvas)
 
 				--[ About ]
@@ -8349,6 +8349,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					description = ns.toolboxStrings.about.description:gsub("#ADDON", data.title),
 					arrange = {},
 					size = { h = 258 },
+					arrangement = {
+						flip = true,
+						resize = false
+					},
 					initialize = function(panel)
 
 						--[ Information ]
@@ -8590,6 +8594,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 										frameStrata = "DIALOG",
 										keepOnTop = true,
 										background = { color = { a = 0.9 }, },
+										arrangement = {
+											margins = { l = 16, r = 16, t = 42, b = 16 },
+											flip = true,
+										},
 										initialize = function(windowPanel)
 											wt.CreateMultilineEditbox({
 												parent = windowPanel,
@@ -8619,19 +8627,11 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 											windowPanel:EnableMouse(true)
 										end,
-										arrangement = { parameters = {
-											margins = { l = 16, r = 16, t = 42, b = 16 },
-											flip = true,
-										}, }
 									})
 								end
 							end,
 						})
 					end,
-					arrangement = { parameters = {
-						flip = true,
-						resize = false
-					}, }
 				})
 
 				--[ Sponsors ]
@@ -8684,7 +8684,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					})
 				end
 			end,
-			arrangement = {}
 		} or nil)
 	end
 
@@ -8697,7 +8696,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	function wt.CreateDataManagementPage(addon, t)
 		if not addon or not C_AddOns.IsAddOnLoaded(addon) or not t.accountData or not t.characterData or not t.settingsData or not t.defaultsTable then return end
 
-		local addonTitle = wt.Clear(C_AddOns.GetAddOnMetadata(addon, "Title"))
+		local addonTitle = C_AddOns.GetAddOnMetadata(addon, "Title")
 
 		---@class dataManagementPage
 		---@field profiles? table Collection of profiles settings widgets
@@ -8740,6 +8739,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			onLoad = t.onLoad,
 			onCancel = t.onCancel,
 			onDefault = t.onDefault,
+			arrangement = {},
 			initialize = function(canvas, _, _, category, keys)
 
 				--[ Profile Management ]
@@ -9012,6 +9012,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						description = ns.toolboxStrings.profiles.description:gsub("#ADDON", addonTitle),
 						arrange = {},
 						size = { h = 64 },
+						arrangement = {},
 						initialize = function(panel)
 							dataManagement.profiles.apply = wt.CreateDropdownSelector({
 								parent = panel,
@@ -9093,7 +9094,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								dependencies = { { frame = dataManagement.profiles.apply, evaluate = function() return #t.accountData.profiles > 1 end }, }
 							})
 						end,
-						arrangement = {}
 					})
 
 					--[ Backup ]
@@ -9108,6 +9108,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 						description = ns.toolboxStrings.backup.description:gsub("#ADDON", addonTitle),
 						arrange = {},
 						size = { h = canvas:GetHeight() - 214 },
+						arrangement = {
+							flip = true,
+							resize = false
+						},
 						initialize = function(panel)
 
 							--[ Utilities ]
@@ -9237,6 +9241,10 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								frameStrata = "DIALOG",
 								keepOnTop = true,
 								background = { color = { a = 0.9 }, },
+								arrangement = {
+									margins = { l = 16, r = 16, t = 42, b = 16 },
+									flip = true,
+								},
 								initialize = function(windowPanel)
 									dataManagement.backupAllProfiles.box = wt.CreateMultilineEditbox({
 										parent = windowPanel,
@@ -9278,10 +9286,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 									windowPanel:EnableMouse(true)
 									windowPanel:Hide()
 								end,
-								arrangement = { parameters = {
-									margins = { l = 16, r = 16, t = 42, b = 16 },
-									flip = true,
-								}, }
 							})
 
 							wt.CreateSimpleButton({
@@ -9372,14 +9376,9 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 								action = dataManagement.refreshAllProfilesBackupBox,
 							})
 						end,
-						arrangement = { parameters = {
-							flip = true,
-							resize = false
-						}, }
 					})
 				end
 			end,
-			arrangement = {},
 		})
 
 		return dataManagement
@@ -9390,8 +9389,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 	--| Positioning
 
 	local positioningVisualAids = {}
-
-	if WidgetToolsDB.lite or wt.classic then WidgetToolsDB.positioningAids = false end --TODO fix in Classic
 
 	---Create and set up position options for a specified frame within a panel frame
 	---***
@@ -9417,36 +9414,25 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			positioningVisualAids.frame = positioningVisualAids.frame or wt.CreateFrame({
 				name = "WidgetToolsPositioningVisualAids",
 				position = { anchor = "CENTER", },
-				size = { w = GetScreenWidth() / C_CVar.GetCVar("uiScale") - 14, h = GetScreenHeight() / C_CVar.GetCVar("uiScale") - 14 },
+				size = { w = GetScreenWidth() - 14, h = GetScreenHeight() - 14 },
 				visible = false,
 				frameStrata = "BACKGROUND",
 				initialize = function(container)
 
 					--[ Textures ]
 
-					-- positioningVisualAids.highlight = positioningVisualAids.highlight or wt.CreateTexture({
-					-- 	parent = container,
-					-- 	name = "Highlight",
-					-- 	wrap = { h = true, v = true },
-					-- 	color = ns.colors.halfTransparent.grey,
-					-- 	events = {
-					-- 		OnEnter = function() positioningVisualAids.highlight:SetColorTexture(wt.UnpackColor(ns.colors.halfTransparent.blue)) end,
-					-- 		OnLeave = function() positioningVisualAids.highlight:SetColorTexture(wt.UnpackColor(ns.colors.halfTransparent.grey)) end
-					-- 	}
-					-- })
-
 					positioningVisualAids.anchor = positioningVisualAids.anchor or wt.CreateTexture({
 						parent = container,
 						name = "Anchor",
 						size = { w = 14, h = 14 },
-						path = "Interface/Common/common-mask-diamond",
+						path = wt.classic and "Interface/CharacterFrame/TempPortraitAlphaMask" or "Interface/Common/common-mask-diamond",
 					})
 
 					positioningVisualAids.relativePoint = positioningVisualAids.relativePoint or wt.CreateTexture({
 						parent = container,
 						name = "RelativePoint",
 						size = { w = 14, h = 14 },
-						path = "Interface/Common/common-iconmask",
+						path = not wt.classic and "Interface/Common/common-iconmask" or nil,
 					})
 
 					positioningVisualAids.line = positioningVisualAids.line or wt.CreateLine({
@@ -9487,14 +9473,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 					function positioningVisualAids.show(frame, position)
 						positioningVisualAids.frame:Show()
-						positioningVisualAids.frame:SetScale(UIParent:GetScale())
-
-						--Highlight
-						-- wt.SetPosition(positioningVisualAids.highlight, {
-						-- 	anchor = "CENTER",
-						-- 	relativeTo = t.frame,
-						-- })
-						-- positioningVisualAids.highlight:SetSize(t.frame:GetSize())
 
 						--Points
 						positioningVisualAids.update(frame, position)
@@ -9502,13 +9480,19 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 				end
 			})
 
-			--Update the size of the highlight aid
-			-- t.frame:HookScript("OnSizeChanged", function(_, ...) if positioningVisualAids.frame:IsVisible() then positioningVisualAids.highlight:SetSize(...) end end)
-
 			--[ Toggle ]
 
 			t.canvas:HookScript("OnShow", function() positioningVisualAids.show(t.frame, t.getData().position) end)
 			t.canvas:HookScript("OnHide", function() positioningVisualAids.frame:Hide() end)
+
+			--[ Update Size ]
+
+			WidgetTools.frame:RegisterEvent("UI_SCALE_CHANGED")
+
+			function WidgetTools.frame:UI_SCALE_CHANGED()
+				positioningVisualAids.frame:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
+				positioningVisualAids.frame:SetScale(UIParent:GetScale())
+			end
 		end
 
 		--[ Options Panel ]
@@ -9519,6 +9503,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			title = ns.toolboxStrings.position.title,
 			description = ns.toolboxStrings.position.description[t.setMovable and "movable" or "static"]:gsub("#FRAME", t.frameName),
 			arrange = {},
+			arrangement = {},
 			initialize = function(panelFrame)
 
 				--[ Presets ]
@@ -9897,62 +9882,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					},
 				}) end
 
-				-- panel.position.relativeTo = wt.CreateEditBox({ --TODO: Try out GetMouseFocus() instead
-				-- 	parent = panelFrame,
-				-- 	name = "RelativeFrame",
-				-- 	title = strings.position.relativeTo.label,
-				-- 	tooltip = { lines = { { text = strings.position.relativeTo.tooltip:gsub("#FRAME", t.frameName), }, } },
-				-- 	arrange = { newRow = false, },
-				-- 	width = 170,
-				-- 	events = {
-				-- 		OnTextChanged = function(self, text)
-				-- 			print("SET TEXT CHANGED", t.frameName, text) --REMOVE
-				-- 			if text then
-				-- 				text = wt.Clear(text)
-				-- 				self:SetText(wt.Color(text, wt.ToFrame(text) and { r = 1, g = 1, b = 1 } or { r = 1, g = 0.3, b = 0.3 }))
-				-- 			else self:SetText("") end
-				-- 		end,
-				-- 		OnEnterPressed = function(self, text) local l = wt.ToFrame(wt.Clear(text)) if not l then
-				-- 			self:SetText("")
-				-- 			print("ON ENTER PRESSED", l) --REMOVE
-				-- 			panel.position.relativePoint.setSelected(nil)
-				-- 		end end,
-				-- 		OnEscapePressed = function(self) self:SetText(t.getData().position.relativeTo) end,
-				-- 	},
-				-- 	dependencies = wt.MergeTable(wt.Clone(t.dependencies), { { frame = panel.position.absolute, evaluate = function(value) return not value end }, }),
-				-- 	optionsKey = t.optionsKey,
-				-- 	getData = function()
-				-- 		if type(t.getData().position.relativeTo) == "table" then if t.getData().position.relativeTo.GetName then print(t.getData().position.relativeTo:GetName() .. ".") end end --REMOVE
-				-- 		return wt.Clear(wt.ToString(t.getData().position.relativeTo))
-				-- 	end,
-				-- 	saveData = function(text)
-				-- 		text = wt.Clear(value)
-				-- 		local frame = wt.ToFrame(text)
-				-- 		print("CONVERT SAVE", frame, frame and text or nil) --REMOVE
-				--		
-				-- 		t.getData().position.relativeTo = frame and text
-				-- 	end,
-				-- 	onChange = { "CustomPositionChangeHandler", "UpdateFramePosition", },
-				-- 	-- disabled = not t.getData().position.relativeTo,
-				-- 	-- dependencies = t.getData().position.relativeTo and t.dependencies or nil,
-				-- 	-- optionsData = t.getData().position.relativeTo and {
-				-- 	-- 	optionsKey = t.optionsKey,
-				-- 	-- 	st = t.getData().position,
-				-- 	-- 	storageKey = "relativeTo",
-				-- 	-- 	convertSave = function(value)
-				-- 	-- 		local text = wt.Clear(value)
-				-- 	-- 		local frame = wt.ToFrame(text)
-				-- 	-- 		print("CONVERT SAVE", frame, frame and text or nil) --REMOVE
-				-- 	-- 		return frame and text or nil
-				-- 	-- 	end,
-				-- 	-- 	convertLoad = function(value)
-				-- 	-- 		if type(value) == "table" then if value.GetName then print(value:GetName() .. ".") end end --REMOVE
-				-- 	-- 		return wt.Clear(wt.ToString(value))
-				-- 	-- 	end,
-				-- 	-- 	onChange = { "CustomPositionChangeHandler", "UpdateFramePosition", }
-				-- 	-- } or nil
-				-- })
-
 				--[ Screen Layer ]
 
 				if t.getData().layer and next(t.getData().layer) then
@@ -10026,7 +9955,6 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 					}) end
 				end
 			end,
-			arrangement = {}
 		})
 
 		--[ Movability ]

@@ -194,19 +194,16 @@
 ---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** 12
 ---@field b? number Space to leave at the bottom | ***Default:*** 12
 
----@class arrangementParameters
+---@class arrangementData
 ---@field margins? spacingData Inset the content inside the container frame by the specified amount on each side
 ---@field gaps? number The amount of space to leave between rows | ***Default:*** 8
 ---@field flip? boolean Fill the rows from right to left instead of left to right | ***Default:*** false
 ---@field resize? boolean Set the height of the container frame to match the space taken up by the arranged content (including margins) | ***Default:*** true
-
----@class arrangementData
----@field parameters? arrangementParameters Set of parameters to arrange the frames by: spacing, direction & resizing
 ---@field order? { [table[]] : integer[] } If set, position the child frames by into columns within rows in the order specified in a nested structure, an array of subtables representing rows, and their values representing the index of a given child frame in { **container**:[GetChildren()](https://wowpedia.fandom.com/wiki/API_Frame_GetChildren) }<ul><li>***Note:*** If not set, assemble the arrangement from the individual arrangement descriptions of child frames stored in their **arrangementInfo** custom table property.</li></ul>
 
 ---@class initializableContainer
----@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 ---@field arrangement? arrangementData If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
+---@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 ---@class initializableOptionsContainer : initializableContainer
 ---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing options data management rules & change handler scripts</p><p>@*param* `keys`? string[] A list of unique strings appended to **category** linking a subset of options data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
@@ -760,11 +757,8 @@
 ---@class spacingData_panel : spacingData
 ---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** **t.description** and 30 or 12
 
----@class arrangementParameters_panel : arrangementParameters
+---@class arrangementData_panel : arrangementData
 ---@field margins? spacingData_panel Inset the content inside the container frame by the specified amount on each side
-
----@class arrangementData_panel
----@field parameters? arrangementParameters_panel Set of parameters to arrange the frames by: spacing, direction & resizing
 
 --| Constructors
 
@@ -775,6 +769,7 @@
 ---@field border? backdropBorderData_panel Table containing the parameters used for the border
 ---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the panel and the functions to assign as event handlers called when they trigger
 ---@field initialize? fun(container?: panel, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? panel ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+---@field arrangement? arrangementData_panel If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 
 --[ Context Menu ]
 
@@ -834,13 +829,10 @@
 ---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** **t.scroll** and 78 or 82
 ---@field b? number Space to leave at the bottom | ***Default:*** **t.scroll** and 10 or 22
 
----@class arrangementParameters_settingsPage : arrangementParameters
+---@class arrangementData_settingsPage : arrangementData
 ---@field margins? spacingData_settingsPage Inset the content inside the canvas frame by the specified amount on each side
 ---@field gaps? number The amount of space to leave between rows | ***Default:*** 32
 ---@field resize? boolean Set the height of the canvas frame to match the space taken up by the arranged content (including margins) | ***Default:*** **t.scroll** ~= nil
-
----@class arrangementData_settingsPage
----@field parameters? arrangementParameters_settingsPage Set of parameters to arrange the frames by: spacing, direction & resizing
 
 ---@class settingsPageCreationData_base
 ---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** false<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
@@ -862,6 +854,7 @@
 ---@field scroll? settingsPageScrollData If set, make the canvas frame scrollable by creating a [ScrollFrame](https://wowpedia.fandom.com/wiki/UIOBJECT_ScrollFrame) as its child
 ---@field autoSave? boolean If true, automatically save the values of all widgets registered for options data management under options keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** true if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 ---@field autoLoad? boolean If true, automatically load all data to the widgets registered for options data management under options keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** true if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 
 ---@class aboutPageCreationData : settingsPageCreationData_base
 ---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "Notes")](https://wowpedia.fandom.com/wiki/API_GetAddOnMetadata)
