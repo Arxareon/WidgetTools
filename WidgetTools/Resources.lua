@@ -115,7 +115,7 @@ local english = {
 		license = "License: #LICENSE",
 		toggle = {
 			label = "Enabled",
-			tooltip = "Shortcut to disable this addon.\n\nThis change will only take effect after the interface is reloaded. Once it has been disabled, this addon will not show up in this list until it's reenabled within the main AddOns menu.",
+			tooltip = "Uncheck to disable this addon.\n\nThis change will only take effect after the interface is reloaded. Once it has been disabled, this addon will not show up in this list until it's reenabled within the main AddOns menu.",
 		},
 	},
 	specifications = {
