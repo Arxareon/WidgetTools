@@ -49,9 +49,6 @@ foreach ($addon in $addons) {
 	$sourcePathToolbox = Join-Path $source "WidgetTools\WidgetToolbox.lua"
 	$destinationPathToolbox = $destination -replace "\[addon\]", $addon -replace "\[addonNameSpace\]", ($addon -replace "\s", "")
 
-	#Clear the directory
-	Remove-Item $destinationPathToolbox -Include *.* -Recurse -Force
-
 	#Copy the Toolbox to the addon
 	if (!(Test-Path -Path $destinationPathToolbox)) { New-Item $destinationPathToolbox -Type Directory }
 	Copy-Item $sourcePathToolbox -Destination $destinationPathToolbox -Recurse -Force

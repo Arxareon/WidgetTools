@@ -7,12 +7,12 @@
 ## Category: Development Tools
 ## Notes: Responsible for doing the heavy lifting in the background for other addons built on it & provides extra development tools.
 ## Author: Barnabas Nagy (Arxareon)
+## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
 ## X-CurseForge: curseforge.com/wow/addons/widget-tools
 ## X-Wago: addons.wago.io/addons/widget-tools
 ## X-Repository: github.com/Arxareon/WidgetTools
 ## X-Issues: github.com/Arxareon/WidgetTools/issues
-## X-Sponsors: Celierra
 ## IconTexture: Interface/AddOns/WidgetTools/Textures/Logo.tga
 ## AddonCompartmentFunc: AddonCompartment_OnClick_WidgetTools
 ## AddonCompartmentFuncOnEnter: AddonCompartment_OnEnter_WidgetTools

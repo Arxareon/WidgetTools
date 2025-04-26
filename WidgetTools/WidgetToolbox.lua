@@ -3540,7 +3540,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 
 		--| Parent
 
-		local parentTitle = parent.title and parent.title:GetText() or ""
+		local parentTitle = parent.title or ""
 
 		if type(parent.isType) ~= "function" and not parent.isType("SettingsPage") then parent = wt.CreateSettingsPage(addon, parent) end
 
@@ -3569,7 +3569,7 @@ function WidgetTools.frame:ADDON_LOADED(addon)
 			--Override defaults warning and add all defaults option to dialog
 			wt.UpdatePopupDialog(pages[i].getDefaultsPopupKey(), {
 				text = ns.toolboxStrings.settings.warning:gsub("#CATEGORY", wt.Color(parentTitle, wt.colors.normal)):gsub(
-					"#PAGE", wt.Color(pages[i].title and pages[i].title:GetText() or "", wt.colors.normal)
+					"#PAGE", wt.Color(pages[i].title or "", wt.colors.normal)
 				),
 				accept = ALL_SETTINGS,
 				alt = CURRENT_SETTINGS,
