@@ -43,10 +43,10 @@ foreach ($addon in $addons) {
 	if (!(Test-Path -Path $destinationPathWT)) { New-Item $destinationPathWT -Type Directory }
 	Copy-Item $sourcePathWT -Destination $destinationPathWT -Recurse -Force
 
-	<# WidgetToolbox #>
+	<# Toolbox #>
 
 	#Fill in the paths
-	$sourcePathToolbox = Join-Path $source "WidgetTools\WidgetToolbox.lua"
+	$sourcePathToolbox = Join-Path $source "WidgetTools\Toolbox"
 	$destinationPathToolbox = $destination -replace "\[addon\]", $addon -replace "\[addonNameSpace\]", ($addon -replace "\s", "")
 
 	#Copy the Toolbox to the addon
