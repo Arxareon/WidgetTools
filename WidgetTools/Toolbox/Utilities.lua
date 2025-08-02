@@ -375,8 +375,9 @@ end
 ---@return string
 function wt.Thousands(value, decimals, round, trim)
 	value = round == false and value or wt.Round(value, decimals)
-	local fraction = math.fmod(value, 1)
-	local integer = value - fraction
+	local sign = value < 0 and "-" or ""
+	local fraction = math.abs(value) % 1
+	local integer = math.abs(value) - fraction
 	local decimalText = tostring(fraction):sub(3, (decimals or 0) + 2)
 	local leftover
 
@@ -386,7 +387,7 @@ function wt.Thousands(value, decimals, round, trim)
 	end
 	if trim == false then for i = 1, (decimals or 0) - #decimalText do decimalText = decimalText .. "0" end end
 
-	return integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and wt.strings.decimal .. decimalText or "")
+	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and wt.strings.decimal .. decimalText or "")
 end
 
 --[ Escape sequences ]
