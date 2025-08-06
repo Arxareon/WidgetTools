@@ -7725,7 +7725,7 @@ function wt. CreatePositionOptions(addon, t)
 						dependencies = t.dependencies
 					})
 
-					local resetPopup = wt.RegisterPopupDialog(addon, "RESET_PRESET", {
+					local resetPopup = wt.RegisterPopupDialog(addon, "RESET_PRESET_" .. panelFrame:GetName(), {
 						text = wt.strings.presets.reset.warning:gsub("#CUSTOM", wt.Color(panel.presetList[t.presets.custom.index].title, wt.colors.normal)),
 						accept = wt.strings.override,
 						onAccept = panel.resetCustomPreset,
