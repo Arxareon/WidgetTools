@@ -1396,7 +1396,7 @@ function wt.AddSettingsDataManagementEntry(widget, t)
 	wt.settingsTable.rules[key] = wt.settingsTable.rules[key] or {}
 
 	--Add onChange handlers
-	if t.onChange then
+	if type(t.onChange) == "table" then
 		local newKeys = {}
 
 		for k, v in pairs(t.onChange) do if type(k) == "string" and type(v) == "function" then
@@ -1434,7 +1434,7 @@ function wt.LoadSettingsData(category, key, applyChanges)
 		wt.settingsTable.rules[key][i].widget.loadData(false)
 
 		--Register onChange handlers for call
-		if applyChanges and wt.settingsTable.rules[key][i].onChange then
+		if applyChanges and type(wt.settingsTable.rules[key][i].onChange) == "table" then
 			for j = 1, #wt.settingsTable.rules[key][i].onChange do applyChanges[category .. wt.settingsTable.rules[key][i].onChange[j]] = true end
 		end
 	end
@@ -1467,7 +1467,7 @@ function wt.ApplySettingsData(category, key)
 	local handlers = {}
 
 	--Register onChange handlers for call
-	for i = 1, #wt.settingsTable.rules[key] do if wt.settingsTable.rules[key][i].onChange then
+	for i = 1, #wt.settingsTable.rules[key] do if type(wt.settingsTable.rules[key][i].onChange) == "table" then
 		for j = 1, #wt.settingsTable.rules[key][i].onChange do handlers[category .. wt.settingsTable.rules[key][i].onChange[j]] = true end
 	end end
 
@@ -1503,7 +1503,7 @@ function wt.RevertSettingsData(category, key)
 		wt.settingsTable.rules[key][i].widget.revertData(false)
 
 		--Register onChange handlers for call
-		for i = 1, #wt.settingsTable.rules[key] do if applyChanges and wt.settingsTable.rules[key][i].onChange then
+		for i = 1, #wt.settingsTable.rules[key] do if applyChanges and type(wt.settingsTable.rules[key][i].onChange) == "table" then
 			for j = 1, #wt.settingsTable.rules[key][i].onChange do applyChanges[category .. wt.settingsTable.rules[key][i].onChange[j]] = true end
 		end end
 	end
@@ -1528,7 +1528,7 @@ function wt.ResetSettingsData(category, key)
 		wt.settingsTable.rules[key][i].widget.resetData(false)
 
 		--Register onChange handlers for call
-		for i = 1, #wt.settingsTable.rules[key] do if applyChanges and wt.settingsTable.rules[key][i].onChange then
+		for i = 1, #wt.settingsTable.rules[key] do if applyChanges and type(wt.settingsTable.rules[key][i].onChange) == "table" then
 			for j = 1, #wt.settingsTable.rules[key][i].onChange do applyChanges[category .. wt.settingsTable.rules[key][i].onChange[j]] = true end
 		end end
 	end

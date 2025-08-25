@@ -175,7 +175,6 @@ function WidgetTools.frame:PLAYER_LOGIN()
 				parent = canvas,
 				name = "DevTools",
 				title = ns.strings.specifications.dev.title,
-				description = ns.strings.specifications.dev.description,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
