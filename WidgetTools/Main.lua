@@ -87,7 +87,6 @@ function WidgetTools.frame:PLAYER_LOGIN()
 		name = "Specifications",
 		title = ns.strings.specifications.title,
 		description = ns.strings.specifications.description,
-		storage = { { storageTable = WidgetToolsDB, defaultsTable = ns.defaults, }, },
 		dataManagement = {},
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
