@@ -312,7 +312,7 @@
 ---@field font? fontData Table containing font properties used for [SetFont](https://wowpedia.fandom.com/wiki/API_FontInstance_SetFont) (overriding **t.template**)
 ---@field color? colorData_whiteDefault Apply the specified color to the font (overriding **t.template**)
 ---@field spacing? number Set the character spacing of the text using this font (overriding **t.template**) | ***Default:*** 0
----@field shadow? { offset: offsetData, color: colorData_blackDefault} Set a text shadow with the following parameters (overriding **t.template**)
+---@field shadow? { offset: offsetData, color: colorData_blackDefault } Set a text shadow with the following parameters (overriding **t.template**)
 ---@field justify? justifyData_centered Set the justification of the text using font (overriding **t.template**)
 ---@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**) | ***Default:*** true
 
