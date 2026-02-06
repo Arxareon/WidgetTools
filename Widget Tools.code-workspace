@@ -1,0 +1,80 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"launch": {
+		"configurations": [
+			{
+				"type": "PowerShell",
+				"request": "launch",
+				"name": "Copy Everywhere",
+				"script": "${workspaceFolder}/Install Tools/CopyEverywhere.ps1"
+			},
+			{
+				"type": "PowerShell",
+				"request": "launch",
+				"name": "Copy to Projects",
+				"script": "${workspaceFolder}/Install Tools/CopyToProjects.ps1"
+			},
+			{
+				"type": "PowerShell",
+				"request": "launch",
+				"name": "Copy to WoW",
+				"script": "${workspaceFolder}/Install Tools/CopyToWow.ps1"
+			}
+		]
+	},
+	"settings": {
+		"Lua.runtime.version": "Lua 5.1",
+		"Lua.runtime.builtin": {
+			"basic": "disable",
+			"debug": "disable",
+			"io": "disable",
+			"math": "disable",
+			"os": "disable",
+			"package": "disable",
+			"string": "disable",
+			"table": "disable",
+			"utf8": "disable"
+		},
+		"Lua.workspace.library": [
+			"~\\.vscode\\extensions\\ketho.wow-api-0.22.1\\Annotations\\Core"
+		],
+		"Lua.diagnostics.globals": [
+			"TableAttributeDisplay",
+			"VIDEO_OPTIONS_ENABLED",
+			"VIDEO_OPTIONS_DISABLED",
+			"StaticPopup_Show",
+			"CATEGORY",
+			"StaticPopupDialogs",
+			"ColorPickerFrame",
+			"ACCEPT",
+			"CANCEL",
+			"Settings",
+			"ALL_SETTINGS",
+			"CURRENT_SETTINGS",
+			"ScrollControllerMixin",
+			"Clamp",
+			"ReloadUI",
+			"DEFAULTS",
+			"SOUNDKIT",
+			"SettingsPanel",
+			"DEFAULT",
+			"DELETE",
+			"RESET",
+			"CLOSE",
+			"CTRL_KEY_TEXT",
+			"KEY_ENTER",
+			"COMMAND",
+			"KEY_ESCAPE",
+			"SlashCmdList",
+			"CreateSimpleTextureMarkup",
+			"ItemRefTooltip",
+			"WidgetToolbox",
+			"STATICPOPUPS_NUMDIALOGS"
+		],
+		"Lua.type.weakUnionCheck": true
+	}
+}
