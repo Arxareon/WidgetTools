@@ -30,7 +30,7 @@ ns.chat = {
 --Changelog
 ns.changelog = {
 	{
-		"#V_Version 2.1_# #H_(13/2/2026)_#",
+		"#V_Version 2.2_# #H_(13/2/2026)_#",
 		"#F_Hotfix:_#",
 		"Text in editboxes will once again be properly sized to fit the width of the boxes.",
 	},
