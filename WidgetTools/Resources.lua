@@ -1,23 +1,30 @@
 --[[ NAMESPACE ]]
 
 ---Addon namespace table
----@class WidgetToolsNamespace
----@field name string Addon namespace name
+---@class addonNamespace
 local ns = select(2, ...)
 
-ns.name = ...
+--| Shareable resources table
+
+---@class widgetToolsResources
+---@field name string Addon namespace name
+---@field title string Addon display title
+ns.rs = {}
+
+--Addon namespace name
+ns.rs.name = ...
 
 --Addon display title
-ns.title = select(2, C_AddOns.GetAddOnInfo(ns.name)):gsub("^%s*(.-)%s*$", "%1")
+ns.rs.title = select(2, C_AddOns.GetAddOnInfo(ns.rs.name)):gsub("^%s*(.-)%s*$", "%1")
 
 --Addon root folder
-ns.root = "Interface/AddOns/" .. ns.name .. "/"
+ns.rs.root = "Interface/AddOns/" .. ns.rs.name .. "/"
 
 
 --[[ STRINGS ]]
 
 --Chat commands
-ns.chat = {
+ns.rs.chat = {
 	keyword = "wt",
 	commands = {
 		about = "about",
@@ -148,7 +155,7 @@ ns.changelog = {
 
 ---Localized strings
 ---@class WidgetToolsStrings
-ns.strings = ns.localizations[GetLocale()]
+ns.rs.strings = ns.localizations[GetLocale()]
 
 --| Cleanup
 
@@ -157,8 +164,10 @@ ns.localizations = nil
 
 --[[ ASSETS ]]
 
+
+
 --Colors
-ns.colors = {
+ns.rs.colors = {
 	grey = {
 		{ r = 0.7, g = 0.7, b = 0.7 },
 		{ r = 0.54, g = 0.54, b = 0.54 },
@@ -171,13 +180,33 @@ ns.colors = {
 		grey = { r = 0.7, g = 0.7, b = 0.7, a = 0.5 },
 		blue = { r = 0.7, g = 0.9, b = 1, a = 0.5 },
 		yellow = { r = 1, g = 0.9, b = 0.7, a = 0.5 },
-	}
+	},
+	-- normal = NORMAL_FONT_COLOR,
+	-- highlight = HIGHLIGHT_FONT_COLOR,
+	-- disabled = GRAY_FONT_COLOR,
+	-- warning = RED_FONT_COLOR,
 }
 
 --Textures
-ns.textures = {
-	logo = ns.root .. "Textures/Logo.tga",
-	missing = ns.root .. "Textures/MissingLogo.tga",
+ns.rs.textures = {
+	logo = ns.rs.root .. "Textures/Logo.tga",
+	missing = ns.rs.root .. "Textures/MissingLogo.tga",
+	alphaBG = ns.rs.root .. "/Textures/AlphaBG.tga",
+	gradientBG = ns.rs.root .. "/Textures/GradientBG.tga",
+}
+
+--Fonts
+ns.rs.fonts = {
+	{ name = DEFAULT, path = STANDARD_TEXT_FONT:gsub("\\", "/"), widthRatio = 1 },
+	{ name = "Arbutus Slab", path = ns.rs.root .. "Fonts/ArbutusSlab.ttf", widthRatio = 1.07 },
+	{ name = "Caesar Dressing", path = ns.rs.root .. "Fonts/CaesarDressing.ttf", widthRatio = 0.84 },
+	{ name = "Germania One", path = ns.rs.root .. "Fonts/GermaniaOne.ttf", widthRatio = 0.86 },
+	{ name = "Mitr", path = ns.rs.root .. "Fonts/Mitr.ttf", widthRatio = 1.07 },
+	{ name = "Oxanium", path = ns.rs.root .. "Fonts/Oxanium.ttf", widthRatio = 0.94 },
+	{ name = "Pattaya", path = ns.rs.root .. "Fonts/Pattaya.ttf", widthRatio = 0.87 },
+	{ name = "Reem Kufi", path = ns.rs.root .. "Fonts/ReemKufi.ttf", widthRatio = 0.92 },
+	{ name = "Source Code Pro", path = ns.rs.root .. "Fonts/SourceCodePro.ttf", widthRatio = 1.11 },
+	{ name = CUSTOM, path = ns.rs.root .. "Fonts/CUSTOM.ttf", widthRatio = 1.2 },
 }
 
 

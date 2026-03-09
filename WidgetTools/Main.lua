@@ -1,15 +1,17 @@
 --[[ NAMESPACE ]]
 
----@class WidgetToolsNamespace
+---@class addonNamespace
 local ns = select(2, ...)
 
 
---[[ TOOLBOX MANAGEMENT ]]
-
-local registry = { toolbox = {}, addons = {} }
+--[[ GLOBAL TOOLS ]]
 
 --Global WidgetTools table
 WidgetTools = {}
+
+--[ Toolbox Management ]
+
+local registry = { toolbox = {}, addons = {} }
 
 ---Register or get a read-only reference of a WidgetTools toolbox under the specified version key
 ---***
@@ -17,7 +19,7 @@ WidgetTools = {}
 ---@param version string Version key the **toolbox** should be registered under
 ---@param toolbox? table Reference to the table to register as a WidgetTools toolbox
 ---***
----@return table|nil? toolbox Reference to the toolbox table registered under the **version** key
+---@return widgetToolbox|table|nil toolbox Read-only reference to the registered toolbox table under the **version** key
 function WidgetTools.RegisterToolbox(addon, version, toolbox)
 	if not addon or not version or (not registry.toolbox[version] and not toolbox) then return nil end
 
@@ -28,16 +30,30 @@ function WidgetTools.RegisterToolbox(addon, version, toolbox)
 	else return nil end
 
 	--Register the toolbox
-	registry.toolbox[version] = registry.toolbox[version] or toolbox
+	if type(registry.toolbox[version]) ~= "table" then registry.toolbox[version] = setmetatable({}, {
+		__index = toolbox,
+		__newindex = function(t, k, v) error("Widget Tools: Prevented the attempt of overriding protected data.", 2) end
+	}) end
 
 	return registry.toolbox[version]
 end
+
+--[ Global Resources ]
+
+local rs = setmetatable({}, {
+	__index = ns.rs,
+	__newindex = function(t, k, v) error("Widget Tools: Prevented the attempt of overriding protected data.", 2) end
+})
+
+---Get a read-only reference to the global Widget Tools resources
+---@return widgetToolsResources|table
+function WidgetTools.GetResources() return rs end
 
 
 --[[ INITIALIZATION ]]
 
 --Initialization frame
-WidgetTools.loaderFrame = CreateFrame("Frame", ns.name .. "InitializationFrame")
+WidgetTools.loaderFrame = CreateFrame("Frame", ns.rs.name .. "InitializationFrame")
 
 --Event handler
 WidgetTools.loaderFrame:SetScript("OnEvent", function(self, event, ...) return self[event] and self[event](self, ...) end)
@@ -50,7 +66,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 
 	--[[ RESOURCES ]]
 
-	---@class wt
+	---@class widgetToolbox
 	local wt = ns.WidgetToolbox
 
 	---@type chatCommandManager
@@ -71,7 +87,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 
 	--| Main Page
 
-	local mainPage = wt.CreateAboutPage(ns.name, {
+	local mainPage = wt.CreateAboutPage(ns.rs.name, {
 		register = true,
 		name = "About",
 		changelog = ns.changelog
@@ -82,50 +98,50 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 	---@type checkbox
 	local liteToggle
 
-	local specificationsPage = wt.CreateSettingsPage(ns.name, {
+	local specificationsPage = wt.CreateSettingsPage(ns.rs.name, {
 		register = mainPage,
 		name = "Specifications",
-		title = ns.strings.specifications.title,
-		description = ns.strings.specifications.description,
+		title = ns.rs.strings.specifications.title,
+		description = ns.rs.strings.specifications.description,
 		dataManagement = {},
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			wt.CreatePanel({
 				parent = canvas,
 				name = "General",
-				title = ns.strings.specifications.general.title,
-				description = ns.strings.specifications.general.description,
+				title = ns.rs.strings.specifications.general.title,
+				description = ns.rs.strings.specifications.general.description,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
 					local silentSave = false
 
-					local enableLitePopup = wt.RegisterPopupDialog(ns.name, "ENABLE_LITE_MODE", {
-						text = ns.strings.lite.enable.warning:gsub("#ADDON", ns.title),
-						accept = ns.strings.lite.enable.accept,
+					local enableLitePopup = wt.RegisterPopupDialog(ns.rs.name, "ENABLE_LITE_MODE", {
+						text = ns.rs.strings.lite.enable.warning:gsub("#ADDON", ns.rs.title),
+						accept = ns.rs.strings.lite.enable.accept,
 						onAccept = function()
 							liteToggle.setState(true)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
-					local disableLitePopup = wt.RegisterPopupDialog(ns.name, "DISABLE_LITE_MODE", {
-						text = ns.strings.lite.disable.warning:gsub("#ADDON", ns.title),
-						accept = ns.strings.lite.disable.accept,
+					local disableLitePopup = wt.RegisterPopupDialog(ns.rs.name, "DISABLE_LITE_MODE", {
+						text = ns.rs.strings.lite.disable.warning:gsub("#ADDON", ns.rs.title),
+						accept = ns.rs.strings.lite.disable.accept,
 						onAccept = function()
 							liteToggle.setState(false)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(ns.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
 					liteToggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "LiteMode",
-						title = ns.strings.specifications.general.lite.label,
-						tooltip = { lines = { { text = ns.strings.specifications.general.lite.tooltip:gsub("#COMMAND", WrapTextInColorCode("/wt lite", "FFFFFFFF")), }, } },
+						title = ns.rs.strings.specifications.general.lite.label,
+						tooltip = { lines = { { text = ns.rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", WrapTextInColorCode("/wt lite", "FFFFFFFF")), }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.lite end,
 						saveData = function(state) WidgetToolsDB.lite = state end,
@@ -155,8 +171,8 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 					wt.CreateCheckbox({
 						parent = panel,
 						name = "PositioningAids",
-						title = ns.strings.specifications.general.positioningAids.label,
-						tooltip = { lines = { { text = ns.strings.specifications.general.positioningAids.tooltip, }, } },
+						title = ns.rs.strings.specifications.general.positioningAids.label,
+						tooltip = { lines = { { text = ns.rs.strings.specifications.general.positioningAids.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.positioningAids end,
 						saveData = function(state) WidgetToolsDB.positioningAids = state end,
@@ -174,15 +190,15 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 			wt.CreatePanel({
 				parent = canvas,
 				name = "DevTools",
-				title = ns.strings.specifications.dev.title,
+				title = ns.rs.strings.specifications.dev.title,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
 					local toggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "ToggleWideFrameAttributes",
-						title = ns.strings.specifications.dev.frameAttributes.enabled.label,
-						tooltip = { lines = { { text = ns.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
+						title = ns.rs.strings.specifications.dev.frameAttributes.enabled.label,
+						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.frameAttributes.enabled end,
 						saveData = function(state) WidgetToolsDB.frameAttributes.enabled = state end,
@@ -213,8 +229,8 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 					wt.CreateNumericSlider({
 						parent = panel,
 						name = "FrameAttributesWidth",
-						title = ns.strings.specifications.dev.frameAttributes.width.label,
-						tooltip = { lines = { { text = ns.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
+						title = ns.rs.strings.specifications.dev.frameAttributes.width.label,
+						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
 						arrange = { newRow = false, },
 						min = 200,
 						max = 1400,
@@ -240,11 +256,11 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 
 	--| Addons Page
 
-	local addonsPage = wt.CreateSettingsPage(ns.name, {
+	local addonsPage = wt.CreateSettingsPage(ns.rs.name, {
 		register = mainPage,
 		name = "Addons",
-		title = ns.strings.addons.title,
-		description = ns.strings.addons.description:gsub("#ADDON", ns.title),
+		title = ns.rs.strings.addons.title,
+		description = ns.rs.strings.addons.description:gsub("#ADDON", ns.rs.title),
 		scroll = { speed = 0.2 },
 		static = true,
 		dataManagement = {},
@@ -257,7 +273,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 				wt.CreatePanel({
 					parent = canvas,
 					name = "Toolbox" .. toolboxVersion,
-					title = ns.strings.addons.toolbox:gsub("#VERSION", ns.strings.about.version:gsub("#VERSION", WrapTextInColorCode(toolboxVersion, "FFFFFFFF"))),
+					title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", WrapTextInColorCode(toolboxVersion, "FFFFFFFF"))),
 					arrange = {},
 					size = { h = 32 },
 					arrangement = {
@@ -310,7 +326,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 											offset = { x = 3, y = -3 }
 										},
 										size = { w = 38, h = 38 },
-										path = data.logo or ns.textures.missing,
+										path = data.logo or ns.rs.textures.missing,
 									})
 
 									--| Toggle
@@ -328,8 +344,8 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 									local toggle = wt.CreateCheckbox({
 										parent = addonPanel,
 										name = "Toggle",
-										title = wt.Color(C_AddOns.GetAddOnMetadata(addons[i], "Title"), wt.colors.highlight) .. " (" .. ns.strings.about.toggle.label .. ")",
-										tooltip = { lines = { { text = ns.strings.about.toggle.tooltip, }, } },
+										title = wt.Color(C_AddOns.GetAddOnMetadata(addons[i], "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
+										tooltip = { lines = { { text = ns.rs.strings.about.toggle.tooltip, }, } },
 										arrange = {},
 										size = { w = 300, },
 										font = { normal = "GameFontNormalMed1", },
@@ -391,7 +407,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 												"#MONTH", data.month
 											):gsub(
 												"#YEAR", data.year
-											), wt.colors.normal) .. ")", "FFFFFFFF") or ""),
+											), NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
 											font = "GameFontNormalSmall",
 											justify = { h = "LEFT", },
 										})
@@ -500,12 +516,12 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 			wt.CreatePanel({
 				parent = canvas,
 				name = "OldList",
-				title = ns.strings.addons.old.title,
-				description = ns.strings.addons.old.description,
+				title = ns.rs.strings.addons.old.title,
+				description = ns.rs.strings.addons.old.description,
 				arrange = {},
 				size = { h = 42 },
 				initialize = function(panel)
-					local oldToolboxes = ns.strings.addons.old.none:gsub("#ADDON", ns.title)
+					local oldToolboxes = ns.rs.strings.addons.old.none:gsub("#ADDON", ns.rs.title)
 
 					if type(WidgetToolbox) == "table" and next(WidgetToolbox) then
 						local toolboxes = ""
@@ -513,7 +529,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 						--Find old toolboxes
 						for k, _ in wt.SortedPairs(WidgetToolbox) do toolboxes = toolboxes .. " • " .. k end
 
-						oldToolboxes = WrapTextInColorCode(ns.strings.addons.old.inUse:gsub(
+						oldToolboxes = WrapTextInColorCode(ns.rs.strings.addons.old.inUse:gsub(
 							"#TOOLBOXES",  WrapTextInColorCode(toolboxes:sub(5), "FFFFFFFF")
 						), wt.ColorToHex(NORMAL_FONT_COLOR, true, false))
 					end
@@ -534,29 +550,29 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 
 	--[[ CHAT CONTROL ]]
 
-	chatCommands = wt.RegisterChatCommands(ns.name, { ns.chat.keyword }, {
+	chatCommands = wt.RegisterChatCommands(ns.rs.name, { ns.rs.chat.keyword }, {
 		commands = {
 			{
-				command = ns.chat.commands.about,
-				description = ns.strings.chat.about.description,
+				command = ns.rs.chat.commands.about,
+				description = ns.rs.strings.chat.about.description,
 				handler = mainPage.open,
 			},
 			{
-				command = ns.chat.commands.lite,
-				description = ns.strings.chat.lite.description,
+				command = ns.rs.chat.commands.lite,
+				description = ns.rs.strings.chat.lite.description,
 				handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
 			},
 			{
-				command = ns.chat.commands.dump,
-				description = ns.strings.chat.dump.description,
+				command = ns.rs.chat.commands.dump,
+				description = ns.rs.strings.chat.dump.description,
 				handler = function() wt.Dump(WidgetToolsDB, "WidgetToolsDB") end,
 			},
 			{
-				command = ns.chat.commands.run,
-				description = ns.strings.chat.run.description:gsub("#EXAMPLE", wt.Color("/wt run Dump { 1, \"a\", true, { print, UIParent, { 2 } } }; \"T\"; _; 2", ns.colors.grey[2])),
+				command = ns.rs.chat.commands.run,
+				description = ns.rs.strings.chat.run.description:gsub("#EXAMPLE", wt.Color("/wt run Dump { 1, \"a\", true, { print, UIParent, { 2 } } }; \"T\"; _; 2", ns.rs.colors.grey[2])),
 				handler = function(_, f, ...) print(f, wt[f]) return type(wt[f]) == "function", f, ... end,
-				success = ns.strings.chat.run.success,
-				error = ns.strings.chat.run.error,
+				success = ns.rs.strings.chat.run.success,
+				error = ns.rs.strings.chat.run.error,
 				onSuccess = function(_, f, ...)
 					local p = strsplittable(";", table.concat({ ... }, " "), nil)
 
@@ -567,59 +583,59 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 			},
 		},
 		colors = {
-			title = ns.colors.gold[1],
-			content = ns.colors.gold[2],
+			title = ns.rs.colors.gold[1],
+			content = ns.rs.colors.gold[2],
 			command = { r = 1, g = 1, b = 1, },
-			description = ns.colors.grey[1]
+			description = ns.rs.colors.grey[1]
 		},
 	})
 
 
 	--[[ ADDON COMPARTMENT ]]
 
-	wt.SetUpAddonCompartment(ns.name, {
+	wt.SetUpAddonCompartment(ns.rs.name, {
 		onClick = function()
 			if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
 				initialize = function(menu)
-					wt.CreateMenuTextline(menu, { text = ns.title, })
+					wt.CreateMenuTextline(menu, { text = ns.rs.title, })
 					wt.CreateMenuButton(menu, {
 						title = wt.strings.about.title,
 						action = mainPage.open
 					})
 					wt.CreateMenuButton(menu, {
-						title = ns.strings.specifications.title,
+						title = ns.rs.strings.specifications.title,
 						action = specificationsPage.open
 					})
 					wt.CreateMenuButton(menu, {
-						title = ns.strings.addons.title,
+						title = ns.rs.strings.addons.title,
 						action = addonsPage.open
 					})
 				end,
 				rightClickMenu = false,
 			}).open() end
 		end,
-		onEnter = function(_, frame) wt.tooltipData[wt.GetID(frame)].lines[5] = {
-			text = "\n" .. (WidgetToolsDB.lite and ns.strings.compartment.lite or ns.strings.compartment.open),
+		onEnter = function(_, frame) wt.UpdateTooltipData(frame, { lines = { [5] = {
+			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
 			font = GameFontNormalTiny,
-			color = ns.colors.grey[1],
-		} end
+			color = ns.rs.colors.grey[1],
+		}} }, false) end
 	}, { lines = {
-		{ text = ns.strings.about.version:gsub("#VERSION", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "Version") or "?", "FFFFFFFF")), },
-		{ text = ns.strings.about.date:gsub(
+		{ text = ns.rs.strings.about.version:gsub("#VERSION", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Version") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.date:gsub(
 			"#DATE", WrapTextInColorCode(wt.strings.date:gsub(
-				"#DAY", C_AddOns.GetAddOnMetadata(ns.name, "X-Day") or "?"
+				"#DAY", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Day") or "?"
 			):gsub(
-				"#MONTH", C_AddOns.GetAddOnMetadata(ns.name, "X-Month") or "?"
+				"#MONTH", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Month") or "?"
 			):gsub(
-				"#YEAR", C_AddOns.GetAddOnMetadata(ns.name, "X-Year") or "?"
+				"#YEAR", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Year") or "?"
 			), "FFFFFFFF")
 		), },
-		{ text = ns.strings.about.author:gsub("#AUTHOR", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "Author") or "?", "FFFFFFFF")), },
-		{ text = ns.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.name, "X-License") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.author:gsub("#AUTHOR", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Author") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "X-License") or "?", "FFFFFFFF")), },
 		{
-			text = "\n" .. (WidgetToolsDB.lite and ns.strings.compartment.lite or ns.strings.compartment.open),
+			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
 			font = GameFontNormalTiny,
-			color = ns.colors.grey[1],
+			color = ns.rs.colors.grey[1],
 		},
 	} })
 end

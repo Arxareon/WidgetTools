@@ -1,6 +1,6 @@
 --[[ NAMESPACE ]]
 
----@class WidgetToolsNamespace
+---@class addonNamespace
 local ns = select(2, ...)
 
 

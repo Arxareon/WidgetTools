@@ -52,6 +52,7 @@
 			"ColorPickerFrame",
 			"ACCEPT",
 			"CANCEL",
+			"CUSTOM",
 			"Settings",
 			"ALL_SETTINGS",
 			"CURRENT_SETTINGS",
@@ -75,7 +76,6 @@
 			"WidgetToolbox",
 			"STATICPOPUPS_NUMDIALOGS",
 			"STANDARD_TEXT_FONT",
-			"CUSTOM",
 			"WrapTextInColor"
 		],
 		"Lua.type.weakUnionCheck": true,
