@@ -616,7 +616,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 		end,
 		onEnter = function(_, frame) wt.UpdateTooltipData(frame, { lines = { [5] = {
 			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
-			font = GameFontNormalTiny,
+			font = GameFontNormalTiny2,
 			color = ns.rs.colors.grey[1],
 		}} }, false) end
 	}, { lines = {
@@ -634,7 +634,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 		{ text = ns.rs.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "X-License") or "?", "FFFFFFFF")), },
 		{
 			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
-			font = GameFontNormalTiny,
+			font = GameFontNormalTiny2,
 			color = ns.rs.colors.grey[1],
 		},
 	} })

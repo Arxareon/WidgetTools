@@ -45,11 +45,11 @@ ns.localizations.enUS = {
 			title = "Development Tools",
 			frameAttributes = {
 				enabled = {
-					label = "Resize Frame Attributes Table",
+					label = "Resize Frame Attributes",
 					tooltip = "Customize the width of the table inside the Frame Attributes window (TableAttributeDisplay Frame).",
 				},
 				width = {
-					label = "Frame Attributes Table Width",
+					label = "Frame Attributes Width",
 					tooltip = "Specify the width of the scrollable content table in the Frame Attributes window.",
 				},
 			},
@@ -134,11 +134,11 @@ ns.localizations.ptBR = {
 			title = "Ferramentas de Desenvolvimento",
 			frameAttributes = {
 				enabled = {
-					label = "Redimensionar Tabela de Atributos do Quadro",
+					label = "Redimensionar Atributos do Quadro",
 					tooltip = "Personalize a largura da tabela dentro da janela de Atributos do Quadro (Frame TableAttributeDisplay).",
 				},
 				width = {
-					label = "Largura da Tabela de Atributos do Quadro",
+					label = "Largura dos Atributos do Quadro",
 					tooltip = "Especifique a largura da tabela de conteúdo rolável na janela de Atributos do Quadro.",
 				},
 			},
@@ -223,12 +223,12 @@ ns.localizations.deDE = {
 			title = "Entwicklertools",
 			frameAttributes = {
 				enabled = {
-					label = "Größe der Frame-Attributtabelle anpassen",
-					tooltip = "Passe die Breite der Tabelle im Fenster für Frame-Attribute (TableAttributeDisplay Frame) an.",
+					label = "Frame-Attribute skalieren",
+					tooltip = "Passe die Breite der Tabelle im Fenster Frame-Attribute (TableAttributeDisplay Frame) an.",
 				},
 				width = {
-					label = "Breite der Frame-Attributtabelle",
-					tooltip = "Gib die Breite der scrollbaren Inhaltstabelle im Fenster für Frame-Attribute an.",
+					label = "Breite der Frame-Attribute",
+					tooltip = "Gib die Breite der scrollbaren Inhaltstabelle im Fenster Frame-Attribute an.",
 				},
 			},
 		},
@@ -312,12 +312,12 @@ ns.localizations.frFR = {
 			title = "Outils de Développement",
 			frameAttributes = {
 				enabled = {
-					label = "Redimensionner la Table des Attributs du Cadre",
-					tooltip = "Personnalisez la largeur de la table dans la fenêtre des Attributs du Cadre (TableAttributeDisplay Frame).",
+					label = "Redimensionner les attributs du cadre",
+					tooltip = "Personnalisez la largeur du tableau dans la fenêtre des Attributs du Cadre (TableAttributeDisplay Frame).",
 				},
 				width = {
-					label = "Largeur de la Table des Attributs du Cadre",
-					tooltip = "Spécifiez la largeur de la table de contenu défilante dans la fenêtre des Attributs du Cadre.",
+					label = "Largeur des attributs du cadre",
+					tooltip = "Spécifiez la largeur du tableau de contenu défilant dans la fenêtre des Attributs du Cadre.",
 				},
 			},
 		},
@@ -401,11 +401,11 @@ ns.localizations.esES = {
 			title = "Herramientas de Desarrollo",
 			frameAttributes = {
 				enabled = {
-					label = "Redimensionar Tabla de Atributos del Marco",
+					label = "Redimensionar atributos del marco",
 					tooltip = "Personaliza el ancho de la tabla dentro de la ventana de Atributos del Marco (TableAttributeDisplay Frame).",
 				},
 				width = {
-					label = "Ancho de la Tabla de Atributos del Marco",
+					label = "Ancho de los atributos del marco",
 					tooltip = "Especifica el ancho de la tabla de contenido desplazable en la ventana de Atributos del Marco.",
 				},
 			},
@@ -490,11 +490,11 @@ ns.localizations.esMX = {
 			title = "Herramientas de Desarrollo",
 			frameAttributes = {
 				enabled = {
-					label = "Redimensionar Tabla de Atributos del Marco",
-					tooltip = "Personaliza el ancho de la tabla dentro de la ventana de Atributos del Marco (TableAttributeDisplay Frame).",
+					label = "Redimensionar atributos del marco",
+					tooltip = "Configura el ancho de la tabla dentro de la ventana de Atributos del Marco (TableAttributeDisplay Frame).",
 				},
 				width = {
-					label = "Ancho de la Tabla de Atributos del Marco",
+					label = "Ancho de los atributos del marco",
 					tooltip = "Especifica el ancho de la tabla de contenido desplazable en la ventana de Atributos del Marco.",
 				},
 			},
@@ -579,12 +579,12 @@ ns.localizations.itIT = {
 			title = "Strumenti di Sviluppo",
 			frameAttributes = {
 				enabled = {
-					label = "Ridimensiona Tabella Attributi Frame",
-					tooltip = "Personalizza la larghezza della tabella nella finestra Attributi Frame (TableAttributeDisplay Frame).",
+					label = "Ridimensiona Attributi del Frame",
+					tooltip = "Personalizza la larghezza della tabella nella finestra Attributi del Frame (Frame TableAttributeDisplay).",
 				},
 				width = {
-					label = "Larghezza Tabella Attributi Frame",
-					tooltip = "Specifica la larghezza della tabella dei contenuti scorrevole nella finestra Attributi Frame.",
+					label = "Larghezza Attributi del Frame",
+					tooltip = "Specifica la larghezza della tabella di contenuto scorrevole nella finestra Attributi del Frame.",
 				},
 			},
 		},
@@ -668,12 +668,12 @@ ns.localizations.koKR = {
 			title = "개발 도구",
 			frameAttributes = {
 				enabled = {
-					label = "프레임 속성 테이블 크기 조정",
-					tooltip = "프레임 속성 창(TableAttributeDisplay Frame) 내 테이블의 너비를 사용자 지정합니다.",
+					label = "프레임 속성 크기 조절",
+					tooltip = "프레임 속성 창(TableAttributeDisplay Frame) 내부의 테이블 너비를 사용자 지정합니다.",
 				},
 				width = {
-					label = "프레임 속성 테이블 너비",
-					tooltip = "프레임 속성 창의 스크롤 가능한 내용 테이블의 너비를 지정합니다.",
+					label = "프레임 속성 너비",
+					tooltip = "프레임 속성 창의 스크롤 가능한 콘텐츠 테이블의 너비를 지정하세요.",
 				},
 			},
 		},
@@ -757,11 +757,11 @@ ns.localizations.zhTW = {
 			title = "開發工具",
 			frameAttributes = {
 				enabled = {
-					label = "調整框架屬性表格大小",
+					label = "調整框架屬性大小",
 					tooltip = "自訂框架屬性視窗（TableAttributeDisplay Frame）內表格的寬度。",
 				},
 				width = {
-					label = "框架屬性表格寬度",
+					label = "框架屬性寬度",
 					tooltip = "指定框架屬性視窗中可捲動內容表格的寬度。",
 				},
 			},
@@ -846,11 +846,11 @@ ns.localizations.zhCN = {
 			title = "开发工具",
 			frameAttributes = {
 				enabled = {
-					label = "调整框体属性表宽度",
+					label = "调整框体属性大小",
 					tooltip = "自定义框体属性窗口（TableAttributeDisplay Frame）内表格的宽度。",
 				},
 				width = {
-					label = "框体属性表宽度",
+					label = "框体属性宽度",
 					tooltip = "指定框体属性窗口中可滚动内容表格的宽度。",
 				},
 			},
@@ -935,11 +935,11 @@ ns.localizations.ruRU = {
 			title = "Инструменты разработчика",
 			frameAttributes = {
 				enabled = {
-					label = "Изменить размер таблицы атрибутов фрейма",
+					label = "Изменить размер атрибутов фрейма",
 					tooltip = "Настройте ширину таблицы внутри окна атрибутов фрейма (TableAttributeDisplay Frame).",
 				},
 				width = {
-					label = "Ширина таблицы атрибутов фрейма",
+					label = "Ширина атрибутов фрейма",
 					tooltip = "Укажите ширину прокручиваемой таблицы содержимого в окне атрибутов фрейма.",
 				},
 			},

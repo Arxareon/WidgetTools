@@ -191,8 +191,8 @@ ns.rs.colors = {
 ns.rs.textures = {
 	logo = ns.rs.root .. "Textures/Logo.tga",
 	missing = ns.rs.root .. "Textures/MissingLogo.tga",
-	alphaBG = ns.rs.root .. "/Textures/AlphaBG.tga",
-	gradientBG = ns.rs.root .. "/Textures/GradientBG.tga",
+	alphaBG = ns.rs.root .. "Textures/AlphaBG.tga",
+	gradientBG = ns.rs.root .. "Textures/GradientBG.tga",
 }
 
 --Fonts
