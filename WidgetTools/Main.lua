@@ -226,7 +226,7 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 						},
 					})
 
-					wt.CreateNumericSlider({
+					wt.CreateSlider({
 						parent = panel,
 						name = "FrameAttributesWidth",
 						title = ns.rs.strings.specifications.dev.frameAttributes.width.label,
@@ -594,31 +594,24 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 	--[[ ADDON COMPARTMENT ]]
 
 	wt.SetUpAddonCompartment(ns.rs.name, {
-		onClick = function()
-			if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
-				initialize = function(menu)
-					wt.CreateMenuTextline(menu, { text = ns.rs.title, })
-					wt.CreateMenuButton(menu, {
-						title = wt.strings.about.title,
-						action = mainPage.open
-					})
-					wt.CreateMenuButton(menu, {
-						title = ns.rs.strings.specifications.title,
-						action = specificationsPage.open
-					})
-					wt.CreateMenuButton(menu, {
-						title = ns.rs.strings.addons.title,
-						action = addonsPage.open
-					})
-				end,
-				rightClickMenu = false,
-			}).open() end
-		end,
-		onEnter = function(_, frame) wt.UpdateTooltipData(frame, { lines = { [5] = {
-			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
-			font = GameFontNormalTiny2,
-			color = ns.rs.colors.grey[1],
-		}} }, false) end
+		onClick = function() if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
+			initialize = function(menu)
+				wt.CreateMenuTextline(menu, { text = ns.rs.title, })
+				wt.CreateMenuButton(menu, {
+					title = wt.strings.about.title,
+					action = mainPage.open
+				})
+				wt.CreateMenuButton(menu, {
+					title = ns.rs.strings.specifications.title,
+					action = specificationsPage.open
+				})
+				wt.CreateMenuButton(menu, {
+					title = ns.rs.strings.addons.title,
+					action = addonsPage.open
+				})
+			end,
+			rightClickMenu = false,
+		}).open() end end,
 	}, { lines = {
 		{ text = ns.rs.strings.about.version:gsub("#VERSION", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Version") or "?", "FFFFFFFF")), },
 		{ text = ns.rs.strings.about.date:gsub(
@@ -632,9 +625,10 @@ function WidgetTools.loaderFrame:PLAYER_LOGIN()
 		), },
 		{ text = ns.rs.strings.about.author:gsub("#AUTHOR", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Author") or "?", "FFFFFFFF")), },
 		{ text = ns.rs.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "X-License") or "?", "FFFFFFFF")), },
+		{ text = " ", },
 		{
-			text = "\n" .. (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
-			font = GameFontNormalTiny2,
+			text = (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
+			font = GameFontNormalSmall,
 			color = ns.rs.colors.grey[1],
 		},
 	} })

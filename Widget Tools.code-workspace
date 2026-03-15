@@ -15,15 +15,21 @@
 			{
 				"type": "PowerShell",
 				"request": "launch",
-				"name": "Copy to Projects",
-				"script": "${workspaceFolder}/Install Tools/CopyToProjects.ps1"
+				"name": "Copy to WoW",
+				"script": "${workspaceFolder}/Install Tools/CopyToWow.ps1"
 			},
 			{
 				"type": "PowerShell",
 				"request": "launch",
-				"name": "Copy to WoW",
-				"script": "${workspaceFolder}/Install Tools/CopyToWow.ps1"
-			}
+				"name": "Copy Addon to Projects",
+				"script": "${workspaceFolder}/Install Tools/CopyAddonToProjects.ps1"
+			},
+			{
+				"type": "PowerShell",
+				"request": "launch",
+				"name": "Copy Toolbox to Projects",
+				"script": "${workspaceFolder}/Install Tools/CopyToolboxToProjects.ps1"
+			},
 		]
 	},
 	"settings": {
