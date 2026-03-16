@@ -62,17 +62,20 @@ end
 local customPopupInputBoxFrame
 
 ---Show a movable input window with a textbox, accept and cancel buttons
+---***
 ---@param t? popupInputBoxData Parameters are to be provided in this table
 function wt.CreatePopupInputBox(t)
 	t = type(t) == "table" and t or {}
-	customPopupInputBoxFrame = customPopupInputBoxFrame or {}
-	customPopupInputBoxFrame.accept = t.accept
-	customPopupInputBoxFrame.cancel = t.cancel
-	t.position = t.position or {
+	t.position = type(t.position) == "table" and t.position or {
 		anchor = "TOP",
 		offset = { y = -320 }
 	}
-	t.text = t.text or ""
+	t.text = type(t.text) == "string" and t.text or ""
+	t.title = type(t.title) == "string" and t.title or nil
+
+	--[ Frame Setup ]
+
+	customPopupInputBoxFrame = customPopupInputBoxFrame or { accept = t.accept, cancel = t.cancel }
 
 	if customPopupInputBoxFrame.panel then
 		wt.SetPosition(customPopupInputBoxFrame.panel, t.position)
@@ -95,7 +98,7 @@ function wt.CreatePopupInputBox(t)
 		return
 	end
 
-	--[ Utilities ]
+	--| Utilities
 
 	local function accept()
 		if type(customPopupInputBoxFrame.accept) == "function" then customPopupInputBoxFrame.accept(customPopupInputBoxFrame.textbox.getText()) end
@@ -109,7 +112,7 @@ function wt.CreatePopupInputBox(t)
 		customPopupInputBoxFrame.panel:Hide()
 	end
 
-	--[ Frame Setup ]
+	--| Main panel
 
 	customPopupInputBoxFrame.panel = wt.CreatePanel({
 		parent = UIParent,
@@ -193,7 +196,7 @@ function wt.CreateReloadNotice(t)
 	t = type(t) == "table" and t or {}
 
 	if reloadFrame then
-		wt.SetPosition(reloadFrame, t.position or {
+		wt.SetPosition(reloadFrame, type(t.position) == "table" and t.position or {
 			anchor = "TOPRIGHT",
 			offset = { x = -300, y = -100 }
 		})
@@ -227,6 +230,7 @@ function wt.CreateReloadNotice(t)
 	--| Title & description
 
 	reloadFrame.title:SetPoint("TOPLEFT", 14, -14)
+
 	wt.CreateText({
 		parent = reloadFrame,
 		name = "Description",
@@ -239,7 +243,7 @@ function wt.CreateReloadNotice(t)
 		text = t.message or wt.strings.reload.description,
 	})
 
-	--[ Buttons ]
+	--| Buttons
 
 	wt.CreateButton({
 		parent = reloadFrame,
@@ -278,53 +282,51 @@ end
 
 ---Create a new [Font](https://warcraft.wiki.gg/wiki/UIOBJECT_Font) object to be used when setting the look of a [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) using a [FontInstance](https://warcraft.wiki.gg/wiki/UIOBJECT_FontInstance)
 ---***
----@param t fontCreationData Parameters are to be provided in this table
----@return string name, Font font
----<hr><p></p>
-function wt.CreateFont(t)
+---@param name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
+---@param t? fontCreationData Parameters are to be provided in this table
+---***
+---@return string name, Font font ***Default*** *(on invalid input)****:*** "GameFontNormal", **GameFontNormal**
+function wt.CreateFont(name, t)
 	t = type(t) == "table" and t or {}
 
-	if _G[t.name] then return t.name, _G[t.name] end
+	if type(name) ~= "string" or name == "" then return "GameFontNormal", GameFontNormal end
+	if _G[name] then return name, _G[name] end
 
 	--[ Font Setup ]
 
-	local font = CreateFont(t.name)
-	if t.template then font:CopyFontObject(t.template) end
+	local font = CreateFont(name)
+	if type(t.template) == "string" then font:CopyFontObject(t.template) end
 
 	--Set display font
 	if t.font then font:SetFont(t.font.path, t.font.size, t.font.style) end
 
 	--Set appearance
-	if t.color then font:SetTextColor(wt.UnpackColor(wt.AddMissing(t.color, { r = 1, g = 1, b = 1 }))) end
-	if t.spacing then font:SetSpacing(t.spacing) end
-	if t.shadow then
+	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(wt.AddMissing(t.color, { r = 1, g = 1, b = 1 }))) end
+	if type(t.spacing) == "number" then font:SetSpacing(t.spacing) end
+	if type(t.shadow) == "table" then
 		font:SetShadowOffset(t.shadow.offset.x or 1, t.shadow.offset.y)
 		font:SetShadowColor(wt.UnpackColor(wt.AddMissing(t.shadow.color, { r = 0, g = 0, b = 0 })))
 	end
 
 	--Set text positioning
-	if t.justify then
+	if  type(t.justify) == "table" then
 		if t.justify.h then font:SetJustifyH(t.justify.h) end
 		if t.justify.v then font:SetJustifyV(t.justify.v) end
 	end
-	if t.wrap == false then font:SetIndentedWordWrap(false) end
+	if t.wrap == true then font:SetIndentedWordWrap(true) elseif t.wrap == false then font:SetIndentedWordWrap(false) end
 
-	return t.name, font
+	return name, font
 end
 
 --| Create custom fonts for Classic
 
 if wt.classic then
-	wt.CreateFont({
-		name = "GameFontDisableMed2",
+	wt.CreateFont("GameFontDisableMed2", {
 		template = "GameFontHighlightMedium",
 		color = wt.PackColor(GameFontDisable:GetTextColor()),
 	})
 
-	wt.CreateFont({
-		name = "NumberFont_Shadow_Large",
-		font = { path = "Fonts/ARIALN.TTF", size = 20, style = "OUTLINE" },
-	})
+	wt.CreateFont("NumberFont_Shadow_Large", { font = { path = "Fonts/ARIALN.TTF", size = 20, style = "OUTLINE" }, })
 end
 
 --[ Text ]
@@ -335,7 +337,7 @@ end
 ---@return FontString text
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
-	t.parent = wt.IsFrame(t.parent) and t.parent or CreateFrame("Frame")
+	t.parent = wt.IsFrame(t.parent) and t.parent or UIParent
 
 	local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
 
@@ -343,8 +345,8 @@ function wt.CreateText(t)
 
 	wt.SetPosition(text, t.position)
 
-	if t.width then text:SetWidth(t.width) end
-	if t.height then text:SetHeight(t.height) end
+	if type(t.width) == "number" then text:SetWidth(t.width) end
+	if type(t.height) == "number" then text:SetHeight(t.height) end
 
 	--| Font & text
 
@@ -1041,7 +1043,7 @@ end
 ---***
 ---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(addon, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) then return end
+	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
 
 	t = type(t) == "table" and t or {}
 	t.name = t.name and t.name:gsub("%s+", "")
@@ -1068,8 +1070,9 @@ function wt.CreateSettingsPage(addon, t)
 	function page.getType() return "SettingsPage" end
 
 	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function page.isType(type) return type == "SettingsPage" end
 
 	---Return a value at the specified key from the table used for creating the settings page
@@ -1486,8 +1489,9 @@ function wt.CreateAction(t)
 	function action.getType() return "Action" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function action.isType(type) return type == "Action" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -1827,11 +1831,9 @@ function wt.CreateToggle(t)
 
 	--| Data
 
-	t.default = t.default == true
-	local default = t.default
+	local default = t.default == true
 	local value = t.value
-	if type(value) ~= "boolean" and type(t.getData) == "function" then value = t.getData() end
-	if type(value) ~= "boolean" then value = default end
+	if type(value) ~= "boolean" then if type(t.getData) == "function" then value = t.getData() else value = default end end
 	local snapshot = value
 
 	--| State
@@ -1852,8 +1854,9 @@ function wt.CreateToggle(t)
 	function toggle.getType() return "Toggle" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function toggle.isType(type) return type == "Toggle" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -1953,18 +1956,23 @@ function wt.CreateToggle(t)
 		toggle.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **toggle.revertData()**
-	function toggle.snapshotData() snapshot = toggle.getData() end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **toggle.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function toggle.snapshotData(stored) if stored == true then snapshot = toggle.getData() else snapshot = value end end
 
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **toggle.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
-	function toggle.revertData(handleChanges, silent) toggle.setData(snapshot, handleChanges, silent) end
+	function toggle.getDefault() return default end
+
+	function toggle.setDefault(state) default = state == true end
 
 	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
 	function toggle.resetData(handleChanges, silent) toggle.setData(default, handleChanges, silent) end
+
+	---Set and load the stored data managed by the widget to the last saved data snapshot set via **toggle.snapshotData()**
+	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
+	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
+	function toggle.revertData(handleChanges, silent) toggle.setData(snapshot, handleChanges, silent) end
 
 	---Returns the current toggle state of the widget
 	---@return boolean
@@ -1990,6 +1998,16 @@ function wt.CreateToggle(t)
 	---@param user? boolean If true, mark the change as being initiated via a user interaction and call change handlers | ***Default:*** false
 	---@param silent? boolean If false, invoke a "toggled" event and call registered listeners | ***Default:*** false
 	function toggle.toggleState(user, silent) toggle.setState(not value, user, silent) end
+
+	---Utility turn a toggle state value into formatted string
+	---***
+	---@param state? boolean ***Default:*** *(current value)*
+	---@return string
+	function toggle.formatValue(state)
+		if type(state) ~= "boolean" then state = value end
+
+		return WrapTextInColorCode((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
+	end
 
 	--| State & dependencies
 
@@ -2156,12 +2174,7 @@ function wt.CreateCheckbox(t, toggle)
 			},
 		}, { triggers = { checkbox.frame, }, })
 
-		local defaultValue
-		if t.showDefault ~= false then
-			defaultValue = WrapTextInColorCode((t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66")
-		end
-
-		wt.AddWidgetTooltipLines({ checkbox.button }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ checkbox.button }, t.showDefault ~= false and checkbox.formatValue(checkbox.getDefault()), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -2275,12 +2288,7 @@ local function setUpToggleFrame(toggle, title, t)
 			},
 		}, { triggers = { toggle.button, }, })
 
-		local defaultValue
-		if t.showDefault ~= false then
-			defaultValue = WrapTextInColorCode((t.default and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), t.default and "FFAAAAFF" or "FFFFAA66")
-		end
-
-		wt.AddWidgetTooltipLines({ toggle.frame }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ toggle.frame }, t.showDefault ~= false and toggle.formatValue(toggle.getDefault()), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -2565,6 +2573,7 @@ local itemsets = {
 ---@return selector selector Reference to the new selector widget, utility functions and more wrapped in a table
 function wt.CreateSelector(t)
 	t = type(t) == "table" and t or {}
+	t.items = t.items or {}
 
 	--[ Wrapper table ]
 
@@ -2574,8 +2583,6 @@ function wt.CreateSelector(t)
 	--[ Properties ]
 
 	--| Toggle items
-
-	t.items = t.items or {}
 
 	---@type (toggle|selectorToggle)[]
 	selector.toggles = {}
@@ -2618,8 +2625,9 @@ function wt.CreateSelector(t)
 	function selector.getType() return "Selector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function selector.isType(type) return type == "Selector" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -2795,18 +2803,23 @@ function wt.CreateSelector(t)
 		selector.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	function selector.snapshotData() snapshot = selector.getData() end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function selector.snapshotData(stored) snapshot = stored and selector.getData() or value end
 
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
-	function selector.revertData(handleChanges, silent) selector.setData({ index = snapshot }, handleChanges, silent) end
+	function selector.getDefault() return default end
+
+	function selector.setDefault(index) default = index end
 
 	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
 	function selector.resetData(handleChanges, silent) selector.setData({ index = default }, handleChanges, silent) end
+
+	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
+	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
+	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
+	function selector.revertData(handleChanges, silent) selector.setData({ index = snapshot }, handleChanges, silent) end
 
 	---Returns the index of the currently selected item or nil if there is no selection
 	---@return integer|nil index
@@ -2938,8 +2951,9 @@ function wt.CreateSpecialSelector(itemset, t)
 	function selector.getType() return "SpecialSelector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function selector.isType(type) return type == "SpecialSelector" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -3041,18 +3055,19 @@ function wt.CreateSpecialSelector(itemset, t)
 		selector.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	function selector.snapshotData() snapshot = selector.getData() end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
-	function selector.revertData(handleChanges, silent) selector.setData({ value = snapshot }, handleChanges, silent) end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function selector.snapshotData(stored) snapshot = stored and selector.getData() or value end
 
 	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
 	function selector.resetData(handleChanges, silent) selector.setData({ value = default }, handleChanges, silent) end
+
+	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
+	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
+	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
+	function selector.revertData(handleChanges, silent) selector.setData({ value = snapshot }, handleChanges, silent) end
 
 	---Returns the value of the currently selected item or nil if there is no selection
 	---@return FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata|nil
@@ -3175,6 +3190,7 @@ function wt.CreateMultiselector(t)
 
 	default = verify(t.default)
 	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
+	---@type boolean[]|nil
 	local snapshot = wt.Clone(value)
 
 	--| State
@@ -3195,8 +3211,9 @@ function wt.CreateMultiselector(t)
 	function selector.getType() return "Multiselector" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function selector.isType(type) return type == "Multiselector" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -3384,8 +3401,9 @@ function wt.CreateMultiselector(t)
 		selector.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	function selector.snapshotData() snapshot = selector.getData() end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function selector.snapshotData(stored) wt.CopyValues(snapshot, stored and selector.getData() or value) end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
@@ -3400,7 +3418,7 @@ function wt.CreateMultiselector(t)
 	---Returns the list of all items and their current states
 	---***
 	---@return boolean[] selections Indexed list of item states
-	function selector.getSelections() return value end
+	function selector.getSelections() return wt.Clone(value) end
 
 	---Set the specified items as selected
 	---***
@@ -3909,14 +3927,12 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	if t.cycleButtons ~= false then
 		--| Create a custom fonts
 
-		wt.CreateFont({
-			name = "ChatFontNormalSmall",
+		wt.CreateFont("ChatFontNormalSmall", {
 			template = "ChatFontSmall",
 			color = wt.PackColor(GameFontNormal:GetTextColor()),
 		})
 
-		wt.CreateFont({
-			name = "ChatFontDisableSmall",
+		wt.CreateFont("ChatFontDisableSmall", {
 			template = "ChatFontSmall",
 			color = wt.PackColor(GameFontDisable:GetTextColor()),
 		})
@@ -4496,8 +4512,9 @@ function wt.CreateTextbox(t)
 	function textbox.getType() return "Textbox" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function textbox.isType(type) return type == "Textbox" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -4595,8 +4612,9 @@ function wt.CreateTextbox(t)
 		textbox.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **textbox.revertData()**
-	function textbox.snapshotData() snapshot = textbox.getData() end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **textbox.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function textbox.snapshotData(stored) snapshot = stored and textbox.getData() or value end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **textbox.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
@@ -5248,8 +5266,9 @@ function wt.CreateNumeric(t)
 	function numeric.getType() return "Numeric" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function numeric.isType(type) return type == "Numeric" end
 
 	---Return a value at the specified key from the table used for creating the widget
@@ -5359,8 +5378,9 @@ function wt.CreateNumeric(t)
 		numeric.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **numeric.revertData()**
-	function numeric.snapshotData() snapshot = numeric.getData() end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **numeric.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function numeric.snapshotData(stored) snapshot = stored and numeric.getData() or value end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **numeric.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
@@ -6209,14 +6229,15 @@ function wt.CreateColormanager(t)
 
 	---Returns the object type of this widget
 	---***
-	---@return "ColorPicker" string
+	---@return "Colorpicker" string
 	---<hr><p></p>
-	function colormanager.getType() return "ColorPicker" end
+	function colormanager.getType() return "Colorpicker" end
 
 	---Checks and returns if the type of this widget is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
-	function colormanager.isType(type) return type == "ColorPicker" end
+	---<hr><p></p>
+	function colormanager.isType(type) return type == "Colorpicker" end
 
 	---Return a value at the specified key from the table used for creating the widget
 	---@param key string
@@ -6313,8 +6334,9 @@ function wt.CreateColormanager(t)
 		colormanager.loadData(handleChanges, silent)
 	end
 
-	--Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **colorpicker.revertData()**
-	function colormanager.snapshotData() snapshot = wt.Clone(colormanager.getData()) end
+	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **colorpicker.revertData()**
+	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
+	function colormanager.snapshotData(stored) wt.CopyValues(snapshot, stored and colormanager.getData() or value) end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **colorpicker.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
@@ -6439,7 +6461,7 @@ end
 ---@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateColorpicker(t, colormanager)
 	t = type(t) == "table" and t or {}
-	colormanager = colormanager and colormanager.isType and colormanager.isType("ColorPicker") and colormanager or wt.CreateColormanager(t)
+	colormanager = colormanager and colormanager.isType and colormanager.isType("Colorpicker") and colormanager or wt.CreateColormanager(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return colormanager end
 
@@ -6453,7 +6475,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--[ Frame Setup ]
 
-	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "ColorPicker")
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Colorpicker")
 
 	colorpicker.frame = CreateFrame("Frame", name, t.parent)
 
@@ -6475,7 +6497,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--| Label
 
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Color Picker"
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Colorpicker"
 
 	colorpicker.label = t.label ~= false and wt.AddTitle({
 		parent = colorpicker.frame,
@@ -6655,7 +6677,10 @@ function wt.CreateColorpicker(t, colormanager)
 		})
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = "|TInterface/ChatFrame/ChatFrameBackground:12:12:0:0:16:16:0:16:0:16:" .. (t.default.r * 255) .. ":" .. (t.default.g * 255) .. ":" .. (t.default.b * 255) .. "|t " .. WrapTextInColorCode(wt.ColorToHex(t.default), "FFFFFFFF") end
+		if t.showDefault ~= false then
+			local texture = "|TInterface/ChatFrame/ChatFrameBackground:12:12:0:0:16:16:0:16:0:16:" .. (t.default.r * 255) .. ":" .. (t.default.g * 255) .. ":" .. (t.default.b * 255) .. "|t "
+			defaultValue = texture .. WrapTextInColorCode(wt.ColorToHex(t.default), "FFFFFFFF")
+		end
 
 		wt.AddWidgetTooltipLines({ colorpicker.frame, colorpicker.button.frame, colorpicker.hexBox.widget }, defaultValue, t.utilityMenu)
 	end
@@ -6729,9 +6754,9 @@ end
 ---@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
 ---@param t? aboutPageCreationData Parameters are to be provided in this table
 ---***
----@return settingsPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
+---@return settingsPage? aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** nil
 function wt.CreateAboutPage(addon, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) then return end
+	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
 
 	t = type(t) == "table" and t or {}
 	local data = {
@@ -7122,11 +7147,13 @@ end
 ---@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
 ---@param t dataManagementPageCreationData Parameters are to be provided in this table
 ---***
----@return dataManagementPage|nil profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category, or, if required parameters are missing, no settings page will be created and the returned value will be nil
----@return boolean|nil firstLoad True, if **t.accountData.profiles** did not exist yet, or nil if **dataManagementPage** is also nil
----@return boolean|nil newCharacter True, if **t.characterData.activeProfile** did not exist yet, or nil if **dataManagementPage** is also nil
+---@return dataManagementPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** nil
+---@return boolean? firstLoad True, if **t.accountData.profiles** did not exist yet | ***Default:*** nil
+---@return boolean? newCharacter True, if **t.characterData.activeProfile** did not exist yet | ***Default:*** nil
 function wt.CreateDataManagementPage(addon, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not t.accountData or not t.characterData or not t.settingsData or not t.defaultsTable then return end
+	t = type(t) == "table" and t or {}
+
+	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or not t.accountData or not t.characterData or not t.settingsData or not t.defaultsTable then return end
 
 	local firstLoad = not t.accountData.profiles
 	local newCharacter = not t.characterData.activeProfile
@@ -7149,8 +7176,9 @@ function wt.CreateDataManagementPage(addon, t)
 	function dataManagement.getType() return "DataManagementPage" end
 
 	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function dataManagement.isType(type) return type == "DataManagementPage" end
 
 	---Return a value at the specified key from the table used for creating the data management page
@@ -7856,8 +7884,9 @@ function wt.CreatePositionOptions(addon, frame, t)
 	function panel.getType() return "PositionOptions" end
 
 	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|WidgetTypeName
+	---@param type string|AnyTypeName
 	---@return boolean
+	---<hr><p></p>
 	function panel.isType(type) return type == "PositionOptions" end
 
 	--[ Visual Aids ]
@@ -8443,6 +8472,20 @@ function wt.CreateFontOptions(addon, text, t)
 	---@field widgets table
 	local panel = {}
 
+	--[ Getters & Setters ]
+
+	---Returns the type of this object
+	---***
+	---@return "FontOptions" string
+	---<hr><p></p>
+	function panel.getType() return "FontOptions" end
+
+	---Checks and returns if the type of this object is equal to the string provided
+	---@param type string|AnyTypeName
+	---@return boolean
+	---<hr><p></p>
+	function panel.isType(type) return type == "FontOptions" end
+
 	--[ Options Panel ]
 
 	panel.frame = wt.CreatePanel({
@@ -8578,7 +8621,7 @@ function wt.CreateFontOptions(addon, text, t)
 
 				panel.widgets.colors[key] = wt.CreateColorpicker({
 					parent = panelFrame,
-					name = name .. "ColorPicker",
+					name = name .. "Colorpicker",
 					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", type(t.colorNames[key]) == "string" and t.colorNames[key] or name),
 					tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
 					arrange = { newRow = not next(panel.widgets.colors), column = wt.FindIndex(t.colorOrder, key) },

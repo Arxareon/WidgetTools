@@ -40,10 +40,7 @@ end
 
 --[ Global Resources ]
 
-local rs = setmetatable({}, {
-	__index = ns.rs,
-	__newindex = function(t, k, v) error("Widget Tools: Prevented the attempt of overriding protected data.", 2) end
-})
+local rs = setmetatable({}, { __index = ns.rs, __newindex = function() end })
 
 ---Get a read-only reference to the global Widget Tools resources
 ---@return widgetToolsResources|table

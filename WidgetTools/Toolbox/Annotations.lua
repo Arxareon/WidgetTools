@@ -13,7 +13,6 @@
 ---| "RSHIFT"
 ---| "LALT"
 ---| "RALT"
----| "any"
 
 ---@alias AnyFrameObject
 ---| Frame
@@ -137,6 +136,7 @@
 ---| "Action"
 ---| "Toggle"
 ---| "Selector"
+---| "SpecialSelector"
 ---| "Multiselector"
 ---| "Textbox"
 ---| "Numeric"
@@ -157,12 +157,19 @@
 
 --| Global functions
 
----Create a colored string from the provided value via escape sequences
+---Create a colored string via escape sequences
 ---***
 ---@param value string|number Value to add coloring to
 ---@param color colorData|colorRGBA Table containing the color values
 ---@return string
 function WrapTextInColor(value, color) return value end
+
+---Clamp a number between two limits
+---@param value number
+---@param min number
+---@param max number
+---@return number
+function Clamp(value, min, max) return value end
 
 --[[ TABLE MANAGEMENT ]]
 
@@ -284,7 +291,7 @@ function WrapTextInColor(value, color) return value end
 ---@field onCancel? function Function to call when the movement of **frame** is cancelled (because the modifier key was released early as an example)
 
 ---@class movabilityData
----@field modifier? ModifierKey The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** nil *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** nil *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 ---@field triggers? Frame[] List of frames that should handle inputs to initiate or stop the movement when interacted with | ***Default:*** **t.frame**
 ---@field events? movementEvents Table containing functions to call when certain movement events occur
 ---@field cursor? boolean If true, change the cursor to a movement cross when mousing over **t.frame** and **t.modifier** is pressed down if set | ***Default:*** **t.modifier** ~= nil
@@ -348,14 +355,13 @@ function WrapTextInColor(value, color) return value end
 ---@field style TBFFlags Comma separated string of font styling flags
 
 ---@class fontCreationData
----@field name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
 ---@field template? FontObject An existing [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to copy as a baseline
 ---@field font? fontData Table containing font properties used for [FontInstance:SetFont(...)](https://warcraft.wiki.gg/wiki/API_FontInstance_SetFont) (overriding **t.template**)
 ---@field color? colorData_whiteDefault|colorData Apply the specified color to the font (overriding **t.template**)
----@field spacing? number Set the character spacing of the text using this font (overriding **t.template**) | ***Default:*** 0
+---@field spacing? number Set the character spacing of the text using this font (overriding **t.template**)
 ---@field shadow? { offset: offsetData, color: colorData_blackDefault|colorData } Set a text shadow with the following parameters (overriding **t.template**)
 ---@field justify? justifyData_centered Set the justification of the text using font (overriding **t.template**)
----@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**) | ***Default:*** true
+---@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**)
 
 ---@class textCreationData : positionableObject
 ---@field parent? AnyFrameObject Reference to parent frame to create and assign the text to | ***Default:*** UIParent
@@ -1624,7 +1630,7 @@ function WrapTextInColor(value, color) return value end
 ---@field default? colorData Default value of the widget | ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *(opaque white)*
 
 ---@class colorpickerCreationData : colormanagerCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget
----@field name? string Unique string used to set the frame name | ***Default:*** "Color Picker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+---@field name? string Unique string used to set the frame name | ***Default:*** "Colorpicker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
 ---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
 
@@ -1713,7 +1719,7 @@ function WrapTextInColor(value, color) return value end
 ---@field custom? customPositionPresetData When set, add widgets to manage a user-modifiable custom preset
 
 ---@class movabilityData_positioning : movabilityData
----@field modifier? ModifierKey The specific (or any) modifier key required to be pressed down to move **frame** (if **frame** has the "OnUpdate" script defined) | ***Default:*** "SHIFT"<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **frame** (if **frame** has the "OnUpdate" script defined) | ***Default:*** "SHIFT"<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 
 ---@class settingsData_position : settingsData_base
 ---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Position"
