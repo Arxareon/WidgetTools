@@ -1,6 +1,11 @@
 --NOTE: Annotations are for development purposes only, providing documentation for use with LUA Language Server. This file does not need to be loaded by the game client.
 
 
+---Read-only reference to the Widget Toolbox table
+---@class widgetToolbox
+local toolbox
+
+
 --[[ MISC ]]
 
 ---@alias ModifierKey
@@ -255,7 +260,7 @@ function Clamp(value, min, max) return value end
 ---@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 ---@class initializableOptionsContainer : initializableContainer
----@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] A list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 ---@class arrangementRules
 ---@field newRow? boolean Place the frame into a new row within its container instead of adding it to a specified row | ***Default:*** true<ul><li>***Note:*** If the item would not fit in the row with other items in there, it will automatically be placed in a new row.</li></ul>
@@ -403,22 +408,20 @@ function Clamp(value, min, max) return value end
 ---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 0.55
 
 ---@class titleCreationData
----@field parent AnyFrameObject Reference to the frame to add the title to
 ---@field anchor? FramePoint ***Default:*** "TOPLEFT"
 ---@field offset? offsetData The offset from the anchor point relative to the specified frame
 ---@field width? number ***Default:*** *width of the text*
----@field text string Text to be shown as the main title of the frame
+---@field text? string Text to be shown as the main title of the frame
 ---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlight"
 ---@field color? colorData Apply the specified color to the title (overriding **t.font**)
 ---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
 
 ---@class descriptionCreationData
----@field title FontString Reference to the already existing title to place the description next to
 ---@field offset? offsetData The offset from the default position (right side of the separator to the right of **t.title**)
 ---@field width? number ***Default:*** *width of the parent frame of **t.title** - width of **t.title** (& separator, offsets)*
 ---@field widthOffset? number Increase the calculated with by this amount | ***Default:*** 0
 ---@field spacer? number Space to leave between **t.title** & the separator and the separator & the description | ***Default:*** 5
----@field text string Text to be shown as the description of the frame
+---@field text? string Text to be shown as the description of the frame
 ---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlightSmall2"
 ---@field color? descriptionColorData|colorData Apply the specified color to the description (overriding **t.font**)
 ---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
@@ -479,7 +482,6 @@ function Clamp(value, min, max) return value end
 ---@field bottomRight vertexCoordinates_bottomRight
 
 ---@class textureCreationData : positionableObject, pathData_ChatFrameDefault
----@field parent AnyFrameObject Reference to the frame to set as the parent of the new texture
 ---@field name? string String appended to the name of **t.parent** used to set the name of the new texture | ***Default:*** "Texture"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 ---@field size? sizeData ***Default:*** *size of* **parent**
 ---@field atlas? string Name of the texture atlas to use instead of creating a texture based on **t.path**<ul><li>***Note:*** Settings this will override whatever **t.path** is set to.</li></ul>
@@ -516,10 +518,9 @@ function Clamp(value, min, max) return value end
 --[[ LINE ]]
 
 ---@class lineCreationData
----@field parent AnyFrameObject Reference to the frame to set as the parent of the new line
 ---@field name? string String appended to the name of **t.parent** used to set the name of the new line | ***Default:*** "Line"
----@field startPosition pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with
----@field endPosition pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with
+---@field startPosition? pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with | ***Default:*** "TOPLEFT"
+---@field endPosition? pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with | ***Default:*** "TOPLEFT"
 ---@field thickness? number ***Default:*** 4
 ---@field layer? DrawLayer 
 ---@field level? integer Sublevel to set within the draw layer specified with **t.layer** | ***Range:*** (-8, 7)
@@ -1559,7 +1560,7 @@ function Clamp(value, min, max) return value end
 
 ---@class sliderCreationData : numericCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, widgetWidthValue, visibleObject_base, liteObject, tooltipDescribableSettingsWidget
 ---@field name? string Unique string used to set the frame name | ***Default:*** "Slider"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
----@field valueBox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
+---@field valuebox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** true
 ---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
 
 ---@class classicSliderCreationData : sliderCreationData

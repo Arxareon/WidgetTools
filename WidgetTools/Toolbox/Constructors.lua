@@ -1,17 +1,17 @@
---[[ NAMESPACE ]]
-
----@class addonNamespace
-local ns = select(2, ...)
-
-
---[[ INITIALIZATION ]]
+--[[ TOOLBOX ]]
 
 ---@class widgetToolbox
-local wt = ns.WidgetToolbox
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
-if not wt.initialization then return end
+if not wt then return end
 
-local rs = WidgetTools.GetResources()
+
+--[[ REFERENCES ]]
+
+local rs = WidgetTools.resources
+local ut = WidgetTools.utilities
+local ds = WidgetTools.debugging
+local cr = WrapTextInColor
 
 
 --[[ UX HELPERS ]]
@@ -36,23 +36,6 @@ function wt.CreateGameTooltip(name)
 	_G[tooltip:GetName() .. "TextRight" .. 1]:SetFontObject("GameFontNormalMed1")
 
 	return tooltip
-end
-
----Add default value and utility menu hint tooltip lines to widget tooltip tables
----***
----@param frames AnyFrameObject[] List of reference to the frames to add the tooltip lines to<ul><li>***Note:*** If no entry has been registered for a frame in the list in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no changes will be made for that frame.</li></ul>
----@param default? string Default value, formatted | ***Default:*** *(don't show default value)*
----@param utilityNote? boolean Is true, add a note for the utility context menu | ***Default:*** true
-function wt.AddWidgetTooltipLines(frames, default, utilityNote)
-	if type(default) ~= "string" or utilityNote == false then return end
-
-	---@type tooltipData
-	local tooltip = { lines = { { text = " ", }, } }
-
-	if type(default) == "string" then table.insert(tooltip.lines, { text = WrapTextInColorCode(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
-	if utilityNote ~= false then table.insert(tooltip.lines, { text = wt.strings.value.note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
-
-	for i = 1, #frames do wt.UpdateTooltipData(frames[i], tooltip, false) end
 end
 
 --[ Popup ]
@@ -83,11 +66,12 @@ function wt.CreatePopupInputBox(t)
 		--Update textbox
 		customPopupInputBoxFrame.textbox.setText(t.text)
 		if t.title then
-			if customPopupInputBoxFrame.textbox.label then customPopupInputBoxFrame.textbox.label:SetText(t.title) else customPopupInputBoxFrame.textbox.label = wt.AddTitle({
-				parent = customPopupInputBoxFrame.textbox.frame,
-				offset = { x = -1, },
-				text = t.title,
-			}) end
+			if customPopupInputBoxFrame.textbox.label then customPopupInputBoxFrame.textbox.label:SetText(t.title) else
+				customPopupInputBoxFrame.textbox.label = wt.CreateTitle(customPopupInputBoxFrame.textbox.frame, {
+					offset = { x = -1, },
+					text = t.title,
+				})
+			end
 		end
 
 		--Update arrangement
@@ -301,11 +285,11 @@ function wt.CreateFont(name, t)
 	if t.font then font:SetFont(t.font.path, t.font.size, t.font.style) end
 
 	--Set appearance
-	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(wt.AddMissing(t.color, { r = 1, g = 1, b = 1 }))) end
+	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(ut.Fill(t.color, { r = 1, g = 1, b = 1 }))) end
 	if type(t.spacing) == "number" then font:SetSpacing(t.spacing) end
 	if type(t.shadow) == "table" then
 		font:SetShadowOffset(t.shadow.offset.x or 1, t.shadow.offset.y)
-		font:SetShadowColor(wt.UnpackColor(wt.AddMissing(t.shadow.color, { r = 0, g = 0, b = 0 })))
+		font:SetShadowColor(wt.UnpackColor(ut.Fill(t.shadow.color, { r = 0, g = 0, b = 0 })))
 	end
 
 	--Set text positioning
@@ -337,7 +321,7 @@ end
 ---@return FontString text
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
-	t.parent = wt.IsFrame(t.parent) and t.parent or UIParent
+	t.parent = WidgetTools.utilities.IsFrame(t.parent) and t.parent or UIParent
 
 	local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
 
@@ -363,15 +347,17 @@ end
 
 ---Add a title to a frame
 ---***
+---@param frame AnyFrameObject Reference to the frame to add the title textline to
 ---@param t? titleCreationData Parameters are to be provided in this table
----@return FontString|nil
-function wt.AddTitle(t)
+---***
+---@return FontString? # ***Default:*** nil
+function wt.CreateTitle(frame, t)
 	t = type(t) == "table" and t or {}
-	if not t.parent then return end
 
-	--Title
+	if not WidgetTools.utilities.IsFrame(frame) then return end
+
 	return wt.CreateText({
-		parent = t.parent,
+		parent = frame,
 		name = "Title",
 		position = {
 			anchor = t.anchor,
@@ -388,35 +374,40 @@ end
 
 ---Add a description to a titled frame
 ---***
+---@param title FontString Reference to the already existing title textline to place the description next to
 ---@param t? descriptionCreationData Table of parameters to create a description
----@return FontString|nil
-function wt.AddDescription(t)
+---***
+---@return FontString? # ***Default:*** nil
+function wt.CreateDescription(title, t)
 	t = type(t) == "table" and t or {}
-	if not t.title then return end
 
-	local parent = t.title:GetParent()
+	if not type(title) ~= "table" or not type(title.GetFont) == "function" then return end
 
-	t.justify = t.justify or "LEFT"
+	local parent = title:GetParent()
+
+	if not WidgetTools.utilities.IsFrame(parent) then return end
+
+	t.justify = type(t.justify) == "string" and t.justify or "LEFT"
 	local anchor = t.justify ~= "RIGHT" and "LEFT" or "RIGHT"
 	local relativePoint = t.justify ~= "RIGHT" and "RIGHT" or "LEFT"
-	t.offset = t.offset or {}
-	t.offset.x = t.offset.x or 0
-	t.offset.y = t.offset.y or 1
-	t.spacer = (t.spacer or 5) * (t.justify ~= "LEFT" and -1 or 1)
-	t.color = t.color or wt.AddMissing({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
+	t.offset = type(t.offset) == "table" and t.offset or {}
+	t.offset.x = type(t.offset.x) == "number" and t.offset.x or 0
+	t.offset.y = type(t.offset.y) == "number" and t.offset.y or 1
+	t.spacer = (type(t.spacer) == "number" and t.spacer or 5) * (t.justify ~= "LEFT" and -1 or 1)
+	t.color = type(t.color) == "table" and t.color or ut.Fill({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
 
 	local separator = wt.CreateText({
 		parent = parent,
 		name = "Separator",
 		position = {
 			anchor = anchor,
-			relativeTo = t.title,
+			relativeTo = title,
 			relativePoint = relativePoint,
 			offset = { x = t.spacer, }
 		},
 		layer = "ARTWORK",
 		text = "•",
-		font = t.title:GetFontObject():GetName(),
+		font = title:GetFontObject():GetName(),
 		color = t.color,
 	})
 
@@ -429,7 +420,7 @@ function wt.AddDescription(t)
 			relativePoint = relativePoint,
 			offset = { x = t.offset.x + t.spacer + 4, y = t.offset.y }
 		},
-		width = t.width or parent:GetWidth() - t.title:GetWidth() - separator:GetWidth() - t.spacer * 2 + (t.widthOffset or 0),
+		width = t.width or parent:GetWidth() - title:GetWidth() - separator:GetWidth() - t.spacer * 2 + (t.widthOffset or 0),
 		layer = "ARTWORK",
 		text = t.text,
 		font = t.font or "GameFontHighlightSmall2",
@@ -442,15 +433,17 @@ end
 
 ---Create a [Texture](https://warcraft.wiki.gg/wiki/UIOBJECT_Texture) image [TextureBase](https://warcraft.wiki.gg/wiki/UIOBJECT_TextureBase) object
 ---***
+---@param frame AnyFrameObject Reference to the frame to set as the parent of the new texture
 ---@param t textureCreationData Parameters are to be provided in this table
 ---@param updates? table<AnyScriptType, textureUpdateRule> Table of key, value pairs containing the list of events to link texture changes to, and what parameters to change
----@return Texture|nil texture
-function wt.CreateTexture(t, updates)
+---***
+---@return Texture? texture ***Default:*** nil
+function wt.CreateTexture(frame, t, updates)
+	if not WidgetTools.utilities.IsFrame(frame) then return end
+
 	t = type(t) == "table" and t or {}
 
-	if not t.parent then return end
-
-	local texture = t.parent:CreateTexture((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Texture"))
+	local texture = frame:CreateTexture((frame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Texture"))
 
 	--[ Set Texture Utility ]
 
@@ -461,7 +454,7 @@ function wt.CreateTexture(t, updates)
 
 		wt.SetPosition(texture, data.position)
 
-		texture:SetSize(data.size.w or t.size.w or t.parent:GetWidth(), data.size.h or t.size.h or t.parent:GetHeight())
+		texture:SetSize(data.size.w or t.size.w or frame:GetWidth(), data.size.h or t.size.h or frame:GetHeight())
 
 		--| Asset & color
 
@@ -498,17 +491,17 @@ function wt.CreateTexture(t, updates)
 
 	--| Set the base texture
 
-	t.size = t.size or {}
-	t.path = t.path or "Interface/ChatFrame/ChatFrameBackground"
-	t.wrap = t.wrap or {}
-	t.tile = t.tile or {}
+	t.path = type(t.path) == "string" and t.path or "Interface/ChatFrame/ChatFrameBackground"
+	t.size = type(t.size) == "table" and t.size or {}
+	t.wrap = type(t.wrap) == "table" and t.wrap or {}
+	t.tile = type(t.tile) == "table" and t.tile or {}
 
 	setTexture(t)
 
 	--[ Events ]
 
 	--Register script event handlers
-	if t.events then for key, value in pairs(t.events) do
+	if type(t.events) == "table" then for key, value in pairs(t.events) do
 		if key == "attribute" then texture:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
 		else texture:HookScript(key, value) end
 	end end
@@ -516,7 +509,7 @@ function wt.CreateTexture(t, updates)
 	--[ Texture Updates ]
 
 	if updates then for key, value in pairs(updates) do
-		value.frame = value.frame or t.parent
+		value.frame = value.frame or frame
 
 		--Set the script
 		if value.frame:HasScript(key) then value.frame:HookScript(key, function(self, ...)
@@ -528,7 +521,7 @@ function wt.CreateTexture(t, updates)
 			end
 
 			--Conditional: Evaluate the rule & fill texture update date with the base values
-			local data = wt.AddMissing(value.rule(self, ...), t)
+			local data = ut.Fill(value.rule(self, ...), t)
 
 			--Update the texture
 			setTexture(data)
@@ -540,17 +533,19 @@ end
 
 ---Create a [Line](https://warcraft.wiki.gg/wiki/UIOBJECT_Line) [TextureBase](https://warcraft.wiki.gg/wiki/UIOBJECT_TextureBase) object
 ---***
+---@param frame AnyFrameObject Reference to the frame to set as the parent of the new line
 ---@param t lineCreationData Parameters are to be provided in this table
----@return Line|nil line
-function wt.CreateLine(t)
+---***
+---@return Line? line ***Default:*** nil
+function wt.CreateLine(frame, t)
 	t = type(t) == "table" and t or {}
 
-	if not t.parent then return end
+	if not WidgetTools.utilities.IsFrame(frame) then return end
 
 	t.startPosition.offset = t.startPosition.offset or {}
 	t.endPosition.offset = t.endPosition.offset or {}
 
-	local line = t.parent:CreateLine((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Line"), t.layer, nil, t.level)
+	local line = frame:CreateLine((frame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Line"), t.layer, nil, t.level)
 
 	--Positions
 	line:ClearAllPoints()
@@ -760,14 +755,13 @@ function wt.CreatePanel(t)
 
 	--| Title & description
 
-	panel.title = t.label ~= false and wt.AddTitle({
-		parent = panel,
+	panel.title = t.label ~= false and wt.CreateTitle(panel, {
 		offset = { x = 7, y = 27 },
 		text = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Panel",
 		font = "GameFontHighlightLarge",
 	}) or nil
 
-	panel.description = t.description and wt.AddDescription({
+	panel.description = t.description and wt.CreateDescription({
 		title = panel.title,
 		widthOffset = -22,
 		text = t.description,
@@ -776,14 +770,14 @@ function wt.CreatePanel(t)
 	--| Backdrop
 
 	wt.SetBackdrop(panel, {
-		background = wt.AddMissing(t.background, {
+		background = ut.Fill(t.background, {
 			texture = {
 				size = 5,
 				insets = { l = 4, r = 4, t = 4, b = 4 },
 			},
 			color = { r = 0.175, g = 0.175, b = 0.175, a = 0.65 }
 		}),
-		border = wt.AddMissing(t.border, {
+		border = ut.Fill(t.border, {
 			texture = { width = 16, },
 			color = { r = 0.75, g = 0.75, b = 0.75, a = 0.5 }
 		})
@@ -848,7 +842,7 @@ function wt.CreateContextMenu(t)
 	--| Trigger events
 
 	if type(t.triggers) ~= "table" then t.triggers = { { frame = UIParent, }, } else for i = 1, #t.triggers do
-		if not wt.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
+		if not WidgetTools.utilities.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
 
 		if t.triggers[i].rightClick ~= false or t.triggers[i].leftClick then t.triggers[i].frame:HookScript("OnMouseUp", function(_, button, isInside)
 			if not isInside or (button == "RightButton" and t.triggers[i].rightClick == false) or (button == "LeftButton" and not t.triggers[i].leftClick) then return end
@@ -1075,11 +1069,6 @@ function wt.CreateSettingsPage(addon, t)
 	---<hr><p></p>
 	function page.isType(type) return type == "SettingsPage" end
 
-	---Return a value at the specified key from the table used for creating the settings page
-	---@param key string
-	---@return any
-	function page.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	---Returns the unique identifier key representing the defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 	---@return string
 	function page.getDefaultsPopupKey() return defaultsWarning end
@@ -1090,9 +1079,9 @@ function wt.CreateSettingsPage(addon, t)
 	--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
 	function page.open()
 		if WidgetToolsDB.lite or not page.category then
-			print(wt.Color(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. wt.Color(rs.strings.chat.lite.reminder:gsub(
-				"#HINT", wt.Color(rs.strings.chat.lite.hint:gsub(
-					"#COMMAND", wt.Color("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
+			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
+				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
+					"#COMMAND", cr("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
 				), rs.colors.grey[1])
 			), rs.colors.gold[2]))
 
@@ -1194,19 +1183,17 @@ function wt.CreateSettingsPage(addon, t)
 
 		--| Title & description
 
-		page.title = t.title or C_AddOns.GetAddOnMetadata(addon, "title")
+		local title = type(t.title) == "string" and t.title or C_AddOns.GetAddOnMetadata(addon, "title")
 
-
-		local title = page.title and wt.AddTitle({
-			parent = page.canvas,
+		page.title = wt.CreateTitle(page.canvas, {
 			name = "Title",
 			offset = { x = 7, y = -22 },
-			text = page.title,
+			text = title,
 			font = "GameFontHighlightHuge",
-		}) or nil
+		})
 
-		if t.description then wt.AddDescription({
-			title = title,
+		if type(t.description) == "string" then page.description = wt.CreateDescription({
+			title = page.title,
 			widthOffset = -161,
 			spacer = 7,
 			text = t.description,
@@ -1214,10 +1201,7 @@ function wt.CreateSettingsPage(addon, t)
 
 		--| Icon texture
 
-		page.icon = t.icon or C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-
-		if page.icon then wt.CreateTexture({
-			parent = page.canvas,
+		page.icon = wt.CreateTexture(page.canvas, {
 			name = "Logo",
 			position = {
 				anchor = "BOTTOMLEFT",
@@ -1226,13 +1210,12 @@ function wt.CreateSettingsPage(addon, t)
 				offset = { x = 8, }
 			},
 			size = { w = 42, h = 42 },
-			path = page.icon,
-		}) end
+			path = type(t.icon) == "string" and t.icon or C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
+		})
 
 		--| Divider texture
 
-		wt.CreateTexture({
-			parent = page.canvas,
+		wt.CreateTexture(page.canvas, {
 			atlas = "Options_HorizontalDivider",
 			position = { anchor = "TOP", offset = { y = -50 } },
 		})
@@ -1242,7 +1225,7 @@ function wt.CreateSettingsPage(addon, t)
 		--| Defaults button
 
 		defaultsWarning = wt.RegisterPopupDialog(addon, (t.name or "") .. "DEFAULT", {
-			text = wt.strings.settings.warningSingle:gsub("#PAGE", wt.Color(page.title, NORMAL_FONT_COLOR)),
+			text = wt.strings.settings.warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
 			accept = ACCEPT,
 			onAccept = function() page.default(true) end,
 		})
@@ -1290,6 +1273,10 @@ function wt.CreateSettingsPage(addon, t)
 		})
 	end
 
+	--[ Category Resources ]
+
+	page.categorySyncer = { onDefault = t.onDefault, dataManagement = t.dataManagement, titleIcon = t.titleIcon } --REPLACE temporary solution
+
 	--[ Initialization ]
 
 	--Register to the Settings panel
@@ -1304,7 +1291,7 @@ function wt.CreateSettingsPage(addon, t)
 		t.initialize(page.content, width, height, (t.dataManagement or {}).category, (t.dataManagement or {}).keys, t.name or addon)
 
 		--Arrange content
-		if t.arrangement and page.content then wt.ArrangeContent(page.content, wt.AddMissing(t.arrangement, {
+		if t.arrangement and page.content then wt.ArrangeContent(page.content, ut.Fill(t.arrangement, {
 			margins = { l = 10, r = 10, t = 54, b = 10 },
 			gaps = 54,
 			resize = t.scroll ~= nil
@@ -1352,12 +1339,12 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 	---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** true
 	function category.defaults(user, callListeners)
 		for i = 1, #category.pages do
-			local dataManagement = category.pages[i].getProperty("dataManagement")
-			local onDefault = callListeners ~= false and category.pages[i].getProperty("onDefault") or nil
+			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
+			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
 
 			--Update with default values
-			if type(dataManagement) == "table" and type(dataManagement.keys) == "table" then for i = 1, #dataManagement.keys do
-				wt.ResetSettingsData(dataManagement.category, dataManagement.keys[i])
+			if type(dataManagement) == "table" and type(dataManagement.keys) == "table" then for j = 1, #dataManagement.keys do
+				wt.ResetSettingsData(dataManagement.category, dataManagement.keys[j])
 			end end
 
 			--Call listeners
@@ -1372,7 +1359,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 	--| Parent
 
-	local parentTitle = parent.title or ""
+	local parentTitle = parent.title:GetText() or ""
 
 	-- if type(parent.isType) ~= "function" and not parent.isType("SettingsPage") then parent = wt.CreateSettingsPage(addon, parent) end --CHECK if needed
 
@@ -1382,7 +1369,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 	--Override defaults warning and add all defaults option to dialog
 	wt.UpdatePopupDialog(parent.getDefaultsPopupKey(), {
-		text = wt.strings.settings.warning:gsub("#CATEGORY", wt.Color(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", wt.Color(parentTitle, NORMAL_FONT_COLOR)),
+		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category.defaults(true) end,
@@ -1396,12 +1383,12 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 		table.insert(category.pages, pages[i])
 
-		wt.RegisterSettingsPage(pages[i], parent, pages[i].getProperty("titleIcon"))
+		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
 		wt.UpdatePopupDialog(pages[i].getDefaultsPopupKey(), {
-			text = wt.strings.settings.warning:gsub("#CATEGORY", wt.Color(parentTitle, NORMAL_FONT_COLOR)):gsub(
-				"#PAGE", wt.Color(pages[i].title or "", NORMAL_FONT_COLOR)
+			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
+				"#PAGE", cr(pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
@@ -1442,7 +1429,7 @@ local function addListener(listeners, event, listener, callIndex)
 	listeners[event] = type(listeners[event]) == "table" and listeners[event] or {}
 
 	if type(callIndex) ~= "number" then table.insert(listeners[event], listener)
-	else table.insert(listeners[event], Clamp(wt.Round(callIndex), 1, #listeners[event] + 1), listener) end
+	else table.insert(listeners[event], Clamp(WidgetTools.utilities.Round(callIndex), 1, #listeners[event] + 1), listener) end
 end
 
 ---Call registered listeners for **event**
@@ -1493,11 +1480,6 @@ function wt.CreateAction(t)
 	---@return boolean
 	---<hr><p></p>
 	function action.isType(type) return type == "Action" end
-
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function action.getProperty(key) return wt.FindValueByKey(t, key) end
 
 	--| Event handling
 
@@ -1859,11 +1841,6 @@ function wt.CreateToggle(t)
 	---<hr><p></p>
 	function toggle.isType(type) return type == "Toggle" end
 
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function toggle.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	--| Event handling
 
 	--Get a trigger function to call all registered listeners for the specified custom widget event with
@@ -2103,8 +2080,7 @@ function wt.CreateCheckbox(t, toggle)
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle"
 
-	checkbox.label = t.label ~= false and wt.AddTitle({
-		parent = checkbox.frame,
+	checkbox.label = t.label ~= false and wt.CreateTitle(checkbox.frame, {
 		offset = { x = t.size.h * (30 / 29) + 6, },
 		text = title,
 		anchor = "LEFT",
@@ -2630,11 +2606,6 @@ function wt.CreateSelector(t)
 	---<hr><p></p>
 	function selector.isType(type) return type == "Selector" end
 
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function selector.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	--| Event handling
 
 	--Get a trigger function to call all registered listeners for the specified custom widget event with
@@ -2956,11 +2927,6 @@ function wt.CreateSpecialSelector(itemset, t)
 	---<hr><p></p>
 	function selector.isType(type) return type == "SpecialSelector" end
 
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function selector.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	---Return the itemset type specified for this special selector on creation
 	---@return SpecialSelectorItemset itemset
 	function selector.getItemset() return itemset end
@@ -3185,13 +3151,13 @@ function wt.CreateMultiselector(t)
 	---@param v any
 	---@return boolean[]|nil
 	local function verify(v)
-		return wt.AddMissing(wt.RemoveEmpty(type(v) == "table" and wt.Clone(v) or {}, function(_, itemValue) return type(itemValue) == "boolean" end), default)
+		return ut.Fill(ut.Prune(type(v) == "table" and ut.Clone(v) or {}, function(_, itemValue) return type(itemValue) == "boolean" end), default)
 	end
 
 	default = verify(t.default)
 	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
 	---@type boolean[]|nil
-	local snapshot = wt.Clone(value)
+	local snapshot = ut.Clone(value)
 
 	--| State
 
@@ -3215,11 +3181,6 @@ function wt.CreateMultiselector(t)
 	---@return boolean
 	---<hr><p></p>
 	function selector.isType(type) return type == "Multiselector" end
-
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function selector.getProperty(key) return wt.FindValueByKey(t, key) end
 
 	--| Event handling
 
@@ -3403,22 +3364,22 @@ function wt.CreateMultiselector(t)
 
 	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
 	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
-	function selector.snapshotData(stored) wt.CopyValues(snapshot, stored and selector.getData() or value) end
+	function selector.snapshotData(stored) ut.CopyValues(snapshot, stored and selector.getData() or value) end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
-	function selector.revertData(handleChanges, silent) selector.setData({ states = wt.Clone(snapshot) }, handleChanges, silent) end
+	function selector.revertData(handleChanges, silent) selector.setData({ states = ut.Clone(snapshot) }, handleChanges, silent) end
 
 	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
 	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** false
-	function selector.resetData(handleChanges, silent) selector.setData({ states = wt.Clone(default) }, handleChanges, silent) end
+	function selector.resetData(handleChanges, silent) selector.setData({ states = ut.Clone(default) }, handleChanges, silent) end
 
 	---Returns the list of all items and their current states
 	---***
 	---@return boolean[] selections Indexed list of item states
-	function selector.getSelections() return wt.Clone(value) end
+	function selector.getSelections() return ut.Clone(value) end
 
 	---Set the specified items as selected
 	---***
@@ -3562,8 +3523,7 @@ local function setUpSelectorFrame(selector, t, name, title)
 
 	--| Label
 
-	selector.label = t.label ~= false and wt.AddTitle({
-		parent = selector.frame,
+	selector.label = t.label ~= false and wt.CreateTitle(selector.frame, {
 		offset = { x = 4, },
 		text = title,
 	}) or nil
@@ -3819,8 +3779,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	local title = t.title or name or "Dropdown"
 
-	dropdown.label = t.label ~= false and wt.AddTitle({
-		parent = dropdown.holderFrame,
+	dropdown.label = t.label ~= false and wt.CreateTitle(dropdown.holderFrame, {
 		anchor = "TOP",
 		offset = { y = -1, },
 		text = title,
@@ -4084,8 +4043,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		local index = dropdown.getSelected()
 		local item = t.items[index] or {}
 		text = type(text) == "string" and text or item.title or "…"
-		local tooltip = wt.Clone(item.tooltip) or {}
-		tooltip = wt.AddMissing(tooltip, {
+		local tooltip = ut.Clone(item.tooltip) or {}
+		tooltip = ut.Fill(tooltip, {
 			title = text,
 			lines = {
 				{ text = index and wt.strings.dropdown.selected or wt.strings.dropdown.none, },
@@ -4258,7 +4217,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	local utilityMenu = t.utilityMenu
 
 	---@type specialRadiogroupCreationData|radiogroupCreationData
-	t = wt.FillValues(t or {}, {
+	t = ut.Pull(t or {}, {
 		labels = false,
 		columns = itemset == "strata" and 8 or 3,
 		showDefault = false,
@@ -4517,11 +4476,6 @@ function wt.CreateTextbox(t)
 	---<hr><p></p>
 	function textbox.isType(type) return type == "Textbox" end
 
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function textbox.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	--| Event handling
 
 	--Get a trigger function to call all registered listeners for the specified custom widget event with
@@ -4675,7 +4629,7 @@ function wt.CreateTextbox(t)
 	if t.dependencies then wt.AddDependencies(t.dependencies, textbox.setEnabled) end
 
 	--Set starting value
-	textbox.setText(t.color and wt.Color(value, t.color) or value)
+	textbox.setText(t.color and cr(value, t.color) or value)
 
 	return textbox
 end
@@ -4883,8 +4837,7 @@ function wt.CreateEditbox(t, textbox)
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Textbox"
 
-	editbox.label = t.label ~= false and wt.AddTitle({
-		parent = editbox.frame,
+	editbox.label = t.label ~= false and wt.CreateTitle(editbox.frame, {
 		offset = { x = -1, },
 		text = title,
 	}) or nil
@@ -4931,8 +4884,7 @@ function wt.CreateCustomEditbox(t, textbox)
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Textbox"
 
-	editbox.label = t.label ~= false and wt.AddTitle({
-		parent = editbox.frame,
+	editbox.label = t.label ~= false and wt.CreateTitle(editbox.frame, {
 		offset = { x = -1, },
 		text = title,
 	}) or nil
@@ -5004,8 +4956,7 @@ function wt.CreateMultilineEditbox(t, textbox)
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Textbox"
 
-	editbox.label = t.label ~= false and wt.AddTitle({
-		parent = editbox.frame,
+	editbox.label = t.label ~= false and wt.CreateTitle(editbox.frame, {
 		offset = { x = 3, },
 		text = title,
 	}) or nil
@@ -5152,8 +5103,7 @@ function wt.CreateCopybox(t)
 
 		local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Copybox"
 
-		copybox.label = t.label ~= false and wt.AddTitle({
-			parent = copybox.frame,
+		copybox.label = t.label ~= false and wt.CreateTitle(copybox.frame, {
 			offset = { x = -1, },
 			width = t.size.w,
 			text = title,
@@ -5181,18 +5131,18 @@ function wt.CreateCopybox(t)
 				OnTextChanged = function(self, _, user)
 					if not user then return end
 
-					self:SetText(wt.Color(t.value, t.colorOnMouse))
+					self:SetText(cr(t.value, t.colorOnMouse))
 					self:SetCursorPosition(0)
 					self:HighlightText()
 				end,
 				OnEnter = function(self)
-					self:SetText(wt.Color(t.value, t.colorOnMouse))
+					self:SetText(cr(t.value, t.colorOnMouse))
 					self:SetCursorPosition(0)
 					self:HighlightText()
 					self:SetFocus()
 				end,
 				OnLeave = function(self)
-					self:SetText(wt.Color(t.value, t.color))
+					self:SetText(cr(t.value, t.color))
 					self:SetCursorPosition(0)
 					self:ClearHighlightText()
 					self:ClearFocus()
@@ -5270,11 +5220,6 @@ function wt.CreateNumeric(t)
 	---@return boolean
 	---<hr><p></p>
 	function numeric.isType(type) return type == "Numeric" end
-
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function numeric.getProperty(key) return wt.FindValueByKey(t, key) end
 
 	--| Event handling
 
@@ -5521,7 +5466,7 @@ function wt.CreateSlider(t, numeric)
 	if t.arrange then slider.frame.arrangementInfo = t.arrange else wt.SetPosition(slider.frame, t.position) end
 	slider.widget:SetPoint("TOP", 0, -8)
 
-	slider.frame:SetSize(t.width, t.valueBox ~= false and 64 or 52)
+	slider.frame:SetSize(t.width, t.valuebox ~= false and 64 or 52)
 	slider.widget:SetWidth(t.width)
 
 	--| Visibility
@@ -5578,11 +5523,11 @@ function wt.CreateSlider(t, numeric)
 
 	slider.widget.Forward:HookScript("OnClick", function() slider.increase(IsAltKeyDown(), true) end)
 
-	--| Value box
+	--| Valuebox
 
 	local minValue, maxValue = slider.getMin(), slider.getMax()
 
-	if t.valueBox ~= false then
+	if t.valuebox ~= false then
 
 		--| Calculate the required number of fractal digits, assemble string patterns for value validation
 
@@ -5598,9 +5543,9 @@ function wt.CreateSlider(t, numeric)
 
 		--| Frame setup
 
-		slider.valueBox = wt.CreateCustomEditbox({
+		slider.valuebox = wt.CreateCustomEditbox({
 			parent = slider.frame,
-			name = "ValueBox",
+			name = "Valuebox",
 			label = false,
 			tooltip = {
 				title = wt.strings.slider.value.label,
@@ -5645,7 +5590,7 @@ function wt.CreateSlider(t, numeric)
 
 					slider.setNumber(v, true)
 				end,
-				OnEscapePressed = function(self) self.setText(tostring(wt.Round(slider.widget.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(self) self.setText(tostring(WidgetTools.utilities.Round(slider.widget.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -5655,7 +5600,7 @@ function wt.CreateSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valueBox.setText(tostring(wt.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(WidgetTools.utilities.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ]
@@ -5707,7 +5652,7 @@ function wt.CreateSlider(t, numeric)
 		texture = { size = 5, },
 		color = { r = 1, g = 1, b = 1, a = 0 }
 	}, }, { {
-		triggers = { slider.frame, slider.widget.Slider, slider.widget.Forward, slider.widget.Back, t.valueBox ~= false and slider.valueBox.widget or nil },
+		triggers = { slider.frame, slider.widget.Slider, slider.widget.Forward, slider.widget.Back, t.valuebox ~= false and slider.valuebox.widget or nil },
 		rules = {
 			OnEnter = function() return slider.isEnabled() and { background = { color = { a = 0.1 } } } or {} end,
 			OnLeave = "",
@@ -5726,7 +5671,7 @@ function wt.CreateSlider(t, numeric)
 		local defaultValue
 		if t.showDefault ~= false then defaultValue = WrapTextInColorCode(tostring(t.default), "FFDDDD55") end
 
-		wt.AddWidgetTooltipLines({ slider.frame, slider.widget.Slider, slider.widget.Back, slider.widget.Forward, slider.valueBox.widget }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ slider.frame, slider.widget.Slider, slider.widget.Back, slider.widget.Forward, slider.valuebox.widget }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -5749,8 +5694,8 @@ function wt.CreateSlider(t, numeric)
 				frame = slider.widget.Forward,
 				condition = slider.isEnabled,
 			},
-			t.valueBox ~= false and {
-				frame = slider.valueBox.widget,
+			t.valuebox ~= false and {
+				frame = slider.valuebox.widget,
 				condition = slider.isEnabled,
 			} or nil,
 		},
@@ -5777,7 +5722,7 @@ function wt.CreateSlider(t, numeric)
 		slider.widget.MinText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
 		slider.widget.MaxText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
 
-		if t.valueBox ~= false then slider.valueBox.setEnabled(state) end
+		if t.valuebox ~= false then slider.valuebox.setEnabled(state) end
 
 		slider.widget.Back:SetEnabled(state and wt.CheckDependencies({ { frame = slider.widget.Slider, evaluate = function(value) return value > slider.getMin() end }, }))
 		slider.widget.Forward:SetEnabled(state and wt.CheckDependencies({ { frame = slider.widget.Slider, evaluate = function(value) return value < slider.getMax() end }, }))
@@ -5835,7 +5780,7 @@ function wt.CreateClassicSlider(t, numeric)
 	slider.min:SetPoint("TOPLEFT", slider.widget, "BOTTOMLEFT")
 	slider.max:SetPoint("TOPRIGHT", slider.widget, "BOTTOMRIGHT")
 
-	slider.frame:SetSize(t.width, t.valueBox ~= false and 48 or 31)
+	slider.frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
 	slider.widget:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
 
 	--| Visibility
@@ -5866,11 +5811,11 @@ function wt.CreateClassicSlider(t, numeric)
 		slider.widget:SetObeyStepOnDrag(true)
 	end
 
-	--| Value box
+	--| Valuebox
 
 	local minValue, maxValue = slider.getMin(), slider.getMax()
 
-	if t.valueBox ~= false then
+	if t.valuebox ~= false then
 
 		--| Calculate the required number of fractal digits, assemble string patterns for value validation
 		local decimals = t.fractional or max(
@@ -5885,9 +5830,9 @@ function wt.CreateClassicSlider(t, numeric)
 
 		--| Frame setup
 
-		slider.valueBox = wt.CreateCustomEditbox({
+		slider.valuebox = wt.CreateCustomEditbox({
 			parent = slider.frame,
-			name = "ValueBox",
+			name = "Valuebox",
 			label = false,
 			tooltip = {
 				title = wt.strings.slider.value.label,
@@ -5930,7 +5875,7 @@ function wt.CreateClassicSlider(t, numeric)
 
 					slider.setNumber(v, true)
 				end,
-				OnEscapePressed = function(self) self.setText(tostring(wt.Round(slider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(self) self.setText(tostring(WidgetTools.utilities.Round(slider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -5940,7 +5885,7 @@ function wt.CreateClassicSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valueBox.setText(tostring(wt.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(WidgetTools.utilities.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--| Side buttons
@@ -6166,7 +6111,7 @@ function wt.CreateClassicSlider(t, numeric)
 
 		if slider.label then slider.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
-		if t.valueBox ~= false then slider.valueBox.setEnabled(state) end
+		if t.valuebox ~= false then slider.valuebox.setEnabled(state) end
 
 		if t.sideButtons ~= false then
 			slider.decreaseButton.setEnabled(state and wt.CheckDependencies({ { frame = slider.widget, evaluate = function(value) return value > slider.getMin() end }, }))
@@ -6238,11 +6183,6 @@ function wt.CreateColormanager(t)
 	---@return boolean
 	---<hr><p></p>
 	function colormanager.isType(type) return type == "Colorpicker" end
-
-	---Return a value at the specified key from the table used for creating the widget
-	---@param key string
-	---@return any
-	function colormanager.getProperty(key) return wt.FindValueByKey(t, key) end
 
 	--| Event handling
 
@@ -6336,7 +6276,7 @@ function wt.CreateColormanager(t)
 
 	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **colorpicker.revertData()**
 	---@param stored? boolean If true, use the data from storage via **t.getData()** to create the snapshot instead of using the current widget value | ***Default:*** false
-	function colormanager.snapshotData(stored) wt.CopyValues(snapshot, stored and colormanager.getData() or value) end
+	function colormanager.snapshotData(stored) ut.CopyValues(snapshot, stored and colormanager.getData() or value) end
 
 	---Set and load the stored data managed by the widget to the last saved data snapshot set via **colorpicker.snapshotData()**
 	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** true
@@ -6350,7 +6290,7 @@ function wt.CreateColormanager(t)
 
 	---Returns the currently set channel values wrapped in a color table
 	---@return colorData
-	function colormanager.getColor() return wt.Clone(value) end
+	function colormanager.getColor() return ut.Clone(value) end
 
 	---Set the managed color values
 	---***
@@ -6499,8 +6439,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Colorpicker"
 
-	colorpicker.label = t.label ~= false and wt.AddTitle({
-		parent = colorpicker.frame,
+	colorpicker.label = t.label ~= false and wt.CreateTitle(colorpicker.frame, {
 		offset = { x = 4, },
 		text = title,
 	}) or nil
@@ -6521,7 +6460,7 @@ function wt.CreateColorpicker(t, colormanager)
 		colorpicker.hexBox.widget:SetAlpha(opacity)
 	end
 
-	if not t.value and t.getData then t.value = wt.Clone(t.getData()) else t.value = {} end
+	if not t.value and t.getData then t.value = ut.Clone(t.getData()) else t.value = {} end
 
 	if not colorpicker.button.frame then wt.CreateCustomButton({
 		parent = colorpicker.frame,
@@ -6566,8 +6505,7 @@ function wt.CreateColorpicker(t, colormanager)
 		}, }, },
 	}, colorpicker.button) end
 
-	colorpicker.button.gradient = wt.CreateTexture({
-		parent = colorpicker.button.frame,
+	colorpicker.button.gradient = wt.CreateTexture(colorpicker.button.frame, {
 		name = "ColorGradient",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 17, h = 17 },
@@ -6576,8 +6514,7 @@ function wt.CreateColorpicker(t, colormanager)
 		level = -7,
 	})
 
-	colorpicker.button.checker = wt.CreateTexture({
-		parent = colorpicker.button.frame,
+	colorpicker.button.checker = wt.CreateTexture(colorpicker.button.frame, {
 		name = "AlphaBG",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 29, h = 17 },
@@ -6829,7 +6766,7 @@ function wt.CreateAboutPage(addon, t)
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.version .. (data.day and data.month and data.year and WrapTextInColorCode(" ( " .. wt.strings.about.date .. ": " .. wt.Color(wt.strings.date:gsub(
+							text = data.version .. (data.day and data.month and data.year and WrapTextInColorCode(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
 								"#DAY", data.day
 							):gsub(
 								"#MONTH", data.month
@@ -7181,11 +7118,6 @@ function wt.CreateDataManagementPage(addon, t)
 	---<hr><p></p>
 	function dataManagement.isType(type) return type == "DataManagementPage" end
 
-	---Return a value at the specified key from the table used for creating the data management page
-	---@param key string
-	---@return any
-	function dataManagement.getProperty(key) return wt.FindValueByKey(t, key) end
-
 	--[ Settings Page ]
 
 	dataManagement.page = wt.CreateSettingsPage(addon, {
@@ -7254,9 +7186,9 @@ function wt.CreateDataManagementPage(addon, t)
 			local function checkData(profileData, compareWith)
 				compareWith = compareWith or t.defaultsTable
 
-				wt.RemoveEmpty(profileData, t.valueChecker)
-				wt.AddMissing(profileData, compareWith)
-				wt.RemoveMismatch(profileData, compareWith, t.recoveryMap, t.onRecovery)
+				ut.Prune(profileData, t.valueChecker)
+				ut.Fill(profileData, compareWith)
+				ut.Filter(profileData, compareWith, t.recoveryMap, t.onRecovery)
 			end
 
 			---Clean up a profile list table
@@ -7266,10 +7198,10 @@ function wt.CreateDataManagementPage(addon, t)
 				local i = 1
 
 				--Check profile list
-				for key, value in wt.SortedPairs(list) do
+				for key, value in WidgetTools.utilities.SortedPairs(list) do
 					if key == i and type(value) == "table" then
 						--Check profile data
-						if type(list[i].data) == "table" then checkData(list[i].data) else list[i].data = wt.Clone(t.defaultsTable) end
+						if type(list[i].data) == "table" then checkData(list[i].data) else list[i].data = ut.Clone(t.defaultsTable) end
 					else
 						--Remove invalid entry
 						list[key] = nil
@@ -7279,7 +7211,7 @@ function wt.CreateDataManagementPage(addon, t)
 				end
 
 				--Fill with default profile
-				if not list[1] then list[1] = { title = wt.strings.profiles.select.main, data = wt.Clone(t.defaultsTable) } end
+				if not list[1] then list[1] = { title = wt.strings.profiles.select.main, data = ut.Clone(t.defaultsTable) } end
 
 				--Check profile names
 				for i = 1, #list do list[i].title = checkName(list[i].title, nil, false) end
@@ -7327,7 +7259,7 @@ function wt.CreateDataManagementPage(addon, t)
 				--Create profile data
 				table.insert(t.accountData.profiles, index, {
 					title = checkName(duplicate and t.accountData.profiles[duplicate].title or name, number),
-					data = wt.Clone(duplicate and t.accountData.profiles[duplicate] or t.defaultsTable)
+					data = ut.Clone(duplicate and t.accountData.profiles[duplicate] or t.defaultsTable)
 				})
 
 				--Update dropdown items
@@ -7366,7 +7298,7 @@ function wt.CreateDataManagementPage(addon, t)
 				end
 
 				if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialog(deleteProfilePopup, {
-					text = wt.strings.profiles.delete.warning:gsub("#PROFILE", wt.Color(t.accountData.profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", addonTitle),
+					text = wt.strings.profiles.delete.warning:gsub("#PROFILE", cr(t.accountData.profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", addonTitle),
 					onAccept = delete,
 				})) end
 
@@ -7389,14 +7321,14 @@ function wt.CreateDataManagementPage(addon, t)
 					index = index or t.characterData.activeProfile
 
 					--Update the profile in storage (without breaking table references)
-					wt.CopyValues(t.accountData.profiles[index].data, t.defaultsTable)
+					ut.CopyValues(t.accountData.profiles[index].data, t.defaultsTable)
 
 					--Call listener
 					if type(t.onProfileReset) == "function" then t.onProfileReset(t.accountData.profiles[index].title, index) end
 				end
 
 				if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(resetProfilePopup, {
-					text = wt.strings.profiles.reset.warning:gsub("#PROFILE", wt.Color(t.accountData.profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", addonTitle),
+					text = wt.strings.profiles.reset.warning:gsub("#PROFILE", cr(t.accountData.profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", addonTitle),
 					onAccept = reset,
 				}))end
 
@@ -7419,7 +7351,7 @@ function wt.CreateDataManagementPage(addon, t)
 					--Update the profile list in storage (without breaking table references)
 					for i = 1, #p.profiles do
 						t.accountData.profiles[i].title = p.profiles[i].title
-						wt.CopyValues(t.accountData.profiles[i].data, p.profiles[i].data)
+						ut.CopyValues(t.accountData.profiles[i].data, p.profiles[i].data)
 					end
 				else
 					t.accountData.profiles = type(t.accountData.profiles) == "table" and t.accountData.profiles or {}
@@ -7443,7 +7375,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 				if next(recovered) then
 					--Pack recovered data into the active profile data table (to be removed later if found irrelevant or invalid during validation)
-					wt.FillValues(t.accountData.profiles[t.characterData.activeProfile].data, recovered)
+					ut.Pull(t.accountData.profiles[t.characterData.activeProfile].data, recovered)
 
 					--Validate active profile data
 					checkData(t.accountData.profiles[t.characterData.activeProfile].data)
@@ -7575,7 +7507,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 						--Update the backup box and load the current profile data of the selected scope to the backup string, formatted based on the compact setting
 						function dataManagement.refreshBackupBox()
-							dataManagement.backup.box.setText(wt.TableToString(t.accountData.profiles[t.characterData.activeProfile].data, t.settingsData.compactBackup))
+							dataManagement.backup.box.setText(WidgetTools.utilities.TableToString(t.accountData.profiles[t.characterData.activeProfile].data, t.settingsData.compactBackup))
 
 							--Set focus after text change to set the scroll to the top and refresh the position character counter
 							dataManagement.backup.box.scrollFrame.EditBox:SetFocus()
@@ -7584,7 +7516,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 						--Update the backup box and load all addon profile data of the selected scope to the backup string, formatted based on the compact setting
 						function dataManagement.refreshAllProfilesBackupBox()
-							dataManagement.backupAllProfiles.box.setText(wt.TableToString({
+							dataManagement.backupAllProfiles.box.setText(WidgetTools.utilities.TableToString({
 								activeProfile = t.characterData.activeProfile,
 								profiles = t.accountData.profiles
 							}, t.settingsData.compactBackup))
@@ -7649,7 +7581,7 @@ function wt.CreateDataManagementPage(addon, t)
 
 								if success then
 									checkData(load, t.accountData.profiles[t.characterData.activeProfile].data)
-									wt.CopyValues(t.accountData.profiles[t.characterData.activeProfile].data, load)
+									ut.CopyValues(t.accountData.profiles[t.characterData.activeProfile].data, load)
 								end
 
 								t.onImport(success, load)
@@ -7861,9 +7793,9 @@ local positioningVisualAids = {}
 ---@param frame AnyFrameObject Reference to the frame to create the settings for
 ---@param t positionManagementCreationData Parameters are to be provided in this table
 ---***
----@return positionPanel|nil table Components of the settings panel wrapped in a table
+---@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** nil
 function wt.CreatePositionOptions(addon, frame, t)
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not wt.IsFrame(frame) or type(t) ~= "table" then return end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not WidgetTools.utilities.IsFrame(frame) or type(t) ~= "table" then return end
 
 	if type(t.name) ~= "string" then t.name = frame:GetName() end
 	t.dataManagement = t.dataManagement or {}
@@ -7902,22 +7834,19 @@ function wt.CreatePositionOptions(addon, frame, t)
 
 				--[ Textures ]
 
-				positioningVisualAids.anchor = positioningVisualAids.anchor or wt.CreateTexture({
-					parent = container,
+				positioningVisualAids.anchor = positioningVisualAids.anchor or wt.CreateTexture(container, {
 					name = "Anchor",
 					size = { w = 14, h = 14 },
 					path = wt.classic and "Interface/CharacterFrame/TempPortraitAlphaMask" or "Interface/Common/common-mask-diamond",
 				})
 
-				positioningVisualAids.relativePoint = positioningVisualAids.relativePoint or wt.CreateTexture({
-					parent = container,
+				positioningVisualAids.relativePoint = positioningVisualAids.relativePoint or wt.CreateTexture(container, {
 					name = "RelativePoint",
 					size = { w = 14, h = 14 },
 					path = not wt.classic and "Interface/Common/common-iconmask" or nil,
 				})
 
-				positioningVisualAids.line = positioningVisualAids.line or wt.CreateLine({
-					parent = container,
+				positioningVisualAids.line = positioningVisualAids.line or wt.CreateLine(container, {
 					name = "Line",
 					startPosition = {
 						relativeTo = positioningVisualAids.anchor,
@@ -7958,6 +7887,10 @@ function wt.CreatePositionOptions(addon, frame, t)
 				function positioningVisualAids.show(target, position)
 					positioningVisualAids.frame:Show()
 
+					--Dimensions
+					positioningVisualAids.frame:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
+					positioningVisualAids.frame:SetScale(UIParent:GetScale())
+
 					--Points
 					positioningVisualAids.update(target, position)
 				end
@@ -7973,12 +7906,12 @@ function wt.CreatePositionOptions(addon, frame, t)
 
 		--[ Update Size ]
 
-		WidgetTools.loaderFrame:RegisterEvent("UI_SCALE_CHANGED")
-
-		function WidgetTools.loaderFrame:UI_SCALE_CHANGED()
+		positioningVisualAids.frame:HookScript("OnEvent", function(_, event) if event == "UI_SCALE_CHANGED" then
 			positioningVisualAids.frame:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
 			positioningVisualAids.frame:SetScale(UIParent:GetScale())
-		end
+		end end)
+
+		positioningVisualAids.frame:RegisterEvent("UI_SCALE_CHANGED")
 	end
 
 	--[ Options Panel ]
@@ -8015,7 +7948,7 @@ function wt.CreatePositionOptions(addon, frame, t)
 						wt.SetPosition(frame, panel.presets[i].data.position, true)
 
 						--Update the storage
-						wt.CopyValues(t.getData().position, wt.PackPosition(frame:GetPoint()))
+						ut.CopyValues(t.getData().position, wt.PackPosition(frame:GetPoint()))
 
 						--Update the settings widgets
 						panel.widgets.position.anchor.loadData(false)
@@ -8123,8 +8056,8 @@ function wt.CreatePositionOptions(addon, frame, t)
 						end
 
 						--Save the custom preset
-						wt.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
-						if t.presets.custom.getData() then wt.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
+						ut.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
+						if t.presets.custom.getData() then ut.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
 						--Call the specified handler
 						if t.presets.custom.onSave then t.presets.custom.onSave() end
@@ -8133,11 +8066,11 @@ function wt.CreatePositionOptions(addon, frame, t)
 					--Reset the custom preset to its default state
 					function panel.resetCustomPreset()
 						--Reset the custom preset
-						panel.presets[t.presets.custom.index].data = wt.Clone(t.presets.custom.defaultsTable)
+						panel.presets[t.presets.custom.index].data = ut.Clone(t.presets.custom.defaultsTable)
 
 						--Save the custom preset
-						wt.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
-						if t.presets.custom.getData() then wt.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
+						ut.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
+						if t.presets.custom.getData() then ut.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
 						--Call the specified handler
 						if t.presets.custom.onReset then t.presets.custom.onReset() end
@@ -8149,7 +8082,7 @@ function wt.CreatePositionOptions(addon, frame, t)
 					--| Options Widgets
 
 					local savePopup = wt.RegisterPopupDialog(addon, "SAVE_PRESET", {
-						text = wt.strings.presets.save.warning:gsub("#CUSTOM", wt.Color(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						text = wt.strings.presets.save.warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = wt.strings.override,
 						onAccept = panel.saveCustomPreset,
 					})
@@ -8168,7 +8101,7 @@ function wt.CreatePositionOptions(addon, frame, t)
 					})
 
 					local resetPopup = wt.RegisterPopupDialog(addon, "RESET_PRESET_" .. panelFrame:GetName(), {
-						text = wt.strings.presets.reset.warning:gsub("#CUSTOM", wt.Color(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						text = wt.strings.presets.reset.warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = wt.strings.override,
 						onAccept = panel.resetCustomPreset,
 					})
@@ -8420,7 +8353,7 @@ function wt.CreatePositionOptions(addon, frame, t)
 				onMove = t.setMovable.events.onMove,
 				onStop = function()
 					--Update the storage
-					wt.CopyValues(t.getData().position, wt.PackPosition(frame:GetPoint()))
+					ut.CopyValues(t.getData().position, wt.PackPosition(frame:GetPoint()))
 
 					--Update the settings widgets
 					panel.widgets.position.anchor.loadData(false)
@@ -8459,7 +8392,7 @@ local fontItems
 ---@param text FontString Reference to the text object to create font options for
 ---@param t fontManagementCreationData Parameters are to be provided in this table
 ---***
----@return fontPanel|nil table References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
+---@return fontPanel? table References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table | ***Default:*** nil
 function wt.CreateFontOptions(addon, text, t)
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or type(text) ~= "table" or type(text.GetFont) ~= "function" or type(t) ~= "table" then return end
 
@@ -8509,7 +8442,7 @@ function wt.CreateFontOptions(addon, text, t)
 						title = rs.fonts[i].name,
 						lines = i == 1 and { { text = wt.strings.font.path.default, }, } or (i == #rs.fonts and {
 							{ text = wt.strings.font.path.custom:gsub(
-								"#FONTS_DIRECTORY", wt.Color("[WoW]\\Interface\\AddOns\\" .. rs.name .. "\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
+								"#FONTS_DIRECTORY", cr("[WoW]\\Interface\\AddOns\\" .. rs.name .. "\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
 							):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
 							{ text = "\n" .. wt.strings.font.path.reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, },
 						} or nil),
@@ -8525,9 +8458,9 @@ function wt.CreateFontOptions(addon, text, t)
 				arrange = {},
 				items = fontItems,
 				dependencies = t.dependencies,
-				getData = function() return wt.FindIndex(rs.fonts, t.getData().path) end,
+				getData = function() return ut.FindIndex(rs.fonts, t.getData().path) end,
 				saveData = function(value) t.getData().path = rs.fonts[value].path end,
-				default = wt.FindIndex(rs.fonts, t.defaultsTable.path),
+				default = ut.FindIndex(rs.fonts, t.defaultsTable.path),
 				dataManagement = {
 					category = t.dataManagement.category,
 					key = t.dataManagement.key,
@@ -8624,7 +8557,7 @@ function wt.CreateFontOptions(addon, text, t)
 					name = name .. "Colorpicker",
 					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", type(t.colorNames[key]) == "string" and t.colorNames[key] or name),
 					tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-					arrange = { newRow = not next(panel.widgets.colors), column = wt.FindIndex(t.colorOrder, key) },
+					arrange = { newRow = not next(panel.widgets.colors), column = ut.FindIndex(t.colorOrder, key) },
 					dependencies = t.dependencies,
 					getData = function() return t.getData().colors[key] end,
 					saveData = function(value) t.getData().colors[key] = value end,

@@ -1,228 +1,44 @@
---[[ NAMESPACE ]]
-
----@class addonNamespace
-local ns = select(2, ...)
-
-
---[[ INITIALIZATION ]]
+--[[ TOOLBOX ]]
 
 ---@class widgetToolbox
-local wt = ns.WidgetToolbox
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
-if not wt.initialization then return end
-
-local rs = WidgetTools.GetResources()
+if not wt then return end
 
 
---[[ GENERAL ]]
+--[[ REFERENCES ]]
 
----Get the sorted key, value pairs of a table ([Documentation: Sort](https://www.lua.org/pil/19.3.html))
+local rs = WidgetTools.resources
+local ut = WidgetTools.utilities
+local ds = WidgetTools.debugging
+local cr = WrapTextInColor
+
+
+--[[ TABLE MANAGEMENT ]]
+
+---Align all keys in a table to a reference table, filling missing values and removing mismatched or invalid pairs
 ---***
----@param t table Table to be sorted (in an ascending order and/or alphabetically, based on the `<` operator)
+---@param targetTable table Reference to the table to get into alignment with the sample
+---@param tableToSample table Reference to the table to sample keys & data from
 ---***
----@return function iterator Function returning the key, value pairs of the table in order
-function wt.SortedPairs(t)
-	local a = {}
+---@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
+function wt.HarmonizeData(targetTable, tableToSample)
+	if type(targetTable) ~= "table" then return tableToSample end
 
-	for n in pairs(t) do table.insert(a, n) end
-	table.sort(a, function(x, y) if type(x) == "number" and type(y) == "number" then return x < y else return tostring(x) < tostring(y) end end)
-
-	local i = 0
-	local iterator = function ()
-		i = i + 1
-		if a[i] == nil then return nil else return a[i], t[a[i]] end
-	end
-
-	return iterator
-end
-
----Convert and format an input object to string to be dumped to the in-game chat
----***
----@param object any Object to dump out
----@param outputTable table Table to put the formatted output lines in
----@param name? any Value to print out as name string | ***Default:*** **object** as string
----@param blockrule? fun(key: integer|string): boolean Manually filter further exploring subtables under specific keys, skipping it if the value returned is true
----@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
----@param digTables? boolean ***Default:*** true
----@param digFrames? boolean ***Default:*** false
----@param currentKey? string
----@param currentLevel? integer
-local function getDumpOutput(object, outputTable, name, blockrule, depth, digTables, digFrames, currentKey, currentLevel)
-	--Check whether the current key is to be skipped
-	local skip = false
-	if currentKey and type(blockrule) == "function" then skip = blockrule(currentKey) end
-
-	--Calculate indentation based on the current depth level
-	currentLevel = currentLevel or 0
-	local indentation = ""
-	for i = 1, currentLevel do indentation = indentation .. "    " end
-
-	--Format the name and key
-	currentKey = currentKey and indentation .. "|cFFACD1EC" .. currentKey .. "|r" or nil
-	name = name and "|cFF69A6F8" .. tostring(name) .. "|r" or wt.ToString(object)
-
-	--Add the line to the output
-	if type(object) == "table" and (digFrames or not wt.IsFrame(object)) then
-		local s = (currentKey and (currentKey .. " (") or "Dump (") .. name .. "):"
-
-		--Stop at the max depth or if the key is skipped
-		if skip or currentLevel >= (depth or currentLevel + 1) then
-			table.insert(outputTable, s .. " {…}")
-
-			return
-		end
-
-		table.insert(outputTable, s .. (digTables == false and " {…}" or ""))
-
-		--Convert & format the subtable
-		for k, v in wt.SortedPairs(object) do getDumpOutput(v, outputTable, nil, blockrule, depth, digTables, digFrames, k, currentLevel + 1) end
-	elseif digTables == false then return else
-		local line = (currentKey and currentKey .. " = " or "Dump " .. name .. " value: ") .. (skip and "…" or wt.ToString(object))
-
-		table.insert(outputTable, line)
-
-		return
-	end
-end
-
----Dump an object and its contents to the in-game chat
----***
----@param object any Object to dump out
----@param name? string A name to print out | ***Default:*** *the dumped object will not be named* | ***Default:*** true
----@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
----@param blockrule? fun(key: integer|string): boolean Manually filter further exploring subtables under specific keys, skipping it if the value returned is true<ul><li>***Note:*** *The code examples below are only visible in the full function annotations, not the parameter annotations.*</li></ul>
---- - ***Example:*** **Match:** Skip a specific matching key
---- 	```
---- 	function(key) return key == "skip_key" end
---- 	```
---- - ***Example:*** **Comparison:** Skip an index key based the result of a comparison
---- 	```
---- 	function(key)
---- 		if type(key) == "number" then --check if the key is an index to avoid issues with mixed tables
---- 			return key < 10
---- 		end
---- 		return true --or false whether to allow string keys in mixed tables
---- 	end
---- 	```
---- - ***Example:*** **Blocklist:** Iterate through an array (indexed table) containing keys, the values of which are to be skipped
---- 	```
---- 	function(key)
---- 		local blocklist = {
---- 			"skip_key",
---- 			1,
---- 		}
---- 		for i = 1, #blocklist do
---- 			if key == blocklist[i] then
---- 			return true --or false to invert the functionality and treat the blocklist as an allowlist
---- 		end
---- 	end
---- 		return false --or true to invert the functionality and treat the blocklist as an allowlist
---- 	end
---- 	```
----@param digTables? boolean If true, explore and dump the non-subtable values of table objects | ***Default:*** true
----@param digFrames? boolean If true, explore and dump the insides of objects recognized as frames | ***Default:*** false
----@param linesPerMessage? integer Print the specified number of output lines in a single chat message to be able to display more message history and allow faster scrolling | ***Default:*** 2<ul><li>***Note:*** Set to 0 to print all lines in a single message.</li></ul>
-function wt.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
-	--| Get the output lines
-
-	local output = {}
-
-	getDumpOutput(object, output, name, blockrule, depth, digTables, digFrames)
-
-	--| Print the output
-
-	local lineCount = 0
-	local message = ""
-
-	for i = 1, #output do
-		lineCount = lineCount + 1
-		message = message .. ((lineCount > 1 and i > 1) and "\n" .. output[i]:sub(5) or output[i])
-
-		if lineCount == (linesPerMessage or 2) or i == #output then
-			print(message)
-
-			lineCount = 0
-			message = ""
-		end
-	end
-end
-
---Modifier key down checking function lookup table
-local modifierKeyDownCheckers = {
-	CTRL = IsControlKeyDown,
-	SHIFT = IsShiftKeyDown,
-	ALT = IsAltKeyDown,
-	LCTRL = IsLeftControlKeyDown,
-	RCTRL = IsRightControlKeyDown,
-	LSHIFT = IsLeftShiftKeyDown,
-	RSHIFT = IsRightShiftKeyDown,
-	LALT = IsLeftAltKeyDown,
-	RALT = IsRightAltKeyDown,
-}
-
---Access a Blizzard modifier key down checking function via a modifier key string
-wt.isKeyDown = setmetatable({}, { __index = function (_, k) return modifierKeyDownCheckers[k] or IsModifierKeyDown end, __newindex = function() end, })
-
-
---[[ MATH ]]
-
----Round a decimal fraction to the specified number of digits
----***
----@param number? number A fractional number value to round | ***Default:*** 0
----@param decimals? integer Specify the number of decimal places to round the number to | ***Default:*** 0
----@return number
-function wt.Round(number, decimals)
-	if type(number) ~= "number" then number = 0 end
-	if type(decimals) ~= "number" then decimals = 0 end
-
-	local multiplier = 10 ^ (decimals or 0)
-
-	return math.floor(number * multiplier + 0.5) / multiplier
+	return ut.Pull(ut.Filter(ut.Prune(targetTable), tableToSample), tableToSample) --REPLACE with combined code
 end
 
 
---[[ CONVERSION ]]
 
----Convert the object to an appropriately formatted and colored string based on its type
----***
----@param object any Object to convert to a formatted text
----***
----@return string s Formatted output string
----@return "Frame"|"FrameScriptObject"|"table"|"boolean"|"number"|"string"|"any" t Recognized object type
----<hr><p></p>
-function wt.ToString(object)
-	local t = type(object)
+--[[ DATA MANAGEMENT ]]
 
-	if t == "table" then
-		local s = wt.IsFrame(object)
+--[ Position ]
 
-		if s then
-			if type(s) == "string" then return WrapTextInColorCode(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
-			return WrapTextInColorCode(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
-		end
+--| Verification
 
-		return WrapTextInColorCode(tostring(object), "FFFF9999"), t --table reference (pink)
-	end
-	if t == "boolean" then return WrapTextInColorCode(tostring(object), object and "FFAAAAFF" or "FFFFAA66"), t end --boolean value (true: blue, false: orange)
-	if t == "number" then return WrapTextInColorCode(tostring(object), "FFDDDD55"), t end --number value (yellow)
-	if t == "string" then return WrapTextInColorCode("\"" .. object .. "\"", "FF55DD55"), t end --string value (green)
+--ADD position data verification utilities
 
-	return WrapTextInColorCode(tostring(object), "FFFF4444"), "any" --Miscellaneous value (red)
-end
-
----Find a frame or region by its name (or a subregion if a key is included in the input string)
----***
----@param s string Name of the frame to find (and the key of its child region appended to it after a period character)
----***
----@return AnyFrameObject|nil frame Reference to the object
-function wt.ToFrame(s)
-	local frame = nil
-
-	--Find the global reference
-	if type(s) == "string" then for name in s:gmatch("[^.]+") do frame = frame and frame[name] or _G[name] end end
-
-	return wt.IsFrame(frame) and frame or nil
-end
+--| Conversion
 
 ---Return a position table used by WidgetTools assembled from the provided values which are returned by [Region:GetPoint(...)](https://warcraft.wiki.gg/wiki/API_Region_GetPoint)
 ---***
@@ -237,8 +53,8 @@ end
 function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY)
 	return {
 		anchor = type(anchor) == "string" and anchor or "TOPLEFT",
-		relativeTo = wt.IsFrame(relativeTo) and relativeTo,
-		relativePoint = type(relativePoint) == "string" and relativePoint,
+		relativeTo = ut.IsFrame(relativeTo) and relativeTo or nil,
+		relativePoint = type(relativePoint) == "string" and relativePoint or nil,
 		offset = offsetX and offsetY and { x = type(offsetX) == "number" and offsetX or 0, y = type(offsetY) == "number" and offsetY or 0 } or nil
 	}
 end
@@ -259,17 +75,66 @@ function wt.UnpackPosition(t)
 	t.anchor = type(t.anchor) == "string" and t.anchor or "TOPLEFT"
 
 	if t.relativeTo ~= "nil" then
-		if type(t.relativeTo) == "string" then t.relativeTo = wt.ToFrame(t.relativeTo) end
-		if not wt.IsFrame(t.relativeTo) or not (t.relativeTo or {}).GetPoint then t.relativeTo = nil end
+		if type(t.relativeTo) == "string" then t.relativeTo = ut.ToFrame(t.relativeTo) end
+		if not ut.IsFrame(t.relativeTo) or not (t.relativeTo or {}).GetPoint then t.relativeTo = nil end
 	end
 
 	if type(t.offset) ~= "table" then t.offset = {} else
 		t.offset.x = type(t.offset.x) == "number" and t.offset.x or 0
-		t.offset.y = type(t.offset.y) == "number" and t.offset.x or 0
+		t.offset.y = type(t.offset.y) == "number" and t.offset.y or 0
 	end
 
 	return t.anchor, t.relativeTo, t.relativePoint, t.offset.x, t.offset.y
 end
+
+--[ Color ]
+
+--| Verification
+
+---Check if a variable is a valid color table
+---@param t any
+---@return boolean|colorData
+function wt.IsColor(t)
+	if type(t) ~= "table" then
+		ds.Log("Invalid color table: " ..  ut.TableToString(t))
+
+		return false
+	elseif type(t.r) ~= "number" or t.r < 0 or t.r > 1 then
+		ds.Log("Invalid red color value: " .. tostring(t.r))
+
+		return false
+	elseif type(t.g) ~= "number" or t.g < 0 or t.g > 1 then
+		ds.Log("Invalid green color value: " .. tostring(t.g))
+
+		return false
+	elseif type(t.b) ~= "number" or t.b < 0 or t.b > 1 then
+		ds.Log("Invalid blue color value: " .. tostring(t.b))
+
+		return false
+	elseif (type(t.a) ~= "number" and t.a ~= nil) or t.a < 0 or t.a > 1 then
+		ds.Log("Invalid alpha color value: " .. tostring(t.a))
+
+		return false
+	end
+
+	return t
+end
+
+---Check & silently repair a color data table
+---@param color any
+---@return boolean|colorData
+function wt.VerifyColor(color)
+	if type(color) ~= "table" then return { r = 1, g = 1, b = 1, a = 1 } end
+
+	color.r = type(color.r) == "number" and Clamp(color.r, 0, 1) or 1
+	color.g = type(color.g) == "number" and Clamp(color.g, 0, 1) or 1
+	color.b = type(color.b) == "number" and Clamp(color.b, 0, 1) or 1
+	color.a = type(color.a) == "number" and Clamp(color.a, 0, 1) or color.a ~= nil and 1 or nil
+
+	return color
+end
+
+--| Conversion
 
 ---Return a table constructed from color values
 ---***
@@ -357,7 +222,7 @@ end
 ---@param exponent? number ***Default:*** 0.55<ul><li>***Note:*** Values greater than 1 darken, smaller than 1 brighten the color.</li></ul>
 ---***
 ---@return colorData|colorRGBA|any color Reference to **color** (it was already updated during the operation, no need for setting it again)
-function wt.AdjustColorGamma(color, exponent)
+function wt.AdjustGamma(color, exponent)
 	if type(color) ~= "table" then return color end
 
 	exponent = type(exponent) == "number" and exponent or 0.55
@@ -372,36 +237,7 @@ end
 
 --[[ FORMATTING ]]
 
----Format a number string with thousands separation and optional value rounding
----***
----@param value number Number value to turn into a string with thousand separation
----@param decimals? number Specify the number of decimal places to display if the number is a fractional value | ***Default:*** 0
----@param round? boolean Round the number value to the specified number of decimal places | ***Default:*** true
----@param trim? boolean Trim trailing zeros in decimal places | ***Default:*** true
----***
----@return string # ***Default:*** ""
-function wt.Thousands(value, decimals, round, trim)
-	if type(value) ~= "number" then return "" end
-
-	value = round == false and value or wt.Round(value, decimals)
-	local sign = value < 0 and "-" or ""
-	local fraction = math.abs(value) % 1
-	local integer = tostring(math.abs(value) - fraction)
-	local decimalText = tostring(fraction):sub(3, (decimals or 0) + 2)
-	local leftover
-
-	while true do
-		integer, leftover = string.gsub(integer, "^(-?%d+)(%d%d%d)", '%1' .. wt.strings.separator .. '%2')
-		if leftover == 0 then break end
-	end
-	if trim == false then for i = 1, (decimals or 0) - #decimalText do decimalText = decimalText .. "0" end end
-
-	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and wt.strings.decimal .. decimalText or "")
-end
-
---[ Escape sequences ]
-
-wt.Color = WrapTextInColor
+--[ Escape Sequences ]
 
 ---Create a markup texture string snippet via escape sequences based on the specified values
 ---***
@@ -456,55 +292,6 @@ function wt.Clear(s)
 	return s
 end
 
----Format a table as a string with colored values appropriate to their type
----***
----@param table table Reference to the table to convert
----@param compact? boolean Whether spaces and indentations should be trimmed or not | ***Default:*** false
----@param space string Character(s) to add for additional spacing between non-atomic elements
----@param newLine string Character(s) to add for breaking lines (or not)
----@param indentation string Chain of characters to use as the indentation for subtables
----@return string
-local function formatTableString(table, compact, space, newLine, indentation)
-	if wt.IsFrame(table) then return (wt.ToString(table)) end
-
-	local tableString = "{"
-
-	for key, value in wt.SortedPairs(table) do
-		--Key
-		tableString = tableString .. newLine .. (compact and "" or indentation) .. (
-			type(key) == "string" and (
-				key:match("^%a%w*$") and WrapTextInColorCode(key, "FFFFFFFF") or "[" .. WrapTextInColorCode("\"" .. key .. "\"", "FFFFFFFF") .. "]"
-			) or "[" .. WrapTextInColorCode(tostring(key), "FFFFFFFF") .. "]"
-		) .. space .. "="
-
-		--Value
-		local valueString, valueType = wt.ToString(value)
-		if valueType == "table" then valueString = formatTableString(value, compact, space, newLine, indentation .. (compact and "" or "    ")) end
-
-		tableString = tableString .. space .. valueString
-
-		--Add separator
-		tableString = tableString .. ","
-	end
-
-	return WrapTextInColorCode((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
-end
-
----Convert a table into a formatted and colored string (appearing as a functional LUA code chunk but including coloring escape sequences)
---- - ***Example:*** Turning back into a loadable code chunk to then be useable as a table:
---- 	```
---- 	local success, loadedTable = pcall(loadstring("return " .. wt.Clear(tableAsString)))
---- 	```
----***
----@param table table Reference to the table to convert
----@param compact? boolean Whether spaces and indentations should be trimmed or not | ***Default:*** false
----@return string
-function wt.TableToString(table, compact)
-	if type(table) ~= "table" then return (wt.ToString(table)) end
-
-	return formatTableString(table, compact, compact and "" or " ", compact and "" or "\n", "    ")
-end
-
 ---Get an assembled & fully formatted string of a specifically assembled changelog table
 ---***
 ---@param changelog { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
@@ -512,14 +299,12 @@ end
 ---***
 ---@return string c # ***Default:*** ""
 function wt.FormatChangelog(changelog, latest)
-	--Colors
 	local highlight = "FFFFFFFF"
 	local new = "FF66EE66"
 	local fix = "FFEE4444"
 	local change = "FF8888EE"
 	local note = "FFEEEE66"
 
-	--Assemble the changelog
 	local c = ""
 
 	if type(changelog) == "table" then for i = 1, #changelog do
@@ -587,7 +372,7 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 	---@param handlerID string
 	---@param payload string
 	local function callHandler(addonID, handlerID, payload)
-		local handlerFunction = wt.FindValueByKey(wt.FindValueByKey(hyperlinkHandlers, addonID), handlerID)
+		local handlerFunction = ut.FindValue(ut.FindValue(hyperlinkHandlers, addonID), handlerID)
 
 		if handlerFunction then handlerFunction(strsplit(":", payload)) end
 	end
@@ -611,271 +396,6 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 end
 
 
---[[ TABLE MANAGEMENT ]]
-
----Get the unique internal runtime ID of the table
----***
----@param t table Reference to the table to get the ID of
----@return string # Return empty string of t is not a table
-function wt.GetID(t)
-	if type(t) ~= "table" then return "" else return tostring(t):sub(8) end
-end
-
----Get the index of a matching value in the array provided
----***
----@param array any[] Array to search
----@param value any The value to find
----@return integer|nil index
-function wt.FindIndex(array, value)
-	if type(array) ~= "table" then return nil end
-
-	for i = 1, #rs.fonts do if rs.fonts[i].path == value then return i end end
-
-	return nil
-end
-
----Find and return the value at the first matching key via a deep search
----***
----@param tableToCheck table Reference to the table to find a value at a certain key in
----@param keyToFind any Key to look for in **tableToCheck** (including all subtables, recursively)
----***
----@return any|nil match The first match of the value found at **keyToFind**, or nil if no match was found
-function wt.FindValueByKey(tableToCheck, keyToFind)
-	if type(tableToCheck) ~= "table" then return nil end
-
-	for k, v in pairs(tableToCheck) do
-		if k == keyToFind then return v end
-
-		local match = wt.FindValueByKey(v, keyToFind)
-
-		if match ~= nil then return match end
-	end
-
-	return nil
-end
-
----Find the first matching value and return its key via a deep search
----***
----@param tableToCheck table Reference to the table to find a value at a certain key in
----@param valueToFind any Value to look for in **tableToCheck** (including all subtables, recursively)
----***
----@return any|nil match The first match of the key of the found **valueToFind**, or nil if no match was found
-function wt.FindKeyByValue(tableToCheck, valueToFind)
-	if type(tableToCheck) ~= "table" then return nil end
-
-	for k, v in pairs(tableToCheck) do
-		if v == valueToFind then return k end
-
-		local match = wt.FindKeyByValue(v, valueToFind)
-
-		if match ~= nil then return match end
-	end
-
-	return nil
-end
-
----Make a new deep copy (not reference) of an object (non-frame table)
----***
----@param object any Reference to the object to create a copy of
----***
----@return any copy Returns **object** if it's not a table or if it is a frame reference
-function wt.Clone(object)
-	if type(object) ~= "table" or wt.IsFrame(object) then return object end
-
-	local copy = {}
-	for k, v in pairs(object) do copy[k] = wt.Clone(v) end
-
-	return copy
-end
-
----Merge a table to another table, deep copying all its values over under new integer keys
----***
----@param targetTable table|any Table to add the values to
----@param tableToMerge table Table to copy all values from
----***
----@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
-function wt.MergeTable(targetTable, tableToMerge)
-	if type(targetTable) ~= "table" and type(tableToMerge) ~= "table" then return targetTable end
-
-	for _, v in pairs(tableToMerge) do table.insert(targetTable, wt.Clone(v)) end
-
-	return targetTable
-end
-
----Copy all values at matching keys from a sample table to another table while preserving all table references
----***
----@param targetTable table|any Reference to the table to copy the values to
----@param tableToCopy table Reference to the table to copy the values from
----***
----@return table|any targetTable Reference to **targetTable** (the values were already overwritten during the operation, no need to set it again)
-function wt.CopyValues(targetTable, tableToCopy)
-	if type(tableToCopy) ~= "table" or type(targetTable) ~= "table" or wt.IsFrame(tableToCopy) or wt.IsFrame(targetTable) then return targetTable end
-	if next(targetTable) == nil then return targetTable end
-
-	for k, v in pairs(targetTable) do
-		if tableToCopy[k] == nil then return targetTable end
-
-		if type(v) == "table" then wt.CopyValues(v, tableToCopy[k]) else targetTable[k] = tableToCopy[k] end
-	end
-
-	return targetTable
-end
-
----Remove all nil, empty or otherwise invalid items from a data table
----***
----@param tableToCheck table|any Reference to the table to prune
----@param valueChecker? fun(k: number|string, v: any): boolean Helper function for validating values, returning true if the value is to be accepted as valid
----***
----@return table|any tableToCheck Reference to **tableToCheck** (it was already overwritten during the operation, no need for setting it again)
-function wt.RemoveEmpty(tableToCheck, valueChecker)
-	if type(tableToCheck) ~= "table" or wt.IsFrame(tableToCheck) then return tableToCheck end
-
-	for k, v in pairs(tableToCheck) do
-		if type(v) == "table" then
-			if next(v) == nil then tableToCheck[k] = nil else wt.RemoveEmpty(v, valueChecker) end --Remove the subtable if it's empty
-		else
-			local remove = v == nil or v == "" --The value is empty or doesn't exist
-
-			if valueChecker and not remove then remove = not valueChecker(k, v) end --Check if the value is invalid
-			if remove then tableToCheck[k] = nil end --Remove the value
-		end
-	end
-
-	return tableToCheck
-end
-
----Compare two tables and clone any missing data from one to the other
----***
----@param tableToCheck table|any Reference to the table to fill in missing data to (it will be turned into an empty table first if its type is not already "table")
----@param tableToSample table Reference to the table to sample data from
----***
----@return table|any tableToCheck Reference to **tableToCheck** (it was already updated during the operation, no need for setting it again)
-function wt.AddMissing(tableToCheck, tableToSample)
-	if not (type(tableToSample) == "table" and next(tableToSample) ~= nil) then return tableToCheck end
-
-	if wt.IsFrame(tableToSample) then tableToCheck = tableToSample else
-		for k, v in pairs(tableToSample) do
-			tableToCheck = type(tableToCheck) == "table" and tableToCheck or {}
-
-			--Add the missing item if the value is not empty or nil
-			if tableToCheck[k] == nil and v ~= nil and v ~= "" then tableToCheck[k] = wt.Clone(v) else wt.AddMissing(tableToCheck[k], tableToSample[k]) end
-		end
-	end
-
-	return tableToCheck
-end
-
----Remove unused or outdated data from a table while comparing it to another table and assemble the list of removed keys
----***
----@param tableToCheck table|nil Reference to the table to remove unused key, value pairs from
----@param tableToSample table|nil Reference to the table to sample data from
----@param recoveredData? table
----@param recoveredKey? string
----***
----@return table recoveredData Table containing the removed key, value pairs (nested keys chained together with period characters in-between)
-local function cleanTable(tableToCheck, tableToSample, recoveredData, recoveredKey)
-	recoveredData = recoveredData or {}
-	local tc, ts = type(tableToCheck), type(tableToSample)
-
-	--| Utilities
-
-	---Go deeper to fully map out recoverable keys
-	---@param ttc table
-	---@param rck string
-	local function goDeeper(ttc, rck)
-		if type(ttc) ~= "table" then return end
-
-		for k, v in pairs(ttc) do
-			if type(v) == "table" then goDeeper(v, rck .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k)))
-			else recoveredData[(rck .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k))):sub(2)] = v end
-		end
-	end
-
-	--| Compare types
-
-	if tc ~= ts then
-		local rk = (recoveredKey or "") .. (type(recoveredKey) == "number" and ("[" .. recoveredKey .. "]") or ("." .. recoveredKey))
-
-		--Save the old item to the recovered data container
-		if tc ~= "table" then recoveredData[rk:sub(2)] = tableToCheck else goDeeper(tableToCheck, rk) end
-
-		--Remove the unneeded item
-		tableToCheck = nil
-
-		return recoveredData
-	end
-
-	--| Check subtables
-
-	if tc ~= "table" or ts ~= "table" or wt.IsFrame(tableToCheck) or wt.IsFrame(tableToSample) then return recoveredData end
-	if next(tableToCheck) == nil then return recoveredData end
-
-	for key, value in pairs(tableToCheck) do
-		local rk = (recoveredKey or "") .. (type(key) == "number" and ("[" .. key .. "]") or ("." .. key))
-
-		if tableToSample[key] == nil then
-			--Save the old item to the recovered data container
-			if type(value) ~= "table" then recoveredData[rk:sub(2)] = value else goDeeper(value, rk) end
-
-			--Remove the unneeded item
-			tableToCheck[key] = nil
-		else recoveredData = cleanTable(tableToCheck[key], tableToSample[key], recoveredData, rk) end
-	end
-
-	return recoveredData
-end
-
----Remove unused or outdated data from a table while comparing it to another table while restoring any removed values
----***
----@param tableToCheck table Reference to the table to remove unused key, value pairs from
----@param tableToSample table Reference to the table to sample data from
----@param recoveryMap? table<string, recoveryData>|fun(tableToCheck: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>|nil Static map or function returning a dynamically creatable map for removed but recoverable data
----@param onRecovery? fun(tableToCheck: table) Function called after the data has been has been recovered via the **recoveryMap**
----***
----@return table tableToCheck Reference to **tableToCheck** (it was already overwritten during the operation, no need for setting it again)
-function wt.RemoveMismatch(tableToCheck, tableToSample, recoveryMap, onRecovery)
-	local recoveredData = cleanTable(tableToCheck, tableToSample)
-
-	if next(recoveredData) then
-		if type(recoveryMap) == "function" then recoveryMap = recoveryMap(tableToCheck, recoveredData) end
-
-		if type(recoveryMap) == "table" then for key, value in pairs(recoveredData) do
-			if recoveryMap[key] then for i = 1, #recoveryMap[key].saveTo do
-				recoveryMap[key].saveTo[i][recoveryMap[key].saveKey] = recoveryMap[key].convertSave and recoveryMap[key].convertSave(value) or value
-			end end
-		end end
-
-		if type(onRecovery) == "function" then onRecovery(tableToCheck) end
-	end
-
-	return tableToCheck
-end
-
----Copy all values at matching keys and clone any missing data from a reference to the target table
----***
----@param targetTable table|any Reference to the table to copy the values to
----@param tableToSample table Reference to the table to sample data from
----***
----@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
-function wt.FillValues(targetTable, tableToSample)
-	if type(targetTable) ~= "table" then return tableToSample end
-
-	return wt.CopyValues(wt.AddMissing(targetTable, tableToSample), tableToSample) --REPLACE with combined code
-end
-
----Align all keys in a table to a reference table, filling missing values and removing mismatched or invalid pairs
----***
----@param targetTable table Reference to the table to get into alignment with the sample
----@param tableToSample table Reference to the table to sample keys & data from
----***
----@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
-function wt.HarmonizeData(targetTable, tableToSample)
-	if type(targetTable) ~= "table" then return tableToSample end
-
-	return wt.FillValues(wt.RemoveMismatch(wt.RemoveEmpty(targetTable), tableToSample), tableToSample) --REPLACE with combined code
-end
-
-
 --[[ WIDGET MANAGEMENT ]]
 
 ---Check if a variable is a recognizable WidgetTools custom table
@@ -890,18 +410,10 @@ end
 
 --[[ FRAME MANAGEMENT ]]
 
+--| Position
+
 --Used for a transitional step to avoid anchor family connections during safe frame positioning
 local positioningAid
-
----Check if a variable is a frame (or a backdrop object)
----@param t any
----***
----@return boolean|string # If **t** is recognized as a [FrameScriptObject](https://warcraft.wiki.gg/wiki/UIOBJECT_FrameScriptObject), return true, or, return the frame name if named or the debug name if unnamed but recognized as a UI [Object](https://warcraft.wiki.gg/wiki/UIOBJECT_Object) with a parent, otherwise, return false
-function wt.IsFrame(t)
-	if type(t) ~= "table" then return false end
-
-	return t.GetObjectType and t.IsObjectType and (t.GetName and t:GetName() or t.GetParent and t:GetParent() and t.GetDebugName and t:GetDebugName() or true) or false
-end
 
 ---Set the position and anchoring of a frame when it is unknown which parameters will be nil
 ---***
@@ -910,7 +422,7 @@ end
 ---@param unlink? boolean If true, unlink the position of **frame** from **position.relativeTo** (preventing anchor family connections) by moving a positioning aid frame to **position** first, convert its position to absolute, breaking relative links (making it relative to screen points instead), then move **frame** to the position of the aid | ***Default:*** false
 ---@param userPlaced? boolean Remember the position if **frame**:[IsMovable()](https://warcraft.wiki.gg/wiki/API_Frame_IsMovable) | ***Default:*** true
 function wt.SetPosition(frame, position, unlink, userPlaced)
-	if not wt.IsFrame(frame) or not frame.SetPoint then return end
+	if not ut.IsFrame(frame) or not frame.SetPoint then return end
 
 	local anchor, relativeTo, relativePoint, offsetX, offsetY = wt.UnpackPosition(position)
 	relativeTo = relativeTo ~= "nil" and relativeTo or nil
@@ -959,11 +471,11 @@ end
 ---@param frame AnyFrameObject Reference to the frame to be update
 ---@param anchor FramePoint New anchor point to set
 ---***
----@return number offsetX The new horizontal offset value | ***Default:*** 0
----@return number offsetY The new vertical offset value | ***Default:*** 0
+---@return number? offsetX The new horizontal offset value | ***Default:*** nil
+---@return number? offsetY The new vertical offset value | ***Default:*** nil
 ---<hr><p></p>
 function wt.SetAnchor(frame, anchor)
-	if not wt.IsFrame(frame) or type(anchor) ~= "string" then return 0, 0 end
+	if not ut.IsFrame(frame) or type(anchor) ~= "string" then return end
 
 	local oldAnchor, relativeTo, relativePoint, offsetX, offsetY = frame:GetPoint()
 	local x, y = 0, 0
@@ -996,7 +508,7 @@ end
 ---@param frame AnyFrameObject Reference to the frame the position of which to be converted to absolute position
 ---@param keepAnchor? boolean If true, restore the original anchor of **frame** (as its closest anchor to the nearest screen point will be chosen after conversion) | ***Default:*** true
 function wt.ConvertToAbsolutePosition(frame, keepAnchor)
-	if not wt.IsFrame(frame) or not frame.IsMovable then return end
+	if not ut.IsFrame(frame) or not frame.IsMovable then return end
 
 	local movable = frame:IsMovable()
 	local oldAnchor = frame:GetPoint()
@@ -1021,7 +533,7 @@ end
 ---@param container Frame Reference to the parent container frame the child frames of which are to be arranged based on the description in **arrangement**
 ---@param t? arrangementData Arrange the child frames of **container** based on the specifications provided in this table
 function wt.ArrangeContent(container, t)
-	if not wt.IsFrame(container) then return end
+	if not ut.IsFrame(container) then return end
 
 	t = type(t) == "table" and t or {}
 	t.margins = t.margins or {}
@@ -1129,7 +641,7 @@ end
 ---@param movable? boolean Whether to make the frame movable or unmovable | ***Default:*** false
 ---@param t? movabilityData When specified, set **frame** as movable, dynamically updating the position settings widgets when it's moved by the user
 function wt.SetMovability(frame, movable, t)
-	if not wt.IsFrame(frame) or not frame.SetMovable then return end
+	if not ut.IsFrame(frame) or not frame.SetMovable then return end
 
 	movable = movable == true
 	t = type(t) == "table" and t or {}
@@ -1166,7 +678,7 @@ function wt.SetMovability(frame, movable, t)
 				if not cursor or not frame:IsMovable() then return end
 
 				if not modifier then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") else
-					if wt.isKeyDown[modifier]() then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") end
+					if ut.isKeyDown[modifier]() then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") end
 
 					frame:RegisterEvent("MODIFIER_STATE_CHANGED")
 				end
@@ -1186,7 +698,7 @@ function wt.SetMovability(frame, movable, t)
 
 			triggers[i]:HookScript("OnMouseDown", function()
 				if not frame:IsMovable() or isMoving then return end
-				if modifier and not wt.isKeyDown[modifier]() then return end
+				if modifier and not ut.isKeyDown[modifier]() then return end
 
 				--Store position
 				position = wt.PackPosition(frame:GetPoint())
@@ -1203,7 +715,7 @@ function wt.SetMovability(frame, movable, t)
 
 					--Check if the modifier key is pressed
 					if modifier then
-						if wt.isKeyDown[modifier]() then return end
+						if ut.isKeyDown[modifier]() then return end
 
 						--Cancel when the modifier key is released
 						frame:StopMovingOrSizing()
@@ -1249,15 +761,19 @@ function wt.SetMovability(frame, movable, t)
 	else for i = 1, #triggers do triggers[i]:EnableMouse(false) end end
 end
 
+--| Visibility
+
 ---Set the visibility of a frame based on the value provided
 ---***
 ---@param frame AnyFrameObject Reference to the frame to hide or show
 ---@param visible? boolean If false, hide the frame, show it if true | ***Default:*** false
 function wt.SetVisibility(frame, visible)
-	if not wt.IsFrame(frame) then return end
+	if not ut.IsFrame(frame) then return end
 
 	if visible then frame:Show() else frame:Hide() end
 end
+
+--| Backdrop
 
 ---Set the backdrop of a frame with BackdropTemplate with the specified parameters
 ---***
@@ -1265,7 +781,7 @@ end
 ---@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** nil *(remove the backdrop)*
 ---@param updates? backdropUpdateRule[] Table of backdrop update rules, modifying the specified parameters on trigger<ul><li>***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **updates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!</li></ul>
 function wt.SetBackdrop(frame, backdrop, updates)
-	if not wt.IsFrame(frame) or not frame.SetBackdrop then return end
+	if not ut.IsFrame(frame) or not frame.SetBackdrop then return end
 
 	--[ Set Backdrop ]
 
@@ -1337,13 +853,13 @@ function wt.SetBackdrop(frame, backdrop, updates)
 				--Fill defaults
 				if fill then
 					--Fill backdrop update table with the base backdrop values
-					backdropUpdate = backdrop and wt.AddMissing(backdropUpdate, backdrop) or nil
+					backdropUpdate = backdrop and ut.Fill(backdropUpdate, backdrop) or nil
 				else
 					--Fill backdrop update table with the current values
 					if frame.backdropInfo then
 						--Background
 						backdropUpdate.background = backdropUpdate.background or {}
-						backdropUpdate.background.texture = backdropUpdate.background.texture or wt.AddMissing(backdropUpdate.background.texture, {
+						backdropUpdate.background.texture = backdropUpdate.background.texture or ut.Fill(backdropUpdate.background.texture, {
 							path = frame.backdropInfo.bgFile,
 							size = frame.backdropInfo.tileSize,
 							tile = frame.backdropInfo.tile,
@@ -1358,7 +874,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 
 						--Border
 						backdropUpdate.border = backdropUpdate.border or {}
-						backdropUpdate.border.texture = backdropUpdate.border.texture or wt.AddMissing(backdropUpdate.border.texture, {
+						backdropUpdate.border.texture = backdropUpdate.border.texture or ut.Fill(backdropUpdate.border.texture, {
 							path = frame.backdropInfo.edgeFile,
 							width = frame.backdropInfo.edgeSize,
 						})
@@ -1375,6 +891,8 @@ function wt.SetBackdrop(frame, backdrop, updates)
 	end end
 end
 
+--| Dependencies
+
 ---Assign dependency rule listeners from a defined a ruleset
 ---***
 ---@param rules dependencyRule[] Indexed table containing the dependency rules to add
@@ -1389,7 +907,7 @@ function wt.AddDependencies(rules, setState)
 	for i = 1, #rules do if rules[i].frame then
 		local t
 
-		if wt.IsFrame(rules[i].frame) then t = rules[i].frame:GetObjectType() else
+		if ut.IsFrame(rules[i].frame) then t = rules[i].frame:GetObjectType() else
 			t = wt.IsWidget(rules[i].frame)
 
 			--Watch value load events
@@ -1419,7 +937,7 @@ function wt.CheckDependencies(rules)
 	local state = true
 
 	for i = 1, #rules do
-		if wt.IsFrame(rules[i].frame) then --Base Blizzard frame objects
+		if ut.IsFrame(rules[i].frame) then --Base Blizzard frame objects
 			if rules[i].frame:IsObjectType("CheckButton") then state = rules[i].evaluate and rules[i].evaluate(rules[i].frame:GetChecked()) or rules[i].frame:GetChecked()
 			elseif rules[i].frame:IsObjectType("EditBox") then state = rules[i].evaluate(rules[i].frame:GetText())
 			elseif rules[i].frame:IsObjectType("Slider") then state = rules[i].evaluate(rules[i].frame:GetValue())
@@ -1452,76 +970,76 @@ local tooltipData = {}
 
 ---Register tooltip data and set up a GameTooltip for a frame to be toggled on hover
 ---***
----@param owner AnyFrameObject Owner frame the tooltip to be registered for<ul><li>***Note:*** If tooltip data for **owner** has already been added to the registry, it will be fully overwritten with **t**.</li><ul><li>***Note:*** Duplicate triggers may still be added if **duplicate** is set to true.</li></ul></li></ul>
+---@param frame AnyFrameObject Owner frame the tooltip to be registered for<ul><li>***Note:*** If tooltip data for **owner** has already been added to the registry, it will be fully overwritten with **t**.</li><ul><li>***Note:*** Duplicate triggers may still be added if **duplicate** is set to true.</li></ul></li></ul>
 ---@param t? tooltipData The tooltip parameters are to be provided in this table
 ---@param toggle? tooltipToggleData Additional toggle rule parameters are to be provided in this table
 ---@param duplicate? boolean If true, execute even if tooltip data has already been registered for **owner**, potentially adding duplicate toggle triggers, or, automatically call ***WidgetToolbox*.UpdateTooltipData(...)** instead to avoid this | ***Default:*** false
 ---***
 ---@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** nil
-function wt.AddTooltip(owner, t, toggle, duplicate)
-	if not wt.IsFrame(owner) then return nil end
+function wt.AddTooltip(frame, t, toggle, duplicate)
+	if not ut.IsFrame(frame) then return nil end
 
 	--| Register tooltip data
 
-	local id = wt.GetID(owner)
+	local id = ut.GetID(frame)
 
-	if duplicate ~= true and type(tooltipData[id]) == "table" then return wt.UpdateTooltipData(owner, t) end
+	if duplicate ~= true and type(tooltipData[id]) == "table" then return wt.UpdateTooltipData(frame, t) end
 
 	tooltipData[id] = type(t) == "table" and t or {}
 
-	wt.UpdateTooltipData(owner)
+	wt.UpdateTooltipData(frame)
 
 	--| Toggle events
 
 	toggle = type(toggle) == "table" and toggle or {}
 	toggle.triggers = type(toggle.triggers) == "table" and toggle.triggers or {}
 
-	table.insert(toggle.triggers, owner)
+	table.insert(toggle.triggers, frame)
 
 	for i = 1, #toggle.triggers do
 		--Show tooltip
-		if toggle.triggers[i] ~= owner and toggle.replace == false then
+		if toggle.triggers[i] ~= frame and toggle.replace == false then
 			toggle.triggers[i]:HookScript("OnEnter", function()
-				if type(tooltipData[id]) == "table" then if not tooltipData[id].tooltip:IsVisible() then wt.UpdateTooltip(owner) end end
+				if type(tooltipData[id]) == "table" then if not tooltipData[id].tooltip:IsVisible() then wt.UpdateTooltip(frame) end end
 			end)
-		else toggle.triggers[i]:HookScript("OnEnter", function() wt.UpdateTooltip(owner) end) end
+		else toggle.triggers[i]:HookScript("OnEnter", function() wt.UpdateTooltip(frame) end) end
 
 		--Hide tooltip
-		if toggle.triggers[i] ~= owner and toggle.checkParent ~= false then
+		if toggle.triggers[i] ~= frame and toggle.checkParent ~= false then
 			toggle.triggers[i]:HookScript("OnLeave", function()
-				if not owner:IsMouseOver() then if type(tooltipData[id]) == "table" then tooltipData[id].tooltip:Hide() end end
+				if not frame:IsMouseOver() then if type(tooltipData[id]) == "table" then tooltipData[id].tooltip:Hide() end end
 			end)
 		else toggle.triggers[i]:HookScript("OnLeave", function() if type(tooltipData[id]) == "table" then tooltipData[id].tooltip:Hide() end end) end
 	end
 
 	--| Hide with owner
 
-	owner:HookScript("OnHide", function() if type(tooltipData[id]) == "table" then tooltipData[id].tooltip:Hide() end end)
+	frame:HookScript("OnHide", function() if type(tooltipData[id]) == "table" then tooltipData[id].tooltip:Hide() end end)
 
 	return tooltipData[id]
 end
 
 ---Update and show a GameTooltip already set up to be toggled for a frame
 ---***
----@param owner AnyFrameObject Owner frame the tooltip to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no tooltip will be shown.</li></ul>
+---@param frame AnyFrameObject Owner frame the tooltip to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no tooltip will be shown.</li></ul>
 ---@param t? tooltipUpdateData|tooltipData Use this set of parameters to update the tooltip for **owner** with | ***Default:*** *(fill values from the data in the registry)*
-function wt.UpdateTooltip(owner, t)
-	if not wt.IsFrame(owner) then return end
+function wt.UpdateTooltip(frame, t)
+	if not ut.IsFrame(frame) then return end
 
 	--| Verify the tooltip data
 
-	local id = wt.GetID(owner)
+	local id = ut.GetID(frame)
 
 	if type(tooltipData[id]) ~= "table" then return end
 
-	if type(t) ~= "table" then t = tooltipData[id] else wt.FillValues(t, tooltipData[id]) end
+	if type(t) ~= "table" then t = tooltipData[id] else ut.Pull(t, tooltipData[id]) end
 
 	--| Position
 
 	if t.anchor == "ANCHOR_NONE" then
-		t.tooltip:SetOwner(owner, t.anchor)
+		t.tooltip:SetOwner(frame, t.anchor)
 		wt.SetPosition(t.tooltip, t.position)
-	else t.tooltip:SetOwner(owner, t.anchor, t.position.offset.x or 0, t.position.offset.y or 0) end
+	else t.tooltip:SetOwner(frame, t.anchor, t.position.offset.x or 0, t.position.offset.y or 0) end
 
 	--| Title
 
@@ -1565,28 +1083,30 @@ end
 
 ---Verify and update the tooltip data values stored in the registry for a frame
 ---***
----@param owner AnyFrameObject Owner frame the tooltip data to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no data will be changed.</li></ul>
+---@param frame AnyFrameObject Owner frame the tooltip data to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no data will be changed.</li></ul>
 ---@param t? tooltipUpdateData|tooltipData The parameters to update the tooltip with are to be provided in this table | ***Default:*** *(fill values from the data in the registry or use default values for required values missing from the registry)*
 ---@param linesUpdate? boolean|nil If true, replace the full set of lines in the registry with **t.lines**, or if explicitly false, append the lines to the current list of lines, or if nil or something else, adjust the values of existing lines at matching indexes instead without adding or removing lines | ***Default:*** nil
 ---***
 ---@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** nil
-function wt.UpdateTooltipData(owner, t, linesUpdate)
-	if not wt.IsFrame(owner) then return nil end
+function wt.UpdateTooltipData(frame, t, linesUpdate)
+	if not ut.IsFrame(frame) then return nil end
 
 	t = type(t) == "table" and t or {}
 
 	--| Verify & update the tooltip data
 
-	local id = wt.GetID(owner)
+	local id = ut.GetID(frame)
 
 	if type(tooltipData[id]) ~= "table" then return nil end
 
 	--Tooltip frame
-	if wt.IsFrame(t.tooltip) and t.tooltip:IsObjectType("GameTooltip") then tooltipData[id].tooltip = t.tooltip
-	elseif not tooltipData[id].tooltip or not (wt.IsFrame(tooltipData[id].tooltip) and tooltipData[id].tooltip:IsObjectType("GameTooltip")) then
+	if ut.IsFrame(t.tooltip) and t.tooltip:IsObjectType("GameTooltip") then tooltipData[id].tooltip = t.tooltip
+	elseif not tooltipData[id].tooltip or not (ut.IsFrame(tooltipData[id].tooltip) and tooltipData[id].tooltip:IsObjectType("GameTooltip")) then
 		--Create the default reusable tooltip
 		if not defaultTooltip then
-			defaultTooltip = CreateFrame("GameTooltip", rs.name .. wt.version .. "GameTooltip", nil, "GameTooltipTemplate")
+			local name = "Widget Toolbox " .. C_AddOns.GetAddOnMetadata(rs.name, "X-WidgetTools-ToolboxVersion") .. "GameTooltip"
+
+			defaultTooltip = CreateFrame("GameTooltip", name, nil, "GameTooltipTemplate")
 
 			--| Visibility
 
@@ -1604,7 +1124,7 @@ function wt.UpdateTooltipData(owner, t, linesUpdate)
 	t.tooltip = nil
 
 	--Update textlines
-	if linesUpdate == true then wt.RemoveMismatch(tooltipData[id].lines, t.lines)
+	if linesUpdate == true then ut.Filter(tooltipData[id].lines, t.lines)
 	elseif linesUpdate == false and type(t.lines) == "table" then
 		if type(tooltipData[id].lines) ~= "table" then tooltipData[id].lines = {} end
 
@@ -1613,7 +1133,7 @@ function wt.UpdateTooltipData(owner, t, linesUpdate)
 		t.lines = nil
 	end
 
-	tooltipData[id] = wt.FillValues(tooltipData[id], t)
+	tooltipData[id] = ut.Pull(tooltipData[id], t)
 
 	--Position
 	tooltipData[id].position = tooltipData[id].position or {}
@@ -1621,13 +1141,294 @@ function wt.UpdateTooltipData(owner, t, linesUpdate)
 	if not tooltipData[id].anchor then tooltipData[id].anchor = "ANCHOR_CURSOR" end
 
 	--Title
-	if type(tooltipData[id].title) ~= "string" then tooltipData[id].title = owner:GetName() or tostring(wt.GetID(owner)) end
+	if type(tooltipData[id].title) ~= "string" then tooltipData[id].title = frame:GetName() or tostring(ut.GetID(frame)) end
 
 	return tooltipData[id]
 end
 
+---Add default value and utility menu hint tooltip lines to widget tooltip tables
+---***
+---@param frames AnyFrameObject[] List of reference to the frames to add the tooltip lines to<ul><li>***Note:*** If no entry has been registered for a frame in the list in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no changes will be made for that frame.</li></ul>
+---@param default? string Default value, formatted | ***Default:*** *(don't show default value)*
+---@param utilityNote? boolean Is true, add a note for the utility context menu | ***Default:*** true
+function wt.AddWidgetTooltipLines(frames, default, utilityNote)
+	if type(default) ~= "string" or utilityNote == false then return end
 
---[[ SETTINGS DATA MANAGEMENT ]]
+	---@type tooltipData
+	local tooltip = { lines = { { text = " ", }, } }
+
+	if type(default) == "string" then table.insert(tooltip.lines, { text = WrapTextInColorCode(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
+	if utilityNote ~= false then table.insert(tooltip.lines, { text = wt.strings.value.note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
+
+	for i = 1, #frames do wt.UpdateTooltipData(frames[i], tooltip, false) end
+end
+
+
+--[[ POPUP MANAGEMENT ]]
+
+---Create a popup dialog with an accept function and cancel button
+---***
+---@param addon? string The name of the addon's folder (the addon namespace, not its displayed title) | ***Default:*** "WidgetTools" *(register as global)*
+---@param key? string Unique string appended to **addon** to be used as the identifier key in the global **StaticPopupDialogs** table | ***Default:*** "DIALOG"<ul><li>***Note:*** Dialog data registered under existing keys will be overwritten.</li><li>***Note:*** Space characters will be replaced with "_".</li></ul>
+---@param t? popupDialogData Parameters are to be provided in this table
+---***
+---@return string key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
+function wt.RegisterPopupDialog(addon, key, t)
+	t = type(t) == "table" and t or {}
+	key = (type(addon) == "string" and addon or "WidgetTools"):upper() .. "_" .. (type(key) == "string" and key:gsub("%s+", "_"):upper() or "DIALOG")
+
+	StaticPopupDialogs[key] = {
+		text = t.text or "",
+		button1 = t.accept or ACCEPT,
+		button2 = t.cancel or CANCEL,
+		button3 = t.alt,
+		OnAccept = t.onAccept,
+		OnCancel = t.onCancel,
+		OnAlt = t.onAlt,
+		timeout = 0,
+		whileDead = true,
+		hideOnEscape = true,
+		preferredIndex = STATICPOPUPS_NUMDIALOGS
+	}
+
+	return key
+end
+
+---Update already existing popup dialog data
+---***
+---@param key string The unique identifier key representing the defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
+---@param t? popupDialogData Parameters are to be provided in this table
+---***
+---@return string? key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide) | ***Default:*** nil
+function wt.UpdatePopupDialog(key, t)
+	if not StaticPopupDialogs[key] then return end
+
+	t = type(t) == "table" and t or {}
+
+	if t.text then StaticPopupDialogs[key].text = t.text end
+	if t.accept then StaticPopupDialogs[key].button1 = t.accept end
+	if t.cancel then StaticPopupDialogs[key].button2 = t.cancel end
+	if t.alt then StaticPopupDialogs[key].button3 = t.alt end
+	if t.onAccept then StaticPopupDialogs[key].OnAccept = t.onAccept end
+	if t.onCancel then StaticPopupDialogs[key].OnCancel = t.onCancel end
+	if t.onAlt then StaticPopupDialogs[key].OnAlt = t.onAlt end
+
+	return key
+end
+
+
+--[[ ADDON COMPARTMENT ]]
+
+---Set up the [Addon Compartment](https://warcraft.wiki.gg/wiki/Addon_compartment#Automatic_registration) functionality by registering global functions for call
+---***
+---@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
+---@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
+function wt.SetUpAddonCompartment(addon, calls, tooltip)
+	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
+
+	calls = type(calls) == "table" and calls or {}
+
+	local onClickName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFunc")
+	local onEnterName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFuncOnEnter")
+	local onLeaveName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFuncOnLeave")
+
+	if onClickName and type(calls.onClick) == "function" then _G[onClickName] = calls.onClick end
+
+	if type(tooltip) == "table" and onEnterName and onLeaveName then
+		if not tooltip.tooltip then tooltip.tooltip = defaultTooltip end
+		tooltip.title = tooltip.title or C_AddOns.GetAddOnMetadata(addon, "Title")
+		tooltip.anchor = "ANCHOR_BOTTOMRIGHT"
+
+		_G[onEnterName] = function(addonNamespace, frame)
+			--Set tooltip
+			local id = ut.GetID(frame)
+			if type(tooltipData[id]) ~= "table" then tooltipData[id] = tooltip end
+			wt.UpdateTooltipData(frame)
+
+			--Call handler
+			if type(calls.onEnter) == "function" then calls.onEnter(addonNamespace, frame) end
+
+			--Show tooltip
+			wt.UpdateTooltip(frame)
+		end
+
+		_G[onLeaveName] = function(addonNamespace, frame)
+			--Call handler
+			if type(calls.onLeave) == "function" then calls.onLeave(addonNamespace, frame) end
+
+			--Hide tooltip
+			local id = ut.GetID(frame)
+			if type(tooltipData[id]) == "table" and tooltipData[id].tooltip then tooltipData[id].tooltip:Hide() end
+		end
+	else
+		if onEnterName and type(calls.onEnter) == "function" then _G[onEnterName] = calls.onEnter end
+		if onLeaveName and type(calls.onLeave) == "function" then _G[onLeaveName] = calls.onLeave end
+	end
+end
+
+
+--[[ CHAT CONTROL ]]
+
+---Register a list of chat keywords and related commands for use
+---***
+---@param addon string The name of the addon's folder (the addon namespace not the display title)
+---@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands<ul><li>***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.</li></ul>
+---@param t chatCommandManagerCreationData Parameters are to be provided in this table
+---***
+---@return chatCommandManager? manager Table containing command handler functions | ***Default:*** nil
+function wt.RegisterChatCommands(addon, keywords, t)
+	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return end
+
+	t = type(t) == "table" and t or {}
+
+	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
+	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+	local branding = logo .. addonTitle .. ": "
+
+	---@class chatCommandManager
+	local manager = {}
+
+	addon = addon:upper()
+
+	--Register the keywords
+	for i = 1, #keywords do
+		keywords[i] = "/" .. keywords[i]
+		_G["SLASH_" .. addon .. i] = keywords[i]
+	end
+
+	--| Utilities
+
+	---Print out a formatted chat message
+	---@param message string Message content
+	---@param title? string Title to start the message with | ***Default:*** *(**addon** title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of **addon**, a logo will also be included at the start of the message.</li></ul>
+	---@param contentColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "content"
+	---@param titleColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "title"
+	function manager.print(message, title, titleColor, contentColor)
+		title = type(title) == "string" and title or branding
+		titleColor = type(titleColor) == "table" and titleColor or t.colors[type(titleColor) == "string" and titleColor or "title"]
+		contentColor = type(contentColor) == "table" and contentColor or t.colors[type(contentColor) == "string" and contentColor or "content"]
+
+		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
+	end
+
+	--Print a welcome message with a hint about chat keywords
+	function manager.welcome()
+		local keyword = cr(keywords[1], t.colors.command)
+		if #keywords > 1 then
+			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], t.colors.command) end end
+			keyword = wt.strings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], t.colors.command)):gsub("#KEYWORD", keyword)
+		end
+
+		print(cr(logo .. wt.strings.chat.welcome.thanks:gsub("#ADDON", cr(addonTitle, t.colors.title)), t.colors.content))
+		print(cr(wt.strings.chat.welcome.hint:gsub("#KEYWORD", keyword), t.colors.description))
+
+		if type(t.onWelcome) == "function" then t.onWelcome() end
+	end
+
+	--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
+	function manager.help()
+		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(logo .. addonTitle, t.colors.title)), t.colors.content))
+
+		for i = 1, #t.commands do
+			if not t.commands[i].hidden then
+				local description = type(t.commands[i].description) == "function" and t.commands[i].description() or t.commands[i].description
+
+				print(cr("    " .. keywords[1] .. " ".. t.commands[i].command, t.colors.command) .. (
+					type(description) == "string" and cr(" • " .. description, t.colors.description) or ""
+				))
+			end
+
+			if type(t.commands[i].onHelp) == "function" then t.commands[i].onHelp() end
+		end
+	end
+
+	---Find and a specific command by its name and call its handler script
+	---***
+	---@param command string Name of the slash command word (no spaces)
+	---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
+	---***
+	---@return boolean # Whether the command was found and the handler called successfully
+	function manager.handleCommand(command, ...)
+		--Find the command
+		for i = 1, #t.commands do if command == t.commands[i].command then
+			--Call command handler
+			if t.commands[i].handler then
+				local results = { t.commands[i].handler(manager, ...) }
+
+				--Response
+				if results[1] == true then
+					local message = type(t.commands[i].success) == "function" and t.commands[i].success(unpack(results, 2)) or t.commands[i].success
+
+					--Print response message
+					if type(message) == "string" then manager.print(message) end
+
+					--Call handler
+					if type(t.commands[i].onSuccess) == "function" then t.commands[i].onSuccess(manager, unpack(results, 2)) end
+				elseif results[1] == false then
+					local message = type(t.commands[i].error) == "function" and t.commands[i].error(unpack(results, 2)) or t.commands[i].error
+
+					--Print response message
+					if type(message) == "string" then manager.print(message) end
+
+					--Call handler
+					if type(t.commands[i].onError) == "function" then t.commands[i].onError(manager, unpack(results, 2)) end
+				end
+			end
+
+			if t.commands[i].help then manager.help() end
+
+			return true
+		end end
+
+		return false
+	end
+
+	--| Set global keyword handler
+
+	SlashCmdList[addon] = function(line)
+		local payload = { strsplit(" ", line) }
+		local command = payload[1]
+
+		--Find and handle the specific command or call the default handler script
+		if not manager.handleCommand(command, unpack(payload, 2)) then
+			if type(t.defaultHandler) == "function" then t.defaultHandler(manager, command, unpack(payload, 2)) end
+
+			--List (non-hidden) commands
+			manager.help()
+		end
+	end
+
+	return manager
+end
+
+
+--[[ SETTINGS MANAGEMENT ]]
+
+---Register the settings page to the Settings window if it wasn't already
+--- - ***Note:*** No settings page will be registered if **WidgetToolsDB.lite** is true.
+---@param page settingsPage Reference to the settings page to register to Settings
+---@param parent? settingsPage Reference to the parent settings page to set **page** as a child category page of | ***Default:*** *set as a parent category page*
+---@param icon? boolean If true, append the icon set for the settings page to its button title in the AddOns list of the Settings window as well | ***Default:*** true if **parent** == nil
+function wt.RegisterSettingsPage(page, parent, icon)
+	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
+
+	parent = wt.IsWidget(parent) == "SettingsPage" and parent or nil
+	icon = (icon or not parent and type(page.icon) == "table" and type(page.icon.GetTexture) == "function" and ("  " .. wt.Texture(page.icon:GetTexture())) or "")
+	local title = (type(page.title) == "table" and type(page.title.GetText) == "function" and page.title:GetText() or "") .. icon
+
+	page.canvas.OnCommit = function() page.save(true) end
+	page.canvas.OnRefresh = function() page.load(nil, true) end
+	page.canvas.OnDefault = function() page.default(true) end
+
+	if parent and type(parent.category) == "table" then page.category = Settings.RegisterCanvasLayoutSubcategory(parent.category, page.canvas, title)
+	else page.category = Settings.RegisterCanvasLayoutCategory(page.canvas, title) end
+
+	Settings.RegisterAddOnCategory(page.category)
+end
+
+--| Settings data
 
 --Settings data management rule registry
 ---@class settingsRegistry
@@ -1666,7 +1467,7 @@ function wt.AddSettingsDataManagementEntry(widget, t)
 		for i = 1, #newKeys do table.insert(t.onChange, newKeys[i]) end
 	end
 
-	t.index = type(t.index) == "number" and Clamp(wt.Round(t.index), 1, #settingsData.rules[key] + 1) or #settingsData.rules[key] + 1
+	t.index = type(t.index) == "number" and Clamp(ut.Round(t.index), 1, #settingsData.rules[key] + 1) or #settingsData.rules[key] + 1
 
 	--Add to the registry
 	table.insert(settingsData.rules[key], t.index, { widget = widget, onChange = t.onChange })
@@ -1806,267 +1607,4 @@ function wt.HandleWidgetChanges(index, category, key)
 
 	--Call registered onChange handlers
 	for i = 1, #settingsData.rules[key][index].onChange do settingsData.changeHandlers[category .. settingsData.rules[key][index].onChange[i]]() end
-end
-
-
---[[ SETTINGS PAGE MANAGEMENT ]]
-
----Register the settings page to the Settings window if it wasn't already
---- - ***Note:*** No settings page will be registered if **WidgetToolsDB.lite** is true.
----@param page settingsPage Reference to the settings page to register to Settings
----@param parent? settingsPage Reference to the parent settings page to set **page** as a child category page of | ***Default:*** *set as a parent category page*
----@param icon? boolean If true, append the icon set for the settings page to its button title in the AddOns list of the Settings window as well | ***Default:*** true if **parent** == nil
-function wt.RegisterSettingsPage(page, parent, icon)
-	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
-
-	local title = (type(page.title) == "string" and page.title or "") .. (icon or not parent and type(page.icon) == "string" and (" " .. wt.Texture(page.icon)) or "")
-
-	page.canvas.OnCommit = function() page.save(true) end
-	page.canvas.OnRefresh = function() page.load(nil, true) end
-	page.canvas.OnDefault = function() page.default(true) end
-
-	if parent and wt.IsWidget(parent) == "SettingsPage" and type(parent.category) == "table" then page.category = Settings.RegisterCanvasLayoutSubcategory(parent.category, page.canvas, title)
-	else page.category = Settings.RegisterCanvasLayoutCategory(page.canvas, title) end
-
-	Settings.RegisterAddOnCategory(page.category)
-end
-
-
---[[ CHAT CONTROL ]]
-
----Register a list of chat keywords and related commands for use
----***
----@param addon string The name of the addon's folder (the addon namespace not the display title)
----@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands<ul><li>***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.</li></ul>
----@param t chatCommandManagerCreationData Parameters are to be provided in this table
----***
----@return chatCommandManager? manager Table containing command handler functions | ***Default:*** nil
-function wt.RegisterChatCommands(addon, keywords, t)
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return end
-
-	t = type(t) == "table" and t or {}
-
-	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
-	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-	local branding = logo .. addonTitle .. ": "
-
-	---@class chatCommandManager
-	local manager = {}
-
-	addon = addon:upper()
-
-	--Register the keywords
-	for i = 1, #keywords do
-		keywords[i] = "/" .. keywords[i]
-		_G["SLASH_" .. addon .. i] = keywords[i]
-	end
-
-	--| Utilities
-
-	---Print out a formatted chat message
-	---@param message string Message content
-	---@param title? string Title to start the message with | ***Default:*** *(**addon** title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of **addon**, a logo will also be included at the start of the message.</li></ul>
-	---@param contentColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "content"
-	---@param titleColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "title"
-	function manager.print(message, title, titleColor, contentColor)
-		title = type(title) == "string" and title or branding
-		titleColor = type(titleColor) == "table" and titleColor or t.colors[type(titleColor) == "string" and titleColor or "title"]
-		contentColor = type(contentColor) == "table" and contentColor or t.colors[type(contentColor) == "string" and contentColor or "content"]
-
-		if type(message) == "string" then print(wt.Color(title, titleColor) .. wt.Color(message, contentColor)) end
-	end
-
-	--Print a welcome message with a hint about chat keywords
-	function manager.welcome()
-		local keyword = wt.Color(keywords[1], t.colors.command)
-		if #keywords > 1 then
-			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. wt.Color(keywords[i], t.colors.command) end end
-			keyword = wt.strings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", wt.Color(keywords[#keywords], t.colors.command)):gsub("#KEYWORD", keyword)
-		end
-
-		print(wt.Color(logo .. wt.strings.chat.welcome.thanks:gsub("#ADDON", wt.Color(addonTitle, t.colors.title)), t.colors.content))
-		print(wt.Color(wt.strings.chat.welcome.hint:gsub("#KEYWORD", keyword), t.colors.description))
-
-		if type(t.onWelcome) == "function" then t.onWelcome() end
-	end
-
-	--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
-	function manager.help()
-		print(wt.Color(wt.strings.chat.help.list:gsub("#ADDON", wt.Color(logo .. addonTitle, t.colors.title)), t.colors.content))
-
-		for i = 1, #t.commands do
-			if not t.commands[i].hidden then
-				local description = type(t.commands[i].description) == "function" and t.commands[i].description() or t.commands[i].description
-
-				print(wt.Color("    " .. keywords[1] .. " ".. t.commands[i].command, t.colors.command) .. (
-					type(description) == "string" and wt.Color(" • " .. description, t.colors.description) or ""
-				))
-			end
-
-			if type(t.commands[i].onHelp) == "function" then t.commands[i].onHelp() end
-		end
-	end
-
-	---Find and a specific command by its name and call its handler script
-	---***
-	---@param command string Name of the slash command word (no spaces)
-	---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
-	---***
-	---@return boolean # Whether the command was found and the handler called successfully
-	function manager.handleCommand(command, ...)
-		--Find the command
-		for i = 1, #t.commands do if command == t.commands[i].command then
-			--Call command handler
-			if t.commands[i].handler then
-				local results = { t.commands[i].handler(manager, ...) }
-
-				--Response
-				if results[1] == true then
-					local message = type(t.commands[i].success) == "function" and t.commands[i].success(unpack(results, 2)) or t.commands[i].success
-
-					--Print response message
-					if type(message) == "string" then manager.print(message) end
-
-					--Call handler
-					if type(t.commands[i].onSuccess) == "function" then t.commands[i].onSuccess(manager, unpack(results, 2)) end
-				elseif results[1] == false then
-					local message = type(t.commands[i].error) == "function" and t.commands[i].error(unpack(results, 2)) or t.commands[i].error
-
-					--Print response message
-					if type(message) == "string" then manager.print(message) end
-
-					--Call handler
-					if type(t.commands[i].onError) == "function" then t.commands[i].onError(manager, unpack(results, 2)) end
-				end
-			end
-
-			if t.commands[i].help then manager.help() end
-
-			return true
-		end end
-
-		return false
-	end
-
-	--| Set global keyword handler
-
-	SlashCmdList[addon] = function(line)
-		local payload = { strsplit(" ", line) }
-		local command = payload[1]
-
-		--Find and handle the specific command or call the default handler script
-		if not manager.handleCommand(command, unpack(payload, 2)) then
-			if type(t.defaultHandler) == "function" then t.defaultHandler(manager, command, unpack(payload, 2)) end
-
-			--List (non-hidden) commands
-			manager.help()
-		end
-	end
-
-	return manager
-end
-
-
---[[ ADDON COMPARTMENT ]]
-
----Set up the [Addon Compartment](https://warcraft.wiki.gg/wiki/Addon_compartment#Automatic_registration) functionality by registering global functions for call
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
----@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
-function wt.SetUpAddonCompartment(addon, calls, tooltip)
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
-
-	calls = type(calls) == "table" and calls or {}
-
-	local onClickName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFunc")
-	local onEnterName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFuncOnEnter")
-	local onLeaveName = C_AddOns.GetAddOnMetadata(addon, "AddonCompartmentFuncOnLeave")
-
-	if onClickName and type(calls.onClick) == "function" then _G[onClickName] = calls.onClick end
-
-	if type(tooltip) == "table" and onEnterName and onLeaveName then
-		if not tooltip.tooltip then tooltip.tooltip = defaultTooltip end
-		tooltip.title = tooltip.title or C_AddOns.GetAddOnMetadata(addon, "Title")
-		tooltip.anchor = "ANCHOR_BOTTOMRIGHT"
-
-		_G[onEnterName] = function(addonNamespace, frame)
-			--Set tooltip
-			local id = wt.GetID(frame)
-			if type(tooltipData[id]) ~= "table" then tooltipData[id] = tooltip end
-			wt.UpdateTooltipData(frame)
-
-			--Call handler
-			if type(calls.onEnter) == "function" then calls.onEnter(addonNamespace, frame) end
-
-			--Show tooltip
-			wt.UpdateTooltip(frame)
-		end
-
-		_G[onLeaveName] = function(addonNamespace, frame)
-			--Call handler
-			if type(calls.onLeave) == "function" then calls.onLeave(addonNamespace, frame) end
-
-			--Hide tooltip
-			local id = wt.GetID(frame)
-			if type(tooltipData[id]) == "table" and tooltipData[id].tooltip then tooltipData[id].tooltip:Hide() end
-		end
-	else
-		if onEnterName and type(calls.onEnter) == "function" then _G[onEnterName] = calls.onEnter end
-		if onLeaveName and type(calls.onLeave) == "function" then _G[onLeaveName] = calls.onLeave end
-	end
-end
-
-
---[[ POPUP MANAGEMENT ]]
-
----Create a popup dialog with an accept function and cancel button
----***
----@param addon? string The name of the addon's folder (the addon namespace, not its displayed title) | ***Default:*** "WidgetTools" *(register as global)*
----@param key? string Unique string appended to **addon** to be used as the identifier key in the global **StaticPopupDialogs** table | ***Default:*** "DIALOG"<ul><li>***Note:*** Dialog data registered under existing keys will be overwritten.</li><li>***Note:*** Space characters will be replaced with "_".</li></ul>
----@param t? popupDialogData Parameters are to be provided in this table
----***
----@return string key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
-function wt.RegisterPopupDialog(addon, key, t)
-	t = type(t) == "table" and t or {}
-	key = (type(addon) == "string" and addon or "WidgetTools"):upper() .. "_" .. (type(key) == "string" and key:gsub("%s+", "_"):upper() or "DIALOG")
-
-	StaticPopupDialogs[key] = {
-		text = t.text or "",
-		button1 = t.accept or ACCEPT,
-		button2 = t.cancel or CANCEL,
-		button3 = t.alt,
-		OnAccept = t.onAccept,
-		OnCancel = t.onCancel,
-		OnAlt = t.onAlt,
-		timeout = 0,
-		whileDead = true,
-		hideOnEscape = true,
-		preferredIndex = STATICPOPUPS_NUMDIALOGS
-	}
-
-	return key
-end
-
----Update already existing popup dialog data
----***
----@param key string The unique identifier key representing the defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
----@param t? popupDialogData Parameters are to be provided in this table
----***
----@return string? key The unique identifier key created for this popup in the global **StaticPopupDialogs** table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide) | ***Default:*** nil
-function wt.UpdatePopupDialog(key, t)
-	if not StaticPopupDialogs[key] then return end
-
-	t = type(t) == "table" and t or {}
-
-	if t.text then StaticPopupDialogs[key].text = t.text end
-	if t.accept then StaticPopupDialogs[key].button1 = t.accept end
-	if t.cancel then StaticPopupDialogs[key].button2 = t.cancel end
-	if t.alt then StaticPopupDialogs[key].button3 = t.alt end
-	if t.onAccept then StaticPopupDialogs[key].OnAccept = t.onAccept end
-	if t.onCancel then StaticPopupDialogs[key].OnCancel = t.onCancel end
-	if t.onAlt then StaticPopupDialogs[key].OnAlt = t.onAlt end
-
-	return key
 end

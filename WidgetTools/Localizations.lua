@@ -43,6 +43,12 @@ ns.localizations.enUS = {
 		},
 		dev = {
 			title = "Development Tools",
+			debugging = {
+				enabled = {
+					label = "Debugging Mode",
+					tooltip = "Toggle to create, save and print debugging log entries to the chat window.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "Resize Frame Attributes",
@@ -58,12 +64,6 @@ ns.localizations.enUS = {
 	addons = {
 		title = "Addons & Toolboxes",
 		description = "The list of currently loaded addons using specific versions of registered #ADDON toolboxes.",
-		old = {
-			title = "Old versions",
-			description = "Versions of toolboxes older than 1.5 don't have addon data. It is visible if they are in use, however.",
-			none = "There are no recognized older versions of #ADDON toolboxes currently in use.",
-			inUse = "Old toolboxes currently in use:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -90,15 +90,9 @@ ns.localizations.enUS = {
 			reminder = "Lite Mode is enabled, settings for dependant addons have not been loaded.\n#HINT",
 			hint = "Type #COMMAND to disable Lite Mode.",
 		},
-		dump = {
-			description = "List out the Widget Tools settings data",
-		},
-		run = {
-			description = "Run a WidgetToolbox function with the provided parameters (separated by a semicolon [;] character after the name of the function).\nExample: #EXAMPLE",
-			success = "Run command initiated successfully.",
-			error = "Run command failed.",
-		},
 	},
+	separator = ",", --Thousand separator character
+	decimal = ".", --Decimal character
 }
 
 --[ Portuguese (Brazil) ]
@@ -147,12 +141,6 @@ ns.localizations.ptBR = {
 	addons = {
 		title = "Addons & Toolboxes",
 		description = "Lista dos addons atualmente carregados usando versões específicas das toolboxes #ADDON registradas.",
-		old = {
-			title = "Versões antigas",
-			description = "Versões das toolboxes anteriores à 1.5 não possuem dados de addon. É possível ver se estão em uso, no entanto.",
-			none = "Não há versões antigas reconhecidas das toolboxes #ADDON em uso atualmente.",
-			inUse = "Toolboxes antigas em uso atualmente:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -179,15 +167,9 @@ ns.localizations.ptBR = {
 			reminder = "Modo Lite está ativado, as configurações dos addons dependentes não foram carregadas.\n#HINT",
 			hint = "Digite #COMMAND para desativar o Modo Lite.",
 		},
-		dump = {
-			description = "Listar os dados de configurações do Widget Tools",
-		},
-		run = {
-			description = "Executa uma função do WidgetToolbox com os parâmetros fornecidos (separados por ponto e vírgula [;] após o nome da função).\nExemplo: #EXAMPLE",
-			success = "Comando de execução iniciado com sucesso.",
-			error = "Falha ao executar o comando.",
-		},
 	},
+	separator = ".", -- Separador de milhar
+	decimal = ",", -- Caractere decimal
 }
 
 --[ German ]
@@ -236,12 +218,6 @@ ns.localizations.deDE = {
 	addons = {
 		title = "Addons & Toolboxes",
 		description = "Liste der aktuell geladenen Addons, die bestimmte Versionen registrierter #ADDON-Toolboxes verwenden.",
-		old = {
-			title = "Alte Versionen",
-			description = "Toolbox-Versionen älter als 1.5 enthalten keine Addon-Daten. Es ist jedoch sichtbar, ob sie verwendet werden.",
-			none = "Es sind derzeit keine älteren Versionen der #ADDON-Toolboxes im Einsatz.",
-			inUse = "Alte Toolboxes derzeit im Einsatz:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -268,15 +244,9 @@ ns.localizations.deDE = {
 			reminder = "Lite-Modus ist aktiviert, Einstellungen für abhängige Addons wurden nicht geladen.\n#HINT",
 			hint = "Gib #COMMAND ein, um den Lite-Modus zu deaktivieren.",
 		},
-		dump = {
-			description = "Widget Tools Einstellungsdaten auflisten",
-		},
-		run = {
-			description = "Führt eine WidgetToolbox-Funktion mit den angegebenen Parametern aus (durch Semikolon [;] nach dem Funktionsnamen getrennt).\nBeispiel: #EXAMPLE",
-			success = "Befehl erfolgreich ausgeführt.",
-			error = "Befehl konnte nicht ausgeführt werden.",
-		},
 	},
+	separator = ".", -- Tausendertrennzeichen
+	decimal = ",", -- Dezimalzeichen
 }
 
 --[ French ]
@@ -325,12 +295,6 @@ ns.localizations.frFR = {
 	addons = {
 		title = "Addons & Toolboxes",
 		description = "Liste des addons actuellement chargés utilisant des versions spécifiques des toolboxes #ADDON enregistrées.",
-		old = {
-			title = "Anciennes versions",
-			description = "Les versions des toolboxes antérieures à 1.5 ne possèdent pas de données d'addon. Il est cependant visible si elles sont utilisées.",
-			none = "Aucune ancienne version reconnue des toolboxes #ADDON n'est actuellement utilisée.",
-			inUse = "Anciennes toolboxes actuellement utilisées :#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -357,15 +321,9 @@ ns.localizations.frFR = {
 			reminder = "Le Mode Léger est activé, les paramètres des addons dépendants n'ont pas été chargés.\n#HINT",
 			hint = "Tapez #COMMAND pour désactiver le Mode Léger.",
 		},
-		dump = {
-			description = "Lister les données de configuration de Widget Tools",
-		},
-		run = {
-			description = "Exécute une fonction WidgetToolbox avec les paramètres fournis (séparés par un point-virgule [;] après le nom de la fonction).\nExemple : #EXAMPLE",
-			success = "Commande exécutée avec succès.",
-			error = "Échec de l'exécution de la commande.",
-		},
 	},
+	separator = " ", -- Séparateur de milliers
+	decimal = ",", -- Caractère décimal
 }
 
 --[ Spanish (Spain) ]
@@ -414,12 +372,6 @@ ns.localizations.esES = {
 	addons = {
 		title = "Addons y Toolboxes",
 		description = "Lista de los addons actualmente cargados que usan versiones específicas de las toolboxes #ADDON registradas.",
-		old = {
-			title = "Versiones antiguas",
-			description = "Las versiones de toolboxes anteriores a la 1.5 no tienen datos de addon. Sin embargo, es visible si están en uso.",
-			none = "No hay versiones antiguas reconocidas de las toolboxes #ADDON en uso actualmente.",
-			inUse = "Toolboxes antiguas en uso actualmente:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -446,15 +398,9 @@ ns.localizations.esES = {
 			reminder = "El Modo Lite está activado, la configuración de los addons dependientes no se ha cargado.\n#HINT",
 			hint = "Escribe #COMMAND para desactivar el Modo Lite.",
 		},
-		dump = {
-			description = "Listar los datos de configuración de Widget Tools",
-		},
-		run = {
-			description = "Ejecuta una función de WidgetToolbox con los parámetros proporcionados (separados por punto y coma [;] después del nombre de la función).\nEjemplo: #EXAMPLE",
-			success = "Comando ejecutado correctamente.",
-			error = "Error al ejecutar el comando.",
-		},
 	},
+	separator = ".", -- Separador de miles
+	decimal = ",", -- Carácter decimal
 }
 
 --[ Spanish (Mexico) ]
@@ -503,12 +449,6 @@ ns.localizations.esMX = {
 	addons = {
 		title = "Addons y Toolboxes",
 		description = "Lista de los addons actualmente cargados que usan versiones específicas de las toolboxes #ADDON registradas.",
-		old = {
-			title = "Versiones antiguas",
-			description = "Las versiones de toolboxes anteriores a la 1.5 no tienen datos de addon. Sin embargo, es visible si están en uso.",
-			none = "No hay versiones antiguas reconocidas de las toolboxes #ADDON en uso actualmente.",
-			inUse = "Toolboxes antiguas en uso actualmente:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -535,15 +475,9 @@ ns.localizations.esMX = {
 			reminder = "El Modo Lite está activado, la configuración de los addons dependientes no se ha cargado.\n#HINT",
 			hint = "Escribe #COMMAND para desactivar el Modo Lite.",
 		},
-		dump = {
-			description = "Listar los datos de configuración de Widget Tools",
-		},
-		run = {
-			description = "Ejecuta una función de WidgetToolbox con los parámetros proporcionados (separados por punto y coma [;] después del nombre de la función).\nEjemplo: #EXAMPLE",
-			success = "Comando ejecutado correctamente.",
-			error = "Error al ejecutar el comando.",
-		},
 	},
+	separator = ".", -- Separador de miles
+	decimal = ",", -- Carácter decimal
 }
 
 --[ Italian ]
@@ -592,12 +526,6 @@ ns.localizations.itIT = {
 	addons = {
 		title = "Addon & Toolboxes",
 		description = "Elenco degli addon attualmente caricati che usano versioni specifiche delle toolboxes #ADDON registrate.",
-		old = {
-			title = "Versioni vecchie",
-			description = "Le versioni delle toolboxes precedenti alla 1.5 non hanno dati addon. Tuttavia, è visibile se sono in uso.",
-			none = "Non ci sono versioni vecchie riconosciute delle toolboxes #ADDON attualmente in uso.",
-			inUse = "Toolboxes vecchie attualmente in uso:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -624,15 +552,9 @@ ns.localizations.itIT = {
 			reminder = "La Modalità Lite è abilitata, le impostazioni per gli addon dipendenti non sono state caricate.\n#HINT",
 			hint = "Digita #COMMAND per disabilitare la Modalità Lite.",
 		},
-		dump = {
-			description = "Elenca i dati delle impostazioni di Widget Tools",
-		},
-		run = {
-			description = "Esegui una funzione WidgetToolbox con i parametri forniti (separati da punto e virgola [;] dopo il nome della funzione).\nEsempio: #EXAMPLE",
-			success = "Comando eseguito con successo.",
-			error = "Errore nell'esecuzione del comando.",
-		},
 	},
+	separator = ".", -- Separatore delle migliaia
+	decimal = ",", -- Carattere decimale
 }
 
 --[ Korean ]
@@ -681,12 +603,6 @@ ns.localizations.koKR = {
 	addons = {
 		title = "애드온 & 툴박스",
 		description = "등록된 #ADDON 툴박스의 특정 버전을 사용하는 현재 로드된 애드온 목록입니다.",
-		old = {
-			title = "이전 버전",
-			description = "1.5보다 오래된 툴박스 버전은 애드온 데이터를 포함하지 않습니다. 하지만 사용 중인 경우에는 표시됩니다.",
-			none = "현재 사용 중인 #ADDON 툴박스의 인식된 이전 버전이 없습니다.",
-			inUse = "현재 사용 중인 이전 툴박스:#TOOLBOXES",
-		},
 		toolbox = "툴박스 (#VERSION)",
 	},
 	compartment = {
@@ -713,15 +629,9 @@ ns.localizations.koKR = {
 			reminder = "라이트 모드가 활성화되어 의존 애드온의 설정이 로드되지 않았습니다.\n#HINT",
 			hint = "#COMMAND를 입력하여 라이트 모드를 비활성화하세요.",
 		},
-		dump = {
-			description = "Widget Tools 설정 데이터 목록 출력",
-		},
-		run = {
-			description = "제공된 매개변수(함수명 뒤에 세미콜론 [;]으로 구분)를 사용하여 WidgetToolbox 함수를 실행합니다.\n예시: #EXAMPLE",
-			success = "명령 실행이 성공적으로 시작되었습니다.",
-			error = "명령 실행에 실패했습니다.",
-		},
 	},
+	separator = ",", -- 천 단위 구분자
+	decimal = ".", -- 소수점 문자
 }
 
 --[ Chinese (traditional, Taiwan) ]
@@ -770,12 +680,6 @@ ns.localizations.zhTW = {
 	addons = {
 		title = "插件與工具箱",
 		description = "目前已載入並使用已註冊 #ADDON 工具箱特定版本的插件清單。",
-		old = {
-			title = "舊版本",
-			description = "1.5 以前的工具箱版本沒有插件資料，但仍可顯示其是否正在使用。",
-			none = "目前沒有正在使用的已識別 #ADDON 工具箱舊版本。",
-			inUse = "目前正在使用的舊工具箱：#TOOLBOXES",
-		},
 		toolbox = "工具箱（#VERSION）",
 	},
 	compartment = {
@@ -802,15 +706,9 @@ ns.localizations.zhTW = {
 			reminder = "精簡模式已啟用，相依插件設定尚未載入。\n#HINT",
 			hint = "輸入 #COMMAND 以停用精簡模式。",
 		},
-		dump = {
-			description = "列出 Widget Tools 設定資料",
-		},
-		run = {
-			description = "執行 WidgetToolbox 函式並傳入參數（函式名稱後以分號 [;] 分隔）。\n範例：#EXAMPLE",
-			success = "執行指令已成功啟動。",
-			error = "執行指令失敗。",
-		},
 	},
+	separator = ",", -- 千分位分隔符號
+	decimal = ".", -- 小數點符號
 }
 
 --[ Chinese (simplified, PRC) ]
@@ -859,12 +757,6 @@ ns.localizations.zhCN = {
 	addons = {
 		title = "插件与工具箱",
 		description = "当前已加载并使用已注册 #ADDON 工具箱特定版本的插件列表。",
-		old = {
-			title = "旧版本",
-			description = "1.5 之前的工具箱版本没有插件数据，但可以看到它们是否正在使用。",
-			none = "当前没有正在使用的已识别 #ADDON 工具箱旧版本。",
-			inUse = "当前正在使用的旧工具箱：#TOOLBOXES",
-		},
 		toolbox = "工具箱（#VERSION）",
 	},
 	compartment = {
@@ -891,15 +783,9 @@ ns.localizations.zhCN = {
 			reminder = "精简模式已启用，依赖插件设置尚未加载。\n#HINT",
 			hint = "输入 #COMMAND 以禁用精简模式。",
 		},
-		dump = {
-			description = "列出 Widget Tools 设置数据",
-		},
-		run = {
-			description = "运行 WidgetToolbox 函数并传入参数（函数名后用分号 [;] 分隔）。\n示例：#EXAMPLE",
-			success = "运行命令已成功启动。",
-			error = "运行命令失败。",
-		},
 	},
+	separator = ",", -- 千位分隔符
+	decimal = ".", -- 小数点符号
 }
 
 --[ Russian ]
@@ -948,12 +834,6 @@ ns.localizations.ruRU = {
 	addons = {
 		title = "Аддоны и Toolboxes",
 		description = "Список загруженных аддонов, использующих определённые версии зарегистрированных #ADDON toolboxes.",
-		old = {
-			title = "Старые версии",
-			description = "Версии toolboxes старше 1.5 не содержат данных об аддонах. Однако видно, используются ли они.",
-			none = "В настоящее время не используется ни одной распознанной старой версии #ADDON toolboxes.",
-			inUse = "Старые toolboxes, используемые сейчас:#TOOLBOXES",
-		},
 		toolbox = "Toolbox (#VERSION)",
 	},
 	compartment = {
@@ -980,13 +860,7 @@ ns.localizations.ruRU = {
 			reminder = "Лёгкий режим включён, настройки зависимых аддонов не были загружены.\n#HINT",
 			hint = "Введите #COMMAND, чтобы отключить Лёгкий режим.",
 		},
-		dump = {
-			description = "Вывести данные настроек Widget Tools",
-		},
-		run = {
-			description = "Выполнить функцию WidgetToolbox с указанными параметрами (разделёнными точкой с запятой [;] после имени функции).\nПример: #EXAMPLE",
-			success = "Команда успешно выполнена.",
-			error = "Ошибка выполнения команды.",
-		},
 	},
+	separator = " ", -- Разделитель тысяч
+	decimal = ",", -- Десятичный разделитель
 }

@@ -3,36 +3,32 @@
 --| Hook into the local addon namespace
 
 ---@class addonNamespace
-local ns = select(2, ...)
+local namespace = select(2, ...)
 
 --Addon namespace name
-local name = ...
+local addon = ...
 
 
---[[ TOOLBOX ]]
+--[[ TOOLBOX REGISTRATION ]]
 
 --Widget Toolbox version number
-local version = "2.3"
+local version = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-ToolboxVersion")
 
---| Check for the toolbox
+if not version then return end
 
-ns.WidgetToolbox = WidgetTools.RegisterToolbox(name, version)
+--Add the toolbox reference to local addon namespace
+local function AddToNamespace(toolbox)
+	local key = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")
 
-if type(ns.WidgetToolbox) == "table" then return end
+	if not key then return end
 
---| Create a new toolbox
+	---@type widgetToolbox
+	namespace[key] = toolbox
 
----@class widgetToolbox
-ns.WidgetToolbox = { version = version, initialization = true }
-
-WidgetTools.loaderFrame:RegisterEvent("ADDON_LOADED")
-
-function WidgetTools.loaderFrame:ADDON_LOADED(addon)
-	if addon ~= name then return end
-
-	WidgetTools.loaderFrame:UnregisterEvent("ADDON_LOADED")
-
-	ns.WidgetToolbox.initialization = false
-
-	ns.WidgetToolbox = WidgetTools.RegisterToolbox(name, ns.WidgetToolbox.version, ns.WidgetToolbox)
+	WidgetTools.debugging.Log("Widget Toolbox has been added to the " .. addon .. " namespace under the " .. key .. " key.", "Toolbox loaded")
 end
+
+---@type widgetToolbox
+local toolbox = WidgetTools.toolboxes.Register(addon, version, AddToNamespace)
+
+if toolbox then AddToNamespace(toolbox) end

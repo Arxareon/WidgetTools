@@ -1,14 +1,11 @@
 --[[ NAMESPACE ]]
 
----Addon namespace table
 ---@class addonNamespace
 local ns = select(2, ...)
 
 --| Shareable resources table
 
 ---@class widgetToolsResources
----@field name string Addon namespace name
----@field title string Addon display title
 ns.rs = {}
 
 --Addon namespace name
@@ -29,8 +26,7 @@ ns.rs.chat = {
 	commands = {
 		about = "about",
 		lite = "lite",
-		dump = "dump",
-		run = "run",
+		fx = "fx",
 	}
 }
 
@@ -159,8 +155,7 @@ ns.changelog = {
 
 --[ Localization ]
 
----Localized strings
----@class WidgetToolsStrings
+---@type WidgetToolsStrings
 ns.rs.strings = ns.localizations[GetLocale()]
 
 --| Cleanup
@@ -169,8 +164,6 @@ ns.localizations = nil
 
 
 --[[ ASSETS ]]
-
-
 
 --Colors
 ns.rs.colors = {
@@ -207,23 +200,10 @@ ns.rs.fonts = {
 	{ name = "Arbutus Slab", path = ns.rs.root .. "Fonts/ArbutusSlab.ttf", widthRatio = 1.07 },
 	{ name = "Caesar Dressing", path = ns.rs.root .. "Fonts/CaesarDressing.ttf", widthRatio = 0.84 },
 	{ name = "Germania One", path = ns.rs.root .. "Fonts/GermaniaOne.ttf", widthRatio = 0.86 },
-	{ name = "Mitr", path = ns.rs.root .. "Fonts/Mitr.ttf", widthRatio = 1.07 },
+	{ name = "Mitr", "Fonts/Mitr.ttf", widthRatio = 1.07 },
 	{ name = "Oxanium", path = ns.rs.root .. "Fonts/Oxanium.ttf", widthRatio = 0.94 },
 	{ name = "Pattaya", path = ns.rs.root .. "Fonts/Pattaya.ttf", widthRatio = 0.87 },
 	{ name = "Reem Kufi", path = ns.rs.root .. "Fonts/ReemKufi.ttf", widthRatio = 0.92 },
 	{ name = "Source Code Pro", path = ns.rs.root .. "Fonts/SourceCodePro.ttf", widthRatio = 1.11 },
-	{ name = CUSTOM, path = ns.rs.root .. "Fonts/CUSTOM.ttf", widthRatio = 1.2 },
-}
-
-
---[[ DATA ]]
-
---Defaults
-ns.defaults = {
-	lite = false,
-	positioningAids = true,
-	frameAttributes = {
-		enabled = false,
-		width = 620,
-	},
+	{ name = CUSTOM, path = "Fonts/CUSTOM.ttf", widthRatio = 1.2 },
 }

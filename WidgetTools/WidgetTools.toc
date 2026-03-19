@@ -1,7 +1,7 @@
 ## Interface: 120001, 50503, 20505, 11508
 ## Title: Widget Tools
-## Version: 2.3
-## X-Day: 9
+## Version: 3.0
+## X-Day: 20
 ## X-Month: 3
 ## X-Year: 2026
 ## Category: Development Tools
@@ -18,10 +18,14 @@
 ## AddonCompartmentFuncOnEnter: AddonCompartment_OnEnter_WidgetTools
 ## AddonCompartmentFuncOnLeave: AddonCompartment_OnLeave_WidgetTools
 ## SavedVariables: WidgetToolsDB
+## LoadSavedVariablesFirst: 1
+## X-WidgetTools-ToolboxVersion: 3.0
+## X-WidgetTools-AddToNamespace: wt
 
 Localizations.lua
 Resources.lua
-Main.lua
+Core.lua
+Initialization.lua
 Toolbox\Load.lua
 Toolbox\Localizations.lua
 Toolbox\Utilities.lua

@@ -10,25 +10,19 @@
 				"type": "PowerShell",
 				"request": "launch",
 				"name": "Copy Everywhere",
-				"script": "${workspaceFolder}/Install Tools/CopyEverywhere.ps1"
+				"script": "${workspaceFolder}/.install/CopyEverywhere.ps1"
 			},
 			{
 				"type": "PowerShell",
 				"request": "launch",
 				"name": "Copy to WoW",
-				"script": "${workspaceFolder}/Install Tools/CopyToWow.ps1"
+				"script": "${workspaceFolder}/.install/CopyToWow.ps1"
 			},
 			{
 				"type": "PowerShell",
 				"request": "launch",
-				"name": "Copy Addon to Projects",
-				"script": "${workspaceFolder}/Install Tools/CopyAddonToProjects.ps1"
-			},
-			{
-				"type": "PowerShell",
-				"request": "launch",
-				"name": "Copy Toolbox to Projects",
-				"script": "${workspaceFolder}/Install Tools/CopyToolboxToProjects.ps1"
+				"name": "Copy to Projects",
+				"script": "${workspaceFolder}/.install/CopyToProjects.ps1"
 			},
 		]
 	},
@@ -82,9 +76,17 @@
 			"WidgetToolbox",
 			"STATICPOPUPS_NUMDIALOGS",
 			"STANDARD_TEXT_FONT",
-			"WrapTextInColor"
+			"WrapTextInColor",
+			"Wrap",
+			"LE_SCRIPT_BINDING_TYPE_INTRINSIC_POSTCALL",
+			"LE_SCRIPT_BINDING_TYPE_INTRINSIC_PRECALL",
+			"COLOR",
+			"Round"
 		],
 		"Lua.type.weakUnionCheck": true,
-		"todo-tree.tree.scanMode": "current file"
+		"todo-tree.tree.scanMode": "current file",
+		"Lua.diagnostics.disable": [
+			"assign-type-mismatch"
+		]
 	}
 }
