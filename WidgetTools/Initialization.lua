@@ -1,4 +1,6 @@
---[[ NAMESPACE ]]
+--[[ REFERENCES ]]
+
+--[ Namespace ]
 
 ---@class addonNamespace
 local ns = select(2, ...)
@@ -31,6 +33,16 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 	--[[ REFERENCES ]]
 
+	--[ Shortcuts ]
+
+	---@type widgetToolbox
+	local wt = ns[C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-WidgetTools-AddToNamespace")]
+
+	local cr = WrapTextInColor
+	local crc = WrapTextInColorCode
+
+	--[ Locals ]
+
 	local chatCommands
 
 	--| Data snapshots
@@ -45,7 +57,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 	--| Main Page
 
 	---@type settingsPage
-	local mainPage = ns.wt.CreateAboutPage(ns.rs.name, {
+	local mainPage = wt.CreateAboutPage(ns.rs.addon, {
 		register = true,
 		name = "About",
 		changelog = ns.changelog
@@ -57,7 +69,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 	local liteToggle
 
 	---@type settingsPage
-	local specificationsPage = ns.wt.CreateSettingsPage(ns.rs.name, {
+	local specificationsPage = wt.CreateSettingsPage(ns.rs.addon, {
 		register = mainPage,
 		name = "Specifications",
 		title = ns.rs.strings.specifications.title,
@@ -65,7 +77,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 		dataManagement = {},
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
-			ns.wt.CreatePanel({
+			wt.CreatePanel({
 				parent = canvas,
 				name = "General",
 				title = ns.rs.strings.specifications.general.title,
@@ -75,7 +87,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 				initialize = function(panel)
 					local silentSave = false
 
-					local enableLitePopup = ns.wt.RegisterPopupDialog(ns.rs.name, "ENABLE_LITE_MODE", {
+					local enableLitePopup = wt.RegisterPopupDialog(ns.rs.addon, "ENABLE_LITE_MODE", {
 						text = ns.rs.strings.lite.enable.warning:gsub("#ADDON", ns.rs.title),
 						accept = ns.rs.strings.lite.enable.accept,
 						onAccept = function()
@@ -85,7 +97,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
-					local disableLitePopup = ns.wt.RegisterPopupDialog(ns.rs.name, "DISABLE_LITE_MODE", {
+					local disableLitePopup = wt.RegisterPopupDialog(ns.rs.addon, "DISABLE_LITE_MODE", {
 						text = ns.rs.strings.lite.disable.warning:gsub("#ADDON", ns.rs.title),
 						accept = ns.rs.strings.lite.disable.accept,
 						onAccept = function()
@@ -96,11 +108,11 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						end,
 					})
 
-					liteToggle = ns.wt.CreateCheckbox({
+					liteToggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "LiteMode",
 						title = ns.rs.strings.specifications.general.lite.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", WrapTextInColorCode("/wt lite", "FFFFFFFF")), }, } },
+						tooltip = { lines = { { text = ns.rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.lite end,
 						saveData = function(state) WidgetToolsDB.lite = state end,
@@ -110,7 +122,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 							saved = { { handler = function()
 								silentSave = false
 
-								if loadedLite ~= WidgetToolsDB.lite then ns.wt.CreateReloadNotice() end end,
+								if loadedLite ~= WidgetToolsDB.lite then wt.CreateReloadNotice() end end,
 							}, },
 							toggled = { { handler = function(_, state, user)
 								if not user then return end
@@ -127,7 +139,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						},
 					})
 
-					ns.wt.CreateCheckbox({
+					wt.CreateCheckbox({
 						parent = panel,
 						name = "PositioningAids",
 						title = ns.rs.strings.specifications.general.positioningAids.label,
@@ -135,7 +147,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						arrange = {},
 						getData = function() return WidgetToolsDB.positioningAids end,
 						saveData = function(state) WidgetToolsDB.positioningAids = state end,
-						listeners = { saved = { { handler = function() if loadedPositioningAids ~= WidgetToolsDB.positioningAids then ns.wt.CreateReloadNotice() end end, }, }, },
+						listeners = { saved = { { handler = function() if loadedPositioningAids ~= WidgetToolsDB.positioningAids then wt.CreateReloadNotice() end end, }, }, },
 						instantSave = false,
 						default = true,
 						dataManagement = {
@@ -146,14 +158,14 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 				end,
 			})
 
-			ns.wt.CreatePanel({
+			wt.CreatePanel({
 				parent = canvas,
 				name = "DevTools",
 				title = ns.rs.strings.specifications.dev.title,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
-					ns.wt.CreateCheckbox({
+					wt.CreateCheckbox({
 						parent = panel,
 						name = "ToggleDebugging",
 						title = ns.rs.strings.specifications.dev.debugging.enabled.label,
@@ -161,7 +173,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						arrange = {},
 						getData = function() return WidgetToolsDB.debugging end,
 						saveData = function(state) WidgetToolsDB.debugging = state end,
-						listeners = { saved = { { handler = function() if loadedDebugging ~= WidgetToolsDB.debugging then ns.wt.CreateReloadNotice() end end, }, }, },
+						listeners = { saved = { { handler = function() if loadedDebugging ~= WidgetToolsDB.debugging then wt.CreateReloadNotice() end end, }, }, },
 						instantSave = false,
 						default = false,
 						dataManagement = {
@@ -170,7 +182,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						},
 					})
 
-					local toggle = ns.wt.CreateCheckbox({
+					local toggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "ToggleWideFrameAttributes",
 						title = ns.rs.strings.specifications.dev.frameAttributes.enabled.label,
@@ -202,7 +214,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						},
 					})
 
-					ns.wt.CreateSlider({
+					wt.CreateSlider({
 						parent = panel,
 						name = "FrameAttributesWidth",
 						title = ns.rs.strings.specifications.dev.frameAttributes.width.label,
@@ -233,7 +245,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 	--| Addons Page
 
 	---@type settingsPage
-	local addonsPage = ns.wt.CreateSettingsPage(ns.rs.name, {
+	local addonsPage = wt.CreateSettingsPage(ns.rs.addon, {
 		register = mainPage,
 		name = "Addons",
 		title = ns.rs.strings.addons.title,
@@ -246,10 +258,10 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 			--[ List Toolbox Versions ]
 
-			for version, entry in WidgetTools.utilities.SortedPairs(ns.protectedToolboxRegistry) do ns.wt.CreatePanel({
+			for version, entry in WidgetTools.utilities.SortedPairs(ns.protectedToolboxRegistry) do wt.CreatePanel({
 				parent = canvas,
 				name = "Toolbox" .. version,
-				title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", WrapTextInColorCode(version, "FFFFFFFF"))),
+				title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", crc(version, "FFFFFFFF"))),
 				arrange = {},
 				size = { h = 32 },
 				arrangement = {
@@ -280,7 +292,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 							logo = C_AddOns.GetAddOnMetadata(entry.addons[i], "IconTexture"),
 						}
 
-						ns.wt.CreatePanel({
+						wt.CreatePanel({
 							parent = toolboxPanel,
 							name = entry.addons[i],
 							label = false,
@@ -292,7 +304,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								resize = false,
 							},
 							initialize = function(addonPanel)
-								ns.wt.CreateTexture(addonPanel, {
+								wt.CreateTexture(addonPanel, {
 									name = "Logo",
 									position = {
 										anchor = "TOP",
@@ -316,10 +328,10 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 									end
 								end
 
-								local toggle = ns.wt.CreateCheckbox({
+								local toggle = wt.CreateCheckbox({
 									parent = addonPanel,
 									name = "Toggle",
-									title = WrapTextInColor(C_AddOns.GetAddOnMetadata(entry.addons[i], "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
+									title = cr(C_AddOns.GetAddOnMetadata(entry.addons[i], "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
 									tooltip = { lines = { { text = ns.rs.strings.about.toggle.tooltip, }, } },
 									arrange = {},
 									size = { w = 300, },
@@ -327,7 +339,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 									getData = function() return C_AddOns.GetAddOnEnableState(entry.addons[i]) > 0 end,
 									saveData = function(state) toggleAddon(state) end,
 									instantSave = false,
-									listeners = { saved = { { handler = function(self) if not self.getState() then ns.wt.CreateReloadNotice() end end, }, }, },
+									listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },
 									events = { OnClick = function(_, state) toggleAddon(state) end, },
 									showDefault = false,
 									utilityMenu = false,
@@ -341,7 +353,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 								--| Description
 
-								if data.notes then ns.wt.CreateText({
+								if data.notes then wt.CreateText({
 									parent = addonPanel,
 									name = "Notes",
 									position = { offset = { x = 16, y = -49 } },
@@ -357,17 +369,17 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								local position = { offset = { x = 344, y = -13 } }
 
 								if data.version then
-									local version = ns.wt.CreateText({
+									local version = wt.CreateText({
 										parent = addonPanel,
 										name = "VersionTitle",
 										position = position,
 										width = 48,
-										text = ns.wt.strings.about.version,
+										text = wt.strings.about.version,
 										font = "GameFontHighlightSmall",
 										justify = { h = "RIGHT", },
 									})
 
-									ns.wt.CreateText({
+									wt.CreateText({
 										parent = addonPanel,
 										name = "Version",
 										position = {
@@ -376,7 +388,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 											offset = { x = 5 }
 										},
 										width = 140,
-										text = data.version .. (data.day and data.month and data.year and WrapTextInColorCode(" ( " .. ns.wt.strings.about.date .. ": " .. WrapTextInColor(ns.wt.strings.date:gsub(
+										text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
 											"#DAY", data.day
 										):gsub(
 											"#MONTH", data.month
@@ -394,7 +406,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								end
 
 								if data.category then
-									local category = ns.wt.CreateText({
+									local category = wt.CreateText({
 										parent = addonPanel,
 										name = "Category",
 										position = position,
@@ -405,7 +417,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										wrap = false,
 									})
 
-									ns.wt.CreateText({
+									wt.CreateText({
 										parent = addonPanel,
 										name = "Category",
 										position = {
@@ -426,17 +438,17 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								end
 
 								if data.author then
-									local author = ns.wt.CreateText({
+									local author = wt.CreateText({
 										parent = addonPanel,
 										name = "AuthorTitle",
 										position = position,
 										width = 48,
-										text = ns.wt.strings.about.author,
+										text = wt.strings.about.author,
 										font = "GameFontHighlightSmall",
 										justify = { h = "RIGHT", },
 									})
 
-									ns.wt.CreateText({
+									wt.CreateText({
 										parent = addonPanel,
 										name = "Author",
 										position = {
@@ -457,17 +469,17 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								end
 
 								if data.license then
-									local license = ns.wt.CreateText({
+									local license = wt.CreateText({
 										parent = addonPanel,
 										name = "LicenseTitle",
 										position = position,
 										width = 48,
-										text = ns.wt.strings.about.license,
+										text = wt.strings.about.license,
 										font = "GameFontHighlightSmall",
 										justify = { h = "RIGHT", },
 									})
 
-									ns.wt.CreateText({
+									wt.CreateText({
 										parent = addonPanel,
 										name = "License",
 										position = {
@@ -493,7 +505,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 	--[[ CHAT CONTROL ]]
 
 	---@type chatCommandManager
-	chatCommands = ns.wt.RegisterChatCommands(ns.rs.name, { ns.rs.chat.keyword }, {
+	chatCommands = wt.RegisterChatCommands(ns.rs.addon, { ns.rs.chat.keyword }, {
 		commands = {
 			{
 				command = ns.rs.chat.commands.about,
@@ -517,19 +529,19 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 	--[[ ADDON COMPARTMENT ]]
 
-	ns.wt.SetUpAddonCompartment(ns.rs.name, {
-		onClick = function() if WidgetToolsDB.lite then liteToggle.setState(false, true) else ns.wt.CreateContextMenu({
+	wt.SetUpAddonCompartment(ns.rs.addon, {
+		onClick = function() if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
 			initialize = function(menu)
-				ns.wt.CreateMenuTextline(menu, { text = ns.rs.title, })
-				ns.wt.CreateMenuButton(menu, {
-					title = ns.wt.strings.about.title,
+				wt.CreateMenuTextline(menu, { text = ns.rs.title, })
+				wt.CreateMenuButton(menu, {
+					title = wt.strings.about.title,
 					action = mainPage.open
 				})
-				ns.wt.CreateMenuButton(menu, {
+				wt.CreateMenuButton(menu, {
 					title = ns.rs.strings.specifications.title,
 					action = specificationsPage.open
 				})
-				ns.wt.CreateMenuButton(menu, {
+				wt.CreateMenuButton(menu, {
 					title = ns.rs.strings.addons.title,
 					action = addonsPage.open
 				})
@@ -537,18 +549,18 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 			rightClickMenu = false,
 		}).open() end end,
 	}, { lines = {
-		{ text = ns.rs.strings.about.version:gsub("#VERSION", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Version") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "Version") or "?", "FFFFFFFF")), },
 		{ text = ns.rs.strings.about.date:gsub(
-			"#DATE", WrapTextInColorCode(ns.wt.strings.date:gsub(
-				"#DAY", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Day") or "?"
+			"#DATE", crc(wt.strings.date:gsub(
+				"#DAY", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Day") or "?"
 			):gsub(
-				"#MONTH", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Month") or "?"
+				"#MONTH", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Month") or "?"
 			):gsub(
-				"#YEAR", C_AddOns.GetAddOnMetadata(ns.rs.name, "X-Year") or "?"
+				"#YEAR", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Year") or "?"
 			), "FFFFFFFF")
 		), },
-		{ text = ns.rs.strings.about.author:gsub("#AUTHOR", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "Author") or "?", "FFFFFFFF")), },
-		{ text = ns.rs.strings.about.license:gsub("#LICENSE", WrapTextInColorCode(C_AddOns.GetAddOnMetadata(ns.rs.name, "X-License") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "Author") or "?", "FFFFFFFF")), },
+		{ text = ns.rs.strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-License") or "?", "FFFFFFFF")), },
 		{ text = " ", },
 		{
 			text = (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),

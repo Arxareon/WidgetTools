@@ -1,7 +1,13 @@
---[[ NAMESPACE ]]
+--[[ REFERENCES ]]
+
+--[ Namespace ]
 
 ---@class addonNamespace
 local ns = select(2, ...)
+
+--[ Shortcuts ]
+
+local crc = WrapTextInColorCode
 
 
 --[[ UTILITIES ]]
@@ -11,9 +17,6 @@ ns.us = {}
 
 --[ General ]
 
-
----@param t table Table to be sorted (in an ascending order and/or alphabetically, based on the `<` operator)
----@return function iterator Function returning the key, value pairs of the table in order
 function ns.us.SortedPairs(t)
 	local s = {}
 
@@ -21,7 +24,7 @@ function ns.us.SortedPairs(t)
 	table.sort(s, function(x, y) if type(x) == "number" and type(y) == "number" then return x < y else return tostring(x) < tostring(y) end end)
 
 	local i = 0
-	local iterator = function ()
+	local iterator = function()
 		i = i + 1
 		if s[i] == nil then return nil else return s[i], t[s[i]] end
 	end
@@ -50,8 +53,6 @@ ns.us.isKeyDown = setmetatable({}, {
 
 --[ Math ]
 
----@param number? number A fractional number value to round | ***Default:*** 0
----@param decimals? integer Specify the number of decimal places to round the number to | ***Default:*** 0
 function ns.us.Round(number, decimals)
 	if type(number) ~= "number" then number = 0 end
 	if type(decimals) ~= "number" then decimals = 0 end
@@ -63,15 +64,12 @@ end
 
 --[ Validation ]
 
----@return boolean|string # If **t** is recognized as a [FrameScriptObject](https://warcraft.wiki.gg/wiki/UIOBJECT_FrameScriptObject), return true, or, return the frame name if named or the debug name if unnamed but recognized as a UI [Object](https://warcraft.wiki.gg/wiki/UIOBJECT_Object) with a parent, otherwise, return false
 function ns.us.IsFrame(t)
 	if type(t) ~= "table" then return false end
 
 	return t.GetObjectType and t.IsObjectType and (t.GetName and t:GetName() or t.GetParent and t:GetParent() and t.GetDebugName and t:GetDebugName() or true) or false
 end
 
----@param s string Name of the frame to find (and the key of its child region appended to it after a period character)
----@return AnyFrameObject|nil frame Reference to the object
 function ns.us.ToFrame(s)
 	local frame = nil
 
@@ -83,11 +81,6 @@ end
 
 --[ Formatting ]
 
----@param value number Number value to turn into a string with thousand separation
----@param decimals? number Specify the number of decimal places to display if the number is a fractional value | ***Default:*** 0
----@param round? boolean Round the number value to the specified number of decimal places | ***Default:*** true
----@param trim? boolean Trim trailing zeros in decimal places | ***Default:*** true
----@return string # ***Default:*** ""
 function ns.us.Thousands(value, decimals, round, trim)
 	if type(value) ~= "number" then return "" end
 
@@ -107,9 +100,6 @@ function ns.us.Thousands(value, decimals, round, trim)
 	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and ns.rs.strings.decimal .. decimalText or "")
 end
 
----@param object any Object to convert to a formatted text
----@return string s Formatted output string
----@return "Frame"|"FrameScriptObject"|"table"|"boolean"|"number"|"string"|"any" t Recognized object type
 function ns.us.ToString(object)
 	local t = type(object)
 
@@ -117,17 +107,17 @@ function ns.us.ToString(object)
 		local s = ns.us.IsFrame(object)
 
 		if s then
-			if type(s) == "string" then return WrapTextInColorCode(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
-			return WrapTextInColorCode(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
+			if type(s) == "string" then return crc(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
+			return crc(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
 		end
 
-		return WrapTextInColorCode(tostring(object), "FFFF9999"), t --table reference (pink)
+		return crc(tostring(object), "FFFF9999"), t --table reference (pink)
 	end
-	if t == "boolean" then return WrapTextInColorCode(tostring(object), object and "FFAAAAFF" or "FFFFAA66"), t end --boolean value (true: blue, false: orange)
-	if t == "number" then return WrapTextInColorCode(tostring(object), "FFDDDD55"), t end --number value (yellow)
-	if t == "string" then return WrapTextInColorCode("\"" .. object .. "\"", "FF55DD55"), t end --string value (green)
+	if t == "boolean" then return crc(tostring(object), object and "FFAAAAFF" or "FFFFAA66"), t end --boolean value (true: blue, false: orange)
+	if t == "number" then return crc(tostring(object), "FFDDDD55"), t end --number value (yellow)
+	if t == "string" then return crc("\"" .. object .. "\"", "FF55DD55"), t end --string value (green)
 
-	return WrapTextInColorCode(tostring(object), "FFFF4444"), "any" --Miscellaneous value (red)
+	return crc(tostring(object), "FFFF4444"), "any" --Miscellaneous value (red)
 end
 
 ---Format a table as a string with colored values appropriate to their type
@@ -147,8 +137,8 @@ local function formatTableString(table, compact, space, newLine, indentation)
 		--Key
 		tableString = tableString .. newLine .. (compact and "" or indentation) .. (
 			type(key) == "string" and (
-				key:match("^%a%w*$") and WrapTextInColorCode(key, "FFFFFFFF") or "[" .. WrapTextInColorCode("\"" .. key .. "\"", "FFFFFFFF") .. "]"
-			) or "[" .. WrapTextInColorCode(tostring(key), "FFFFFFFF") .. "]"
+				key:match("^%a%w*$") and crc(key, "FFFFFFFF") or "[" .. crc("\"" .. key .. "\"", "FFFFFFFF") .. "]"
+			) or "[" .. crc(tostring(key), "FFFFFFFF") .. "]"
 		) .. space .. "="
 
 		--Value
@@ -161,11 +151,9 @@ local function formatTableString(table, compact, space, newLine, indentation)
 		tableString = tableString .. ","
 	end
 
-	return WrapTextInColorCode((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
+	return crc((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
 end
 
----@param table table Reference to the table to convert
----@param compact? boolean Whether spaces and indentations should be trimmed or not | ***Default:*** false
 function ns.us.TableToString(table, compact)
 	if type(table) ~= "table" then return (ns.us.ToString(table)) end
 
@@ -182,8 +170,8 @@ function ns.expose(proxy)
 	return proxy
 end
 
----@param t any Reference to the table to create the proxy for
----@return any # Reference to the new proxy table or **t** itself
+local function infect(t, p) for k, v in pairs(t) do if type(v) == "table" then infect(v, p[k]) else return end end end
+
 function ns.us.Protect(t)
 	local metatable = getmetatable(t)
 
@@ -193,7 +181,7 @@ function ns.us.Protect(t)
 		__index = function(_, k)
 			local v = t[k]
 
-			if type(v) ~= "table" or getmetatable(v) == true or ns.us.IsFrame(v) then return v end
+			if type(v) ~= "table" or getmetatable(v) == "public" or ns.us.IsFrame(v) then return v end
 
 			local subproxy = protectionProxies[v]
 
@@ -205,25 +193,26 @@ function ns.us.Protect(t)
 
 			return subproxy
 		end,
-		__newindex = function(_, k, v) ns.ds.Log("Prevented setting " .. tostring(k) .. " to " .. tostring(v) .. " in a protected table.", t) end,
+		__newindex = function(_, k, v)
+			ns.ds.Log("Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).", "Read-only protection")
+		end,
 		__metatable = "protected",
 	})
 
 	protectionProxies[t] = proxy
 
+	--Trigger the protection on subtables recursively by indexing them
+	infect(t, proxy)
+
 	return proxy
 end
 
----@param t table Reference to the table to get the ID of
----@return string # Return empty string of t is not a table | ***Default:*** ""
 function ns.us.GetID(t)
 	if type(t) ~= "table" then return "" else return tostring(t):sub(8) end
 end
 
 --| Search
 
----@param array any[] Array to search
----@param value any The value to find
 function ns.us.FindIndex(array, value)
 	array = ns.expose(array)
 
@@ -235,39 +224,33 @@ function ns.us.FindIndex(array, value)
 	return nil
 end
 
----@param t table Reference to the table to find a value at a certain key in
----@param value any Value to look for in **tableToCheck** (including all subtables, recursively)
----@return any|nil match The first match of the key of the found **valueToFind**, or nil if no match was found
 function ns.us.FindKey(t, value)
 	t = ns.expose(t)
 
 	if type(t) ~= "table" then return nil end
 
 	for k, v in pairs(t) do
-		if v == value then return k end
+		if v == value then return protectionProxies[k] or k end
 
 		local match = ns.us.FindKey(v, value)
 
-		if match ~= nil then return match end
+		if match ~= nil then return protectionProxies[match] or match end
 	end
 
 	return nil
 end
 
----@param t table Reference to the table to find a value at a certain key in
----@param key any Key to look for in **tableToCheck** (including all subtables, recursively)
----@return any|nil match The first match of the value found at **keyToFind**, or nil if no match was found
 function ns.us.FindValue(t, key)
 	t = ns.expose(t)
 
 	if type(t) ~= "table" then return nil end
 
 	for k, v in pairs(t) do
-		if k == key then return v end
+		if k == key then return protectionProxies[v] or v end
 
 		local match = ns.us.FindValue(v, key)
 
-		if match ~= nil then return match end
+		if match ~= nil then return protectionProxies[match] or match end
 	end
 
 	return nil
@@ -275,8 +258,6 @@ end
 
 --| Data management
 
----@param object any Reference to the object to create a copy of
----@return any copy Returns **object** itself if it's a frame or not a table
 function ns.us.Clone(object)
 	object = ns.expose(object)
 
@@ -289,9 +270,6 @@ function ns.us.Clone(object)
 	return copy
 end
 
----@param target table Table to add the values to
----@param source table Table to copy all values from
----@return any target Reference to **target** (it was already overwritten during the operation, no need for setting it again)
 function ns.us.Merge(target, source)
 	if type(target) ~= "table" and type(source) ~= "table" then return target end
 
@@ -300,9 +278,6 @@ function ns.us.Merge(target, source)
 	return target
 end
 
----@param target table Reference to the table to copy the values to
----@param source table Reference to the table to copy the values from
----@return any target Reference to **target** (the values were already overwritten during the operation, no need to set it again)
 function ns.us.CopyValues(target, source)
 	if type(source) ~= "table" or type(target) ~= "table" or ns.us.IsFrame(source) or ns.us.IsFrame(target) then return target end
 	if next(target) == nil then return target end
@@ -316,9 +291,6 @@ function ns.us.CopyValues(target, source)
 	return target
 end
 
----@param target table Reference to the table to fill in missing data to (it will be turned into an empty table first if its type is not already "table")
----@param source table Reference to the table to sample data from
----@return any target Reference to **target** (it was already updated during the operation, no need for setting it again)
 function ns.us.Fill(target, source)
 	if not (type(source) == "table" and next(source) ~= nil) then return target end
 
@@ -334,18 +306,12 @@ function ns.us.Fill(target, source)
 	return target
 end
 
----@param target table Reference to the table to copy the values to
----@param source table Reference to the table to sample data from
----@return any target Reference to **target** (it was already overwritten during the operation, no need for setting it again)
 function ns.us.Pull(target, source)
 	if type(target) ~= "table" then return source end
 
 	return ns.us.CopyValues(ns.us.Fill(target, source), source) --REPLACE with combined code
 end
 
----@param target table Reference to the table to verify
----@param source table Reference to the table to sample
----@return any target Reference to **target** (it was already mutated during the operation)
 function ns.us.VerifyData(target, source)
 	if type(target) ~= "table" or type(source) ~= "table" then return target end
 
@@ -358,9 +324,6 @@ function ns.us.VerifyData(target, source)
 	return target
 end
 
----@param target table Reference to the table to prune
----@param validate? fun(k: number|string, v: any): boolean Helper function for validating values, returning true if the value is to be accepted as valid
----@return any table Reference to **table** (it was already overwritten during the operation, no need for setting it again)
 function ns.us.Prune(target, validate)
 	if type(target) ~= "table" or ns.us.IsFrame(target) then return target end
 
@@ -438,11 +401,6 @@ local function purge(target, sample, recoveredData, recoveredKey)
 	return recoveredData
 end
 
----@param target table Reference to the table to remove unused key, value pairs from
----@param sample table Reference to the table to sample data from
----@param recoveryMap? table<string, recoveryData>|fun(tableToCheck: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>|nil Static map or function returning a dynamically creatable map for removed but recoverable data
----@param onRecovery? fun(tableToCheck: table) Function called after the data has been has been recovered via the **recoveryMap**
----@return any target Reference to **target** (it was already overwritten during the operation, no need for setting it again)
 function ns.us.Filter(target, sample, recoveryMap, onRecovery)
 	if type(target) ~= "table" or ns.us.IsFrame(target) then return target end
 
@@ -469,8 +427,6 @@ end
 ---@type widgetToolsDebugging
 ns.ds = {}
 
----@param message any Included in the log entry as a string
----@param trace? any Custom log trace to help identify the exact log source included in the entry as a string | ***Default:*** "(source not traced)"
 function ns.ds.Log(message, trace)
 	if not WidgetToolsDB.debugging then return end
 
@@ -505,7 +461,7 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 
 	--Format the name and key
 	currentKey = currentKey and indentation .. "|cFFACD1EC" .. currentKey .. "|r" or nil
-	name = name and "|cFF69A6F8" .. tostring(name) .. "|r" or ns.us.ToString(object)
+	name = name and "|cFF69A6F8" .. tostring(name) .. "|r" or ns.us.ToString(protectionProxies[object] or object)
 
 	--Add the line to the output
 	if type(object) == "table" and (digFrames or not ns.us.IsFrame(object)) then
@@ -523,7 +479,7 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 		--Convert & format the subtable
 		for k, v in ns.us.SortedPairs(object) do getDumpOutput(v, outputTable, nil, blockrule, depth, digTables, digFrames, k, currentLevel + 1) end
 	elseif digTables == false then return else
-		local line = (currentKey and currentKey .. " = " or "Dump " .. name .. " value: ") .. (skip and "…" or ns.us.ToString(object))
+		local line = (currentKey and currentKey .. " = " or "Dump " .. name .. " value: ") .. (skip and "…" or ns.us.ToString(protectionProxies[object] or object))
 
 		table.insert(outputTable, line)
 
@@ -531,13 +487,6 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 	end
 end
 
----@param object any Object to dump out
----@param name? string A name to print out | ***Default:*** *the dumped object will not be named* | ***Default:*** true
----@param depth? integer How many levels of subtables to print out (root level: 0) | ***Default:*** *full depth*
----@param blockrule? fun(key: integer|string): boolean Manually filter further exploring subtables under specific keys, skipping it if the value returned is true<ul><li>***Note:*** *The code examples below are only visible in the full function annotations, not the parameter annotations.*</li></ul>
----@param digTables? boolean If true, explore and dump the non-subtable values of table objects | ***Default:*** true
----@param digFrames? boolean If true, explore and dump the insides of objects recognized as frames | ***Default:*** false
----@param linesPerMessage? integer Print the specified number of output lines in a single chat message to be able to display more message history and allow faster scrolling | ***Default:*** 2<ul><li>***Note:*** Set to 0 to print all lines in a single message.</li></ul>
 function ns.ds.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
 	object = ns.expose(object)
 	local output = {}
@@ -574,11 +523,6 @@ ns.protectedToolboxRegistry = {}
 ---@type widgetToolsToolboxes
 ns.ts = { initialization = {} }
 
----@param addon string Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
----@param version string|number Version key the **toolbox** should be registered under (always converted to string)
----@param callback? fun(toolbox: widgetToolbox|table?) Function to be called after a new toolbox initialization has finished when **addon** loaded, returning a read-only reference to the new toolbox table
----@param toolbox? table Reference to an existing toolbox table to register
----@return widgetToolbox|table? toolbox Read-only reference to the registered toolbox table | ***Default:*** nil
 function ns.ts.Register(addon, version, callback, toolbox)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or not version then return end
 
