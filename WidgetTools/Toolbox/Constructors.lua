@@ -389,7 +389,7 @@ end
 function wt.CreateDescription(title, t)
 	t = type(t) == "table" and t or {}
 
-	if not type(title) ~= "table" or not type(title.GetFont) == "function" then return end
+	if type(title) ~= "table" or type(title.GetFont) ~= "function" then return end
 
 	local parent = title:GetParent()
 
@@ -769,11 +769,10 @@ function wt.CreatePanel(t)
 		font = "GameFontHighlightLarge",
 	}) or nil
 
-	panel.description = t.description and wt.CreateDescription({
-		title = panel.title,
+	if type(t.description) == "string" then panel.description = wt.CreateDescription(panel.title, {
 		widthOffset = -22,
 		text = t.description,
-	}) or nil
+	}) end
 
 	--| Backdrop
 
@@ -1200,8 +1199,7 @@ function wt.CreateSettingsPage(addon, t)
 			font = "GameFontHighlightHuge",
 		})
 
-		if type(t.description) == "string" then page.description = wt.CreateDescription({
-			title = page.title,
+		if type(t.description) == "string" then page.description = wt.CreateDescription(page.title, {
 			widthOffset = -161,
 			spacer = 7,
 			text = t.description,
@@ -2185,7 +2183,7 @@ function wt.CreateCheckbox(t, toggle)
 				checkbox.setState(wt.clipboard.toggle, true)
 			end }):SetEnabled(wt.clipboard.toggle ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox.revertData() end })
-			if t.default ~= nil then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
 		end
 	}) end
 
@@ -2299,7 +2297,7 @@ local function setUpToggleFrame(toggle, title, t)
 				toggle.setState(wt.clipboard.toggle, true)
 			end }):SetEnabled(wt.clipboard.toggle ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() toggle.revertData() end })
-			if t.default ~= nil then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle.resetData() end }) end
 		end
 	}) end
 
@@ -3755,7 +3753,7 @@ function wt.CreateRadiogroup(t, selector)
 				radiogroup.setSelected(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
 		end
 	}) end
 
@@ -4237,7 +4235,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				dropdown.setSelected(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown.revertData() end })
-			if dropdown.getDefault() then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
 		end
 	}) end
 
@@ -4285,8 +4283,10 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
 
-	local showDefault = t.showDefault
-	local utilityMenu = t.utilityMenu
+	--[ Properties ]
+
+	local showDefault = t.showDefault ~= false
+	local utilityMenu = t.utilityMenu ~= false
 
 	---@type specialRadiogroupCreationData|radiogroupCreationData
 	t = us.Pull(t or {}, {
@@ -4296,6 +4296,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		utilityMenu = false,
 	})
 
+	--[ Frame Setup ]
+
 	---@type specialRadiogroup
 	local radiogroup = wt.CreateRadiogroup(t, selector)
 
@@ -4303,17 +4305,17 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if type(t.tooltip) == "table" then
 		local defaultValue
-		if showDefault ~= false then crc(radiogroup.getDefault(), "FFFFFFFF") end
+		if showDefault then defaultValue = crc(radiogroup.getDefault(), "FFFFFFFF") end
 
 		local frames = { radiogroup.frame }
 		for i = 1, #radiogroup.toggles do table.insert(frames, radiogroup.toggles[i].frame) end
 
-		wt.AddWidgetTooltipLines(frames, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines(frames, defaultValue, utilityMenu)
 	end
 
 	--| Utility menu
 
-	if utilityMenu ~= false then wt.CreateContextMenu({
+	if utilityMenu then wt.CreateContextMenu({
 		triggers = { {
 			frame = radiogroup.frame,
 			condition = radiogroup.isEnabled,
@@ -4495,7 +4497,7 @@ function wt.CreateCheckgroup(t, selector)
 				checkgroup.setSelections(wt.clipboard.selections.states, true)
 			end }):SetEnabled(wt.clipboard.selections ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
 		end
 	}) end
 
@@ -4879,7 +4881,7 @@ local function setUpSingleLineEditbox(editbox, title, t)
 				editbox.setText(wt.clipboard.text, true)
 			end }):SetEnabled(wt.clipboard.text ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
 		end
 	}) end
 end
@@ -5134,7 +5136,7 @@ function wt.CreateMultilineEditbox(t, textbox)
 				editbox.setText(wt.clipboard.text, true)
 			end }):SetEnabled(wt.clipboard.text ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
 		end
 	}) end
 
@@ -5796,7 +5798,7 @@ function wt.CreateSlider(t, numeric)
 				slider.setNumber(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
 		end
 	}) end
 
@@ -6187,7 +6189,7 @@ function wt.CreateClassicSlider(t, numeric)
 				slider.setNumber(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
 		end
 	}) end
 
@@ -6751,7 +6753,7 @@ function wt.CreateColorpicker(t, colormanager)
 				colorpicker.setColor(wt.clipboard.color, true)
 			end }):SetEnabled(wt.clipboard.color ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker.revertData() end })
-			if t.showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
 		end
 	}) end
 
@@ -8645,8 +8647,7 @@ function wt.CreateFontOptions(addon, text, t)
 
 			--| Font color
 
-			if type(t.colorOrder) ~= "table" then t.colorOrder = {} end
-			if type(t.colorNames) ~= "table" then t.colorNames = {} end
+			if type(t.colorList) ~= "table" then t.colorList = {} end
 
 			---@type (colormanager|colorpicker)[]
 			panel.widgets.colors = {}
@@ -8654,12 +8655,14 @@ function wt.CreateFontOptions(addon, text, t)
 			for key, _ in pairs(t.getData().colors) do
 				local name = key:sub(1,1):upper() .. key:sub(2)
 
+				if type(t.colorList[key]) ~= "table" then t.colorList[key] = {} end
+
 				panel.widgets.colors[key] = wt.CreateColorpicker({
 					parent = panelFrame,
 					name = name .. "Colorpicker",
-					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", type(t.colorNames[key]) == "string" and t.colorNames[key] or name),
+					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", type(t.colorList[key].name) == "string" and t.colorList[key].name or name),
 					tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-					arrange = { newRow = not next(panel.widgets.colors), column = us.FindIndex(t.colorOrder, key) },
+					arrange = { newRow = not next(panel.widgets.colors), column = t.colorList[key].index == "number" and t.colorList[key].index or nil },
 					dependencies = t.dependencies,
 					getData = function() return t.getData().colors[key] end,
 					saveData = function(value) t.getData().colors[key] = value end,
