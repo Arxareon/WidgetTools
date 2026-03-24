@@ -801,7 +801,7 @@ function Clamp(value, min, max) return value end
 --| Parameters
 
 ---@class sizeData_panel
----@field w? number Width | ***Default:*** **t.parent** and *width of the parent frame* - 32 or 0
+---@field w? number Width | ***Default:*** **t.parent** and *width of the parent frame* - 20 or 0
 ---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and **t.arrangeContent.resize** is true, the height will be set dynamically based on the calculated height of the content.</li></ul>
 
 ---@class backgroundColorData_panel
