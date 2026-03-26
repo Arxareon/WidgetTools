@@ -278,18 +278,22 @@ function ns.us.Merge(target, source)
 	return target
 end
 
-function ns.us.CopyValues(target, source)
-	if type(source) ~= "table" or type(target) ~= "table" or ns.us.IsFrame(source) or ns.us.IsFrame(target) then return target end
-	if next(target) == nil then return target end
-
-	for k, v in pairs(target) do
-		if source[k] == nil then return target end
-
-		if type(v) == "table" then ns.us.CopyValues(v, source[k]) else target[k] = source[k] end
-	end
+---Deep traverse two tables in parallel and copy values at matching keys from one to the other
+---@param target table
+---@param source table
+---@return table target
+local function copy(target, source)
+	for k, v in pairs(target) do if source[k] ~= nil then
+		if type(v) ~= "table" or ns.us.IsFrame(v) or type(source[k]) ~= "table" or ns.us.IsFrame(source[k]) then target[k] = source[k] else copy(v, source[k]) end
+	end end
 
 	return target
 end
+
+function ns.us.CopyValues(target, source)
+	if type(target) ~= "table" or ns.us.IsFrame(target) or type(source) ~= "table" or ns.us.IsFrame(source) then return target else return copy(target, source) end
+end
+
 
 function ns.us.Fill(target, source)
 	if not (type(source) == "table" and next(source) ~= nil) then return target end
