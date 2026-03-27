@@ -12,7 +12,8 @@ local ns = select(2, ...)
 WidgetToolsDB = ns.us.VerifyData(type(WidgetToolsDB) == "table" and WidgetToolsDB or {}, {
 	lite = false,
 	positioningAids = true,
-	debugging = true,
+	customFonts = { "CUSTOM", }, --REPLACE with custom font management
+	debugging = false,
 	frameAttributes = {
 		enabled = false,
 		width = 620,

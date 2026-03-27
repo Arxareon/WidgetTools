@@ -316,18 +316,6 @@ function ns.us.Pull(target, source)
 	return ns.us.CopyValues(ns.us.Fill(target, source), source) --REPLACE with combined code
 end
 
-function ns.us.VerifyData(target, source)
-	if type(target) ~= "table" or type(source) ~= "table" then return target end
-
-	for k, v in pairs(target) do
-		if source[k] == nil then target[k] = nil
-		elseif type(v) ~= type(source[k]) then target[k] = source[k]
-		else ns.us.VerifyData(v, source[k]) end
-	end
-
-	return target
-end
-
 function ns.us.Prune(target, validate)
 	if type(target) ~= "table" or ns.us.IsFrame(target) then return target end
 
@@ -421,6 +409,15 @@ function ns.us.Filter(target, sample, recoveryMap, onRecovery)
 
 		if type(onRecovery) == "function" then onRecovery(target) end
 	end
+
+	return target
+end
+
+function ns.us.VerifyData(target, source)
+	if type(target) ~= "table" or type(source) ~= "table" then return target end
+
+	for k, v in pairs(source) do if type(v) ~= type(target[k]) then target[k] = ns.us.Clone(v) else ns.us.VerifyData(target[k], v) end end
+	for k in pairs(target) do if source[k] == nil then target[k] = nil end end
 
 	return target
 end

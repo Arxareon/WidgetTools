@@ -191,176 +191,141 @@ ns.rs.fonts = {
 	{
 		name = "Amarante",
 		path = ns.rs.root .. "Fonts/Amarante.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Anton",
 		path = ns.rs.root .. "Fonts/Anton.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Arbutus Slab",
 		path = ns.rs.root .. "Fonts/ArbutusSlab.ttf",
-		widthRatio = 1.07,
 	},
 	{
 		name = "Arial Narrow",
 		path = "Fonts/ARIALN.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Aubrey",
 		path = ns.rs.root .. "Fonts/Aubrey.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Black Ops One",
 		path = ns.rs.root .. "Fonts/BlackOpsOne.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Bonbon",
 		path = ns.rs.root .. "Fonts/Bonbon.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Caesar Dressing",
 		path = ns.rs.root .. "Fonts/CaesarDressing.ttf",
-		widthRatio = 0.84,
 	},
 	{
 		name = "Domine",
 		path = ns.rs.root .. "Fonts/Domine.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Friz Quadrata",
 		path = "Fonts/FRIZQT__.TTF",
-		widthRatio = 1,
 	},
 	{
 		name = "Geologica",
 		path = ns.rs.root .. "Fonts/Geologica.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Germania One",
 		path = ns.rs.root .. "Fonts/GermaniaOne.ttf",
-		widthRatio = 0.86,
 	},
 	{
 		name = "Grechen Fuemen",
 		path = ns.rs.root .. "Fonts/GrechenFuemen.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Iosevka Charon",
 		path = ns.rs.root .. "Fonts/IosevkaCharon.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Kirang Haerang",
 		path = ns.rs.root .. "Fonts/KirangHaerang.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Lacquer",
 		path = ns.rs.root .. "Fonts/Lacquer.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Molle",
 		path = ns.rs.root .. "Fonts/Molle.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Morpheus",
 		path = "Fonts/MORPHEUS.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Oregano",
 		path = ns.rs.root .. "Fonts/Oregano.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Oxanium",
 		path = ns.rs.root .. "Fonts/Oxanium.ttf",
-		widthRatio = 0.94,
 	},
 	{
 		name = "Pattaya",
 		path = ns.rs.root .. "Fonts/Pattaya.ttf",
-		widthRatio = 0.87,
 	},
 	{
 		name = "Racing Sans One",
 		path = ns.rs.root .. "Fonts/RacingSansOne.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Ranchers",
 		path = ns.rs.root .. "Fonts/Ranchers.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Reem Kufi",
 		path = ns.rs.root .. "Fonts/ReemKufi.ttf",
-		widthRatio = 0.92,
 	},
 	{
 		name = "Reggae One",
 		path = ns.rs.root .. "Fonts/ReggaeOne.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Righteous",
 		path = ns.rs.root .. "Fonts/Righteous.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Sancreek",
 		path = ns.rs.root .. "Fonts/Sancreek.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Sansation",
 		path = ns.rs.root .. "Fonts/Sansation.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Skurri",
 		path = "Fonts/skurri.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Sora",
 		path = ns.rs.root .. "Fonts/Sora.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Source Code Pro",
 		path = ns.rs.root .. "Fonts/SourceCodePro.ttf",
-		widthRatio = 1.11,
 	},
 	{
 		name = "Special Elite",
 		path = ns.rs.root .. "Fonts/SpecialElite.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Stylish",
 		path =  ns.rs.root .. "Fonts/Stylish.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Underdog",
 		path =  ns.rs.root .. "Fonts/Underdog.ttf",
-		widthRatio = 1,
 	},
 	{
 		name = "Zen Dots",
 		path =  ns.rs.root .. "Fonts/ZenDots.ttf",
-		widthRatio = 1,
 	},
 }
