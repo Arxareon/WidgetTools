@@ -1765,7 +1765,7 @@ function Clamp(value, min, max) return value end
 ---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Font"
 
 ---@class fontManagementCreationData : settingsWidgetPanel_text
----@field colorList? table<string, textColorInfo> If set, use this list of specifications to set the order and displayed name of the colors | ***Default:*** *unspecified order; data management key in Title case*
+---@field colors? table<string, textColorInfo> If set, use this list of specifications to set the order and displayed name of the colors | ***Default:*** *unspecified order; data management key in Title case*
 ---@field getData fun(): table: fontOptionsData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@field defaultsTable fontOptionsData Reference to the table containing the default values
 ---@field dataManagement? settingsData_font Register the widgets to settings data management to be linked with the specified key under the specified category
