@@ -28,7 +28,7 @@ ns.rs.chat = {
 
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(28/3/2026)_#",
+		"#V_Version 2.3_# #H_(29/3/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons using Widget Tools can now access through utilities and create Font Selectors for in their settings.",

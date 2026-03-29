@@ -207,10 +207,6 @@ function ns.us.Protect(t)
 	return proxy
 end
 
-function ns.us.GetID(t)
-	if type(t) ~= "table" then return "" else return tostring(t):sub(8) end
-end
-
 --| Search
 
 function ns.us.FindIndex(array, value)
@@ -254,6 +250,28 @@ function ns.us.FindValue(t, key)
 	end
 
 	return nil
+end
+
+--| Sort
+
+function ns.us.Reorder(t, directives)
+	if type(t) ~= "table" or #t < 2 or type(directives) ~= "table" then return t end
+
+	local i = 1
+
+	while i <= #t do
+		local targetIndex = 1
+
+		if directives[t[i]] then
+			targetIndex = Clamp(directives[t[i]], 1, #t)
+
+			if targetIndex ~= i then table.insert(t, targetIndex, table.remove(t, i)) end
+		end
+
+		if targetIndex <= i then i = i + 1 end
+	end
+
+	return  t
 end
 
 --| Data management

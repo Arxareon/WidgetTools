@@ -220,7 +220,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 						name = "FrameAttributesWidth",
 						title = ns.rs.strings.specifications.dev.frameAttributes.width.label,
 						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
-						arrange = { newRow = false, },
+						arrange = { wrap = false, },
 						min = 200,
 						max = 1400,
 						step = 20,
