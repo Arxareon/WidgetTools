@@ -257,19 +257,18 @@ end
 function ns.us.Reorder(t, directives)
 	if type(t) ~= "table" or #t < 2 or type(directives) ~= "table" then return t end
 
-	local i = 1
+	local d = {}
 
-	while i <= #t do
-		local targetIndex = 1
+	for i = #t, 1, -1 do if directives[t[i]] then
+		local p = 1
 
-		if directives[t[i]] then
-			targetIndex = Clamp(directives[t[i]], 1, #t)
+		for j = 1, #d do if directives[d[j]] < directives[t[i]] then p = p + 1 else break end end
 
-			if targetIndex ~= i then table.insert(t, targetIndex, table.remove(t, i)) end
-		end
+		table.insert(d, p, t[i])
+		table.remove(t, i)
+	end end
 
-		if targetIndex <= i then i = i + 1 end
-	end
+	for i = 1, #d do table.insert(t, Clamp(directives[d[i]], 1, #t + 1), d[i]) end
 
 	return  t
 end
