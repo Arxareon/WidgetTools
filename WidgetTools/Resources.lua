@@ -28,14 +28,18 @@ ns.rs.chat = {
 
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(29/3/2026)_#",
+		"#V_Version 2.3_# #H_(30/3/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons using Widget Tools can now access through utilities and create Font Selectors for in their settings.",
 		"#C_Changes:_#",
 		"The look of settings number sliders have been updated to match the new Blizzard sliders but keeping every enhanced functionality as usual for addons built with Widget Tools Toolboxes.",
-		"Tooltip data will no longer be injected into frame tables but housed in a toolbox-specific table accessible via frame ID.",
+		"Added a new advanced settings template for managing Font options.",
+		"The Toolbox loading structure has been overhauled, older versions are no longer supported.",
+		"Many basic utility functions have been handed over to Widget Tools (and are no longer Toolbox-specific), accessible in code globally via the WidgetTools collection.",
+		"Toolbox-specific data will no longer be injected into frame tables but housed in a Toolbox-specific tables (including tooltip or container content arrangement data).",
 		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts.",
+		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size. (This effort will be continued with the Toolbox-specific annotations in future updates.)",
 		"Several other under the hood changes & improvements.",
 		"#F_Hotfixs:_#",
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",
