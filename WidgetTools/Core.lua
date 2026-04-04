@@ -177,32 +177,36 @@ function ns.us.Protect(t)
 
 	if type(t) ~= "table" or metatable == "protected" or metatable == "public" or ns.us.IsFrame(t) then return t end
 
-	local proxy = setmetatable({}, {
-		__index = function(_, k)
-			local v = t[k]
+	local proxy = protectionProxies[t]
 
-			if type(v) ~= "table" or getmetatable(v) == "public" or ns.us.IsFrame(v) then return v end
+	if not proxy then
+		proxy = setmetatable({}, {
+			__index = function(_, k)
+				local v = t[k]
 
-			local subproxy = protectionProxies[v]
+				if type(v) ~= "table" or getmetatable(v) == "public" or ns.us.IsFrame(v) then return v end
 
-			if not subproxy then
-				subproxy = ns.us.Protect(v)
+				local subproxy = protectionProxies[v]
 
-				protectionProxies[v] = subproxy
-			end
+				if not subproxy then
+					subproxy = ns.us.Protect(v)
 
-			return subproxy
-		end,
-		__newindex = function(_, k, v)
-			ns.ds.Log("Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).", "Read-only protection")
-		end,
-		__metatable = "protected",
-	})
+					protectionProxies[v] = subproxy
+				end
 
-	protectionProxies[t] = proxy
+				return subproxy
+			end,
+			__newindex = function(_, k, v)
+				ns.ds.Log("Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).", "Read-only protection")
+			end,
+			__metatable = "protected",
+		})
 
-	--Trigger the protection on subtables recursively by indexing them
-	infect(t, proxy)
+		protectionProxies[t] = proxy
+
+		--Trigger the protection on subtables recursively by indexing them
+		infect(t, proxy)
+	end
 
 	return proxy
 end

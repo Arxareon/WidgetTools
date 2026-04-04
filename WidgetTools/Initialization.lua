@@ -259,10 +259,10 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 			--[ List Toolbox Versions ]
 
-			for version, entry in WidgetTools.utilities.SortedPairs(ns.protectedToolboxRegistry) do wt.CreatePanel({
+			for toolboxVersion, entry in WidgetTools.utilities.SortedPairs(ns.protectedToolboxRegistry) do wt.CreatePanel({
 				parent = canvas,
-				name = "Toolbox" .. version,
-				title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", crc(version, "FFFFFFFF"))),
+				name = "Toolbox" .. toolboxVersion:gsub("[^%w]", "_"),
+				title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", crc(toolboxVersion, "FFFFFFFF"))),
 				arrange = {},
 				size = { h = 32 },
 				arrangement = {
