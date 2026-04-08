@@ -280,21 +280,19 @@ end
 --| Data management
 
 function ns.us.Clone(object)
-	object = ns.expose(object)
-
 	if type(object) ~= "table" or ns.us.IsFrame(object) then return object end
 
 	local copy = {}
 
-	for k, v in pairs(object) do copy[k] = ns.us.Clone(v) end
+	for k, v in pairs(ns.expose(object)) do copy[k] = ns.us.Clone(v) end
 
 	return copy
 end
 
 function ns.us.Merge(target, source)
-	if type(target) ~= "table" and type(source) ~= "table" then return target end
+	if type(target) ~= "table" or type(source) ~= "table" then return target end
 
-	for _, v in pairs(source) do target.insert(target, ns.us.Clone(v)) end
+	for _, v in pairs(source) do table.insert(target, ns.us.Clone(v)) end
 
 	return target
 end
@@ -304,54 +302,77 @@ end
 ---@param source table
 ---@return table target
 local function copy(target, source)
-	for k, v in pairs(target) do if source[k] ~= nil then
-		if type(v) ~= "table" or ns.us.IsFrame(v) or type(source[k]) ~= "table" or ns.us.IsFrame(source[k]) then target[k] = source[k] else copy(v, source[k]) end
-	end end
+	for k, v in pairs(target) do
+		local sv = source[k]
+
+		if sv ~= nil then if type(v) ~= "table" or ns.us.IsFrame(v) or type(sv) ~= "table" or ns.us.IsFrame(sv) then target[k] = sv else copy(v, sv) end end
+	end
 
 	return target
 end
 
 function ns.us.CopyValues(target, source)
-	if type(target) ~= "table" or ns.us.IsFrame(target) or type(source) ~= "table" or ns.us.IsFrame(source) then return target else return copy(target, source) end
+	return type(target) ~= "table" or ns.us.IsFrame(target) or type(source) ~= "table" or ns.us.IsFrame(source) and target or copy(target, source)
 end
 
-
 function ns.us.Fill(target, source)
-	if not (type(source) == "table" and next(source) ~= nil) then return target end
+	if type(source) ~= "table" or next(source) == nil or ns.us.IsFrame(source) then return target end
 
-	if ns.us.IsFrame(source) then target = source else
-		for k, v in pairs(source) do
-			target = type(target) == "table" and target or {}
+	target = type(target) == "table" and target or {}
 
-			--Add the missing item if the value is not empty or nil
-			if target[k] == nil and v ~= nil and v ~= "" then target[k] = ns.us.Clone(v) else ns.us.Fill(target[k], source[k]) end
-		end
+	for k, v in pairs(source) do
+		local tv = target[k]
+
+		if tv == nil then if v ~= nil and v ~= "" then target[k] = ns.us.Clone(v) end
+		elseif type(tv) == "table" and not ns.us.IsFrame(tv) and type(v) == "table" then ns.us.Fill(tv, v) end
 	end
 
 	return target
 end
 
 function ns.us.Pull(target, source)
-	if type(target) ~= "table" then return source end
+	if type(target) ~= "table" or ns.us.IsFrame(target) or type(source) ~= "table" or ns.us.IsFrame(source) then return source end
 
-	return ns.us.CopyValues(ns.us.Fill(target, source), source) --REPLACE with combined code
+	for k, v in pairs(source) do
+		local tv = target[k]
+
+		if tv == nil then if v ~= nil and v ~= "" then target[k] = ns.us.Clone(v) end
+		elseif type(tv) == "table" and type(v) == "table" then ns.us.Pull(tv, v) else target[k] = ns.us.Clone(v) end
+	end
+
+	return target
 end
 
 function ns.us.Prune(target, validate)
 	if type(target) ~= "table" or ns.us.IsFrame(target) then return target end
 
+	validate = type(validate) == "function" and validate or nil
+
 	for k, v in pairs(target) do
 		if type(v) == "table" then
-			if next(v) == nil then target[k] = nil else ns.us.Prune(v, validate) end --Remove the subtable if it's empty
+			if next(v) == nil then target[k] = nil else ns.us.Prune(v, validate) end
 		else
-			local remove = v == nil or v == "" --The value is empty or doesn't exist
+			local remove = v == nil or v == ""
 
-			if type(validate) == "function" and not remove then remove = not validate(k, v) end --Check if the value is invalid
-			if remove then target[k] = nil end --Remove the value
+			if validate and not remove then remove = not validate(k, v) end
+			if remove then target[k] = nil end
 		end
 	end
 
 	return target
+end
+
+---Go deeper to fully map out recoverable keys
+---@param t table
+---@param rKey string
+---@param recoveredData table
+local function purgeDeeper(t, rKey, recoveredData)
+	if type(t) ~= "table" then return end
+
+	for k, v in pairs(t) do
+		if type(v) == "table" then purgeDeeper(v, rKey .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k)), recoveredData)
+		else recoveredData[(rKey .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k))):sub(2)] = v end
+	end
 end
 
 ---Remove unused or outdated data from a table while comparing it to another table and assemble the list of removed keys
@@ -366,27 +387,13 @@ local function purge(target, sample, recoveredData, recoveredKey)
 	recoveredData = recoveredData or {}
 	local targetType, sampleType = type(target), type(sample)
 
-	--| Utilities
-
-	---Go deeper to fully map out recoverable keys
-	---@param t table
-	---@param rKey string
-	local function goDeeper(t, rKey)
-		if type(t) ~= "table" then return end
-
-		for k, v in pairs(t) do
-			if type(v) == "table" then goDeeper(v, rKey .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k)))
-			else recoveredData[(rKey .. (type(k) == "number" and ("[" .. k .. "]") or ("." .. k))):sub(2)] = v end
-		end
-	end
-
 	--| Compare types
 
 	if targetType ~= sampleType then
 		local rKey = (recoveredKey or "") .. (type(recoveredKey) == "number" and ("[" .. recoveredKey .. "]") or ("." .. recoveredKey))
 
 		--Save the old item to the recovered data container
-		if targetType ~= "table" then recoveredData[rKey:sub(2)] = target else goDeeper(target, rKey) end
+		if targetType ~= "table" then recoveredData[rKey:sub(2)] = target else purgeDeeper(target, rKey, recoveredData) end
 
 		--Remove the unneeded item
 		target = nil
@@ -404,7 +411,7 @@ local function purge(target, sample, recoveredData, recoveredKey)
 
 		if sample[key] == nil then
 			--Save the old item to the recovered data container
-			if type(value) ~= "table" then recoveredData[rKey:sub(2)] = value else goDeeper(value, rKey) end
+			if type(value) ~= "table" then recoveredData[rKey:sub(2)] = value else purgeDeeper(value, rKey, recoveredData) end
 
 			--Remove the unneeded item
 			target[key] = nil
@@ -437,7 +444,12 @@ end
 function ns.us.VerifyData(target, source)
 	if type(target) ~= "table" or type(source) ~= "table" then return target end
 
-	for k, v in pairs(source) do if type(v) ~= type(target[k]) then target[k] = ns.us.Clone(v) else ns.us.VerifyData(target[k], v) end end
+	for k, v in pairs(source) do
+		local tv = target[k]
+
+		if type(v) ~= type(tv) then target[k] = ns.us.Clone(v) elseif type(tv) == "table" and type(v) == "table" then ns.us.VerifyData(tv, v) end
+	end
+
 	for k in pairs(target) do if source[k] == nil then target[k] = nil end end
 
 	return target

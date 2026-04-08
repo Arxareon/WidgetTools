@@ -28,7 +28,7 @@ ns.rs.chat = {
 
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(4/4/2026)_#",
+		"#V_Version 2.3_# #H_(8/4/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
@@ -41,6 +41,7 @@ ns.changelog = {
 		"Toolbox-specific data will no longer be injected into frame tables but housed in a Toolbox-specific tables (including tooltip or container content arrangement data).",
 		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts.",
 		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size. (This effort will be continued with the Toolbox-specific annotations in future updates.)",
+		"Separated the logic of data management settings page construction (now called profiles page) into a profilemanager widget and a GUI mutation on top to allow for further development flexibility and more customization.",
 		"Several other under the hood changes & improvements.",
 		"#F_Hotfixs:_#",
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",

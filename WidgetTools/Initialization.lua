@@ -55,7 +55,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 	--[[ SETTINGS ]]
 
-	--| Main Page
+	--[ Main Page ]
 
 	---@type settingsPage
 	local mainPage = wt.CreateAboutPage(ns.rs.addon, {
@@ -64,7 +64,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 		changelog = ns.changelog
 	})
 
-	--| Specifications Page
+	--[ Specifications Page ]
 
 	---@type checkbox
 	local liteToggle
@@ -88,7 +88,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 				initialize = function(panel)
 					local silentSave = false
 
-					local enableLitePopup = wt.RegisterPopupDialog(ns.rs.addon, "ENABLE_LITE_MODE", {
+					local enableLitePopup = wt.RegisterPopupDialog(ns.rs.addon .. "_ENABLE_LITE_MODE", {
 						text = ns.rs.strings.lite.enable.warning:gsub("#ADDON", ns.rs.title),
 						accept = ns.rs.strings.lite.enable.accept,
 						onAccept = function()
@@ -98,7 +98,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
-					local disableLitePopup = wt.RegisterPopupDialog(ns.rs.addon, "DISABLE_LITE_MODE", {
+					local disableLitePopup = wt.RegisterPopupDialog(ns.rs.addon .. "_DISABLE_LITE_MODE", {
 						text = ns.rs.strings.lite.disable.warning:gsub("#ADDON", ns.rs.title),
 						accept = ns.rs.strings.lite.disable.accept,
 						onAccept = function()
@@ -243,7 +243,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 		end,
 	})
 
-	--| Addons Page
+	--[ Addons Page ]
 
 	---@type settingsPage
 	local addonsPage = wt.CreateSettingsPage(ns.rs.addon, {
@@ -370,7 +370,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 								local position = { offset = { x = 344, y = -13 } }
 
 								if data.version then
-									local version = wt.CreateText({
+									local versionLabel = wt.CreateText({
 										parent = addonPanel,
 										name = "VersionTitle",
 										position = position,
@@ -384,7 +384,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										parent = addonPanel,
 										name = "Version",
 										position = {
-											relativeTo = version,
+											relativeTo = versionLabel,
 											relativePoint = "TOPRIGHT",
 											offset = { x = 5 }
 										},
@@ -400,14 +400,14 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										justify = { h = "LEFT", },
 									})
 
-									position.relativeTo = version
+									position.relativeTo = versionLabel
 									position.relativePoint = "BOTTOMLEFT"
 									position.offset.x = 0
 									position.offset.y = -6
 								end
 
 								if data.category then
-									local category = wt.CreateText({
+									local categoryLabel = wt.CreateText({
 										parent = addonPanel,
 										name = "Category",
 										position = position,
@@ -422,7 +422,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										parent = addonPanel,
 										name = "Category",
 										position = {
-											relativeTo = category,
+											relativeTo = categoryLabel,
 											relativePoint = "TOPRIGHT",
 											offset = { x = 5 }
 										},
@@ -432,14 +432,14 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										justify = { h = "LEFT", },
 									})
 
-									position.relativeTo = category
+									position.relativeTo = categoryLabel
 									position.relativePoint = "BOTTOMLEFT"
 									position.offset.x = 0
 									position.offset.y = -6
 								end
 
 								if data.author then
-									local author = wt.CreateText({
+									local authorLabel = wt.CreateText({
 										parent = addonPanel,
 										name = "AuthorTitle",
 										position = position,
@@ -453,7 +453,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										parent = addonPanel,
 										name = "Author",
 										position = {
-											relativeTo = author,
+											relativeTo = authorLabel,
 											relativePoint = "TOPRIGHT",
 											offset = { x = 5 }
 										},
@@ -463,14 +463,14 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										justify = { h = "LEFT", },
 									})
 
-									position.relativeTo = author
+									position.relativeTo = authorLabel
 									position.relativePoint = "BOTTOMLEFT"
 									position.offset.x = 0
 									position.offset.y = -6
 								end
 
 								if data.license then
-									local license = wt.CreateText({
+									local licenseLabel = wt.CreateText({
 										parent = addonPanel,
 										name = "LicenseTitle",
 										position = position,
@@ -484,7 +484,7 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 										parent = addonPanel,
 										name = "License",
 										position = {
-											relativeTo = license,
+											relativeTo = licenseLabel,
 											relativePoint = "TOPRIGHT",
 											offset = { x = 5 }
 										},

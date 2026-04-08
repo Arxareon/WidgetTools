@@ -82,7 +82,8 @@
 			"LE_SCRIPT_BINDING_TYPE_INTRINSIC_PRECALL",
 			"COLOR",
 			"Round",
-			"CHAT"
+			"CHAT",
+			"YELL"
 		],
 		"Lua.type.weakUnionCheck": true,
 		"todo-tree.tree.scanMode": "current file",
