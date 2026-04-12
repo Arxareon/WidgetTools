@@ -17,18 +17,9 @@ ns.rs.root = "Interface/AddOns/" .. ns.rs.addon .. "/"
 
 --[[ STRINGS ]]
 
-ns.rs.chat = {
-	keyword = "wt",
-	commands = {
-		about = "about",
-		lite = "lite",
-		fx = "fx",
-	}
-}
-
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(8/4/2026)_#",
+		"#V_Version 2.3_# #H_(12/4/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
@@ -39,6 +30,7 @@ ns.changelog = {
 		"The Toolbox loading structure has been overhauled, older versions are no longer supported.",
 		"Many basic utility functions have been handed over to Widget Tools (and are no longer Toolbox-specific), accessible in code globally via the WidgetTools collection.",
 		"Toolbox-specific data will no longer be injected into frame tables but housed in a Toolbox-specific tables (including tooltip or container content arrangement data).",
+		"Updated the event handling backend system managing Blizzard global OnEvent (and custom event) handlers for Frames.",
 		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts.",
 		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size. (This effort will be continued with the Toolbox-specific annotations in future updates.)",
 		"Separated the logic of data management settings page construction (now called profiles page) into a profilemanager widget and a GUI mutation on top to allow for further development flexibility and more customization.",
@@ -152,6 +144,15 @@ ns.changelog = {
 		"#N_Update:_#",
 		"Added Dragonflight (Retail 10.0) support with backwards compatibility.",
 	},
+}
+
+ns.rs.chat = {
+	keyword = "wt",
+	commands = {
+		about = "about",
+		lite = "lite",
+		fx = "fx",
+	}
 }
 
 --[ Localization ]
