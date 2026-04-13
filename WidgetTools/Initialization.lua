@@ -20,6 +20,12 @@ WidgetToolsDB = ns.us.VerifyData(type(WidgetToolsDB) == "table" and WidgetToolsD
 	},
 })
 
+--| Snapshots
+
+local loadedLite = WidgetToolsDB.lite
+local loadedPositioningAids = WidgetToolsDB.positioningAids
+local loadedDebugging = WidgetToolsDB.debugging
+
 
 --[[ EVENTS ]]
 
@@ -41,16 +47,6 @@ ns.eventFrame:HookScript("OnEvent", function(_, event)
 
 	local cr = WrapTextInColor
 	local crc = WrapTextInColorCode
-
-	--[ Locals ]
-
-	local chatCommands
-
-	--| Data snapshots
-
-	local loadedLite = WidgetToolsDB.lite
-	local loadedPositioningAids = WidgetToolsDB.positioningAids
-	local loadedDebugging = WidgetToolsDB.debugging
 
 
 	--[[ SETTINGS ]]
