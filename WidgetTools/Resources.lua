@@ -19,7 +19,7 @@ ns.rs.root = "Interface/AddOns/" .. ns.rs.addon .. "/"
 
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(14/4/2026)_#",
+		"#V_Version 2.3_# #H_(15/4/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
@@ -28,9 +28,9 @@ ns.changelog = {
 		"#C_Changes:_#",
 		"The look of settings number sliders have been updated to match the new Blizzard sliders but keeping every enhanced functionality as usual for addons built with Widget Tools Toolboxes.",
 		"The Toolbox loading structure has been overhauled, older versions are no longer supported.",
-		"Many basic utility functions have been handed over to Widget Tools (and are no longer Toolbox-specific), accessible in code globally via the WidgetTools collection.",
+		"Many basic utility functions have been handed over to Widget Tools (and are no longer Toolbox-specific), accessible in code globally via the WidgetTools.utilities collection.",
 		"Toolbox-specific data will no longer be injected into frame tables but housed in a Toolbox-specific tables (including tooltip or container content arrangement data).",
-		"Updated the event handling backend system managing Blizzard global OnEvent (and custom event) handlers for Frames.",
+		"Updated the event handling backend system managing Blizzard global OnEvent (and custom event) handlers for Frames with new utilities accessible globally via the WidgetTools.utilities collection.",
 		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts.",
 		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size. (This effort will be continued with the Toolbox-specific annotations in future updates.)",
 		"Separated the logic of data management settings page construction (now called profiles page) into a profilemanager widget and a GUI mutation on top to allow for further development flexibility and more customization.",
@@ -151,7 +151,7 @@ ns.rs.chat = {
 	commands = {
 		about = "about",
 		lite = "lite",
-		fx = "fx",
+		debug = "debug",
 	}
 }
 

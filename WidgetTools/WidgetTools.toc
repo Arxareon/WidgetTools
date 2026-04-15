@@ -1,7 +1,7 @@
 ## Interface: 120001, 50503, 20505, 11508
 ## Title: Widget Tools
 ## Version: 3.0
-## X-Day: 14
+## X-Day: 15
 ## X-Month: 4
 ## X-Year: 2026
 ## Category: Development Tools
@@ -25,7 +25,6 @@
 Localizations.lua
 Resources.lua
 Core.lua
-Initialization.lua
 Toolbox\Load.lua
 Toolbox\Localizations.lua
 Toolbox\Utilities.lua

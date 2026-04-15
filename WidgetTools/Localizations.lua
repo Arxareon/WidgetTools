@@ -92,6 +92,11 @@ ns.localizations.enUS = {
 			reminder = "Lite Mode is enabled, settings for dependant addons have not been loaded.\n#HINT",
 			hint = "Type #COMMAND to disable Lite Mode.",
 		},
+		debug = {
+			description = "Toggle Debugging Mode: save and display debug logs in chat",
+			response = "Debugging will be #STATE after the interface is reloaded.",
+			hint = "Type #COMMAND to disable Debugging Mode.",
+		},
 	},
 	separator = ",", --Thousand separator character
 	decimal = ".", --Decimal character
