@@ -16,7 +16,7 @@ ns.localizations = {}
 
 --[ English ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.enUS = {
 	about = {
 		version = "Version: #VERSION",
@@ -104,7 +104,7 @@ ns.localizations.enUS = {
 
 --[ Portuguese (Brazil) ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.ptBR = {
 	about = {
 		version = "Versão: #VERSION",
@@ -181,7 +181,7 @@ ns.localizations.ptBR = {
 
 --[ German ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.deDE = {
 	about = {
 		version = "Version: #VERSION",
@@ -258,7 +258,7 @@ ns.localizations.deDE = {
 
 --[ French ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.frFR = {
 	about = {
 		version = "Version : #VERSION",
@@ -335,7 +335,7 @@ ns.localizations.frFR = {
 
 --[ Spanish (Spain) ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.esES = {
 	about = {
 		version = "Versión: #VERSION",
@@ -412,7 +412,7 @@ ns.localizations.esES = {
 
 --[ Spanish (Mexico) ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.esMX = {
 	about = {
 		version = "Versión: #VERSION",
@@ -489,7 +489,7 @@ ns.localizations.esMX = {
 
 --[ Italian ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.itIT = {
 	about = {
 		version = "Versione: #VERSION",
@@ -566,7 +566,7 @@ ns.localizations.itIT = {
 
 --[ Korean ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.koKR = {
 	about = {
 		version = "버전: #VERSION",
@@ -643,7 +643,7 @@ ns.localizations.koKR = {
 
 --[ Chinese (traditional, Taiwan) ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.zhTW = {
 	about = {
 		version = "版本：#VERSION",
@@ -720,7 +720,7 @@ ns.localizations.zhTW = {
 
 --[ Chinese (simplified, PRC) ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.zhCN = {
 	about = {
 		version = "版本：#VERSION",
@@ -797,7 +797,7 @@ ns.localizations.zhCN = {
 
 --[ Russian ]
 
----@class WidgetToolsStrings
+---@class widgetToolsStrings
 ns.localizations.ruRU = {
 	about = {
 		version = "Версия: #VERSION",

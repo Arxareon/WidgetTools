@@ -1,5 +1,5 @@
 ## Interface: 120001, 50503, 20505, 11508
-## Title: Widget Tools
+## Title: Widget Toolbox 3.0
 ## Version: 3.0
 ## X-Day: 17
 ## X-Month: 4
@@ -14,15 +14,11 @@
 ## X-Wago: addons.wago.io/addons/widget-tools
 ## X-Repository: github.com/Arxareon/WidgetTools
 ## X-Issues: github.com/Arxareon/WidgetTools/issues
-## AddonCompartmentFunc: AddonCompartment_OnClick_WidgetTools
-## AddonCompartmentFuncOnEnter: AddonCompartment_OnEnter_WidgetTools
-## AddonCompartmentFuncOnLeave: AddonCompartment_OnLeave_WidgetTools
-## SavedVariables: WidgetToolsDB
-## LoadSavedVariablesFirst: 1
-## X-WidgetTools-ToolboxVersion: 3.0
-## X-WidgetTools-AddToNamespace: wt
+## Group: WidgetTools
+## LoadOnDemand: 1
 
 Localizations.lua
+Utilities.lua
 Resources.lua
-Core.lua
-Toolbox.lua
+Widgets.lua
+Frames.lua

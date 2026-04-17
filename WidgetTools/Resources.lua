@@ -19,7 +19,7 @@ ns.rs.root = "Interface/AddOns/" .. ns.rs.addon .. "/"
 
 ns.changelog = {
 	{
-		"#V_Version 2.3_# #H_(15/4/2026)_#",
+		"#V_Version 2.3_# #H_(17/4/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
@@ -157,7 +157,6 @@ ns.rs.chat = {
 
 --[ Localization ]
 
----@type WidgetToolsStrings
 ns.rs.strings = ns.localizations[GetLocale()]
 
 --| Cleanup

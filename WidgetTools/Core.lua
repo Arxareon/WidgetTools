@@ -602,6 +602,8 @@ function ds.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerM
 	end
 end
 
+--| Resize Frame Attributes
+
 if WidgetToolsDB.frameAttributes.enabled then us.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", function()
 	eventFrame:UnregisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
 
@@ -623,7 +625,7 @@ local protectedToolboxRegistry = {}
 function ts.Register(addon, version, callback, toolbox)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or not version then return end
 
-	--| Existing entry
+	--[ Supply Toolbox ]
 
 	--Register addon for use
 	if protectedToolboxRegistry[version] then
@@ -634,9 +636,9 @@ function ts.Register(addon, version, callback, toolbox)
 		return protectedToolboxRegistry[version].toolbox
 	end
 
-	--| Registering existing toolbox
+	--[ Register Toolbox ]
 
-	--Protected and add the toolbox to registry and register addon for use
+	--Protect and add the toolbox to the registry and register addon for use
 	if type(toolbox) == "table" then
 		protectedToolboxRegistry[version] = { toolbox = us.Protect(toolbox), addons = { addon } }
 
@@ -645,13 +647,21 @@ function ts.Register(addon, version, callback, toolbox)
 		return protectedToolboxRegistry[version].toolbox
 	end
 
-	--| Initializing new toolbox
+	--[ Initialize Toolbox ]
 
 	version = tostring(version)
 
-	ts.initialization[version] = setmetatable({}, { __metatable = "public" })
+	--| Load the Toolbox addon
 
-	ds.Log("New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".", "Widget Toolbox registration")
+	local toolboxAddon = "WidgetToolbox_" .. version
+
+	if not C_AddOns.IsAddOnLoadable(toolboxAddon) then
+		ds.Log("Could not start loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration")
+
+		return false
+	end
+
+	--| Register callback
 
 	us.SetListener(eventFrame, "ADDON_LOADED", function(_, a)
 		if a ~= addon then return end
@@ -665,6 +675,15 @@ function ts.Register(addon, version, callback, toolbox)
 
 		if type(callback) == "function" then callback(protectedToolboxRegistry[version].toolbox) end
 	end)
+
+	--| Initialization
+
+	ts.initialization[version] = setmetatable({}, { __metatable = "public" })
+
+	ds.Log("New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".", "Widget Toolbox registration")
+	ds.Log("Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration")
+
+	C_AddOns.LoadAddOn(toolboxAddon)
 end
 
 

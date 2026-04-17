@@ -5,8 +5,6 @@
 ---@class widgetToolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
-if not wt then return end
-
 --[ Shortcuts ]
 
 ---@type widgetToolsResources
@@ -24,12 +22,6 @@ local crc = WrapTextInColorCode
 
 --[[ TABLE MANAGEMENT ]]
 
----Align all keys in a table to a reference table, filling missing values and removing mismatched or invalid pairs
----***
----@param targetTable table Reference to the table to get into alignment with the sample
----@param tableToSample table Reference to the table to sample keys & data from
----***
----@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
 function wt.HarmonizeData(targetTable, tableToSample)
 	if type(targetTable) ~= "table" then return tableToSample end
 
@@ -47,16 +39,6 @@ end
 
 --| Conversion
 
----Return a position table used by WidgetTools assembled from the provided values which are returned by [Region:GetPoint(...)](https://warcraft.wiki.gg/wiki/API_Region_GetPoint)
----***
----@param anchor? FramePoint Base anchor point | ***Default:*** "TOPLEFT"
----@param relativeTo? Frame Relative to this Frame or Region
----@param relativePoint? FramePoint Relative anchor point
----@param offsetX? number | ***Default:*** 0
----@param offsetY? number | ***Default:*** 0
----***
----@return positionData # Table containing the position values as used by WidgetTools
----<p></p>
 function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY)
 	return {
 		anchor = type(anchor) == "string" and anchor or "TOPLEFT",
@@ -66,16 +48,6 @@ function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY)
 	}
 end
 
----Extract, verify and return the position values used by [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) from a position table used by WidgetTools
----***
----@param t? positionData Table containing parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with
----***
----@return FramePoint anchor ***Default:*** "TOPLEFT"
----@return AnyFrameObject|nil relativeTo ***Default:*** "nil" *(anchor relative to screen dimensions)*<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li></ul>
----@return FramePoint? relativePoint
----@return number|nil offsetX ***Default:*** 0
----@return number|nil offsetY ***Default:*** 0
----<hr><p></p>
 function wt.UnpackPosition(t)
 	if type(t) ~= "table" then return "TOPLEFT" end
 
@@ -98,9 +70,6 @@ end
 
 --| Verification
 
----Check if a variable is a valid color table
----@param t any
----@return boolean|colorData
 function wt.IsColor(t)
 	if type(t) ~= "table" then
 		ds.Log("Not a color: " ..  us.TableToString(t), "IsColor")
@@ -127,9 +96,6 @@ function wt.IsColor(t)
 	return t
 end
 
----Check & silently repair a color data table
----@param color any
----@return boolean|colorData
 function wt.VerifyColor(color)
 	if type(color) ~= "table" then return { r = 1, g = 1, b = 1, a = 1 } end
 
@@ -143,14 +109,6 @@ end
 
 --| Conversion
 
----Return a table constructed from color values
----***
----@param red? number Red | ***Range:*** (0, 1) | ***Default:*** 1
----@param green? number Green | ***Range:*** (0, 1) | ***Default:*** 1
----@param blue? number Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@param alpha? number Opacity | ***Range:*** (0, 1) | ***Default:*** 1
----***
----@return colorData # Table containing the color values
 function wt.PackColor(red, green, blue, alpha)
 	return {
 		r = type(red) == "number" and Clamp(red, 0, 1) or 1,
@@ -160,15 +118,6 @@ function wt.PackColor(red, green, blue, alpha)
 	}
 end
 
----Extract, verify and return the color values found in a table
----***
----@param color? colorData|colorRGBA Table containing the color values | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
----@param alpha? boolean Specify whether to return the full RGBA set or just the RGB values | ***Default:*** true
----***
----@return number r Red | ***Range:*** (0, 1) | ***Default:*** 1
----@return number g Green | ***Range:*** (0, 1) | ***Default:*** 1
----@return number b Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@return number? a Opacity | ***Range:*** (0, 1)
 function wt.UnpackColor(color, alpha)
 	if type(color) ~= "table" then return 1, 1, 1, 1 end
 
@@ -180,13 +129,6 @@ function wt.UnpackColor(color, alpha)
 	if alpha ~= false then return r, g, b, a else return r, g, b end
 end
 
----Convert RGB(A) color values in Range: (0, 1) to HEX color code
----***
----@param color? colorData|colorRGBA The RGB(A) color data with all channels in Range: (0, 1) | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
----@param alphaFirst? boolean Put the alpha value first: ARGB output instead of RGBA | ***Default:*** false
----@param hashtag? boolean Whether to add a "#" to the beginning of the color description | ***Default:*** true
----***
----@return string hex Color code in HEX format<ul><li>***Examples:***<ul><li>**RGB:** "#2266BB"</li><li>**RGBA:** "#2266BBAA"</li></ul></li></ul>
 function wt.ColorToHex(color, alphaFirst, hashtag)
 	local hex = hashtag ~= false and "#" or ""
 
@@ -204,14 +146,6 @@ function wt.ColorToHex(color, alphaFirst, hashtag)
 	return hex:upper()
 end
 
----Convert a HEX color code into RGB or RGBA in Range: (0, 1)
----***
----@param hex string String in HEX color code format<ul><li>***Examples:***<ul><li>**RGB:** "#2266BB" (where the "#" is optional)</li><li>**RGBA:** "#2266BBAA" (where the "#" is optional)</li></ul></li></ul>
----***
----@return number r Red | ***Range:*** (0, 1) | ***Default:*** 1
----@return number g Green  | ***Range:*** (0, 1) | ***Default:*** 1
----@return number b Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@return number? a Alpha | ***Range:*** (0, 1)
 function wt.HexToColor(hex)
 	if type(hex) ~= "string" then return 1, 1, 1 else hex = hex:gsub("#", "") end
 
@@ -222,12 +156,6 @@ function wt.HexToColor(hex)
 	if hex:len() == 8 then return r, g, b, tonumber(hex:sub(7, 8), 16) / 255 else return r, g, b end
 end
 
----Brighten or darken the RGB values of a color by an exponent
----***
----@param color colorData|colorRGBA|any Table containing the color values
----@param exponent? number ***Default:*** 0.55<ul><li>***Note:*** Values greater than 1 darken, smaller than 1 brighten the color.</li></ul>
----***
----@return colorData|colorRGBA|any color Reference to **color** (it was already updated during the operation, no need for setting it again)
 function wt.AdjustGamma(color, exponent)
 	if type(color) ~= "table" then return color end
 
@@ -245,16 +173,6 @@ end
 
 --[ Escape Sequences ]
 
----Create a markup texture string snippet via escape sequences based on the specified values
----***
----@param path string Path to the specific texture file relative to the root directory of the specific WoW client<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
----@param width? number ***Default:*** *width of the texture file*
----@param height? number ***Default:*** **width**
----@param offsetX? number | ***Default:*** 0
----@param offsetY? number | ***Default:*** 0
----@param t? table Additional parameters are to be provided in this table
----***
----@return string # ***Default:*** ""
 function wt.Texture(path, width, height, offsetX, offsetY, t)
 	if type(path) ~= "string" then return "" end
 
@@ -268,10 +186,6 @@ function wt.Texture(path, width, height, offsetX, offsetY, t)
 	else return CreateSimpleTextureMarkup(path, height, width, offsetX, offsetY) end
 end
 
----Remove most visual formatting (like coloring) & other (like hyperlink) [escape sequences](https://warcraft.wiki.gg/wiki/UI_escape_sequences) from a string
---- - ***Note:*** *Grammar* escape sequences are not yet supported, and will not be removed.
----@param s string
----@return string s
 function wt.Clear(s)
 	if type(s) ~= "string" then return s end
 
@@ -298,12 +212,6 @@ function wt.Clear(s)
 	return s
 end
 
----Get an assembled & fully formatted string of a specifically assembled changelog table
----***
----@param changelog { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
----@param latest? boolean Whether to get the update notes of the latest version or the entire changelog | ***Default:*** false<ul><li>***Note:*** If true, the first line (expected to be the title containing the version number and/or release date) of the of the last version table will be omitted from the final formatted text returned, only including the update notes themselves.</li></ul>
----***
----@return string c # ***Default:*** ""
 function wt.FormatChangelog(changelog, latest)
 	local highlight = "FFFFFFFF"
 	local new = "FF66EE66"
@@ -340,24 +248,10 @@ end
 
 --[ Hyperlinks ]
 
----Format a clickable hyperlink text via escape sequences
----***
----@param linkType ExtendedHyperlinkType [Type of the hyperlink](https://warcraft.wiki.gg/wiki/Hyperlinks#Types) determining how it's being handled and what payload it carries
----@param content? string A colon-separated chain of parameters determined by **type** (Example: "content1:content2:content3") | ***Default:*** ""
----@param text string Clickable text to be displayed as the hyperlink
----***
----@return string # ***Default:*** ""
----<p></p>
 function wt.Hyperlink(linkType, content, text)
 	if not linkType or not content or not text then return "" else return "\124H" .. linkType .. ":" .. (content or "") .. "\124h" .. text .. "\124h" end
 end
 
----Format a custom clickable addon hyperlink text via escape sequences
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param type? string A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via ***WidgetToolbox*.SetHyperlinkHandler(...)** | ***Default:*** "-"
----@param content? string A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
----@param text string Clickable text to be displayed as the hyperlink
 function wt.CustomHyperlink(addon, type, content, text)
 	if not addon then return "" else return wt.Hyperlink("addon", addon .. ":" .. (type or "-") .. ":" .. (content or ""), text) end
 end
@@ -365,11 +259,6 @@ end
 --Hyperlink handler script registry
 local hyperlinkHandlers = {}
 
----Register a function to handle custom hyperlink clicks
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)<ul><li>***Note:*** Duplicate addon key that already had rules registered under will be overwritten.</li></ul>
----@param linkType? string Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
----@param handler fun(...) Function to be called with the list of content data strings carried by the hyperlink returned one by one when clicking on a hyperlink text created via ***WidgetToolbox*.CustomHyperlink(...)**
 function wt.SetHyperlinkHandler(addon, linkType, handler)
 	if type(addon) ~= "string" or type(handler) ~= "function" then return end
 
@@ -404,11 +293,6 @@ end
 
 --[[ WIDGET MANAGEMENT ]]
 
----Check if a variable is a recognizable WidgetTools custom table
----@param t any
----***
----@return boolean|AnyTypeName # Return the type name of the object if recognized, false if not
----<p></p>
 function wt.IsWidget(t)
 	return type(t) == "table" and t.isType and t.getType and t.getType() or false
 end
@@ -421,12 +305,6 @@ end
 --Used for a transitional step to avoid anchor family connections during safe frame positioning
 local positioningAid
 
----Set the position and anchoring of a frame when it is unknown which parameters will be nil
----***
----@param frame AnyFrameObject Reference to the frame to be moved
----@param position? positionData Table of parameters to call **frame**:[SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** "TOPLEFT"
----@param unlink? boolean If true, unlink the position of **frame** from **position.relativeTo** (preventing anchor family connections) by moving a positioning aid frame to **position** first, convert its position to absolute, breaking relative links (making it relative to screen points instead), then move **frame** to the position of the aid | ***Default:*** false
----@param userPlaced? boolean Remember the position if **frame**:[IsMovable()](https://warcraft.wiki.gg/wiki/API_Frame_IsMovable) | ***Default:*** true
 function wt.SetPosition(frame, position, unlink, userPlaced)
 	if not us.IsFrame(frame) or not frame.SetPoint then return end
 
@@ -472,14 +350,6 @@ function wt.SetPosition(frame, position, unlink, userPlaced)
 	if frame.IsMovable and frame:IsMovable() then frame:SetUserPlaced(userPlaced ~= false) end
 end
 
----Set the anchor of a frame while keeping its positioning by updating its relative offsets
----***
----@param frame AnyFrameObject Reference to the frame to be update
----@param anchor FramePoint New anchor point to set
----***
----@return number? offsetX The new horizontal offset value | ***Default:*** nil
----@return number? offsetY The new vertical offset value | ***Default:*** nil
----<p></p>
 function wt.SetAnchor(frame, anchor)
 	if not us.IsFrame(frame) or type(anchor) ~= "string" then return end
 
@@ -509,10 +379,6 @@ function wt.SetAnchor(frame, anchor)
 	return offsetX, offsetY
 end
 
----Convert the position of a frame positioned relative to another to absolute position (making it relative to screen points, the UIParent instead)
----***
----@param frame AnyFrameObject Reference to the frame the position of which to be converted to absolute position
----@param keepAnchor? boolean If true, restore the original anchor of **frame** (as its closest anchor to the nearest screen point will be chosen after conversion) | ***Default:*** true
 function wt.ConvertToAbsolutePosition(frame, keepAnchor)
 	if not us.IsFrame(frame) or not frame.IsMovable then return end
 
@@ -547,11 +413,6 @@ local arrangementWrapping = {}
 ---@type AnyFrameObject[]
 local arrangementSkipping = {}
 
----Set the arrangement ordering description of a child frame by which to automatically position it in a columns within rows arrangement in its parent container via ***WidgetToolbox*.ArrangeContent(...)**
----@param frame AnyFrameObject Reference to the child frame to set the arrangement ordering description for
----@param index integer|nil If set, use this ordering index for **frame** by which to schedule placing it during arrangement (instead of relying on its child index), or if nil, delete the ordering directive set for **frame**
----@param wrap boolean|nil If true, place **frame** into a new row within its container instead of adding it to the current row being filled, or if nil, delete the wrapping directive set for **frame**<ul><li>***Note:*** If the item would not fit in the row with other items in there, it will automatically be placed in a new row.</li></ul>
----@param skip boolean|nil If true, ignore all other directives and don't include **frame** in the arrangement when positioning the children of the parent frame, or if nil, delete the skipping directive set for **frame**
 function wt.SetArrangementDirective(frame, index, wrap, skip)
 	if not us.IsFrame(frame) or not frame:GetParent() then return end
 
@@ -560,11 +421,6 @@ function wt.SetArrangementDirective(frame, index, wrap, skip)
 	if skip == nil then arrangementSkipping[frame] = nil else arrangementSkipping[frame] = skip == true end
 end
 
----Arrange the child frames of a container frame into stacked rows based on the parameters provided
---- - ***Note:*** The frames will be arranged into columns based on the the number of child frames assigned to a given row, anchored to "TOPLEFT", "TOP" and "TOPRIGHT" in order (by default) up to 3 frames. Columns in rows with more frames will be attempted to be spaced out evenly between the frames placed at the main 3 anchors.
----***
----@param container Frame Reference to the parent container frame the child frames of which are to be arranged based on their arrangement descriptions
----@param t? arrangementRules Arrange the child frames of **container** based on the specifications provided in this table
 function wt.ArrangeContent(container, t)
 	if not us.IsFrame(container) then return end
 
@@ -658,11 +514,6 @@ end
 
 --| Movability
 
----Set the movability of a frame based in the specified values
----***
----@param frame AnyFrameObject Reference to the frame to make movable/unmovable
----@param movable? boolean Whether to make the frame movable or unmovable | ***Default:*** false
----@param t? movabilityData When specified, set **frame** as movable, dynamically updating the position settings widgets when it's moved by the user
 function wt.SetMovability(frame, movable, t)
 	if not us.IsFrame(frame) or not frame.SetMovable then return end
 
@@ -786,10 +637,6 @@ end
 
 --[ Visibility ]
 
----Set the visibility of a frame based on the value provided
----***
----@param frame AnyFrameObject Reference to the frame to hide or show
----@param visible? boolean If false, hide the frame, show it if true | ***Default:*** false
 function wt.SetVisibility(frame, visible)
 	if not us.IsFrame(frame) then return end
 
@@ -798,11 +645,6 @@ end
 
 --[ Backdrop ]
 
----Set the backdrop of a frame with BackdropTemplate with the specified parameters
----***
----@param frame backdropFrame|AnyFrameObject Reference to the frame to set the backdrop of<ul><li>***Note:*** The template of **frame** must have been set as: `BackdropTemplateMixin and "BackdropTemplate"`.</li></ul>
----@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** nil *(remove the backdrop)*
----@param updates? backdropUpdateRule[] Table of backdrop update rules, modifying the specified parameters on trigger<ul><li>***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **updates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!</li></ul>
 function wt.SetBackdrop(frame, backdrop, updates)
 	if not us.IsFrame(frame) or not frame.SetBackdrop then return end
 
@@ -916,10 +758,6 @@ end
 
 --[ Dependencies ]
 
----Assign dependency rule listeners from a defined a ruleset
----***
----@param rules dependencyRule[] Indexed table containing the dependency rules to add
----@param setState fun(state: boolean) Function to call to set the state of the frame, enabling it on a true, or disabling it on a false input
 function wt.AddDependencies(rules, setState)
 	if type(rules) ~= "table" or type(setState) ~= "function" then return end
 
@@ -950,10 +788,6 @@ function wt.AddDependencies(rules, setState)
 	setter()
 end
 
----Check and evaluate all dependencies in a ruleset
----***
----@param rules dependencyRule[] Indexed table containing the dependency rules to check
----@return boolean? state
 function wt.CheckDependencies(rules)
 	if type(rules) ~= "table" then return end
 
@@ -991,14 +825,6 @@ local defaultTooltip
 ---@type AnyTooltipData[]
 local tooltipData = {}
 
----Register tooltip data and set up a GameTooltip for a frame to be toggled on hover
----***
----@param frame AnyFrameObject Owner frame the tooltip to be registered for<ul><li>***Note:*** If tooltip data for **owner** has already been added to the registry, it will be fully overwritten with **t**.</li><ul><li>***Note:*** Duplicate triggers may still be added if **duplicate** is set to true.</li></ul></li></ul>
----@param t? tooltipData The tooltip parameters are to be provided in this table
----@param toggle? tooltipToggleData Additional toggle rule parameters are to be provided in this table
----@param duplicate? boolean If true, execute even if tooltip data has already been registered for **owner**, potentially adding duplicate toggle triggers, or, automatically call ***WidgetToolbox*.UpdateTooltipData(...)** instead to avoid this | ***Default:*** false
----***
----@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** nil
 function wt.AddTooltip(frame, t, toggle, duplicate)
 	if not us.IsFrame(frame) then return nil end
 
@@ -1040,10 +866,6 @@ function wt.AddTooltip(frame, t, toggle, duplicate)
 	return tooltipData[frame]
 end
 
----Update and show a GameTooltip already set up to be toggled for a frame
----***
----@param frame AnyFrameObject Owner frame the tooltip to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no tooltip will be shown.</li></ul>
----@param t? tooltipUpdateData|tooltipData Use this set of parameters to update the tooltip for **owner** with | ***Default:*** *(fill values from the data in the registry)*
 function wt.UpdateTooltip(frame, t)
 	if not us.IsFrame(frame) then return end
 
@@ -1100,13 +922,6 @@ function wt.UpdateTooltip(frame, t)
 	t.tooltip:SetScale(UIParent:GetScale())
 end
 
----Verify and update the tooltip data values stored in the registry for a frame
----***
----@param frame AnyFrameObject Owner frame the tooltip data to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no data will be changed.</li></ul>
----@param t? tooltipUpdateData|tooltipData The parameters to update the tooltip with are to be provided in this table | ***Default:*** *(fill values from the data in the registry or use default values for required values missing from the registry)*
----@param linesUpdate boolean|nil If true, replace the full set of lines in the registry with **t.lines**, or if explicitly false, append the lines to the current list of lines, or if nil or something else, adjust the values of existing lines at matching indexes instead without adding or removing lines | ***Default:*** `nil`
----***
----@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** `nil`
 function wt.UpdateTooltipData(frame, t, linesUpdate)
 	if not us.IsFrame(frame) then return nil end
 
@@ -1163,11 +978,6 @@ function wt.UpdateTooltipData(frame, t, linesUpdate)
 	return tooltipData[frame]
 end
 
----Add default value and utility menu hint tooltip lines to widget tooltip tables
----***
----@param frames AnyFrameObject[] List of reference to the frames to add the tooltip lines to<ul><li>***Note:*** If no entry has been registered for a frame in the list in the tooltip data registry via ***WidgetToolbox*.AddTooltip(...)** yet, no changes will be made for that frame.</li></ul>
----@param default? string Default value, formatted | ***Default:*** *(don't show default value)*
----@param utilityNote? boolean Is true, add a note for the utility context menu | ***Default:*** true
 function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 	if type(default) ~= "string" or utilityNote == false then return end
 
@@ -1183,12 +993,6 @@ end
 
 --[[ POPUP MANAGEMENT ]]
 
----Register the data for a Blizzard popup dialog for use
----***
----@param key? string Unique string to be used as the identifier key in the global `StaticPopupDialogs` table | ***Default:*** *table id of `t` or a random ID string*<ul><li>***Note:*** the default value will be appended to `key` even if its set and a valid string if that key already exist in the global `StaticPopupDialogs` table.
----@param t? popupDialogData Optional parameters
----***
----@return string key The unique identifier key the popup data was created under in the global `StaticPopupDialogs` table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 function wt.RegisterPopupDialog(key, t)
 	key = type(key) == "string" and key:len() > 0 and key:upper() or nil
 	t = type(t) == "table" and t or {}
@@ -1212,12 +1016,6 @@ function wt.RegisterPopupDialog(key, t)
 	return key
 end
 
----Update already existing popup dialog data
----***
----@param key string The unique identifier key representing the defaults warning popup dialog in the global `StaticPopupDialogs` table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
----@param t? popupDialogData Optional parameters
----***
----@return string? key The unique identifier key created for this popup in the global `StaticPopupDialogs` table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide) | ***Default:*** nil
 function wt.UpdatePopupDialog(key, t)
 	if not StaticPopupDialogs[key] then return end
 
@@ -1237,11 +1035,6 @@ end
 
 --[[ ADDON COMPARTMENT ]]
 
----Set up the [Addon Compartment](https://warcraft.wiki.gg/wiki/Addon_compartment#Automatic_registration) functionality by registering global functions for call
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
----@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
 function wt.SetUpAddonCompartment(addon, calls, tooltip)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
 
@@ -1286,13 +1079,6 @@ end
 
 --[[ CHAT CONTROL ]]
 
----Register a list of chat keywords and related commands for use
----***
----@param addon string The name of the addon's folder (the addon namespace not the display title)
----@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands<ul><li>***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.</li></ul>
----@param t chatCommandManagerCreationData Optional parameters
----***
----@return chatCommandManager? manager Table containing command handler functions | ***Default:*** nil
 function wt.RegisterChatCommands(addon, keywords, t)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return end
 
@@ -1430,11 +1216,6 @@ end
 
 --[[ SETTINGS MANAGEMENT ]]
 
----Register the settings page to the Settings window if it wasn't already
---- - ***Note:*** No settings page will be registered if **WidgetToolsDB.lite** is true.
----@param page settingsPage Reference to the settings page to register to Settings
----@param parent? settingsPage Reference to the parent settings page to set **page** as a child category page of | ***Default:*** *set as a parent category page*
----@param icon? boolean If true, append the icon set for the settings page to its button title in the AddOns list of the Settings window as well | ***Default:*** true if **parent** == nil
 function wt.RegisterSettingsPage(page, parent, icon)
 	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
 
@@ -1456,18 +1237,9 @@ end
 
 --| Settings data
 
---Settings data management rule registry
 ---@class settingsRegistry
----@field rules table<string, settingsRule[]> Collection of rules describing where to save/load settings data to/from, and what change handlers to call in the process linked to each specific settings category under an addon
----@field changeHandlers table<string, function> List of pairs of addon-specific unique keys and change handler scripts
 local settingsData = { rules = {}, changeHandlers = {} }
 
----Register a settings data management entry for a settings widget to the settings data management registry for batched data handling
----***
----@param widget AnyWidgetType|AnyGUIWidgetType Reference to the widget to be saved & loaded data to/from with defined **widget.loadData()** & **widget.saveData()** functions
----@param t settingsData Optional parameters
----***
----@return integer|nil index The index for the new entry for **widget** where it ended up in the settings data management registry | ***Default:*** nil
 function wt.AddSettingsDataManagementEntry(widget, t)
 	if not wt.IsWidget(widget) or type(t) ~= "table" then return nil end
 
@@ -1502,11 +1274,6 @@ function wt.AddSettingsDataManagementEntry(widget, t)
 	return t.index
 end
 
----Load all data from storage to the widgets specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].loadData(...)** for each
----***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
----@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** false
 function wt.LoadSettingsData(category, key, handleChanges)
 	category = type(category) == "string" and category or "WidgetTools"
 	key = category .. (type(key) == "string" and key or "")
@@ -1528,10 +1295,6 @@ function wt.LoadSettingsData(category, key, handleChanges)
 	if changeHandlers then for k in pairs(changeHandlers) do settingsData.changeHandlers[k]() end end
 end
 
----Save all data from the widgets to storage specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].saveData(...)** for each
----***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.SaveSettingsData(category, key)
 	key = (type(category) == "string" and category or "WidgetTools") .. (type(key) == "string" and key or "")
 
@@ -1540,9 +1303,6 @@ function wt.SaveSettingsData(category, key)
 	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.saveData() end
 end
 
----Call all **onChange** handlers registered in the settings data management registry in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.ApplySettingsData(category, key)
 	category = type(category) == "string" and category or "WidgetTools"
 	key = category .. (type(key) == "string" and key or "")
@@ -1560,10 +1320,6 @@ function wt.ApplySettingsData(category, key)
 	if handlers then for k in pairs(handlers) do settingsData.changeHandlers[k]() end end
 end
 
----Set a data snapshot for each widget specified in the settings data management registry in the specified **category** under the specified **key** calling **[*widget*].revertData()** for each
----***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.SnapshotSettingsData(category, key)
 	key = (type(category) == "string" and category or "WidgetTools") .. (type(key) == "string" and key or "")
 
@@ -1572,10 +1328,6 @@ function wt.SnapshotSettingsData(category, key)
 	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.snapshotData() end
 end
 
----Set & load the stored data managed by each widget specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].revertData()** for each
----***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.RevertSettingsData(category, key)
 	category = type(category) == "string" and category or "WidgetTools"
 	key = category .. (type(key) == "string" and key or "")
@@ -1597,10 +1349,6 @@ function wt.RevertSettingsData(category, key)
 	if applyChanges then for k in pairs(applyChanges) do settingsData.changeHandlers[k]() end end
 end
 
----Set & load the default data managed by each widget specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].resetData()** for each
----***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.ResetSettingsData(category, key)
 	category = type(category) == "string" and category or "WidgetTools"
 	key = category .. (type(key) == "string" and key or "")
@@ -1622,10 +1370,6 @@ function wt.ResetSettingsData(category, key)
 	if applyChanges then for k in pairs(applyChanges) do settingsData.changeHandlers[k]() end end
 end
 
----Handle changes for widgets in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].onChange()** for each
----@param index integer Filter the call of change handlers to only include the list under the specified index not each list in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.HandleWidgetChanges(index, category, key)
 	category = type(category) == "string" and category or "WidgetTools"
 	key = category .. (type(key) == "string" and key or "")

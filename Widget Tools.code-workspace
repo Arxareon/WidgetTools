@@ -85,6 +85,9 @@
 			"CHAT",
 			"YELL"
 		],
+		"Lua.workspace.ignoreDir": [
+			"WidgetToolbox_*"
+		],
 		"Lua.type.weakUnionCheck": true,
 		"todo-tree.tree.scanMode": "current file",
 		"Lua.diagnostics.disable": [

@@ -1,32 +1,53 @@
 <# RESOURCES #>
 
 # List of addon namespace directories (inside their specific parent project folders) to copy to
-$destinations = Get-Content "$PSScriptRoot\.config\ProjectDirectories.txt" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+$addons = Get-Content "$PSScriptRoot\.config\ProjectDirectories.txt" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+
+# Toolbox
+$toolboxSource = Join-Path (Get-Location) ".toolbox"
+$toolboxVersion = (Select-String (Join-Path $toolboxSource "Toolbox.toc") -Pattern "^## Version:").Line.Split(":")[1].Trim()
+$toolboxName = "WidgetToolbox_$toolboxVersion"
+$toolbox = Join-Path (Get-Location) $toolboxName
 
 
 <# INSTALLATION #>
 
-foreach ($destination in $destinations) {
+# Update the TOC
+$widgetToolsTOC = Join-Path (Get-Location) "WidgetTools\WidgetTools.toc"
+(Get-Content $widgetToolsTOC -Raw) -replace "X-WidgetTools-ToolboxVersion:.*", "X-WidgetTools-ToolboxVersion: $toolboxVersion" | Set-Content $widgetToolsTOC -NoNewline
+
+<# Toolbox #>
+
+# Create the install copy
+Get-ChildItem (Get-Location) -Directory -Filter "WidgetToolbox_*" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item $toolboxSource -Destination $toolbox -Recurse -Force
+
+# Rename the TOC
+$toolboxTOC = Join-Path $toolbox "Toolbox.toc"
+Rename-Item $toolboxTOC "$toolboxName.toc" -Force
+
+<# Addon Projects #>
+
+foreach ($addon in $addons) {
+	if (-not (Test-Path $addon)) { continue }
 
 	<# Toolbox #>
 
-	$destinationPath = Join-Path $destination "Toolbox"
+	# Version
+	$addonTOC = (Get-ChildItem $addon -Filter "*.toc").FullName
+	(Get-Content $addonTOC -Raw) -replace "X-WidgetTools-ToolboxVersion:.*", "X-WidgetTools-ToolboxVersion: $toolboxVersion" | Set-Content $addonTOC -NoNewline
 
-	# Verify & clear the bundled Toolbox folder in the addon namespace folder
-	if (!(Test-Path -Path $destinationPath)) { New-Item $destinationPath -Type Directory }
-	Remove-Item $destinationPath -Recurse -Force
+	# Loader
+	Copy-Item (Join-Path (Get-Location) "WidgetTools\Toolbox.lua") -Destination $addon -Force
 
-	# Copy the Toolbox to the addon
-	Copy-Item (Join-Path (Get-Location) "WidgetTools\Toolbox") -Destination $destinationPath -Recurse -Force
+	# Addon
+	$projectRoot = Split-Path $addon -Parent
+	Get-ChildItem $projectRoot -Directory -Filter "WidgetToolbox_*" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+	Copy-Item $toolbox -Destination (Join-Path $projectRoot $toolboxName) -Recurse -Force
 
 	<# Annotations #>
 
-	$destinationPath = Join-Path (Split-Path $destination -Parent) ".annotations\WidgetTools"
-
-	# Verify & clear the Widget Tools annotations folder in the addon project folder
-	if (!(Test-Path -Path $destinationPath)) { New-Item $destinationPath -Type Directory }
-	Remove-Item $destinationPath -Recurse -Force
-
-	# Copy Widget Tools annotations to the addon
-	Copy-Item (Join-Path (Get-Location) ".annotations\WidgetTools") -Destination $destinationPath -Recurse -Force
+	$annotationsPath = Join-Path (Split-Path $addon -Parent) ".annotations\WidgetTools"
+	Remove-Item $annotationsPath -Recurse -Force -ErrorAction SilentlyContinue
+	Copy-Item (Join-Path (Get-Location) ".annotations") -Destination $annotationsPath -Recurse -Force
 }
