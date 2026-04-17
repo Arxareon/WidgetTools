@@ -1565,7 +1565,7 @@ function wt.CreateButton(t, action)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
-	---@class actionButton
+	---@type actionButton
 	local button = action
 
 	--[ Getters & Setters ]
@@ -1620,7 +1620,7 @@ function wt.CreateCustomButton(t, action)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
-	---@class customButton
+	---@type customButton
 	local button = action
 
 	--[ Getters & Setters ]
@@ -1681,7 +1681,7 @@ function wt.CreateCheckbox(t, toggle)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return toggle end
 
-	---@class checkbox
+	---@type checkbox
 	local checkbox = toggle
 
 	--[ Getters & Setters ]
@@ -2196,9 +2196,6 @@ end
 
 
 --[[ SELECTOR ]]
-
----@class selectorToggle : toggle
----@field index integer The index of this toggle item inside a selector widget
 
 ---Item naming utility
 ---@param parentName string

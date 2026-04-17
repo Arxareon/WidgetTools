@@ -2,7 +2,7 @@
 
 --[ Toolbox ]
 
----@class widgetToolbox
+---@type widgetToolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
 --[ Shortcuts ]
@@ -19,9 +19,6 @@ local crc = WrapTextInColorCode
 
 --[[ CLIPBOARD ]]
 
---| Value clipboard
-
----@class clipboard
 wt.clipboard = {}
 
 
@@ -54,19 +51,20 @@ local function callListeners(widget, listeners, event, ...)
 end
 
 
---[[ CONSTRUCTORS ]]
-
---[ Action ]
+--[[ ACTION ]]
 
 function wt.CreateAction(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Widget ]
 
-	---@class action
-	local action = {}
+	---@type action
+	local action = { invoke = {}, setListener = {}, }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	--| State
 
@@ -79,16 +77,13 @@ function wt.CreateAction(t)
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function action.invoke.enabled() callListeners(action, listeners, "enabled", enabled) end
+	function action.invoke.trigger(user) callListeners(action, listeners, "trigger", user) end
+	function action.invoke._(event, ...) callListeners(action, listeners, event, ...) end
 
-	action.invoke.enabled = function() callListeners(action, listeners, "enabled", enabled) end
-	action.invoke.trigger = function(user) callListeners(action, listeners, "trigger", user) end
-	action.invoke._ = function(event, ...) callListeners(action, listeners, event, ...) end
-
-	action.setListener.enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	action.setListener.trigger = function(listener, callIndex) addListener(listeners, "trigger", listener, callIndex) end
-	action.setListener._ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+	function action.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function action.setListener.trigger(listener, callIndex) addListener(listeners, "trigger", listener, callIndex) end
+	function action.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| State
 
@@ -120,17 +115,21 @@ function wt.CreateAction(t)
 	return action
 end
 
---[ Toggle ]
+
+--[[ TOGGLE ]]
 
 function wt.CreateToggle(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Widget ]
 
-	---@class toggle
-	local toggle = {}
+	---@type toggle
+	local toggle = { invoke = {}, setListener = {}, }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	--| Data
 
@@ -150,22 +149,19 @@ function wt.CreateToggle(t)
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function toggle.invoke.enabled() callListeners(toggle, listeners, "enabled", enabled) end
+	function toggle.invoke.loaded(success) callListeners(toggle, listeners, "loaded", success) end
+	function toggle.invoke.saved(success) callListeners(toggle, listeners, "saved", success) end
+	function toggle.invoke.toggled(user) callListeners(toggle, listeners, "toggled", value, user) end
+	function toggle.invoke._(event, ...) callListeners(toggle, listeners, event, ...) end
 
-	toggle.invoke.enabled = function() callListeners(toggle, listeners, "enabled", enabled) end
-	toggle.invoke.loaded = function(success) callListeners(toggle, listeners, "loaded", success) end
-	toggle.invoke.saved = function(success) callListeners(toggle, listeners, "saved", success) end
-	toggle.invoke.toggled = function(user) callListeners(toggle, listeners, "toggled", value, user) end
-	toggle.invoke._ = function(event, ...) callListeners(toggle, listeners, event, ...) end
+	function toggle.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function toggle.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function toggle.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function toggle.setListener.toggled(listener, callIndex) addListener(listeners, "toggled", listener, callIndex) end
+	function toggle.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-	toggle.setListener.enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	toggle.setListener.loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	toggle.setListener.saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
-	toggle.setListener.toggled = function(listener, callIndex) addListener(listeners, "toggled", listener, callIndex) end
-	toggle.setListener._ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-
-	--| Options data management
+	--| Data management
 
 	function toggle.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
@@ -199,7 +195,6 @@ function wt.CreateToggle(t)
 
 	function toggle.getDefault() return default end
 	function toggle.setDefault(state) default = state == true end
-
 	function toggle.resetData(handleChanges, silent) toggle.setData(default, handleChanges, silent) end
 
 	function toggle.snapshotData(stored) if stored == true then snapshot = toggle.getData() else snapshot = value end end
@@ -252,7 +247,8 @@ function wt.CreateToggle(t)
 	return toggle
 end
 
---[ Selector ]
+
+--[[ SELECTOR ]]
 
 local itemsets = {
 	anchor = {
@@ -293,17 +289,17 @@ function wt.CreateSelector(t)
 
 	--[ Widget ]
 
-	---@class selector
-	local selector = {}
+	---@type selector
+	local selector = { invoke = {}, setListener = {}, toggles = {} }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	local clearable = t.clearable
 
 	--| Toggle items
-
-	---@type (toggle|selectorToggle)[]
-	selector.toggles = {}
 
 	---@type (toggle|selectorToggle)[]
 	local inactive = {}
@@ -331,76 +327,26 @@ function wt.CreateSelector(t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Selector"
-	---<p></p>
 	function selector.getType() return "Selector" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function selector.isType(type) return type == "Selector" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function selector.invoke.enabled() callListeners(selector, listeners, "enabled", enabled) end
+	function selector.invoke.loaded(success) callListeners(selector, listeners, "loaded", success) end
+	function selector.invoke.saved(success) callListeners(selector, listeners, "saved", success) end
+	function selector.invoke.selected(user) callListeners(selector, listeners, "selected", value, user) end
+	function selector.invoke.updated() callListeners(selector, listeners, "updated") end
+	function selector.invoke.added(toggle) callListeners(selector, listeners, "added", toggle) end
+	function selector.invoke._(event, ...) callListeners(selector, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	selector.invoke = {
-		enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
-
-		---@param success boolean
-		loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
-
-		---@param success boolean
-		saved = function(success) callListeners(selector, listeners, "saved", success) end,
-
-		---@param user boolean
-		selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
-
-		updated = function() callListeners(selector, listeners, "updated") end,
-
-		added = function(toggle) callListeners(selector, listeners, "added", toggle) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(selector, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	selector.setListener = {
-		---@param listener SelectorEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_selected Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_updated Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		updated = function(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_added Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		added = function(listener, callIndex) addListener(listeners, "added", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener SelectorEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
+	function selector.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function selector.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function selector.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function selector.setListener.selected(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end
+	function selector.setListener.updated(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end
+	function selector.setListener.added(listener, callIndex) addListener(listeners, "added", listener, callIndex) end
+	function selector.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Toggle items
 
@@ -437,12 +383,6 @@ function wt.CreateSelector(t)
 		if new and not silent then selector.invoke.added(selector.toggles[index]) end
 	end
 
-	---Update the list of items currently set for the selector widget, updating its parameters and toggle widgets
-	--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
-	--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
-	---***
-	---@param newItems (selectorItem|toggle|selectorToggle)[] Table containing subtables with data used to update the toggle widgets, or already existing toggle widgets
-	---@param silent? boolean If false, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 	function selector.updateItems(newItems, silent)
 		t.items = newItems
 
@@ -468,12 +408,8 @@ function wt.CreateSelector(t)
 		selector.setSelected(value, nil, silent)
 	end
 
-	--| Options data management
+	--| Data management
 
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function selector.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
@@ -488,10 +424,6 @@ function wt.CreateSelector(t)
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function selector.saveData(data, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(type(data) == "table" and verify(data.index) or value)
@@ -500,51 +432,20 @@ function wt.CreateSelector(t)
 		elseif not silent then selector.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return integer|nil
 	function selector.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function selector.setData(data, handleChanges, silent)
 		selector.saveData(data, silent)
 		selector.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return integer|nil default
 	function selector.getDefault() return default end
-
-	---Set the default value
-	---@param index integer|nil | ***Default:*** *no change*
 	function selector.setDefault(index) default = verify(index) end
-
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function selector.resetData(handleChanges, silent) selector.setData({ index = default }, handleChanges, silent) end
 
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
 	function selector.snapshotData(stored) snapshot = stored and selector.getData() or value end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function selector.revertData(handleChanges, silent) selector.setData({ index = snapshot }, handleChanges, silent) end
 
-	---Returns the index of the currently selected item or nil if there is no selection
-	---@return integer|nil index
 	function selector.getSelected() return value end
-
-	---Verify and set the specified item as selected
-	---***
-	---@param index? integer ***Default:*** nil *(no selection)*
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "selected" event and call registered listeners | ***Default:*** `false`
 	function selector.setSelected(index, user, silent)
 		value = verify(index)
 
@@ -559,14 +460,7 @@ function wt.CreateSelector(t)
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
 	function selector.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 	function selector.setEnabled(state, silent)
 		enabled = state ~= false
 
@@ -603,10 +497,13 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--[ Widget ]
 
-	---@class specialSelector
-	local selector = {}
+	---@type specialSelector
+	local specialSelector = { invoke = {}, setListener = {}, toggles = {} }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	local clearable = t.clearable
 
@@ -619,9 +516,6 @@ function wt.CreateSpecialSelector(itemset, t)
 		t.items[i].title = itemsets[itemset][i].name
 		t.items[i].tooltip = { lines = { { text = "(" .. itemsets[itemset][i].value .. ")", }, } }
 	end
-
-	---@type (toggle|selectorToggle)[]
-	selector.toggles = {}
 
 	---@type (toggle|selectorToggle)[]
 	local inactive = {}
@@ -652,189 +546,92 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "SpecialSelector"
-	---<p></p>
-	function selector.getType() return "SpecialSelector" end
+	function specialSelector.getType() return "SpecialSelector" end
+	function specialSelector.isType(type) return type == "SpecialSelector" end
 
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
-	function selector.isType(type) return type == "SpecialSelector" end
-
-	---Return the itemset type specified for this special selector on creation
-	---@return SpecialSelectorItemset itemset
-	function selector.getItemset() return itemset end
+	function specialSelector.getItemset() return itemset end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function specialSelector.invoke.enabled() callListeners(specialSelector, listeners, "enabled", enabled) end
+	function specialSelector.invoke.loaded(success) callListeners(specialSelector, listeners, "loaded", success) end
+	function specialSelector.invoke.saved(success) callListeners(specialSelector, listeners, "saved", success) end
+	function specialSelector.invoke.selected(user) callListeners(specialSelector, listeners, "selected", value, user) end
+	function specialSelector.invoke._(event, ...) callListeners(specialSelector, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	selector.invoke = {
-		enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
+	function specialSelector.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function specialSelector.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function specialSelector.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function specialSelector.setListener.selected(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end
+	function specialSelector.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-		---@param success boolean
-		loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
+	--| Data management
 
-		---@param success boolean
-		saved = function(success) callListeners(selector, listeners, "saved", success) end,
-
-		---@param user boolean
-		selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(selector, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	selector.setListener = {
-		---@param listener SpecialSelectorEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener SpecialSelectorEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener SpecialSelectorEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener SpecialSelectorEventHandler_selected Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener SpecialSelectorEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
-
-	--| Options data management
-
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-	function selector.loadData(handleChanges, silent)
+	function specialSelector.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
 		if type(t.getData) == "function" then
-			selector.setSelected(t.getData(), handleChanges)
+			specialSelector.setSelected(t.getData(), handleChanges)
 
-			if not silent then selector.invoke.loaded(true) end
+			if not silent then specialSelector.invoke.loaded(true) end
 		else
 			if handleChanges then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 
-			if not silent then selector.invoke.loaded(false) end
+			if not silent then specialSelector.invoke.loaded(false) end
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-	function selector.saveData(data, silent)
+	function specialSelector.saveData(data, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(itemsets[itemset][verify(data or value)].value)
 
-			if not silent then selector.invoke.saved(true) end
-		elseif not silent then selector.invoke.saved(false) end
+			if not silent then specialSelector.invoke.saved(true) end
+		elseif not silent then specialSelector.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return specialSelectorValueTypes|nil
-	function selector.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.setData(data, handleChanges, silent)
-		selector.saveData(data, silent)
-		selector.loadData(handleChanges, silent)
+	function specialSelector.getData() return type(t.getData) == "function" and t.getData() or nil end
+	function specialSelector.setData(data, handleChanges, silent)
+		specialSelector.saveData(data, silent)
+		specialSelector.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return specialSelectorValueTypes|nil default
-	function selector.getDefault() return itemsets[itemset][default] and itemsets[itemset][default].value or nil end
+	function specialSelector.getDefault() return itemsets[itemset][default] and itemsets[itemset][default].value or nil end
+	function specialSelector.setDefault(selected) default = verify(selected) end
+	function specialSelector.resetData(handleChanges, silent) specialSelector.setData(default, handleChanges, silent) end
 
-	---Set the default value
-	---***
-	---@param selected integer|specialSelectorValueTypes|nil | ***Default:*** *no change*
-	---<p></p>
-	function selector.setDefault(selected) default = verify(selected) end
+	function specialSelector.snapshotData(stored) snapshot = stored and specialSelector.getData() or value end
+	function specialSelector.revertData(handleChanges, silent) specialSelector.setData(snapshot, handleChanges, silent) end
 
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.resetData(handleChanges, silent) selector.setData(default, handleChanges, silent) end
-
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	---***
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
-	function selector.snapshotData(stored) snapshot = stored and selector.getData() or value end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.revertData(handleChanges, silent) selector.setData(snapshot, handleChanges, silent) end
-
-	---Returns the value of the currently selected item or nil if there is no selection
-	---@return specialSelectorValueTypes|nil selected
-	---<p></p>
-	function selector.getSelected() return itemsets[itemset][value] and itemsets[itemset][value].value or nil end
-
-	---Set the specified item as selected
-	---***
-	---@param selected integer|specialSelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "selected" event and call registered listeners | ***Default:*** `false`
-	---<p></p>
-	function selector.setSelected(selected, user, silent)
+	function specialSelector.getSelected() return itemsets[itemset][value] and itemsets[itemset][value].value or nil end
+	function specialSelector.setSelected(selected, user, silent)
 		value = verify(selected)
 
-		for i = 1, #selector.toggles do selector.toggles[i].setState(i == value, user, silent) end
+		for i = 1, #specialSelector.toggles do specialSelector.toggles[i].setState(i == value, user, silent) end
 
-		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
+		if user and t.instantSave ~= false then specialSelector.saveData(nil, silent) end
 
-		if not silent then selector.invoke.selected(user == true) end
+		if not silent then specialSelector.invoke.selected(user == true) end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
-	function selector.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
-	function selector.setEnabled(state, silent)
+	function specialSelector.isEnabled() return enabled end
+	function specialSelector.setEnabled(state, silent)
 		enabled = state ~= false
 
 		--Update toggle items
-		for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
+		for i = 1, #specialSelector.toggles do specialSelector.toggles[i].setEnabled(state, silent) end
 
-		if not silent then selector.invoke.enabled() end
+		if not silent then specialSelector.invoke.enabled() end
 	end
 
 	--[ Initialization ]
 
 	--Register event handlers
 	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
+		if k == "_" then specialSelector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else specialSelector.setListener[k](v[i].handler, v[i].callIndex) end
 	end end end end
 
 	--Register starting items
@@ -842,33 +639,33 @@ function wt.CreateSpecialSelector(itemset, t)
 		if t.items[i].isType and t.items[i].isType("Toggle") then
 			--| Register the already defined toggle widget
 
-			selector.toggles[i] = t.items[i]
+			specialSelector.toggles[i] = t.items[i]
 		elseif #inactive > 0 then
 			--| Reenable an inactive toggle widget
 
-			selector.toggles[i] = inactive[#inactive]
+			specialSelector.toggles[i] = inactive[#inactive]
 			table.remove(inactive, #inactive)
 		else
 			--| Create a new toggle widget
 
-			selector.toggles[i] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
-				if type(t.items[selector.toggles[i].index].onSelect) == "function" and user and state then t.items[selector.toggles[i].index].onSelect() end
+			specialSelector.toggles[i] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
+				if type(t.items[specialSelector.toggles[i].index].onSelect) == "function" and user and state then t.items[specialSelector.toggles[i].index].onSelect() end
 			end, }, }, }, })
 		end
 
-		selector.toggles[i].index = i
+		specialSelector.toggles[i].index = i
 	end end
 
 	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(selector, t.dataManagement) end
+	if t.dataManagement then wt.AddSettingsDataManagementEntry(specialSelector, t.dataManagement) end
 
 	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, selector.setEnabled) end
+	if t.dependencies then wt.AddDependencies(t.dependencies, specialSelector.setEnabled) end
 
 	--Set starting value
-	selector.setSelected(value, false, true)
+	specialSelector.setSelected(value, false, true)
 
-	return selector
+	return specialSelector
 end
 
 function wt.CreateMultiselector(t)
@@ -876,10 +673,13 @@ function wt.CreateMultiselector(t)
 
 	--[ Widget ]
 
-	---@class multiselector
-	local selector = {}
+	---@type multiselector
+	local multiselector = { invoke = {}, setListener = {}, toggles = {} }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	--| Toggle items
 
@@ -887,9 +687,6 @@ function wt.CreateMultiselector(t)
 	t.limits = t.limits or {}
 	t.limits.min = t.limits.min or 1
 	t.limits.max = t.limits.max or #t.items
-
-	---@type (toggle|selectorToggle)[]
-	selector.toggles = {}
 
 	---@type (toggle|selectorToggle)[]
 	local inactive = {}
@@ -919,91 +716,31 @@ function wt.CreateMultiselector(t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Multiselector"
-	---<p></p>
-	function selector.getType() return "Multiselector" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
-	function selector.isType(type) return type == "Multiselector" end
+	function multiselector.getType() return "Multiselector" end
+	function multiselector.isType(type) return type == "Multiselector" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function multiselector.invoke.enabled() callListeners(multiselector, listeners, "enabled", enabled) end
+	function multiselector.invoke.loaded(success) callListeners(multiselector, listeners, "loaded", success) end
+	function multiselector.invoke.saved(success) callListeners(multiselector, listeners, "saved", success) end
+	function multiselector.invoke.selected(user) callListeners(multiselector, listeners, "selected", value, user) end
+	function multiselector.invoke.updated() callListeners(multiselector, listeners, "updated") end
+	function multiselector.invoke.added(toggle) callListeners(multiselector, listeners, "added", toggle) end
+	function multiselector.invoke.limited(count) callListeners(multiselector, listeners, "limited", count <= t.limits.min, count < t.limits.min) end
+	function multiselector.invoke._(event, ...) callListeners(multiselector, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	selector.invoke = {
-		enabled = function() callListeners(selector, listeners, "enabled", enabled) end,
-
-		---@param success boolean
-		loaded = function(success) callListeners(selector, listeners, "loaded", success) end,
-
-		---@param success boolean
-		saved = function(success) callListeners(selector, listeners, "saved", success) end,
-
-		---@param user boolean
-		selected = function(user) callListeners(selector, listeners, "selected", value, user) end,
-
-		updated = function() callListeners(selector, listeners, "updated") end,
-
-		added = function(toggle) callListeners(selector, listeners, "added", toggle) end,
-
-		---@param count integer
-		limited = function(count) callListeners(selector, listeners, "limited", count <= t.limits.min, count < t.limits.min) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(selector, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	selector.setListener = {
-		---@param listener MultiselectorEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener MultiselectorEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener MultiselectorEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener MultiselectorEventHandler_selected Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		selected = function(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end,
-
-		---@param listener MultiselectorEventHandler_updated Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		updated = function(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end,
-
-		---@param listener SelectorEventHandler_added Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		added = function(listener, callIndex) addListener(listeners, "added", listener, callIndex) end,
-
-		---@param listener MultiselectorEventHandler_limited Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		limited = function(listener, callIndex) addListener(listeners, "limited", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener SelectorEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
+	function multiselector.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function multiselector.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function multiselector.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function multiselector.setListener.selected(listener, callIndex) addListener(listeners, "selected", listener, callIndex) end
+	function multiselector.setListener.updated(listener, callIndex) addListener(listeners, "updated", listener, callIndex) end
+	function multiselector.setListener.added(listener, callIndex) addListener(listeners, "added", listener, callIndex) end
+	function multiselector.setListener.limited(listener, callIndex) addListener(listeners, "limited", listener, callIndex) end
+	function multiselector.setListener._ (event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Toggle items
 
-	---Register, update or set up a new toggle widget item
-	---***
-	---@param item toggle|selectorToggle
-	---@param index integer
-	---@param silent? boolean ***Default:*** `false`
 	local function setToggle(item, index, silent)
 		if type(item) ~= "table" then return end
 
@@ -1013,148 +750,102 @@ function wt.CreateMultiselector(t)
 			--| Register the already defined toggle widget
 
 			new = true
-			selector.toggles[index] = item
+			multiselector.toggles[index] = item
 		elseif #inactive > 0 then
 			--| Reenable an inactive toggle widget
 
-			selector.toggles[index] = inactive[#inactive]
+			multiselector.toggles[index] = inactive[#inactive]
 			table.remove(inactive, #inactive)
 		else
 			--| Create a new toggle widget
 
 			new = true
-			selector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
-				if type(t.items[selector.toggles[index].index].onSelect) == "function" and user and state then t.items[selector.toggles[index].index].onSelect() end
+			multiselector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
+				if type(t.items[multiselector.toggles[index].index].onSelect) == "function" and user and state then t.items[multiselector.toggles[index].index].onSelect() end
 			end, }, }, }, })
 		end
 
-		selector.toggles[index].index = index
+		multiselector.toggles[index].index = index
 
-		if new and not silent then selector.invoke.added(selector.toggles[index]) end
+		if new and not silent then multiselector.invoke.added(multiselector.toggles[index]) end
 	end
 
-	---Update the list of items currently set for the selector widget, updating its parameters and toggle widgets
-	--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
-	--- - ***Note:*** The currently selected item may not be the same after item were removed. In that case, the new item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
-	---***
-	---@param newItems (selectorItem|toggle|selectorToggle)[] Table containing subtables with data used to update the toggle widgets, or already existing toggle widgets
-	---@param silent? boolean If false, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
-	function selector.updateItems(newItems, silent)
+	function multiselector.updateItems(newItems, silent)
 		t.items = newItems
 
 		--Update the toggle widgets
 		for i = 1, #newItems do
 			setToggle(newItems[i], i, silent)
 
-			if not silent then selector.toggles[i].invoke._("activated", true) end
+			if not silent then multiselector.toggles[i].invoke._("activated", true) end
 		end
 
 		--Deactivate extra toggle widgets
-		while #newItems < #selector.toggles do
-			selector.toggles[#selector.toggles].setState(nil, nil, silent)
+		while #newItems < #multiselector.toggles do
+			multiselector.toggles[#multiselector.toggles].setState(nil, nil, silent)
 
-			if not silent then selector.toggles[#selector.toggles].invoke._("activated", false) end
+			if not silent then multiselector.toggles[#multiselector.toggles].invoke._("activated", false) end
 
-			table.insert(inactive, selector.toggles[#selector.toggles])
-			table.remove(selector.toggles, #selector.toggles)
+			table.insert(inactive, multiselector.toggles[#multiselector.toggles])
+			table.remove(multiselector.toggles, #multiselector.toggles)
 		end
 
-		if not silent then selector.invoke.updated() end
+		if not silent then multiselector.invoke.updated() end
 
 		--Update limits
 		if t.limits.min > #t.items then t.limits.min = #t.items end
 		if t.limits.max > #t.items then t.limits.max = #t.items end
 
-		selector.setSelections(value, nil, silent)
+		multiselector.setSelections(value, nil, silent)
 	end
 
-	--| Options data management
+	--| Data management
 
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-	function selector.loadData(handleChanges, silent)
+	function multiselector.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
 		if type(t.getData) == "function" then
-			selector.setSelections(t.getData(), handleChanges)
+			multiselector.setSelections(t.getData(), handleChanges)
 
-			if not silent then selector.invoke.loaded(true) end
+			if not silent then multiselector.invoke.loaded(true) end
 		else
 			if handleChanges then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 
-			if not silent then selector.invoke.loaded(false) end
+			if not silent then multiselector.invoke.loaded(false) end
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-	function selector.saveData(data, silent)
+	function multiselector.saveData(data, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(type(data) == "table" and verify(data.states) or value)
 
-			if not silent then selector.invoke.saved(true) end
-		elseif not silent then selector.invoke.saved(false) end
+			if not silent then multiselector.invoke.saved(true) end
+		elseif not silent then multiselector.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return boolean[]|nil
-	function selector.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.setData(data, handleChanges, silent)
-		selector.saveData(data, silent)
-		selector.loadData(handleChanges, silent)
+	function multiselector.getData() return type(t.getData) == "function" and t.getData() or nil end
+	function multiselector.setData(data, handleChanges, silent)
+		multiselector.saveData(data, silent)
+		multiselector.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return boolean[] default
-	function selector.getDefault() return default end
+	function multiselector.getDefault() return default end
+	function multiselector.setDefault(selections) default = verify(selections) end
+	function multiselector.revertData(handleChanges, silent) multiselector.setData({ states = us.Clone(snapshot) }, handleChanges, silent) end
 
-	---Set the default value
-	---@param selections? boolean[] | ***Default:*** *no selected items: `false[]`*
-	function selector.setDefault(selections) default = verify(selections) end
+	function multiselector.snapshotData(stored) us.CopyValues(snapshot, stored and multiselector.getData() or value) end
+	function multiselector.resetData(handleChanges, silent) multiselector.setData({ states = us.Clone(default) }, handleChanges, silent) end
 
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **selector.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.revertData(handleChanges, silent) selector.setData({ states = us.Clone(snapshot) }, handleChanges, silent) end
-
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **selector.revertData()**
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
-	function selector.snapshotData(stored) us.CopyValues(snapshot, stored and selector.getData() or value) end
-
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function selector.resetData(handleChanges, silent) selector.setData({ states = us.Clone(default) }, handleChanges, silent) end
-
-	---Returns the list of all items and their current states
-	---***
-	---@return boolean[] selections Indexed list of item states
-	function selector.getSelections() return us.Clone(value) end
-
-	---Set the specified items as selected
-	---***
-	---@param selections? boolean[] Indexed list of item states | ***Default:*** *no selected items: `false[]`*
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
-	function selector.setSelections(selections, user, silent)
+	function multiselector.getSelections() return us.Clone(value) end
+	function multiselector.setSelections(selections, user, silent)
 		value = verify(selections)
 
-		for i = 1, #selector.toggles do selector.toggles[i].setState(value and value[i], user, silent) end
+		for i = 1, #multiselector.toggles do multiselector.toggles[i].setState(value and value[i], user, silent) end
 
-		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
+		if user and t.instantSave ~= false then multiselector.saveData(nil, silent) end
 
 		if not silent then
-			selector.invoke.selected(user == true)
+			multiselector.invoke.selected(user == true)
 
 			--| Check limits
 
@@ -1162,29 +853,23 @@ function wt.CreateMultiselector(t)
 
 			for _, v in pairs(value) do if v then count = count + 1 end end
 
-			selector.invoke.limited(count)
+			multiselector.invoke.limited(count)
 		end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
-	---Set the specified item as selected
-	---***
-	---@param index integer Index of the item | ***Range:*** (1, #selector.toggles)
-	---@param selected? boolean If true, set the item at this index as selected | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
-	function selector.setSelected(index, selected, user, silent)
-		if not selector.toggles[index] then return end
+	function multiselector.setSelected(index, selected, user, silent)
+		if not multiselector.toggles[index] then return end
 
 		value[index] = selected == true
 
-		selector.toggles[index].setState(selected, user, silent)
+		multiselector.toggles[index].setState(selected, user, silent)
 
-		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
+		if user and t.instantSave ~= false then multiselector.saveData(nil, silent) end
 
 		if not silent then
-			selector.invoke.selected(user == true)
+			multiselector.invoke.selected(user == true)
 
 			--| Check limits
 
@@ -1192,7 +877,7 @@ function wt.CreateMultiselector(t)
 
 			for _, v in pairs(value) do if v then count = count + 1 end end
 
-			selector.invoke.limited(count)
+			multiselector.invoke.limited(count)
 		end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
@@ -1200,56 +885,53 @@ function wt.CreateMultiselector(t)
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
-	function selector.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
-	function selector.setEnabled(state, silent)
+	function multiselector.isEnabled() return enabled end
+	function multiselector.setEnabled(state, silent)
 		enabled = state ~= false
 
 		--Update toggle items
-		for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
+		for i = 1, #multiselector.toggles do multiselector.toggles[i].setEnabled(state, silent) end
 
-		if not silent then selector.invoke.enabled() end
+		if not silent then multiselector.invoke.enabled() end
 	end
 
 	--[ Initialization ]
 
 	--Register event handlers
 	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
+		if k == "_" then multiselector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else multiselector.setListener[k](v[i].handler, v[i].callIndex) end
 	end end end end
 
 	--Register starting items
 	for i = 1, #t.items do setToggle(t.items[i], i) end
 
 	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(selector, t.dataManagement) end
+	if t.dataManagement then wt.AddSettingsDataManagementEntry(multiselector, t.dataManagement) end
 
 	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, selector.setEnabled) end
+	if t.dependencies then wt.AddDependencies(t.dependencies, multiselector.setEnabled) end
 
 	--Set starting value
-	selector.setSelections(value, false, true)
+	multiselector.setSelections(value, false, true)
 
-	return selector
+	return multiselector
 end
 
---[ Textbox ]
+
+--[[ TEXTBOX ]]
 
 function wt.CreateTextbox(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Widget ]
 
-	---@class textbox
-	local textbox = {}
+	---@type textbox
+	local textbox = { invoke = {}, setListener = {}, }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	--| Data
 
@@ -1265,71 +947,25 @@ function wt.CreateTextbox(t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Textbox"
-	---<p></p>
 	function textbox.getType() return "Textbox" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function textbox.isType(type) return type == "Textbox" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function textbox.invoke.enabled() callListeners(textbox, listeners, "enabled", enabled) end
+	function textbox.invoke.loaded(success) callListeners(textbox, listeners, "loaded", success) end
+	function textbox.invoke.saved(success) callListeners(textbox, listeners, "saved", success) end
+	function textbox.invoke.changed(user) callListeners(textbox, listeners, "changed", value, user) end
+	function textbox.invoke._(event, ...) callListeners(textbox, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	textbox.invoke = {
-		enabled = function() callListeners(textbox, listeners, "enabled", enabled) end,
+	function textbox.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function textbox.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function textbox.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function textbox.setListener.changed(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end
+	function textbox.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-		---@param success boolean
-		loaded = function(success) callListeners(textbox, listeners, "loaded", success) end,
+	--| Data management
 
-		---@param success boolean
-		saved = function(success) callListeners(textbox, listeners, "saved", success) end,
-
-		---@param user boolean
-		changed = function(user) callListeners(textbox, listeners, "changed", value, user) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(textbox, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	textbox.setListener = {
-		---@param listener TextboxEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener TextboxEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener TextboxEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener TextboxEventHandler_changed Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		changed = function(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener TextboxEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
-
-	--| Options data management
-
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function textbox.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
@@ -1344,10 +980,6 @@ function wt.CreateTextbox(t)
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param text? string Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 	function textbox.saveData(text, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(type(text) == "string" and text or value)
@@ -1356,51 +988,20 @@ function wt.CreateTextbox(t)
 		elseif not silent then textbox.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return string|nil
 	function textbox.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param text? string Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function textbox.setData(text, handleChanges, silent)
 		textbox.saveData(text, silent)
 		textbox.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return string default
 	function textbox.getDefault() return default end
-
-	---Set the default value
-	---@param text string | ***Default:*** `""`
 	function textbox.setDefault(text) default = type(text) == "string" and text or "" end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **textbox.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function textbox.revertData(handleChanges, silent) textbox.setData(snapshot, handleChanges, silent) end
-
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **textbox.revertData()**
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
-	function textbox.snapshotData(stored) snapshot = stored and textbox.getData() or value end
-
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function textbox.resetData(handleChanges, silent) textbox.setData(default, handleChanges, silent) end
 
-	---Returns the current text value of the widget
-	---@return string
-	function textbox.getText() return value end
+	function textbox.snapshotData(stored) snapshot = stored and textbox.getData() or value end
+	function textbox.revertData(handleChanges, silent) textbox.setData(snapshot, handleChanges, silent) end
 
-	---Set the text value of the widget
-	---***
-	---@param text? string ***Default:*** ""
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
+	function textbox.getText() return value end
 	function textbox.setText(text, user, silent)
 		value = type(text) == "string" and text or ""
 
@@ -1413,14 +1014,7 @@ function wt.CreateTextbox(t)
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
 	function textbox.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 	function textbox.setEnabled(state, silent)
 		enabled = state ~= false
 
@@ -1446,17 +1040,21 @@ function wt.CreateTextbox(t)
 	return textbox
 end
 
---[ Numeric ]
+
+--[[ NUMERIC ]]
 
 function wt.CreateNumeric(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Widget ]
 
-	---@class numeric
-	local numeric = {}
+	---@type numeric
+	local numeric = { invoke = {}, setListener = {}, }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	local limitMin = type(t.min) == "number" and t.min or 0
 	local limitMax = type(t.max) == "number" and t.max or 100
@@ -1489,83 +1087,29 @@ function wt.CreateNumeric(t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Numeric"
-	---<p></p>
 	function numeric.getType() return "Numeric" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function numeric.isType(type) return type == "Numeric" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function numeric.invoke.enabled() callListeners(numeric, listeners, "enabled", enabled) end
+	function numeric.invoke.loaded(success) callListeners(numeric, listeners, "loaded", success) end
+	function numeric.invoke.saved(success) callListeners(numeric, listeners, "saved", success) end
+	function numeric.invoke.changed(user) callListeners(numeric, listeners, "changed", value, user) end
+	function numeric.invoke.min() callListeners(numeric, listeners, "min", limitMin) end
+	function numeric.invoke.max() callListeners(numeric, listeners, "max", limitMax) end
+	function numeric.invoke._(event, ...) callListeners(numeric, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	numeric.invoke = {
-		enabled = function() callListeners(numeric, listeners, "enabled", enabled) end,
+	function numeric.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function numeric.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function numeric.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function numeric.setListener.changed(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end
+	function numeric.setListener.min(listener, callIndex) addListener(listeners, "min", listener, callIndex) end
+	function numeric.setListener.max(listener, callIndex) addListener(listeners, "max", listener, callIndex) end
+	function numeric.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-		---@param success boolean
-		loaded = function(success) callListeners(numeric, listeners, "loaded", success) end,
+	--| Data management
 
-		---@param success boolean
-		saved = function(success) callListeners(numeric, listeners, "saved", success) end,
-
-		---@param user boolean
-		changed = function(user) callListeners(numeric, listeners, "changed", value, user) end,
-
-		min = function() callListeners(numeric, listeners, "min", limitMin) end,
-
-		max = function() callListeners(numeric, listeners, "max", limitMax) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(numeric, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	numeric.setListener = {
-		---@param listener NumericEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener NumericEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener NumericEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener NumericEventHandler_changed Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		changed = function(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end,
-
-		---@param listener NumericEventHandler_min Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		min = function(listener, callIndex) addListener(listeners, "min", listener, callIndex) end,
-
-		---@param listener NumericEventHandler_max Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		max = function(listener, callIndex) addListener(listeners, "max", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener NumericEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
-
-	--| Options data management
-
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function numeric.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
@@ -1580,10 +1124,6 @@ function wt.CreateNumeric(t)
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param number? number Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 	function numeric.saveData(number, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(number and verify(number) or value)
@@ -1592,50 +1132,20 @@ function wt.CreateNumeric(t)
 		elseif not silent then numeric.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return number|nil
 	function numeric.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param number? number Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function numeric.setData(number, handleChanges, silent)
 		numeric.saveData(number, silent)
 		numeric.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return number default
 	function numeric.getDefault() return default end
-
-	---Set the default value
-	---@param number number | ***Default:*** *no change*
 	function numeric.setDefault(number) default = verify(number) end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **numeric.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function numeric.revertData(handleChanges, silent) numeric.setData(snapshot, handleChanges, silent) end
-
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **numeric.revertData()**
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
-	function numeric.snapshotData(stored) snapshot = stored and numeric.getData() or value end
-
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function numeric.resetData(handleChanges, silent) numeric.setData(default, handleChanges, silent) end
 
-	---Returns the current value of the widget
-	---@return number
-	function numeric.getNumber() return value end
+	function numeric.snapshotData(stored) snapshot = stored and numeric.getData() or value end
+	function numeric.revertData(handleChanges, silent) numeric.setData(snapshot, handleChanges, silent) end
 
-	---Set the value of the widget
-	---***
-	---@param number? number A valid number value within the specified **t.min**, **t.max** range | ***Default:*** **t.min**
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+	function numeric.getNumber() return value end
 	function numeric.setNumber(number, user, silent)
 		value = verify(number)
 
@@ -1646,28 +1156,12 @@ function wt.CreateNumeric(t)
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
-	---Decrease the value of the widget by the specified step or alt step amount
-	---@param alt? boolean If true, use alt step instead of step to decrease the value by | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 	function numeric.decrease(alt, user, silent) numeric.setNumber(value - (alt and altStep or step), user, silent) end
-
-	---Increase the value of the widget by the specified step or alt step amount
-	---@param alt? boolean If true, use alt step instead of step to increase the value by | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 	function numeric.increase(alt, user, silent) numeric.setNumber(value + (alt and altStep or step), user, silent) end
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
 	function numeric.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 	function numeric.setEnabled(state, silent)
 		enabled = state ~= false
 
@@ -1676,28 +1170,14 @@ function wt.CreateNumeric(t)
 
 	--| Value limits
 
-	---Return the current lower value limit of the widget
-	---@return number
 	function numeric.getMin() return limitMin end
-
-	---Set the lower value limit of the widget
-	---***
-	---@param number number Updates the lower limit value | ***Range:*** (any, *current upper limit*) *capped automatically*
-	---@param silent? boolean If false, invoke a "min" event and call registered listeners | ***Default:*** `false`
 	function numeric.setMin(number, silent)
 		limitMin = min(number, limitMax)
 
 		if not silent then numeric.invoke.min() end
 	end
 
-	---Return the current upper value limit of the widget
-	---@return number
 	function numeric.getMax() return limitMax end
-
-	---Set the upper value limit of the widget
-	---***
-	---@param number number Updates the upper limit value | ***Range:*** (*current lower limit*, any) *floored automatically*
-	---@param silent? boolean If false, invoke a "max" event and call registered listeners | ***Default:*** `false`
 	function numeric.setMax(number, silent)
 		limitMax = max(limitMin, number)
 
@@ -1706,12 +1186,7 @@ function wt.CreateNumeric(t)
 
 	--| Value step
 
-	---Return the current value step of the widget
-	---@return number
 	function numeric.getStep() return step end
-
-	---Return the current alternative value step of the widget
-	---@return number|nil
 	function numeric.getAltStep() return altStep end
 
 	--[ Initialization ]
@@ -1733,17 +1208,21 @@ function wt.CreateNumeric(t)
 	return numeric
 end
 
---[ Color Data ]
+
+--[[ COLOR DATA ]]
 
 function wt.CreateColormanager(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Widget ]
 
-	---@class colormanager
-	local colormanager = {}
+	---@type colormanager
+	local colormanager = { invoke = {}, setListener = {}, }
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	local active = false
 
@@ -1760,71 +1239,25 @@ function wt.CreateColormanager(t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Colormanager"
-	---<p></p>
 	function colormanager.getType() return "Colormanager" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function colormanager.isType(type) return type == "Colormanager" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function colormanager.invoke.enabled() callListeners(colormanager, listeners, "enabled", enabled) end
+	function colormanager.invoke.loaded(success) callListeners(colormanager, listeners, "loaded", success) end
+	function colormanager.invoke.saved(success) callListeners(colormanager, listeners, "saved", success) end
+	function colormanager.invoke.colored(user) callListeners(colormanager, listeners, "colored", value, user) end
+	function colormanager.invoke._(event, ...) callListeners(colormanager, listeners, event, ...) end
 
-	--Call all registered listeners for a custom widget event
-	colormanager.invoke = {
-		enabled = function() callListeners(colormanager, listeners, "enabled", enabled) end,
+	function colormanager.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function colormanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function colormanager.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function colormanager.setListener.colored(listener, callIndex) addListener(listeners, "colored", listener, callIndex) end
+	function colormanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-		---@param success boolean
-		loaded = function(success) callListeners(colormanager, listeners, "loaded", success) end,
+	--| Data management
 
-		---@param success boolean
-		saved = function(success) callListeners(colormanager, listeners, "saved", success) end,
-
-		---@param user boolean
-		colored = function(user) callListeners(colormanager, listeners, "colored", value, user) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(colormanager, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	colormanager.setListener = {
-		---@param listener ColorpickerEventHandler_enabled Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		enabled = function(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end,
-
-		---@param listener ColorpickerEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener ColorpickerEventHandler_saved Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		saved = function(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end,
-
-		---@param listener ColorpickerEventHandler_colored Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		colored = function(listener, callIndex) addListener(listeners, "colored", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener ColorpickerEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
-
-	--| Options data management
-
-	---Read the data from storage then verify and load it to the widget
-	---***
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 	function colormanager.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
@@ -1839,10 +1272,6 @@ function wt.CreateColormanager(t)
 		end
 	end
 
-	---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
-	---***
-	---@param color? colorData|colorRGBA Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 	function colormanager.saveData(color, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(color and wt.PackColor(wt.UnpackColor(color)) or value)
@@ -1851,51 +1280,20 @@ function wt.CreateColormanager(t)
 		elseif not silent then colormanager.invoke.saved(false) end
 	end
 
-	---Get the currently stored data via **t.getData()**
-	---@return colorData|nil
 	function colormanager.getData() return type(t.getData) == "function" and t.getData() or nil end
-
-	---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
-	---***
-	---@param color? colorData|colorRGBA Data to be saved | ***Default:*** *the currently set value of the widget*
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function colormanager.setData(color, handleChanges, silent)
 		colormanager.saveData(color, silent)
 		colormanager.loadData(handleChanges, silent)
 	end
 
-	---Get the currently set default value
-	---@return colorData default
 	function colormanager.getDefault() return us.Clone(default) end
-
-	---Set the default value
-	---@param color? colorData | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 	function colormanager.setDefault(color) default = wt.PackColor(wt.UnpackColor(color)) end
-
-	---Set and load the stored data managed by the widget to the last saved data snapshot set via **colormanager.snapshotData()**
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-	function colormanager.revertData(handleChanges, silent) colormanager.setData(snapshot, handleChanges, silent) end
-
-	---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **colormanager.revertData()**
-	---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
-	function colormanager.snapshotData(stored) us.CopyValues(snapshot, stored and colormanager.getData() or value) end
-
-	---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-	---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-	---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 	function colormanager.resetData(handleChanges, silent) colormanager.setData(default, handleChanges, silent) end
 
-	---Returns the currently set channel values wrapped in a color table
-	---@return colorData
-	function colormanager.getColor() return us.Clone(value) end
+	function colormanager.snapshotData(stored) us.CopyValues(snapshot, stored and colormanager.getData() or value) end
+	function colormanager.revertData(handleChanges, silent) colormanager.setData(snapshot, handleChanges, silent) end
 
-	---Set the managed color values
-	---***
-	---@param color? colorData|colorRGBA ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke a "colored" event and call registered listeners | ***Default:*** `false`
+	function colormanager.getColor() return us.Clone(value) end
 	function colormanager.setColor(color, user, silent)
 		value = wt.PackColor(wt.UnpackColor(color))
 
@@ -1917,7 +1315,6 @@ function wt.CreateColormanager(t)
 		colormanager.setColor(wt.PackColor(r, g, b, ColorPickerFrame:GetColorAlpha()), true)
 	end
 
-	---Open the the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) for this color picker
 	function colormanager.openColorPicker()
 		local r, g, b, a = wt.UnpackColor(value)
 
@@ -1940,20 +1337,11 @@ function wt.CreateColormanager(t)
 		})
 	end
 
-	---Return the active status of this color picker, whether the main color wheel window was opened for and is currently updating the color of this widget
-	---@return boolean active True, if the color wheel has been opened for this color picker widget
 	function colormanager.isActive() return active end
 
 	--| State
 
-	---Return the current enabled state of the widget
-	---@return boolean enabled True, if the widget is enabled
 	function colormanager.isEnabled() return enabled end
-
-	---Enable or disable the widget based on the specified value
-	---***
-	---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-	---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 	function colormanager.setEnabled(state, silent)
 		enabled = state ~= false
 
@@ -1965,7 +1353,6 @@ function wt.CreateColormanager(t)
 
 	--[ Color Wheel Toggle ]
 
-	--Button to open the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) on action with
 	colormanager.button = wt.CreateAction({ action = colormanager.openColorPicker, })
 
 	--Deactivate on close
@@ -1990,7 +1377,8 @@ function wt.CreateColormanager(t)
 	return colormanager
 end
 
---[ Profile Data ]
+
+--[[ PROFILE DATA ]]
 
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return end
@@ -2000,16 +1388,19 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--[ Widget ]
 
-	---@class profilemanager
-	---@field data table Reference to live data table of the currently active profile
-	---@field firstLoad boolean True, if the `accountData.profiles` table did not exist yet
-	---@field newCharacter boolean True, if the `characterData.activeProfile` integer did not exist yet
+	---@type profilemanager
 	local profilemanager = {
+		data = {},
 		firstLoad = type(accountData.profiles) ~= "table",
-		newCharacter = type(characterData.activeProfile) ~= "number"
+		newCharacter = type(characterData.activeProfile) ~= "number",
+		invoke = {},
+		setListener = {},
 	}
 
 	--[ Properties ]
+
+	---@type table<string, function[]>
+	local listeners = {}
 
 	local category = t.category:len() > 0 and t.category or "Addon"
 	local valueChecker = t.valueChecker
@@ -2030,91 +1421,26 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "Profilemanager"
-	---<p></p>
 	function profilemanager.getType() return "Profilemanager" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function profilemanager.isType(type) return type == "Profilemanager" end
 
 	--| Events
 
-	---@type table<string, function[]>
-	local listeners = {}
+	function profilemanager.invoke.loaded(user) callListeners(profilemanager, listeners, "loaded", user) end
+	function profilemanager.invoke.activated(success, user) callListeners(profilemanager, listeners, "activated", activeIndex, accountData.profiles[activeIndex].title, success, user) end
+	function profilemanager.invoke.created(index, title, user) callListeners(profilemanager, listeners, "created", index, title, user) end
+	function profilemanager.invoke.renamed(success, user, index, title) callListeners(profilemanager, listeners, "renamed", success, index, title, user) end
+	function profilemanager.invoke.deleted(success, user, index, title) callListeners(profilemanager, listeners, "deleted", success, index, title, user) end
+	function profilemanager.invoke.reset(success, user, index, title) callListeners(profilemanager, listeners, "reset", success, index, title, user) end
+	function profilemanager.invoke._(event, ...) callListeners(profilemanager, listeners, event, ...) end
 
-	--Get a trigger function to call all registered listeners for the specified custom widget event with
-	profilemanager.invoke = {
-		---@param user boolean
-		loaded = function(user) callListeners(profilemanager, listeners, "loaded", user) end,
-
-		---@param success boolean
-		---@param user boolean
-		activated = function(success, user) callListeners(profilemanager, listeners, "activated", activeIndex, accountData.profiles[activeIndex].title, success, user) end,
-
-		---@param index integer
-		---@param title string
-		---@param user boolean
-		created = function(index, title, user) callListeners(profilemanager, listeners, "created", index, title, user) end,
-
-		---@param success boolean
-		---@param user boolean
-		---@param index any
-		---@param title? string
-		renamed = function(success, user, index, title) callListeners(profilemanager, listeners, "renamed", success, index, title, user) end,
-
-		---@param success boolean
-		---@param user boolean
-		---@param index any
-		---@param title? string
-		deleted = function(success, user, index, title) callListeners(profilemanager, listeners, "deleted", success, index, title, user) end,
-
-		---@param success boolean
-		---@param user boolean
-		---@param index any
-		---@param title? string
-		reset = function(success, user, index, title) callListeners(profilemanager, listeners, "reset", success, index, title, user) end,
-
-		---@param event string Custom event tag
-		---@param ... any
-		_ = function(event, ...) callListeners(profilemanager, listeners, event, ...) end
-	}
-
-	--Hook a handler function as a listener for a custom widget event
-	profilemanager.setListener = {
-		---@param listener ProfilemanagerEventHandler_loaded Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		loaded = function(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end,
-
-		---@param listener ProfilemanagerEventHandler_activated Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		activated = function(listener, callIndex) addListener(listeners, "activated", listener, callIndex) end,
-
-		---@param listener ProfilemanagerEventHandler_created Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		created = function(listener, callIndex) addListener(listeners, "created", listener, callIndex) end,
-
-		---@param listener ProfilemanagerEventHandler_renamed Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		renamed = function(listener, callIndex) addListener(listeners, "created", listener, callIndex) end,
-
-		---@param listener ProfilemanagerEventHandler_deleted Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		deleted = function(listener, callIndex) addListener(listeners, "deleted", listener, callIndex) end,
-
-		---@param listener ProfilemanagerEventHandler_reset Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		reset = function(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end,
-
-		---@param event string Custom event tag
-		---@param listener ProfilemanagerEventHandler_any Handler function to set
-		---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-		_ = function(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-	}
+	function profilemanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function profilemanager.setListener.activated(listener, callIndex) addListener(listeners, "activated", listener, callIndex) end
+	function profilemanager.setListener.created(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
+	function profilemanager.setListener.renamed(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
+	function profilemanager.setListener.deleted(listener, callIndex) addListener(listeners, "deleted", listener, callIndex) end
+	function profilemanager.setListener.reset(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end
+	function profilemanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Utilities
 
@@ -2130,13 +1456,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		characterData.activeProfile = index
 	end
 
-	---Activate the specified settings profile
-	---***
-	---@param index? integer Index of the profile to set as the currently active settings profile | ***Default:*** *currently active profile index* or `1`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "applied" event and call registered listeners | ***Default:*** `false`
-	---***
-	---@return integer? index The index of the active profile | ***Default:*** `nil`
 	function profilemanager.activate(index, user, silent)
 		if type(index) ~= "number" then
 			--Call listeners
@@ -2153,11 +1472,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		return activeIndex
 	end
 
-	---Find a profile by its display title and return its index
-	---***
-	---@param title string Name of the profile to find
-	---@param skipFirst? boolean Set to `true` to find duplicate `title` | ***Default:*** `false`
-	---@return integer? index
 	function profilemanager.findIndex(title, skipFirst)
 		for i = 1, #accountData.profiles do if accountData.profiles[i].title == title then if skipFirst then skipFirst = false else return i end end end
 	end
@@ -2186,15 +1500,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		return title
 	end
 
-	---Create a new settings profile
-	---***
-	---@param name? string Name tag to use when setting the display title of the new profile | ***Default:*** `duplicate` and **accountData.profiles[duplicate].title** or "Profile"
-	---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** 2
-	---@param duplicate? integer Index of the profile to create the new profile as a duplicate of instead of using default data values
-	---@param apply? boolean Whether to immediately set the new profile as the active profile or not | ***Default:*** `true`
-	---@param index? integer Place the new profile under this specified index in **accountData.profile** instead of the end of the list | ***Range:*** (1, #**accountData.profiles** + 1)
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "created" event and call registered listeners | ***Default:*** `false`
 	function profilemanager.create(name, number, duplicate, index, apply, user, silent)
 		index = Clamp(type(index) == "number" and math.floor(index) or #accountData.profiles + 1, 1, #accountData.profiles + 1)
 		local d = type(accountData.profiles[duplicate]) == "table" and accountData.profiles[duplicate] or nil
@@ -2212,14 +1517,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		if apply ~= false then profilemanager.activate(index, user, silent) end
 	end
 
-	---Rename the specified profile
-	---@param index? integer Index of the profile to rename | ***Default:*** *currently active profile index*
-	---@param name? string The new title of the profile to set | ***Default:*** "Profile"
-	---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** 2
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "renamed" event and call registered listeners | ***Default:*** `false`
-	---***
-	---@return boolean # True on success, false if the operation failed
 	function profilemanager.rename(index, name, number, user, silent)
 		if index and not accountData.profiles[index] then
 			--Call listeners
@@ -2239,14 +1536,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		return true
 	end
 
-	---Delete the specified profile
-	---***
-	---@param index? integer Index of the profile to delete | ***Default:*** *currently active profile index*
-	---@param unsafe? boolean If false, show a popup confirmation before attempting to delete the specified profile | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "deleted" event and call registered listeners | ***Default:*** `false`
-	---***
-	---@return boolean # True on success, false if the operation failed
 	function profilemanager.delete(index, unsafe, user, silent)
 		if index and not accountData.profiles[index] then
 			--Call listeners
@@ -2277,14 +1566,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		return true
 	end
 
-	---Reset the specified profile data to default values
-	---***
-	---@param index? integer Index of the profile to restore to defaults | ***Default:*** *currently active profile index*
-	---@param unsafe? boolean If false, show a popup confirmation before attempting to reset the specified profile | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "reset" event and call registered listeners | ***Default:*** `false`
-	---***
-	---@return boolean # True on success, false if the operation failed
 	function profilemanager.reset(index, unsafe, user, silent)
 		if index and not accountData.profiles[index] then
 			--Call listeners
@@ -2311,12 +1592,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		return true
 	end
 
-	---Check & fix a profile data table based on the specified sample profile
-	---***
-	---@param profileData table Profile data table to check
-	---@param compareWith? table  Profile data table to sample | ***Default:*** `defaultData`
-	---***
-	---@return table profileData Reference to `profileData` (it was already updated during the operation, no need for setting it again)
 	function profilemanager.validate(profileData, compareWith)
 		if type(profileData) ~= "table" then return profileData end
 
@@ -2354,12 +1629,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
 
-	---Load profiles data
-	---***
-	---@param p? profileStorage Table holding the list of profiles to store | ***Default:*** *validate* **accountData** *(if the data is missing or invalid, set up a default profile)*
-	---@param activeProfile? integer Index of the active profile to set | ***Default:*** *currently active profile index*
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param silent? boolean If false, invoke an "loaded" event and call registered listeners | ***Default:*** `false`
 	function profilemanager.load(p, activeProfile, user, silent)
 
 		--| Profile list
