@@ -1,11 +1,9 @@
---[[ REFERENCES ]]
-
---[ Toolbox ]
+--| Toolbox
 
 ---@type widgetToolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
---[ Shortcuts ]
+--| References
 
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
@@ -17,7 +15,7 @@ local cr = WrapTextInColor
 local crc = WrapTextInColorCode
 
 
---[[ CLIPBOARD ]]
+--[ Clipboard ]
 
 wt.clipboard = {}
 
@@ -1353,8 +1351,6 @@ function wt.CreateColormanager(t)
 
 	--[ Color Wheel Toggle ]
 
-	colormanager.button = wt.CreateAction({ action = colormanager.openColorPicker, })
-
 	--Deactivate on close
 	ColorPickerFrame:HookScript("OnHide", function() active = false end)
 
@@ -1670,7 +1666,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 			--Validate active profile data
 			profilemanager.validate(profilemanager.data)
 
-			ds.Log("Recovered misplaced data:" .. us.TableToString(recovered), "Profilemanager (" .. category .. ") loadProfiles")
+			ds.Log(function() return "Recovered misplaced data:" .. us.TableToString(recovered), "Profilemanager (" .. category .. ") loadProfiles" end)
 		end
 
 		--| Call listeners

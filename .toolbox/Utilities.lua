@@ -1,11 +1,9 @@
---[[ REFERENCES ]]
+--| Toolbox
 
---[ Toolbox ]
-
----@class widgetToolbox
+---@type widgetToolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
---[ Shortcuts ]
+--| References
 
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
@@ -72,23 +70,23 @@ end
 
 function wt.IsColor(t)
 	if type(t) ~= "table" then
-		ds.Log("Not a color: " ..  us.TableToString(t), "IsColor")
+		ds.Log(function() return "Not a color: " ..  us.TableToString(t), "IsColor" end)
 
 		return false
 	elseif type(t.r) ~= "number" or t.r < 0 or t.r > 1 then
-		ds.Log("Invalid red color value: " .. tostring(t.r))
+		ds.Log(function() return "Invalid red color value: " .. tostring(t.r) end)
 
 		return false
 	elseif type(t.g) ~= "number" or t.g < 0 or t.g > 1 then
-		ds.Log("Invalid green color value: " .. tostring(t.g))
+		ds.Log(function() return "Invalid green color value: " .. tostring(t.g) end)
 
 		return false
 	elseif type(t.b) ~= "number" or t.b < 0 or t.b > 1 then
-		ds.Log("Invalid blue color value: " .. tostring(t.b))
+		ds.Log(function() return "Invalid blue color value: " .. tostring(t.b) end)
 
 		return false
 	elseif t.a ~= nil and (type(t.a) ~= "number" or t.a < 0 or t.a > 1) then
-		ds.Log("Invalid alpha color value: " .. tostring(t.a))
+		ds.Log(function() return "Invalid alpha color value: " .. tostring(t.a) end)
 
 		return false
 	end
@@ -1237,7 +1235,7 @@ end
 
 --| Settings data
 
----@class settingsRegistry
+---@type settingsRegistry
 local settingsData = { rules = {}, changeHandlers = {} }
 
 function wt.AddSettingsDataManagementEntry(widget, t)
@@ -1381,6 +1379,9 @@ function wt.HandleWidgetChanges(index, category, key)
 		local handler = settingsData.changeHandlers[category .. settingsData.rules[key][index].onChange[i]]
 
 		if type(handler) == "function" then handler()
-		else ds.Log("Cannot call invalid or unset " .. key .. " handler of " .. us.ToString(settingsData.rules[key][index].onChange[i]), "HandleWidgetChanges") end
+		else ds.Log(function() return
+			"Cannot call invalid or unset " .. key .. " handler of " .. us.ToString(settingsData.rules[key][index].onChange[i]),
+			"HandleWidgetChanges"
+		end) end
 	end
 end

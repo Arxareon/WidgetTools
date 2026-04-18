@@ -1,18 +1,25 @@
---[[ REFERENCES ]]
-
---[ Namespace ]
+--| Namespace
 
 ---@class addonNamespace
 local ns = select(2, ...)
 
---[ Shortcuts ]
+--| References
 
 local cr = WrapTextInColor
 local crc = WrapTextInColorCode
 
---[ Locals ]
+--| Locals
 
 local eventFrame = CreateFrame("Frame")
+
+---@type widgetToolsDebugging
+local ds = { history = {} --[[ --ADD an option to save logs across sessions ]] }
+
+---@type widgetToolsToolboxes
+local ts = { initialization = {} }
+
+
+--[[ UTILITIES ]]
 
 --Modifier key down checking function lookup table
 local modifierKeyDownCheckers = {
@@ -33,15 +40,6 @@ local us = { isKeyDown = setmetatable({}, {
 	__newindex = function() end,
 	__metatable = "protected",
 }), }
-
----@type widgetToolsDebugging
-local ds = { history = {} --[[ --ADD an option to save logs across sessions ]] }
-
----@type widgetToolsToolboxes
-local ts = { initialization = {} }
-
-
---[[ UTILITIES ]]
 
 --[ General ]
 
@@ -206,7 +204,10 @@ function us.Protect(t)
 				return subproxy
 			end,
 			__newindex = function(_, k, v)
-				ds.Log("Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).", "Read-only protection")
+				ds.Log(function() return
+					"Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).",
+					"Read-only protection"
+				end)
 			end,
 			__metatable = "protected",
 		})
@@ -517,16 +518,20 @@ local loadedDebugging = WidgetToolsDB.debugging
 --[[ DEBUGGING TOOLS ]]
 
 if WidgetToolsDB.debugging then
-	function ds.Log(message, trace)
-		trace = (trace == nil and "(source not traced)" or tostring(trace))
+	function ds.Log(passer)
+		if type(passer) ~= "function" then return end
+
+		local message, trace = passer()
+
 		message = tostring(message)
+		trace = (trace == nil and "(source not traced)" or tostring(trace))
 
 		table.insert(ds.history, date("%Y.%m.%d. %H:%M:%S\t", time()) .. trace .. "\t" ..message)
 
 		print("|T" .. ns.rs.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
 	end
 
-	ds.Log("Debug logging enabled.", "Widget Tools initialization")
+	ds.Log(function() return "Debug logging enabled.", "Widget Tools initialization" end)
 else ds.Log = function() end end
 
 ---Convert and format an input object to string to be dumped to the in-game chat
@@ -631,7 +636,10 @@ function ts.Register(addon, version, callback, toolbox)
 	if protectedToolboxRegistry[version] then
 		table.insert(protectedToolboxRegistry[version].addons, addon)
 
-		ds.Log("Registered " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. us.ToString(version) .. ".", "Widget Toolbox registration")
+		ds.Log(function() return
+			"Registered " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. us.ToString(version) .. ".",
+			"Widget Toolbox registration"
+		end)
 
 		return protectedToolboxRegistry[version].toolbox
 	end
@@ -642,7 +650,10 @@ function ts.Register(addon, version, callback, toolbox)
 	if type(toolbox) == "table" then
 		protectedToolboxRegistry[version] = { toolbox = us.Protect(toolbox), addons = { addon } }
 
-		ds.Log("Added Toolbox version " .. us.ToString(version) .. " to the registry and registered " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. " for use.", "Widget Toolbox registration")
+		ds.Log(function() return
+			"Added Toolbox version " .. us.ToString(version) .. " to the registry and registered " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. " for use.",
+			"Widget Toolbox registration"
+		end)
 
 		return protectedToolboxRegistry[version].toolbox
 	end
@@ -656,7 +667,7 @@ function ts.Register(addon, version, callback, toolbox)
 	local toolboxAddon = "WidgetToolbox_" .. version
 
 	if not C_AddOns.IsAddOnLoadable(toolboxAddon) then
-		ds.Log("Could not start loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration")
+		ds.Log(function() return "Could not start loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration" end)
 
 		return false
 	end
@@ -671,7 +682,10 @@ function ts.Register(addon, version, callback, toolbox)
 		protectedToolboxRegistry[version] = { toolbox = us.Protect(us.Clone(ts.initialization[version])), addons = { addon } }
 		ts.initialization[version] = nil
 
-		ds.Log("New Toolbox version " .. us.ToString(version) .. " initialization finished for " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".", addon .. " ADDON_LOADED")
+		ds.Log(function() return
+			"New Toolbox version " .. us.ToString(version) .. " initialization finished for " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".",
+			addon .. " ADDON_LOADED"
+		end)
 
 		if type(callback) == "function" then callback(protectedToolboxRegistry[version].toolbox) end
 	end)
@@ -680,8 +694,11 @@ function ts.Register(addon, version, callback, toolbox)
 
 	ts.initialization[version] = setmetatable({}, { __metatable = "public" })
 
-	ds.Log("New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".", "Widget Toolbox registration")
-	ds.Log("Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration")
+	ds.Log(function() return
+		"New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".",
+		"Widget Toolbox registration"
+	end)
+	ds.Log(function() return "Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration" end)
 
 	C_AddOns.LoadAddOn(toolboxAddon)
 end
@@ -700,7 +717,7 @@ WidgetTools = us.Protect(widgetToolsWrapper)
 us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	eventFrame:UnregisterEvent("PLAYER_LOGIN")
 
-	ds.Log("Started loading UI.", "WidgetTools PLAYER_LOGIN")
+	ds.Log(function() return "Started loading UI.", "WidgetTools PLAYER_LOGIN" end)
 
 
 	--[[ REFERENCES ]]

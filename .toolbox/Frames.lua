@@ -1,11 +1,9 @@
---[[ REFERENCES ]]
+--| Toolbox
 
---[ Toolbox ]
-
----@class widgetToolbox
+---@type widgetToolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
 
---[ Shortcuts ]
+--| References
 
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
@@ -4623,6 +4621,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return colormanager end
 
+	---Button to open the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) with
 	---@class colorpickerButton : customButton
 	---@field gradient Texture
 	---@field checker Texture
@@ -4697,7 +4696,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	if not t.value and t.getData then t.value = us.Clone(t.getData()) else t.value = {} end
 
-	if not colorpicker.button.widget then wt.CreateCustomButton({
+	colorpicker.button = wt.CreateCustomButton({
 		parent = colorpicker.frame,
 		name = "PickerButton",
 		label = false,
@@ -4707,6 +4706,7 @@ function wt.CreateColorpicker(t, colormanager)
 		},
 		position = { offset = { y = -14 } },
 		size = { w = 34, h = 22 },
+		action = colormanager.openColorPicker,
 		backdrop = {
 			background = {
 				texture = {
@@ -4746,7 +4746,7 @@ function wt.CreateColorpicker(t, colormanager)
 				return self:IsMouseOver() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {}
 			end,
 		}, }, },
-	}, colorpicker.button) end
+	})
 
 	colorpicker.button.gradient = wt.CreateTexture(colorpicker.button.widget, {
 		name = "ColorGradient",
