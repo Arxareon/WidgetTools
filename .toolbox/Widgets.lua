@@ -76,11 +76,11 @@ function wt.CreateAction(t)
 	--| Events
 
 	function action.invoke.enabled() callListeners(action, listeners, "enabled", enabled) end
-	function action.invoke.trigger(user) callListeners(action, listeners, "trigger", user) end
+	function action.invoke.triggered(user) callListeners(action, listeners, "triggered", user) end
 	function action.invoke._(event, ...) callListeners(action, listeners, event, ...) end
 
 	function action.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	function action.setListener.trigger(listener, callIndex) addListener(listeners, "trigger", listener, callIndex) end
+	function action.setListener.triggered(listener, callIndex) addListener(listeners, "triggered", listener, callIndex) end
 	function action.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| State
@@ -97,7 +97,7 @@ function wt.CreateAction(t)
 	function action.trigger(user, silent)
 		if enabled and t.action then t.action(action, user) end
 
-		if not silent then action.invoke.trigger(user) end
+		if not silent then action.invoke.triggered(user) end
 	end
 
 	--[ Initialization ]

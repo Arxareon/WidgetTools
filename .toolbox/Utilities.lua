@@ -400,15 +400,15 @@ end
 --| Arrangement
 
 ---List of container content element positioning arrangement ordering directives
----@type table<AnyFrameObject, arrangementDirective>
+---@type table<AnyFrameObject, integer>
 local arrangementOrdering = {}
 
 ---List of container content element positioning arrangement wrapping directives
----@type table<AnyFrameObject, arrangementDirective>
+---@type table<AnyFrameObject, boolean>
 local arrangementWrapping = {}
 
 ---List of child frame references to skip when arranging the children of their parents
----@type AnyFrameObject[]
+---@type table<AnyFrameObject[], boolean>
 local arrangementSkipping = {}
 
 function wt.SetArrangementDirective(frame, index, wrap, skip)
@@ -1097,7 +1097,7 @@ function wt.RegisterChatCommands(addon, keywords, t)
 	local onWelcome = type(t.onWelcome) == "function" and t.onWelcome or nil
 	local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
 
-	---@class chatCommandManager
+	---@type chatCommandManager
 	local manager = {}
 
 	addon = addon:upper()
@@ -1110,11 +1110,6 @@ function wt.RegisterChatCommands(addon, keywords, t)
 
 	--| Utilities
 
-	---Print out a formatted chat message
-	---@param message string Message content
-	---@param title? string Title to start the message with | ***Default:*** *(**addon** title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of **addon**, a logo will also be included at the start of the message.</li></ul>
-	---@param contentColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "content"
-	---@param titleColor? chatCommandColorNames|colorData|colorRGBA ***Default:*** "title"
 	function manager.print(message, title, titleColor, contentColor)
 		title = type(title) == "string" and title or branding
 		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
@@ -1123,7 +1118,6 @@ function wt.RegisterChatCommands(addon, keywords, t)
 		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
 	end
 
-	--Print a welcome message with a hint about chat keywords
 	function manager.welcome()
 		local keyword = cr(keywords[1], colors.command)
 		if #keywords > 1 then
@@ -1137,7 +1131,6 @@ function wt.RegisterChatCommands(addon, keywords, t)
 		if onWelcome then onWelcome() end
 	end
 
-	--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
 	function manager.help()
 		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(logo .. addonTitle, colors.title)), colors.content))
 
@@ -1154,12 +1147,6 @@ function wt.RegisterChatCommands(addon, keywords, t)
 		end
 	end
 
-	---Find and a specific command by its name and call its handler script
-	---***
-	---@param command string Name of the slash command word (no spaces)
-	---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
-	---***
-	---@return boolean # Whether the command was found and the handler called successfully
 	function manager.handleCommand(command, ...)
 		for i = 1, #commands do if command == commands[i].command then
 			if commands[i].handler then

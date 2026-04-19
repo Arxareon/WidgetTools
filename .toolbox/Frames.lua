@@ -20,10 +20,6 @@ local crc = WrapTextInColorCode
 
 --[[ TOOLTIP ]]
 
----Create and set up a new custom GameTooltip frame
----***
----@param name string Unique string piece to place in the name of the the tooltip to distinguish it from other tooltips (use the addon namespace string as an example)
----@return GameTooltip tooltip
 function wt.CreateGameTooltip(name)
 	local tooltip = CreateFrame("GameTooltip", name .. "GameTooltip", nil, "GameTooltipTemplate")
 
@@ -47,9 +43,6 @@ end
 
 local customPopupInputBoxFrame
 
----Show a movable input window with a textbox, accept and cancel buttons
----***
----@param t? popupInputBoxData Optional parameters
 function wt.CreatePopupInputBox(t)
 	t = type(t) == "table" and t or {}
 	t.position = type(t.position) == "table" and t.position or {
@@ -174,11 +167,6 @@ end
 
 local reloadFrame
 
----Show a movable reload notice window on screen with a reload now and cancel button
----***
----@param t? reloadFrameData Optional parameters
----***
----@return Frame reload Reference to the reload notice panel frame
 function wt.CreateReloadNotice(t)
 	t = type(t) == "table" and t or {}
 
@@ -267,12 +255,6 @@ end
 
 --[ Font ]
 
----Create a new [Font](https://warcraft.wiki.gg/wiki/UIOBJECT_Font) object to be used when setting the look of a [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) using a [FontInstance](https://warcraft.wiki.gg/wiki/UIOBJECT_FontInstance)
----***
----@param name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
----@param t? fontCreationData Optional parameters
----***
----@return string name, Font font ***Default*** *(on invalid input)****:*** "GameFontNormal", **GameFontNormal**
 function wt.CreateFont(name, t)
 	t = type(t) == "table" and t or {}
 
@@ -318,10 +300,6 @@ end
 
 --[ Textline ]
 
----Create a text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) with the specified parameters
----***
----@param t? textCreationData Optional parameters
----@return FontString text
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
 	t.parent = us.IsFrame(t.parent) and t.parent or UIParent
@@ -348,12 +326,6 @@ function wt.CreateText(t)
 	return text
 end
 
----Add a title to a frame
----***
----@param frame AnyFrameObject Reference to the frame to add the title textline to
----@param t? titleCreationData Optional parameters
----***
----@return FontString? # ***Default:*** nil
 function wt.CreateTitle(frame, t)
 	t = type(t) == "table" and t or {}
 
@@ -375,12 +347,6 @@ function wt.CreateTitle(frame, t)
 	})
 end
 
----Add a description to a titled frame
----***
----@param title FontString Reference to the already existing title textline to place the description next to
----@param t? descriptionCreationData Table of parameters to create a description
----***
----@return FontString? # ***Default:*** nil
 function wt.CreateDescription(title, t)
 	t = type(t) == "table" and t or {}
 
@@ -435,13 +401,6 @@ end
 
 --[[ TEXTURE ]]
 
----Create a [Texture](https://warcraft.wiki.gg/wiki/UIOBJECT_Texture) image [TextureBase](https://warcraft.wiki.gg/wiki/UIOBJECT_TextureBase) object
----***
----@param frame AnyFrameObject Reference to the frame to set as the parent of the new texture
----@param t textureCreationData Optional parameters
----@param updates? table<AnyScriptType, textureUpdateRule> Table of key, value pairs containing the list of events to link texture changes to, and what parameters to change
----***
----@return Texture? texture ***Default:*** nil
 function wt.CreateTexture(frame, t, updates)
 	if not us.IsFrame(frame) then return end
 
@@ -535,12 +494,6 @@ function wt.CreateTexture(frame, t, updates)
 	return texture
 end
 
----Create a [Line](https://warcraft.wiki.gg/wiki/UIOBJECT_Line) [TextureBase](https://warcraft.wiki.gg/wiki/UIOBJECT_TextureBase) object
----***
----@param frame AnyFrameObject Reference to the frame to set as the parent of the new line
----@param t lineCreationData Optional parameters
----***
----@return Line? line ***Default:*** nil
 function wt.CreateLine(frame, t)
 	t = type(t) == "table" and t or {}
 
@@ -618,10 +571,6 @@ end
 
 --[ Base Frame ]
 
----Create & set up a new base frame
----***
----@param t? frameCreationData Optional parameters
----@return Frame frame
 function wt.CreateFrame(t)
 	t = type(t) == "table" and t or {}
 
@@ -637,10 +586,6 @@ function wt.CreateFrame(t)
 	return frame
 end
 
----Create & set up a new customizable frame with BackdropTemplate
----***
----@param t? frameCreationData Optional parameters
----@return Frame|BackdropTemplate frame
 function wt.CreateCustomFrame(t)
 	t = type(t) == "table" and t or {}
 
@@ -658,11 +603,6 @@ end
 
 --[ Scrollframe ]
 
----Create an empty vertically scrollable frame
----***
----@param t? scrollframeCreationData Optional parameters
----@return Frame scrollChild
----@return ScrollFrame scrollframe
 function wt.CreateScrollframe(t)
 	t = type(t) == "table" and t or {}
 	t.scrollSize = type(t.scrollSize) == "table" and t.scrollSize or {}
@@ -720,11 +660,6 @@ end
 
 --[ Panel ]
 
----Create a new simple panel frame
----***
----@param t? panelCreationData Optional parameters
----***
----@return panel|Frame panel Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame) overloaded with custom fields or none if **WidgetToolsDB.lite** is true**
 function wt.CreatePanel(t)
 	t = type(t) == "table" and t or {}
 
@@ -734,9 +669,7 @@ function wt.CreatePanel(t)
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Panel")
 
-	---@class panel : Frame
-	---@field title? FontString Reference to the title textline appearing above the panel
-	---@field description? FontString Reference to the description textline appearing in the panel
+	---@type panel
 	local panel = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
 
 	--| Position & dimensions
@@ -814,26 +747,16 @@ end
 
 --[[ CONTEXT MENU ]]
 
----Create a Blizzard context menu
----***
----@param t? contextMenuCreationData Optional parameters
----***
----@return contextMenu menu Table containing a reference to the root description of the context menu
 function wt.CreateContextMenu(t)
 	t = type(t) == "table" and t or {}
 
 	--[ Menu Setup ]
 
-	---@class contextMenu
-	---@field rootDescription RootMenuDescriptionProxy Container of menu elements (such as titles, widgets, dividers or other frames)
+	---@type contextMenu
 	local menu = {}
 
 	--| Utilities
 
-	---Open the context menu
-	---***
-	---@param trigger? integer Index of the trigger to activate to have the menu opened defined in **t.triggers** | ***Default:*** 1
-	---@param action "click"|"hover"|nil The action that prompted the menu to be opened | ***Default:*** *no action:* `nil`
 	function menu.open(trigger, action)
 		trigger = type(trigger) == "number" and Clamp(trigger, 1, #t.triggers) or 1
 
@@ -864,12 +787,6 @@ function wt.CreateContextMenu(t)
 	return menu
 end
 
----Create a Blizzard context menu attached to a custom button frame to open it
----***
----@param t? popupMenuCreationData Optional parameters
----***
----@return Frame menu Table containing a reference to the root description of the context menu
----@return contextMenu menu Table containing a reference to the root description of the context menu
 function wt.CreatePopupMenu(t)
 	t = type(t) == "table" and t or {}
 	t.size = t.size or {}
@@ -968,12 +885,6 @@ function wt.CreatePopupMenu(t)
 	return buttonFrame, menu
 end
 
----Create a submenu item for an already existing Blizzard context menu
----***
----@param menu contextMenu|contextSubmenu Reference to the parent menu to add the new submenu to
----@param t? contextSubmenuCreationData Optional parameters
----***
----@return contextSubmenu|nil menu Table containing a reference to the root description of the context menu
 function wt.CreateSubmenu(menu, t)
 	if type(menu) ~= "table" then return nil end
 
@@ -981,9 +892,8 @@ function wt.CreateSubmenu(menu, t)
 
 	--[ Menu Setup ]
 
-	---@class contextSubmenu
-	---@field rootDescription ElementMenuDescriptionProxy Container of menu elements (such as titles, widgets, dividers or other frames)
-	---@diagnostic disable-next-line: missing-parameter
+	---@type contextSubmenu
+	---@diagnostic disable-next-line: missing-parameter --REMOVE when the annotations get fixed
 	local submenu = { rootDescription = menu.rootDescription:CreateButton(t.title or "Submenu") }
 
 	--Adding items
@@ -992,12 +902,8 @@ function wt.CreateSubmenu(menu, t)
 	return submenu
 end
 
----Create a textline item for an already existing Blizzard context menu
----***
----@param menu contextMenu|contextSubmenu Reference to the parent menu to add the new item to
----@param t? menuTextlineCreationData Optional parameters
----***
----@return ElementMenuDescriptionProxy|nil textline Reference to the context textline UI object
+--[ Elements ]
+
 function wt.CreateMenuTextline(menu, t)
 	if type(menu) ~= "table" then return nil end
 
@@ -1006,12 +912,6 @@ function wt.CreateMenuTextline(menu, t)
 	return t.queue ~= true and menu.rootDescription:CreateTitle(t.text or "Title") or menu.rootDescription:QueueTitle(t.text or "Title")
 end
 
----Create a divider item for an already existing Blizzard context menu
----***
----@param menu contextMenu|contextSubmenu Reference to the parent menu to add the new item to
----@param t? queuedMenuItem Optional parameters
----***
----@return ElementMenuDescriptionProxy|nil divider Reference to the context divider UI object
 function wt.CreateMenuDivider(menu, t)
 	if type(menu) ~= "table" then return nil end
 
@@ -1020,12 +920,6 @@ function wt.CreateMenuDivider(menu, t)
 	return t.queue ~= true and menu.rootDescription:CreateDivider() or menu.rootDescription:QueueDivider()
 end
 
----Create a spacer item for an already existing Blizzard context menu
----***
----@param menu contextMenu|contextSubmenu Reference to the parent menu to add the new item to
----@param t? queuedMenuItem Optional parameters
----***
----@return ElementMenuDescriptionProxy|nil spacer Reference to the context spacer UI object
 function wt.CreateMenuSpacer(menu, t)
 	if type(menu) ~= "table" then return nil end
 
@@ -1034,12 +928,6 @@ function wt.CreateMenuSpacer(menu, t)
 	return t.queue ~= true and menu.rootDescription:CreateSpacer() or menu.rootDescription:QueueSpacer()
 end
 
----Create a button item for an already existing Blizzard context menu
----***
----@param menu contextMenu|contextSubmenu Reference to the parent menu to add the new item to
----@param t? menuButtonCreationData Optional parameters
----***
----@return ElementMenuDescriptionProxy|nil button Reference to the context button UI object
 function wt.CreateMenuButton(menu, t)
 	if type(menu) ~= "table" then return nil end
 
@@ -1051,12 +939,6 @@ end
 
 --[[ SETTINGS PAGE ]]
 
----Create an new Settings Panel frame and add it to the Options
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param t? settingsPageCreationData Optional parameters
----***
----@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(addon, t)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
 
@@ -1071,30 +953,15 @@ function wt.CreateSettingsPage(addon, t)
 	---@type string, actionButton, actionButton, FontString
 	local resetWarning, resetButton, revertButton, saveNotice
 
-	---@class settingsPage
-	---@field canvas? canvasFrame|Frame The settings page main canvas frame
-	---@field category? table The registered settings category page
-	---@field content? Frame The content frame to house the settings widgets or other page content
-	---@field header? Frame The header frame containing the page title, description and icon
+	---@type settingsPage
+	---@diagnostic disable-next-line: missing-fields --NOTE: Added later
 	local page = {}
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "SettingsPage"
-	---<p></p>
 	function page.getType() return "SettingsPage" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function page.isType(type) return type == "SettingsPage" end
 
-	---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
-	---***
-	---@param state boolean? ***Default:*** `true`
 	function page.setStatic(state)
 		state = state == false
 
@@ -1104,14 +971,10 @@ function wt.CreateSettingsPage(addon, t)
 		if state then saveNotice:Show() else saveNotice:Hide() end
 	end
 
-	---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
-	---@return string
 	function page.getResetPopupKey() return resetWarning end
 
 	--| Utilities
 
-	---Open the Settings window to this category page
-	--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
 	function page.open()
 		if WidgetToolsDB.lite or not page.category then
 			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
@@ -1128,10 +991,6 @@ function wt.CreateSettingsPage(addon, t)
 
 	--| Batched settings data management
 
-	---Force update all linked settings widgets in this category page
-	---***
-	---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function page.load(handleChanges, user)
 		--Update settings widgets
 		if t.autoLoad ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
@@ -1143,9 +1002,6 @@ function wt.CreateSettingsPage(addon, t)
 		if type(t.onLoad) == "function" then t.onLoad(user == true) end
 	end
 
-	---Force save all settings data of this category page from all linked widgets
-	---***
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function page.save(user)
 		--Retrieve data from settings widgets and commit to storage
 		if t.autoSave ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
@@ -1156,9 +1012,6 @@ function wt.CreateSettingsPage(addon, t)
 		if type(t.onSave) == "function" then t.onSave(user == true) end
 	end
 
-	---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
-	---***
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function page.apply(user)
 		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ApplySettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
 
@@ -1166,9 +1019,6 @@ function wt.CreateSettingsPage(addon, t)
 		if type(t.onApply) == "function" then t.onApply(user == true) end
 	end
 
-	---Revert any changes made in this category page and reload all linked widget data
-	---***
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function page.revert(user)
 		--Update settings widgets
 		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.RevertSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
@@ -1177,9 +1027,6 @@ function wt.CreateSettingsPage(addon, t)
 		if type(t.onCancel) == "function" then t.onCancel(user == true) end
 	end
 
-	---Reset all settings data of this category page to default values
-	---***
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function page.reset(user)
 		--Update with default values
 		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ResetSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
@@ -1314,6 +1161,7 @@ function wt.CreateSettingsPage(addon, t)
 
 	--[ Category Resources ]
 
+	---@diagnostic disable-next-line: inject-field --REMOVE when replaced
 	page.categorySyncer = { onDefault = t.onDefault, dataManagement = t.dataManagement, titleIcon = t.titleIcon } --REPLACE temporary solution
 
 	--[ Initialization ]
@@ -1340,45 +1188,23 @@ function wt.CreateSettingsPage(addon, t)
 	return page
 end
 
----Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
----@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under **parent**<ul><li>***Note:*** Already registered pages (which contain a **category** value) will be skipped and won't be included in the new category.</li></ul>
----@param t? settingsCategoryCreationData Optional parameters
----***
----@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified **parent** was invalid
 function wt.CreateSettingsCategory(addon, parent, pages, t)
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
 
 	t = type(t) == "table" and t or {}
 
-	---@class settingsCategory
-	---@field pages settingsPage[]
+	---@type settingsCategory
 	local category = { pages = {} }
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "SettingsCategory"
-	---<p></p>
 	function category.getType() return "SettingsCategory" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function category.isType(type) return type == "SettingsCategory" end
 
 	--[ Utilities ]
 
 	--| Batched settings data management
 
-	---Force update the settings widgets for all pages in this category
-	---***
-	---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 	function category.load(handleChanges, user)
 		for i = 1, #category.pages do category.pages[i].load(handleChanges, user) end
 
@@ -1386,13 +1212,11 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		if t.onLoad then t.onLoad(user == true) end
 	end
 
-	---Reset all settings data to their default values for all pages in this category
-	---***
-	---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-	---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** `true`
 	function category.defaults(user, callListeners)
 		for i = 1, #category.pages do
+			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
+			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
 
 			--Update with default values
@@ -1434,6 +1258,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 		table.insert(category.pages, pages[i])
 
+		---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
@@ -1559,11 +1384,14 @@ end
 
 function wt.CreateButton(t, action)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	action = action and action.isType and action.isType("Action") and action or wt.CreateAction(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
-	---@type actionButton
+	---@type actionButton|action
 	local button = action
 
 	--[ Getters & Setters ]
@@ -1614,11 +1442,14 @@ end
 
 function wt.CreateCustomButton(t, action)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	action = action and action.isType and action.isType("Action") and action or wt.CreateAction(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return action end
 
-	---@type customButton
+	---@type customButton|action
 	local button = action
 
 	--[ Getters & Setters ]
@@ -1675,11 +1506,14 @@ end
 
 function wt.CreateCheckbox(t, toggle)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	toggle = toggle and toggle.isType and toggle.isType("Toggle") and toggle or wt.CreateToggle(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return toggle end
 
-	---@type checkbox
+	---@type checkbox|toggle
 	local checkbox = toggle
 
 	--[ Getters & Setters ]
@@ -1855,7 +1689,7 @@ function wt.CreateCheckbox(t, toggle)
 end
 
 ---Set the parameters of a GUI toggle frame
----@param toggle checkbox|radiobutton
+---@param toggle checkbox|customCheckbox|radiobutton
 ---@param title string
 ---@param t checkboxCreationData
 local function setUpToggleFrame(toggle, title, t)
@@ -1952,19 +1786,16 @@ local function setUpToggleFrame(toggle, title, t)
 	updateToggleState(nil, toggle.getState())
 end
 
----Create a classic Blizzard checkbox GUI frame with enhanced widget functionality
----***
----@param t? checkboxCreationData Optional parameters
----@param toggle? toggle Reference to an already existing toggle to mutate into a checkbox instead of creating a new base widget
----***
----@return checkbox|toggle # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateClassicCheckbox(t, toggle)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	toggle = toggle and toggle.isType and toggle.isType("Toggle") and toggle or wt.CreateToggle(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return toggle end
 
-	---@type checkbox|toggle
+	---@type customCheckbox|toggle
 	local checkbox = toggle
 
 	--[ Getters & Setters ]
@@ -1986,10 +1817,7 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Toggle")
 
-	--Click target
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
-
-	--Checkbox
 	checkbox.button = CreateFrame("CheckButton", name .. "Checkbox", checkbox.frame, "InterfaceOptionsCheckButtonTemplate")
 
 	--| Label
@@ -2070,35 +1898,21 @@ function wt.CreateClassicCheckbox(t, toggle)
 	return checkbox
 end
 
----Create a Blizzard radio button GUI frame with enhanced widget functionality
----***
----@param t? radiobuttonCreationData Optional parameters
----@param toggle? toggle Reference to an already existing toggle to mutate into a radio button instead of creating a new base widget
----***
----@return radiobutton|toggle # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateRadiobutton(t, toggle)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	toggle = toggle and toggle.isType and toggle.isType("Toggle") and toggle or wt.CreateToggle(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return toggle end
 
-	---@class radiobutton: toggle
-	---@field label? FontString
+	---@type radiobutton|toggle
 	local radiobutton = toggle
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Toggle"
-	---@return "Radiobutton"
-	---<p></p>
 	function radiobutton.getType() return "Toggle", "Radiobutton" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function radiobutton.isType(type) return type == "Toggle" or type == "Radiobutton" end
 
 	--[ Properties ]
@@ -2109,11 +1923,8 @@ function wt.CreateRadiobutton(t, toggle)
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Toggle")
 
-	--Click target
 	radiobutton.frame = CreateFrame("Frame", name, t.parent)
-
-	--Radio button
-	radiobutton.button = CreateFrame("CheckButton", name .. "RadioButton", radiobutton.frame, "UIRadioButtonTemplate")
+	radiobutton.widget = CreateFrame("CheckButton", name .. "RadioButton", radiobutton.frame, "UIRadioButtonTemplate")
 
 	--| Label
 
@@ -2122,7 +1933,7 @@ function wt.CreateRadiobutton(t, toggle)
 	if t.label ~= false then
 		radiobutton.label = _G[name .. "RadioButtonText"]
 
-		radiobutton.label:SetPoint("LEFT", radiobutton.button, "RIGHT", 3, 0)
+		radiobutton.label:SetPoint("LEFT", radiobutton.widget, "RIGHT", 3, 0)
 		radiobutton.label:SetFontObject("GameFontNormal")
 
 		radiobutton.label:SetText(title)
@@ -2140,7 +1951,7 @@ function wt.CreateRadiobutton(t, toggle)
 
 	--| UX
 
-	radiobutton.button:HookScript("OnClick", function(_, button)
+	radiobutton.widget:HookScript("OnClick", function(_, button)
 		if button == "LeftButton" then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 
@@ -2153,21 +1964,21 @@ function wt.CreateRadiobutton(t, toggle)
 	end)
 
 	--Linked mouse interactions
-	radiobutton.frame:HookScript("OnEnter", function() if radiobutton.button:IsEnabled() then
-		radiobutton.button:LockHighlight()
-		if IsMouseButtonDown("LeftButton") or (clearable and IsMouseButtonDown("RightButton")) then radiobutton.button:SetButtonState("PUSHED") end
+	radiobutton.frame:HookScript("OnEnter", function() if radiobutton.widget:IsEnabled() then
+		radiobutton.widget:LockHighlight()
+		if IsMouseButtonDown("LeftButton") or (clearable and IsMouseButtonDown("RightButton")) then radiobutton.widget:SetButtonState("PUSHED") end
 	end end)
-	radiobutton.frame:HookScript("OnLeave", function() if radiobutton.button:IsEnabled() then
-		radiobutton.button:UnlockHighlight()
-		radiobutton.button:SetButtonState("NORMAL")
+	radiobutton.frame:HookScript("OnLeave", function() if radiobutton.widget:IsEnabled() then
+		radiobutton.widget:UnlockHighlight()
+		radiobutton.widget:SetButtonState("NORMAL")
 	end end)
-	radiobutton.frame:HookScript("OnMouseDown", function(_, button) if radiobutton.button:IsEnabled() and button == "LeftButton" or (clearable and button == "RightButton") then
-		radiobutton.button:SetButtonState("PUSHED")
+	radiobutton.frame:HookScript("OnMouseDown", function(_, button) if radiobutton.widget:IsEnabled() and button == "LeftButton" or (clearable and button == "RightButton") then
+		radiobutton.widget:SetButtonState("PUSHED")
 	end end)
-	radiobutton.frame:HookScript("OnMouseUp", function(_, button, isInside) if radiobutton.button:IsEnabled() then
-		radiobutton.button:SetButtonState("NORMAL")
+	radiobutton.frame:HookScript("OnMouseUp", function(_, button, isInside) if radiobutton.widget:IsEnabled() then
+		radiobutton.widget:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" or (clearable and button == "RightButton") then radiobutton.button:Click(button) end
+		if isInside and button == "LeftButton" or (clearable and button == "RightButton") then radiobutton.widget:Click(button) end
 	end end)
 
 	--| State
@@ -2176,7 +1987,7 @@ function wt.CreateRadiobutton(t, toggle)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		radiobutton.button:SetEnabled(state)
+		radiobutton.widget:SetEnabled(state)
 
 		if radiobutton.label then radiobutton.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 	end
@@ -2268,49 +2079,28 @@ local function setUpSelectorFrame(selector, t, name, title)
 	updateState(nil, selector.isEnabled())
 end
 
----Create a radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
----***
----@param t? radiogroupCreationData Optional parameters
----@param selector? selector|specialSelector Reference to an already existing selector to mutate into a radio selector instead of creating a new base widget
----***
----@return radiogroup|specialRadiogroup|selector|specialSelector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a table
 function wt.CreateRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	local selectorType = wt.IsWidget(selector)
 	selector = (selectorType == "Selector" or selectorType == "SpecialSelector") and selector or wt.CreateSelector(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
 
-	---@class selectorRadiobutton : selectorToggle, radiobutton
-
 	local radiogroup
 	if selectorType == "Selector" then --WATCH replace branching with a better solution to assign the right annotations
-		---@class radiogroup : selector
-		---@field frame Frame|table
-		---@field label FontString|nil
-		---@field toggles? selectorRadiobutton[] The list of radio button widgets linked together in this selector
+		---@type radiogroup
 		radiogroup = selector
 	else
-		---@class specialRadiogroup : specialSelector
-		---@field frame Frame|table
-		---@field label FontString|nil
-		---@field toggles? selectorRadiobutton[] The list of radio button widgets linked together in this selector
+		---@type specialRadiogroup
 		radiogroup = selector
 	end
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Selector"
-	---@return "Radiogroup"
-	---<p></p>
 	function radiogroup.getType() return "Selector", "Radiogroup" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function radiogroup.isType(type) return type == "Selector" or type == "Radiogroup" end
 
 	--[ Properties ]
@@ -2445,14 +2235,11 @@ function wt.CreateRadiogroup(t, selector)
 	return radiogroup
 end
 
----Create a dropdown radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
----***
----@param t? dropdownRadiogroupCreationData Optional parameters
----@param selector? selector Reference to an already existing selector to mutate into a radio selector instead of creating a new base widget
----***
----@return dropdownRadiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
 function wt.CreateDropdownRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	selector = wt.IsWidget(selector) == "Selector" and selector or wt.CreateSelector(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
@@ -2491,9 +2278,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ Dropdown Menu ]
 
-	---@class dropdownRadiogroup : radiogroup
-	---@field holderFrame Frame Main holder frame for the dropdown toggle, buttons and title
-	---@field menu panel|Frame Panel frame holding the dropdown selector widget
+	---@type dropdownRadiogroup|radiogroup
 	local dropdown = wt.CreateRadiogroup({
 		name = name,
 		append = false,
@@ -2834,24 +2619,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Selector"
-	---@return "Radiogroup"
-	---@return "DropdownRadiogroup"
-	---<p></p>
 	function dropdown.getType() return "Selector", "Radiogroup", "DropdownRadiogroup" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function dropdown.isType(type) return type == "Selector" or type == "Radiogroup" or type == "DropdownRadiogroup" end
 
-	---Set the text displayed on the label of the toggle button
-	---***
-	---@param text? string ***Default:*** **t.items[*index*].title** *(the title of the currently selected item)* or "…" *(if there is no selection)*
-	---@param silent? boolean If false, invoke a "labeled" event and call registered listeners | ***Default:*** `false`
 	function dropdown.setText(text, silent)
 		local index = dropdown.getSelected()
 		local item = t.items[index] or {}
@@ -2863,8 +2633,6 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		if not silent then dropdown.invoke._("labeled", text) end
 	end
 
-	---Toggle the dropdown menu
-	---@param state? boolean ***Default:*** not **selector.list:IsVisible()**
 	function dropdown.toggleMenu(state)
 		if state == nil then open = not dropdown.menu:IsVisible() else open = state end
 
@@ -2899,7 +2667,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	end, false)
 
 	--Handle widget updates
-	dropdown.toggle.setListener.trigger(function() dropdown.toggleMenu() end)
+	dropdown.toggle.setListener.triggered(function() dropdown.toggleMenu() end)
 	dropdown.setListener.selected(function()
 		dropdown.setText()
 
@@ -3006,15 +2774,11 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	return dropdown
 end
 
----Create a special radio button selector GUI frame to pick an Anchor Point, a horizontal or vertical text alignment or Frame Strata value with enhanced widget functionality
----***
----@param itemset SpecialSelectorItemset Specify what type of selector should be created
----@param t? specialRadiogroupCreationData Optional parameters
----@param selector? specialSelector|selector Reference to an already existing special selector widget to mutate into a special selector frame instead of creating a new base widget
----***
----@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a table
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	selector = wt.IsWidget(selector) == "SpecialSelector" and selector or wt.CreateSpecialSelector(itemset, t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
@@ -3069,55 +2833,27 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "SpecialSelector"
-	---@return "SpecialRadiogroup"
-	---<p></p>
 	function radiogroup.getType() return "SpecialSelector", "SpecialRadiogroup" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function radiogroup.isType(type) return type == "SpecialSelector" or type == "SpecialRadiogroup" end
 
 	return radiogroup
 end
 
----Create a checkbox selector GUI frame to pick multiple options out of a list with enhanced widget functionality
----***
----@param t? checkgroupCreationData Optional parameters
----@param selector? multiselector Reference to an already existing selector to mutate into a multiple selector instead of creating a new base widget
----***
----@return checkgroup|multiselector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a table
 function wt.CreateCheckgroup(t, selector)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	selector = wt.IsWidget(selector) == "Multiselector" and selector or wt.CreateMultiselector(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return selector end
 
-	---@class selectorCheckbox : selectorToggle, checkbox
-
-	---@class checkgroup : multiselector
-	---@field frame Frame|table
-	---@field label FontString|nil
-	---@field toggles? selectorCheckbox[] The list of checkbox widgets linked together in this selector
+	---@type checkgroup|multiselector
 	local checkgroup = selector
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Multiselector"
-	---@return "Checkgroup"
-	---<p></p>
 	function checkgroup.getType() return "Multiselector", "Checkgroup" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function checkgroup.isType(type) return type == "Multiselector" or type == "Checkgroup" end
 
 	--[ Frame Setup ]
@@ -3272,7 +3008,7 @@ end
 --[[ TEXTBOX ]]
 
 ---Set the parameters of a GUI textbox widget frame
----@param editbox customEditbox|customEditbox|multilineEditbox
+---@param editbox singlelineEditbox|customEditbox|multilineEditbox
 ---@param t editboxCreationData
 local function setUpEditboxFrame(editbox, t)
 
@@ -3355,7 +3091,7 @@ local function setUpEditboxFrame(editbox, t)
 	--| State
 
 	--Inherit setter
-	editbox.widget.setEnabled = editbox.setEnabled
+	-- editbox.widget.setEnabled = editbox.setEnabled --CHECK if needed
 
 	---Update the widget UI based on its enabled state
 	---@param _ any
@@ -3384,12 +3120,10 @@ local function setUpEditboxFrame(editbox, t)
 end
 
 ---Set the parameters of a single-line GUI textbox widget frame
----@param editbox customEditbox|customEditbox
+---@param editbox singlelineEditbox|customEditbox
 ---@param title string
 ---@param t editboxCreationData
 local function setUpEditbox(editbox, title, t)
-
-	--Set as single line
 	editbox.widget:SetMultiLine(false)
 
 	--| Position
@@ -3441,34 +3175,21 @@ local function setUpEditbox(editbox, title, t)
 	}) end
 end
 
----Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
----***
----@param t? editboxCreationData Optional parameters
----@param textbox? textbox Reference to an already existing textbox to mutate into an editbox instead of creating a new base widget
----***
----@return customEditbox|textbox # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	textbox = wt.IsWidget(textbox) == "Textbox" and textbox or wt.CreateTextbox(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return textbox end
 
-	---@class customEditbox : textbox
+	---@type singlelineEditbox|textbox
 	local editbox = textbox
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Textbox"
-	---@return "Editbox"
-	---<p></p>
 	function editbox.getType() return "Textbox", "Editbox" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function editbox.isType(type) return type == "Textbox" or type == "Editbox" end
 
 	--[ Frame Setup ]
@@ -3503,34 +3224,21 @@ function wt.CreateEditbox(t, textbox)
 	return editbox
 end
 
----Create a single-line Blizzard editbox frame with custom GUI and enhanced widget functionality
----***
----@param t? customEditboxCreationData Optional parameters
----@param textbox? textbox Reference to an already existing textbox to mutate into a customizable editbox instead of creating a new base widget
----***
----@return customEditbox|textbox # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateCustomEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	textbox = wt.IsWidget(textbox) == "Textbox" and textbox or wt.CreateTextbox(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return textbox end
 
-	---@class customEditbox : textbox
+	---@type customEditbox|textbox
 	local editbox = textbox
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Textbox"
-	---@return "CustomEditbox"
-	---<p></p>
 	function editbox.getType() return "Textbox", "CustomEditbox" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function editbox.isType(type) return type == "Textbox" or type == "CustomEditbox" end
 
 	--[ Frame Setup ]
@@ -3576,34 +3284,21 @@ function wt.CreateCustomEditbox(t, textbox)
 	return editbox
 end
 
----Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
----***
----@param t? multilineEditboxCreationData Optional parameters
----@param textbox? textbox Reference to an already existing textbox to mutate into a multiline editbox instead of creating a new base widget
----***
----@return multilineEditbox|textbox # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateMultilineEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	textbox = wt.IsWidget(textbox) == "Textbox" and textbox or wt.CreateTextbox(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return textbox end
 
-	---@class multilineEditbox : textbox
+	---@type multilineEditbox|textbox
 	local editbox = textbox
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Textbox"
-	---@return "MultilineEditbox"
-	---<p></p>
 	function editbox.getType() return "Textbox", "MultilineEditbox" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function editbox.isType(type) return type == "Textbox" or type == "MultilineEditbox" end
 
 	--[ Frame Setup ]
@@ -3612,8 +3307,6 @@ function wt.CreateMultilineEditbox(t, textbox)
 
 	editbox.frame = CreateFrame("Frame", name, t.parent)
 	editbox.scrollframe = CreateFrame("ScrollFrame", name .. "ScrollFrame", editbox.frame, ScrollControllerMixin and "InputScrollFrameTemplate")
-
-	---@type EditBox|nil
 	editbox.widget = editbox.scrollframe.EditBox
 
 	--Set as multiline
@@ -3690,7 +3383,7 @@ function wt.CreateMultilineEditbox(t, textbox)
 		--Update the character counter
 		if editbox.scrollframe.CharCount:IsVisible() and t.charLimit then --WATCH: Remove when the character counter gets fixed..
 			editbox.scrollframe.CharCount:SetWidth(charCountWidth)
-			editbox.scrollframe.CharCount:SetText(t.charLimit - editbox.getText():len())
+			editbox.scrollframe.CharCount:SetText(tostring(t.charLimit - editbox.getText():len()))
 			editbox.scrollframe.CharCount:SetPoint("BOTTOMRIGHT", editbox.scrollframe, "BOTTOMRIGHT", -scrollBarOffset + 1, 0)
 		end
 	end
@@ -3747,19 +3440,16 @@ function wt.CreateMultilineEditbox(t, textbox)
 	return editbox
 end
 
----Create a custom button with a toggled textline & editbox from which text can be copied
----***
----@param t? copyboxCreationData Optional parameters
----***
----@return copybox copybox References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), its child widgets & their custom values, utility functions and more wrapped in a table
 function wt.CreateCopybox(t)
 	t = type(t) == "table" and t or {}
 	local text = type(t.value) == "string" and t.value or ""
 
+	--[ Widget ]
+
 	---@class copybox
 	local copybox = {}
 
-	--[ GUI Widget ]
+	--[ GUI ]
 
 	if not WidgetToolsDB.lite or t.lite == false then
 
@@ -3854,34 +3544,21 @@ end
 
 --[[ NUMERIC ]]
 
----Create a Blizzard slider GUI frame with enhanced widget functionality
----***
----@param t? sliderCreationData Optional parameters
----@param numeric? numeric Reference to an already existing numeric widget to mutate into a slider instead of creating a new base widget
----***
----@return customSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a table
 function wt.CreateSlider(t, numeric)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	numeric = wt.IsWidget(numeric) == "Numeric" and numeric or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return numeric end
 
-	---@class customSlider : numeric
+	---@type customSlider|numeric
 	local slider = numeric
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Numeric"
-	---@return "Slider"
-	---<p></p>
 	function slider.getType() return "Numeric", "Slider" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function slider.isType(type) return type == "Numeric" or type == "Slider" end
 
 	--[ Frame Setup ]
@@ -3889,14 +3566,6 @@ function wt.CreateSlider(t, numeric)
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Slider")
 
 	slider.frame = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
-
-	---@class blizzardSlider : Frame
-	---@field Slider Slider Main slider frame
-	---@field Back Button Decrease value button
-	---@field Forward Button Increase value button
-	---@field TopText FontString Title text
-	---@field MinText FontString Min value text
-	---@field MaxText FontString Max value text
 	slider.widget = CreateFrame("Slider", name .. "Frame", slider.frame, "MinimalSliderWithSteppersTemplate")
 
 	--| Position & dimensions
@@ -4182,34 +3851,21 @@ function wt.CreateSlider(t, numeric)
 	return slider
 end
 
----Create a classic Blizzard slider GUI frame with enhanced widget functionality
----***
----@param t? classicSliderCreationData Optional parameters
----@param numeric? numeric Reference to an already existing numeric widget to mutate into a slider instead of creating a new base widget
----***
----@return classicSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a table
 function wt.CreateClassicSlider(t, numeric)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	numeric = wt.IsWidget(numeric) == "Numeric" and numeric or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return numeric end
 
-	---@class classicSlider : numeric
+	---@type classicSlider|numeric
 	local slider = numeric
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Numeric"
-	---@return "ClassicSlider"
-	---<p></p>
 	function slider.getType() return "Numeric", "ClassicSlider" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function slider.isType(type) return type == "Numeric" or type == "ClassicSlider" end
 
 	--[ Frame Setup ]
@@ -4217,8 +3873,6 @@ function wt.CreateClassicSlider(t, numeric)
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Slider")
 
 	slider.frame = CreateFrame("Frame", name, t.parent)
-
-	---@class classicBlizzardSlider : Slider
 	slider.widget = CreateFrame("Slider", name .. "Frame", slider.frame, "OptionsSliderTemplate")
 
 	slider.min = _G[name .. "FrameLow"]
@@ -4609,41 +4263,22 @@ end
 
 --[[ COLOR DATA ]]
 
----Create a color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
----***
----@param t? colorpickerCreationData Optional parameters
----@param colormanager? colormanager Reference to an already existing color data manager to mutate into a colorpicker instead of creating a new base widget
----***
----@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateColorpicker(t, colormanager)
 	t = type(t) == "table" and t or {}
+
+	--[ Widget ]
+
 	colormanager = wt.IsWidget(colormanager) == "Colorpicker" and colormanager or wt.CreateColormanager(t)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return colormanager end
 
-	---Button to open the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) with
-	---@class colorpickerButton : customButton
-	---@field gradient Texture
-	---@field checker Texture
-
-	---@class colorpicker : colormanager
-	---@field button colorpickerButton|customButton|action
+	---@type colorpicker|colormanager
 	local colorpicker = colormanager
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Colormanager"
-	---@return "Colorpicker"
-	---<p></p>
-	function colormanager.getType() return "Colormanager", "Colorpicker" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
-	function colormanager.isType(type) return type == "Colormanager" or type == "Colorpicker" end
+	function colorpicker.getType() return "Colormanager", "Colorpicker" end
+	function colorpicker.isType(type) return type == "Colormanager" or type == "Colorpicker" end
 
 	--[ Frame Setup ]
 
@@ -4932,18 +4567,6 @@ end
 
 local positioningVisualAids = {}
 
---| GUI --TODO separate logical core
-
----Create and set up position management for a specified frame within a panel frame
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param frame AnyFrameObject Reference to the frame to create the settings for
----@param getData fun(): table: positionPresetData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
----@param defaultData positionPresetData Reference to the table containing the default values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.getData()*.</li></ul>
----@param settingsData positionOptionsSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key **keepInPlace** if it didn't already exist in this table.</li></ul>
----@param t positionManagementCreationData Optional parameters
----***
----@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** nil
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t)
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not us.IsFrame(frame) or type(t) ~= "table" then return end
 
@@ -4952,23 +4575,15 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	t.dataManagement.category = t.dataManagement.category or addon
 	t.dataManagement.key = t.dataManagement.key or "Position"
 
-	---@class positionPanel
-	---@field widgets table
-	---@field presets? table
-	local panel = {}
+	--[ Widget ] --TODO separate logical core
+
+	---@type positionPanel
+	---@diagnostic disable-next-line: missing-fields --NOTE: Added later --REMOVE after the logical core is separated
+	local panel = { widgets = {}, }
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "PositionOptions" string
-	---<p></p>
 	function panel.getType() return "PositionOptions" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function panel.isType(type) return type == "PositionOptions" end
 
 	--[ Visual Aids ]
@@ -5072,7 +4687,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 		arrange = {},
 		arrangement = {},
 		initialize = function(panelFrame)
-			panel.widgets = {}
 
 			--[ Presets ]
 
@@ -5144,12 +4758,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					if t.presets.onPreset then t.presets.onPreset(i) end
 				end
 
-				---Apply a specific preset
-				--- - ***Note:*** If the addon database position table doesn't contain relative frame and point key, value pairs, the position will be converted to absolute position after being applied.
-				---***
-				---@param i integer Index of the preset to be applied
-				---***
-				---@return boolean success Whether or not the preset under the specified index exists and it could be applied
 				function panel.applyPreset(i)
 					if not i or i < 1 or i > #panel.presets then return false end
 
@@ -5185,8 +4793,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 					--| Utilities
 
-					---Save the current position & visibility to the custom preset
-					--- - ***Note:*** If the custom preset position data doesn't contain relative frame and point key, value pairs, the position will be converted to absolute position when saved.
 					function panel.saveCustomPreset()
 						--Update the custom preset
 						panel.presets[t.presets.custom.index].data.position = wt.PackPosition(frame:GetPoint())
@@ -5211,7 +4817,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						if t.presets.custom.onSave then t.presets.custom.onSave() end
 					end
 
-					--Reset the custom preset to its default state
 					function panel.resetCustomPreset()
 						--Reset the custom preset
 						panel.presets[t.presets.custom.index].data = us.Clone(t.presets.custom.defaultsTable)
@@ -5537,17 +5142,6 @@ end
 
 local fonts, fontItems
 
---| GUI --TODO separate logical core
-
----Create and set up font management for a specified text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) including access to a font family selector dropdown to pick a custom font from the Widget Tools fonts list
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param textline FontString Reference to the text object to create font options for
----@param getData fun(): table: fontOptionsData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
----@param defaultData fontOptionsData Reference to the table containing the default values
----@param t fontManagementCreationData Optional parameters
----***
----@return fontPanel? table References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table | ***Default:*** nil
 function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or type(textline) ~= "table" or type(textline.GetFont) ~= "function" or type(t) ~= "table" then return end
 
@@ -5556,22 +5150,15 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 	t.dataManagement.category = t.dataManagement.category or addon
 	t.dataManagement.key = t.dataManagement.key or "Font"
 
-	---@class fontPanel
-	---@field widgets table
-	local panel = {}
+	--[ Widget ] --TODO separate logical core
+
+	---@type fontPanel
+	---@diagnostic disable-next-line: missing-fields --NOTE: Added later --REMOVE after the logical core is separated
+	local panel = { widgets = {}, }
 
 	--[ Getters & Setters ]
 
-	---Returns the type of this object
-	---***
-	---@return "FontOptions" string
-	---<p></p>
 	function panel.getType() return "FontOptions" end
-
-	---Checks and returns if the type of this object is equal to the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function panel.isType(type) return type == "FontOptions" end
 
 	--[ Options Panel ]
@@ -5583,7 +5170,6 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		arrange = {},
 		arrangement = {},
 		initialize = function(panelFrame)
-			panel.widgets = {}
 			local widgetCount = 0
 
 			--| Font family
@@ -5717,6 +5303,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 			--| Alignment
 
+			---@diagnostic disable-next-line: missing-fields --NOTE: Added later
 			panel.widgets.alignment = {}
 
 			panel.widgets.alignment = wt.CreateSpecialRadiogroup("justifyH", {
@@ -5786,46 +5373,25 @@ end
 
 --[[ PROFILE DATA ]]
 
----Create and set up a new settings page with profile data handling and advanced backup management options
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param accountData profileStorage|table Reference to the account-bound SavedVariables addon database where profile data is to be stored<ul><li>***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).</li></ul>
----@param characterData characterProfileData|table Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified<ul><li>***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.</li></ul>
----@param defaultData table A static table containing all default settings values to be cloned when creating a new profile or resetting one
----@param settingsData backupboxSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.</li></ul>
----@param t? profilesPageCreationData Optional parameters
----@param profilemanager? profilemanager Reference to an already existing profile data manager to mutate into a profile management settings page instead of creating a new base widget
----***
----@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** nil
 function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, settingsData, t, profilemanager)
+
+	--[ Widget ]
+
 	profilemanager = wt.IsWidget(profilemanager) == "Profilemanager" and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	if not profilemanager or type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(settingsData) ~= "table" then return profilemanager end
 
-	t = type(t) == "table" and t or {}
-
-	---@class profilesPage : profilemanager
-	---@field widgets? table Collection of profiles settings widgets
-	---@field backup? table Collection of backup settings widgets
-	---@field backupAll? table Collection of all profiles backup settings widgets
+	---@type profilesPage|profilemanager
 	local profiles = profilemanager
 
 	--[ Getters & Setters ]
 
-	---Returns all object types of this mutated widget
-	---***
-	---@return "Profilemanager"
-	---@return "ProfilesPage"
-	---<p></p>
 	function profiles.getType() return "Profilemanager", "ProfilesPage" end
-
-	---Checks and returns if the a type of this mutated widget matches the string provided
-	---@param type string|AnyTypeName
-	---@return boolean
-	---<p></p>
 	function profiles.isType(type) return type == "Profilemanager" or type == "ProfilesPage" end
 
 	--[ Properties ]
+
+	t = type(t) == "table" and t or {}
 
 	local addonTitle = C_AddOns.GetAddOnMetadata(addon, "Title")
 	local onDefault = type(t.onDefault) == "function" and t.onDefault or nil
@@ -6249,14 +5815,6 @@ end
 
 --[[ ADDON INFO ]]
 
---| GUI --TODO create utility logical core, add addon-wide preset management capability
-
----Create and set up a new settings page with about into for an addon
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param t? aboutPageCreationData Optional parameters
----***
----@return settingsPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** nil
 function wt.CreateAboutPage(addon, t)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
 
@@ -6280,7 +5838,7 @@ function wt.CreateAboutPage(addon, t)
 		logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
 	}
 
-	--[ Settings Page ]
+	--[ Settings Page ] --TODO create utility logical core, add addon-wide preset management capability
 
 	return wt.CreateSettingsPage(addon, not WidgetToolsDB.lite and next(data) and {
 		register = t.register,

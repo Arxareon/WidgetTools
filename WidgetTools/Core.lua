@@ -518,11 +518,7 @@ local loadedDebugging = WidgetToolsDB.debugging
 --[[ DEBUGGING TOOLS ]]
 
 if WidgetToolsDB.debugging then
-	function ds.Log(passer)
-		if type(passer) ~= "function" then return end
-
-		local message, trace = passer()
-
+	function ds.LogRaw(message, trace)
 		message = tostring(message)
 		trace = (trace == nil and "(source not traced)" or tostring(trace))
 
@@ -531,8 +527,13 @@ if WidgetToolsDB.debugging then
 		print("|T" .. ns.rs.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
 	end
 
-	ds.Log(function() return "Debug logging enabled.", "Widget Tools initialization" end)
-else ds.Log = function() end end
+	function ds.Log(passer) if type(passer) ~= "function" then return else ds.LogRaw(passer()) end end
+
+	ds.LogRaw("Debug logging enabled.", "Widget Tools initialization")
+else
+	ds.LogRaw = function() end
+	ds.Log = function() end
+end
 
 ---Convert and format an input object to string to be dumped to the in-game chat
 ---***
@@ -717,8 +718,7 @@ WidgetTools = us.Protect(widgetToolsWrapper)
 us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	eventFrame:UnregisterEvent("PLAYER_LOGIN")
 
-	ds.Log(function() return "Started loading UI.", "WidgetTools PLAYER_LOGIN" end)
-
+	ds.LogRaw("Started loading UI.", "WidgetTools PLAYER_LOGIN")
 
 	--[[ REFERENCES ]]
 
@@ -1275,5 +1275,5 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		},
 	} })
 
-	ds.Log("Job's done.", "Widget Tools initialization")
+	ds.LogRaw("Job's done.", "Widget Tools initialization")
 end)
