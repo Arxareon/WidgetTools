@@ -1,7 +1,9 @@
 --| Toolbox
 
----@type widgetToolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
+---@type toolbox
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+
+if not wt then return end
 
 --| References
 
@@ -1526,27 +1528,27 @@ function wt.CreateCheckbox(t, toggle)
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Toggle")
 
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
-	checkbox.button = CreateFrame("CheckButton", name .. "Checkbox", checkbox.frame, "SettingsCheckboxTemplate")
+	checkbox.widget = CreateFrame("CheckButton", name .. "Checkbox", checkbox.frame, "SettingsCheckboxTemplate")
 
 	--| Position & dimensions
 
 	t.size = t.size or {}
-	t.size.h = t.size.h or checkbox.button:GetHeight()
+	t.size.h = t.size.h or checkbox.widget:GetHeight()
 	t.size.w = t.label == false and t.size.h * (30 / 29) or t.size.w or 190
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(checkbox.frame, t.position) end
 	wt.SetArrangementDirective(checkbox.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	checkbox.button:SetPoint("LEFT")
-	wt.SetPosition(checkbox.button.HoverBackground, {
+	checkbox.widget:SetPoint("LEFT")
+	wt.SetPosition(checkbox.widget.HoverBackground, {
 		anchor = "LEFT",
 		offset = { x = -2, },
 	})
 
 	checkbox.frame:SetSize(t.size.w, t.size.h)
-	checkbox.button:SetSize(t.size.h * (30 / 29), t.size.h)
-	checkbox.button.HoverBackground:SetSize(t.size.w + 2, t.size.h)
+	checkbox.widget:SetSize(t.size.h * (30 / 29), t.size.h)
+	checkbox.widget.HoverBackground:SetSize(t.size.w + 2, t.size.h)
 
 	--| Visibility
 
@@ -1574,15 +1576,15 @@ function wt.CreateCheckbox(t, toggle)
 
 	--| Texture
 
-	checkbox.button:GetPushedTexture():SetVertexColor(.6, .6, .6, 1)
+	checkbox.widget:GetPushedTexture():SetVertexColor(.6, .6, .6, 1)
 
 	--[ Events ]
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then checkbox.button:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnClick" then checkbox.button:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
-		else checkbox.button:HookScript(key, value) end
+		if key == "attribute" then checkbox.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		elseif key == "OnClick" then checkbox.widget:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
+		else checkbox.widget:HookScript(key, value) end
 	end end
 
 	--| UX
@@ -1590,12 +1592,12 @@ function wt.CreateCheckbox(t, toggle)
 	---Update the widget UI based on the toggle state
 	---@param _ any
 	---@param state boolean
-	local function updateToggleState(_, state) checkbox.button:SetChecked(state) end
+	local function updateToggleState(_, state) checkbox.widget:SetChecked(state) end
 
 	--Handle widget updates
 	checkbox.setListener.toggled(updateToggleState, 1)
 
-	checkbox.button:HookScript("OnClick", function(self)
+	checkbox.widget:HookScript("OnClick", function(self)
 		local state = self:GetChecked()
 
 		PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
@@ -1605,37 +1607,37 @@ function wt.CreateCheckbox(t, toggle)
 
 	--Linked mouse interactions
 	checkbox.frame:HookScript("OnEnter", function() if checkbox.isEnabled() then
-		checkbox.button.HoverBackground:Show()
-		if IsMouseButtonDown("LeftButton") then checkbox.button:SetButtonState("PUSHED") end
+		checkbox.widget.HoverBackground:Show()
+		if IsMouseButtonDown("LeftButton") then checkbox.widget:SetButtonState("PUSHED") end
 	end end)
 	checkbox.frame:HookScript("OnLeave", function() if checkbox.isEnabled() then
-		checkbox.button.HoverBackground:Hide()
-		checkbox.button:SetButtonState("NORMAL")
+		checkbox.widget.HoverBackground:Hide()
+		checkbox.widget:SetButtonState("NORMAL")
 	end end)
 	checkbox.frame:HookScript("OnMouseDown", function(_, button) if checkbox.isEnabled() and button == "LeftButton" or (button == "RightButton") then
-		checkbox.button:SetButtonState("PUSHED")
+		checkbox.widget:SetButtonState("PUSHED")
 	end end)
 	checkbox.frame:HookScript("OnMouseUp", function(_, button, isInside) if checkbox.isEnabled() then
-		checkbox.button:SetButtonState("NORMAL")
+		checkbox.widget:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" then checkbox.button:Click(button) end
+		if isInside and button == "LeftButton" then checkbox.widget:Click(button) end
 	end end)
 
 	--| Tooltip
 
 	if type(t.tooltip) == "table" then
-		wt.AddTooltip(checkbox.button, {
+		wt.AddTooltip(checkbox.widget, {
 			title = t.tooltip.title or title,
 			lines = t.tooltip.lines,
 			anchor = "ANCHOR_NONE",
 			position = {
 				anchor = "BOTTOMLEFT",
-				relativeTo = checkbox.button,
+				relativeTo = checkbox.widget,
 				relativePoint = "TOPRIGHT",
 			},
 		}, { triggers = { checkbox.frame, }, })
 
-		wt.AddWidgetTooltipLines({ checkbox.button }, t.showDefault ~= false and checkbox.formatValue(checkbox.getDefault()), t.utilityMenu)
+		wt.AddWidgetTooltipLines({ checkbox.widget }, t.showDefault ~= false and checkbox.formatValue(checkbox.getDefault()), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -1647,7 +1649,7 @@ function wt.CreateCheckbox(t, toggle)
 				condition = checkbox.isEnabled,
 			},
 			{
-				frame = checkbox.button,
+				frame = checkbox.widget,
 				condition = checkbox.isEnabled,
 			},
 		},
@@ -1668,8 +1670,8 @@ function wt.CreateCheckbox(t, toggle)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		checkbox.button:SetEnabled(state)
-		checkbox.button:EnableMouse(state)
+		checkbox.widget:SetEnabled(state)
+		checkbox.widget:EnableMouse(state)
 
 		if checkbox.label then checkbox.label:SetFontObject(state and t.font.normal or t.font.disabled) end
 	end
@@ -1703,10 +1705,10 @@ local function setUpToggleFrame(toggle, title, t)
 	if not t.arrange and t.position then wt.SetPosition(toggle.frame, t.position) end
 	wt.SetArrangementDirective(toggle.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	toggle.button:SetPoint("LEFT", (t.size.h - 16) / 2, 0)
+	toggle.widget:SetPoint("LEFT", (t.size.h - 16) / 2, 0)
 
 	toggle.frame:SetSize(t.size.w, t.size.h)
-	toggle.button:SetSize(16, 16)
+	toggle.widget:SetSize(16, 16)
 
 	--| Visibility
 
@@ -1718,15 +1720,15 @@ local function setUpToggleFrame(toggle, title, t)
 
 	--Update the frame order
 	toggle.frame:SetFrameLevel(toggle.frame:GetFrameLevel() + 1)
-	toggle.button:SetFrameLevel(toggle.button:GetFrameLevel() - 2)
+	toggle.widget:SetFrameLevel(toggle.widget:GetFrameLevel() - 2)
 
 	--[ Events ]
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then toggle.button:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnClick" then toggle.button:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
-		else toggle.button:HookScript(key, value) end
+		if key == "attribute" then toggle.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		elseif key == "OnClick" then toggle.widget:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
+		else toggle.widget:HookScript(key, value) end
 	end end
 
 	--| UX
@@ -1734,7 +1736,7 @@ local function setUpToggleFrame(toggle, title, t)
 	---Update the widget UI based on the toggle state
 	---@param _ any
 	---@param state boolean
-	local function updateToggleState(_, state) toggle.button:SetChecked(state) end
+	local function updateToggleState(_, state) toggle.widget:SetChecked(state) end
 
 	--Handle widget updates
 	toggle.setListener.toggled(updateToggleState, 1)
@@ -1748,10 +1750,10 @@ local function setUpToggleFrame(toggle, title, t)
 			anchor = "ANCHOR_NONE",
 			position = {
 				anchor = "BOTTOMLEFT",
-				relativeTo = toggle.button,
+				relativeTo = toggle.widget,
 				relativePoint = "TOPRIGHT",
 			},
-		}, { triggers = { toggle.button, }, })
+		}, { triggers = { toggle.widget, }, })
 
 		wt.AddWidgetTooltipLines({ toggle.frame }, t.showDefault ~= false and toggle.formatValue(toggle.getDefault()), t.utilityMenu)
 	end
@@ -1765,7 +1767,7 @@ local function setUpToggleFrame(toggle, title, t)
 				condition = toggle.isEnabled,
 			},
 			{
-				frame = toggle.button,
+				frame = toggle.widget,
 				condition = toggle.isEnabled,
 			},
 		},
@@ -1818,7 +1820,7 @@ function wt.CreateClassicCheckbox(t, toggle)
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Toggle")
 
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
-	checkbox.button = CreateFrame("CheckButton", name .. "Checkbox", checkbox.frame, "InterfaceOptionsCheckButtonTemplate")
+	checkbox.widget = CreateFrame("CheckButton", name .. "Checkbox", checkbox.frame, "InterfaceOptionsCheckButtonTemplate")
 
 	--| Label
 
@@ -1832,7 +1834,7 @@ function wt.CreateClassicCheckbox(t, toggle)
 	if t.label ~= false then
 		checkbox.label = _G[name .. "CheckboxText"]
 
-		checkbox.label:SetPoint("LEFT", checkbox.button, "RIGHT", 2, 0)
+		checkbox.label:SetPoint("LEFT", checkbox.widget, "RIGHT", 2, 0)
 		checkbox.label:SetFontObject(t.font.normal)
 
 		checkbox.label:SetText(title)
@@ -1850,7 +1852,7 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 	--| UX
 
-	checkbox.button:HookScript("OnClick", function(self)
+	checkbox.widget:HookScript("OnClick", function(self)
 		local state = self:GetChecked()
 
 		PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
@@ -1860,20 +1862,20 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 	--Linked mouse interactions
 	checkbox.frame:HookScript("OnEnter", function() if checkbox.isEnabled() then
-		checkbox.button:LockHighlight()
-		if IsMouseButtonDown("LeftButton") or (IsMouseButtonDown("RightButton")) then checkbox.button:SetButtonState("PUSHED") end
+		checkbox.widget:LockHighlight()
+		if IsMouseButtonDown("LeftButton") or (IsMouseButtonDown("RightButton")) then checkbox.widget:SetButtonState("PUSHED") end
 	end end)
 	checkbox.frame:HookScript("OnLeave", function() if checkbox.isEnabled() then
-		checkbox.button:UnlockHighlight()
-		checkbox.button:SetButtonState("NORMAL")
+		checkbox.widget:UnlockHighlight()
+		checkbox.widget:SetButtonState("NORMAL")
 	end end)
 	checkbox.frame:HookScript("OnMouseDown", function(_, button) if checkbox.isEnabled() and button == "LeftButton" or (button == "RightButton") then
-		checkbox.button:SetButtonState("PUSHED")
+		checkbox.widget:SetButtonState("PUSHED")
 	end end)
 	checkbox.frame:HookScript("OnMouseUp", function(_, button, isInside) if checkbox.isEnabled() then
-		checkbox.button:SetButtonState("NORMAL")
+		checkbox.widget:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" or (button == "RightButton") then checkbox.button:Click(button) end
+		if isInside and button == "LeftButton" or (button == "RightButton") then checkbox.widget:Click(button) end
 	end end)
 
 	--| State
@@ -1882,7 +1884,7 @@ function wt.CreateClassicCheckbox(t, toggle)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		checkbox.button:SetEnabled(state)
+		checkbox.widget:SetEnabled(state)
 
 		if checkbox.label then checkbox.label:SetFontObject(state and t.font.normal or t.font.disabled) end
 	end
@@ -2156,10 +2158,10 @@ function wt.CreateRadiogroup(t, selector)
 				anchor = "ANCHOR_NONE",
 				position = {
 					anchor = "BOTTOMLEFT",
-					relativeTo = item.button,
+					relativeTo = item.widget,
 					relativePoint = "TOPRIGHT",
 				},
-			}, { triggers = { item.button, }, }) end
+			}, { triggers = { item.widget, }, }) end
 
 			wt.SetVisibility(item.frame, true)
 		else wt.SetVisibility(item.frame, false) end
@@ -2873,10 +2875,10 @@ function wt.CreateCheckgroup(t, selector)
 	local function setLock(item, limited)
 		if limited then
 			item.setEnabled(false, true)
-			item.button:SetAlpha(0.4)
+			item.widget:SetAlpha(0.4)
 		elseif checkgroup.isEnabled() then
 			item.setEnabled(true, true)
-			item.button:SetAlpha(1)
+			item.widget:SetAlpha(1)
 		end
 	end
 
@@ -2923,10 +2925,10 @@ function wt.CreateCheckgroup(t, selector)
 				anchor = "ANCHOR_NONE",
 				position = {
 					anchor = "BOTTOMLEFT",
-					relativeTo = item.button,
+					relativeTo = item.widget,
 					relativePoint = "TOPRIGHT",
 				},
-			}, { triggers = { item.button, }, }) end
+			}, { triggers = { item.widget, }, }) end
 		else wt.SetVisibility(item.frame, false) end
 	end
 
@@ -2984,7 +2986,7 @@ function wt.CreateCheckgroup(t, selector)
 	}, }
 
 	for i = 1, #checkgroup.toggles do table.insert(openTriggers, {
-		frame = checkgroup.toggles[i].button,
+		frame = checkgroup.toggles[i].widget,
 		condition = checkgroup.isEnabled,
 	}) end
 
@@ -4697,9 +4699,9 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				--| Utilities
 
 				local applyPreset = function(_, i)
-					if not (panel.presets[i] or {}).data then
+					if type(panel.presets[i]) ~= "table" or type(panel.presets[i].data) ~= "table" then
 						--Call the specified handler
-						if t.presets.onPreset then t.presets.onPreset(i) end
+						if type(t.presets.onPreset) == "function" then t.presets.onPreset(panel.presets[i], i) end
 
 						return
 					end
@@ -4755,7 +4757,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					if WidgetToolsDB.positioningAids then positioningVisualAids.update(frame, getData().position) end
 
 					--Call the specified handler
-					if t.presets.onPreset then t.presets.onPreset(i) end
+					if type(t.presets.onPreset) == "function" then t.presets.onPreset(panel.presets[i], i) end
 				end
 
 				function panel.applyPreset(i)
@@ -5244,15 +5246,15 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 						CustomFontChangeHandler = function() if type(t.onChangeFont) == "function" then t.onChangeFont() end end,
 						UpdateTextFont = function() textline:SetFont(getData().path, getData().size, "OUTLINE") end,
 						UpdateFontDropdownText = not WidgetToolsDB.lite and function()
-							--Update the font of the dropdown toggle button label
 							local _, size, flags = panel.widgets.path.toggle.label:GetFont()
+
 							panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
 						end or nil,
 					},
 				},
 				events = { OnShow = function()
-					--Update the font of the dropdown toggle button label
 					local _, size, flags = panel.widgets.path.toggle.label:GetFont()
+
 					panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
 				end },
 			})
@@ -5601,8 +5603,8 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							key = keys[1],
 							onChange = { RefreshBackupBox = profiles.backup.refresh },
 						},
-						listeners = { loaded = { { handler = function() profiles.backupAll.compact.button:SetChecked(settingsData.compactBackup) end, }, }, },
-						events = { OnClick = function(_, state) profiles.backupAll.compact.button:SetChecked(state) end },
+						listeners = { loaded = { { handler = function() profiles.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
+						events = { OnClick = function(_, state) profiles.backupAll.compact.widget:SetChecked(state) end },
 						showDefault = false,
 						utilityMenu = false,
 					})
@@ -5659,16 +5661,16 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 					--[ All Profiles ]
 
 					local allProfilesBackupFrame = wt.CreatePanel({
-						parent = canvas,
+						parent = canvas:GetParent(),
 						name = addon .. "AllProfilesBackup",
 						append = false,
 						title = wt.strings.backup.allProfiles.label,
-						position = { anchor = "BOTTOMRIGHT", offset = { x = 12, y = 1 }, },
+						position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 						keepInBounds = true,
-						size = { w = 678, h = 609 },
+						size = { w = 685, h = 615 },
 						frameStrata = "DIALOG",
 						keepOnTop = true,
-						background = { color = { a = 0.9 }, },
+						background = { color = { a = 0.94 }, },
 						arrangement = {
 							margins = { l = 16, r = 16, t = 42, b = 16 },
 							resize = false,
@@ -5819,6 +5821,7 @@ function wt.CreateAboutPage(addon, t)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
 
 	t = type(t) == "table" and t or {}
+
 	local data = {
 		title = C_AddOns.GetAddOnMetadata(addon, "Title"),
 		version = C_AddOns.GetAddOnMetadata(addon, "Version"),
@@ -5869,7 +5872,7 @@ function wt.CreateAboutPage(addon, t)
 					local position = { offset = { x = 16, y = -14 } }
 
 					if data.version then
-						local version = wt.CreateText({
+						local versionLabel = wt.CreateText({
 							parent = panel,
 							name = "VersionTitle",
 							position = position,
@@ -5884,7 +5887,7 @@ function wt.CreateAboutPage(addon, t)
 							parent = panel,
 							name = "Version",
 							position = {
-								relativeTo = version,
+								relativeTo = versionLabel,
 								relativePoint = "TOPRIGHT",
 								offset = { x = 5 }
 							},
@@ -5901,16 +5904,16 @@ function wt.CreateAboutPage(addon, t)
 							wrap = false,
 						})
 
-						position.relativeTo = version
+						position.relativeTo = versionLabel
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -6
 					end
 
 					if data.category then
-						local category = wt.CreateText({
+						local categoryLabel = wt.CreateText({
 							parent = panel,
-							name = "Category",
+							name = "CategoryTitle",
 							position = position,
 							width = 48,
 							text = CATEGORY,
@@ -5923,7 +5926,7 @@ function wt.CreateAboutPage(addon, t)
 							parent = panel,
 							name = "Category",
 							position = {
-								relativeTo = category,
+								relativeTo = categoryLabel,
 								relativePoint = "TOPRIGHT",
 								offset = { x = 5 }
 							},
@@ -5933,14 +5936,14 @@ function wt.CreateAboutPage(addon, t)
 							justify = { h = "LEFT", },
 						})
 
-						position.relativeTo = category
+						position.relativeTo = categoryLabel
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -6
 					end
 
 					if data.author then
-						local author = wt.CreateText({
+						local authorLabel = wt.CreateText({
 							parent = panel,
 							name = "AuthorTitle",
 							position = position,
@@ -5954,7 +5957,7 @@ function wt.CreateAboutPage(addon, t)
 							parent = panel,
 							name = "Author",
 							position = {
-								relativeTo = author,
+								relativeTo = authorLabel,
 								relativePoint = "TOPRIGHT",
 								offset = { x = 5 }
 							},
@@ -5965,14 +5968,14 @@ function wt.CreateAboutPage(addon, t)
 							wrap = false,
 						})
 
-						position.relativeTo = author
+						position.relativeTo = authorLabel
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -6
 					end
 
 					if data.license then
-						local license = wt.CreateText({
+						local licenseLabel = wt.CreateText({
 							parent = panel,
 							name = "LicenseTitle",
 							position = position,
@@ -5987,7 +5990,7 @@ function wt.CreateAboutPage(addon, t)
 							parent = panel,
 							name = "License",
 							position = {
-								relativeTo = license,
+								relativeTo = licenseLabel,
 								relativePoint = "TOPRIGHT",
 								offset = { x = 5 }
 							},
@@ -5998,7 +6001,7 @@ function wt.CreateAboutPage(addon, t)
 							wrap = false,
 						})
 
-						position.relativeTo = license
+						position.relativeTo = licenseLabel
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 					end
@@ -6008,7 +6011,7 @@ function wt.CreateAboutPage(addon, t)
 					if position.relativeTo then position.offset.y = -14 end
 
 					if data.curse then
-						local curse = wt.CreateCopybox({
+						local curseLink = wt.CreateCopybox({
 							parent = panel,
 							name = "CurseForge",
 							title = wt.strings.about.curseForge,
@@ -6017,14 +6020,14 @@ function wt.CreateAboutPage(addon, t)
 							value = data.curse,
 						})
 
-						position.relativeTo = curse.frame
+						position.relativeTo = curseLink.frame
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -8
 					end
 
 					if data.wago then
-						local wago = wt.CreateCopybox({
+						local wagoLink = wt.CreateCopybox({
 							parent = panel,
 							name = "Wago",
 							title = wt.strings.about.wago,
@@ -6033,14 +6036,14 @@ function wt.CreateAboutPage(addon, t)
 							value = data.wago,
 						})
 
-						position.relativeTo = wago.frame
+						position.relativeTo = wagoLink.frame
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -8
 					end
 
 					if data.repo then
-						local repo = wt.CreateCopybox({
+						local repoLink = wt.CreateCopybox({
 							parent = panel,
 							name = "Repository",
 							title = wt.strings.about.repository,
@@ -6049,7 +6052,7 @@ function wt.CreateAboutPage(addon, t)
 							value = data.repo,
 						})
 
-						position.relativeTo = repo.frame
+						position.relativeTo = repoLink.frame
 						position.relativePoint = "BOTTOMLEFT"
 						position.offset.x = 0
 						position.offset.y = -8
@@ -6068,7 +6071,7 @@ function wt.CreateAboutPage(addon, t)
 
 					if not t.changelog then return end
 
-					local changelog = wt.CreateMultilineEditbox({
+					local changelogTextbox = wt.CreateMultilineEditbox({
 						parent = panel,
 						name = "Changelog",
 						title = wt.strings.about.changelog.label,
@@ -6077,7 +6080,7 @@ function wt.CreateAboutPage(addon, t)
 						size = { w = panel:GetWidth() - 225, h = panel:GetHeight() - 25 },
 						font = { normal = "GameFontDisableSmall", },
 						color = rs.colors.grey[2],
-						value = wt.FormatChangelog(t.changelog, true),
+						value = us.FormatChangelog(t.changelog, true),
 						readOnly = true,
 					})
 
@@ -6090,27 +6093,27 @@ function wt.CreateAboutPage(addon, t)
 						tooltip = { lines = { { text = wt.strings.about.fullChangelog.open.tooltip, }, } },
 						position = {
 							anchor = "TOPRIGHT",
-							relativeTo = changelog.frame,
+							relativeTo = changelogTextbox.frame,
 							relativePoint = "TOPRIGHT",
 							offset = { x = -1, y = 2 }
 						},
 						size = { w = 100, h = 17 },
-						frameLevel = changelog.frame:GetFrameLevel() + 1, --Make sure it's on top to be clickable
+						frameLevel = changelogTextbox.frame:GetFrameLevel() + 1, --Make sure it's on top to be clickable
 						font = {
 							normal = "GameFontNormalSmall",
 							highlight = "GameFontHighlightSmall",
 						},
 						action = function() if fullChangelogFrame then fullChangelogFrame:Show() else fullChangelogFrame = wt.CreatePanel({
-							parent = canvas,
+							parent = canvas:GetParent(),
 							name = addon .. "Changelog",
 							append = false,
 							title = wt.strings.about.fullChangelog.label:gsub("#ADDON", data.title),
-							position = { anchor = "BOTTOMRIGHT", offset = { x = 12, y = 1 }, },
+							position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 							keepInBounds = true,
-							size = { w = 678, h = 609 },
+							size = { w = 685, h = 615 },
 							frameStrata = "DIALOG",
 							keepOnTop = true,
-							background = { color = { a = 0.9 }, },
+							background = { color = { a = 0.94 }, },
 							arrangement = {
 								margins = { l = 16, r = 16, t = 42, b = 16 },
 								resize = false,
@@ -6126,7 +6129,7 @@ function wt.CreateAboutPage(addon, t)
 									size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
 									font = { normal = "GameFontDisable", },
 									color = rs.colors.grey[2],
-									value = wt.FormatChangelog(t.changelog),
+									value = us.FormatChangelog(t.changelog),
 									readOnly = true,
 									scrollSpeed = 0.2,
 								})
@@ -6199,5 +6202,5 @@ function wt.CreateAboutPage(addon, t)
 				})
 			end
 		end,
-	} or nil)
+	})
 end

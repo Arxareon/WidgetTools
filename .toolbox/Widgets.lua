@@ -1,7 +1,9 @@
 --| Toolbox
 
----@type widgetToolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
+---@type toolbox
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+
+if not wt then return end
 
 --| References
 

@@ -1,7 +1,9 @@
 --| Toolbox
 
----@type widgetToolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "X-WidgetTools-ToolboxVersion")]
+---@type toolbox
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+
+if not wt then return end
 
 --| References
 
@@ -16,6 +18,11 @@ local ds = WidgetTools.debugging
 
 local cr = WrapTextInColor
 local crc = WrapTextInColorCode
+
+
+--[[ GAME VERSION ]]
+
+wt.classic = select(4, GetBuildInfo()) < 100000
 
 
 --[[ TABLE MANAGEMENT ]]
@@ -208,40 +215,6 @@ function wt.Clear(s)
 	)
 
 	return s
-end
-
-function wt.FormatChangelog(changelog, latest)
-	local highlight = "FFFFFFFF"
-	local new = "FF66EE66"
-	local fix = "FFEE4444"
-	local change = "FF8888EE"
-	local note = "FFEEEE66"
-
-	local c = ""
-
-	if type(changelog) == "table" then for i = 1, #changelog do
-		local firstLine = latest and 2 or 1
-
-		for j = firstLine, #changelog[i] do
-			c = c .. (j > firstLine and "\n\n" or "") .. changelog[i][j]:gsub(
-				"#V_(.-)_#", (i > 1 and "\n\n\n" or "") .. "|c" .. highlight .. "• %1|r"
-			):gsub(
-				"#N_(.-)_#", "|c".. new .. "%1|r"
-			):gsub(
-				"#F_(.-)_#", "|c".. fix .. "%1|r"
-			):gsub(
-				"#C_(.-)_#", "|c".. change .. "%1|r"
-			):gsub(
-				"#O_(.-)_#", "|c".. note .. "%1|r"
-			):gsub(
-				"#H_(.-)_#", "|c".. highlight .. "%1|r"
-			)
-		end
-
-		if latest then break end
-	end end
-
-	return c
 end
 
 --[ Hyperlinks ]

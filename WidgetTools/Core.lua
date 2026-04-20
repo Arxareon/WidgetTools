@@ -167,6 +167,41 @@ function us.TableToString(table, compact)
 	return formatTableString(table, compact, compact and "" or " ", compact and "" or "\n", "    ")
 end
 
+local highlightColor, newColor, fixColor, changeColor, noteColor = "FFFFFFFF", "FF66EE66", "FFEE4444", "FF8888EE", "FFEEEE66"
+
+function us.FormatChangelog(changelog, latest)
+	local c = ""
+	if type(changelog) ~= "table" then return c end
+
+	for i = 1, #changelog do
+		local firstLine = latest and 2 or 1
+		local version = changelog[i]
+
+		if type(version) ~= "table" then return c end
+
+		for j = firstLine, #version do if type(version[j]) == "string" then
+			c = c .. (j > firstLine and "\n\n" or "") .. version[j]:gsub(
+				"#V_(.-)_#", (i > 1 and "\n\n\n" or "") .. "|c" .. highlightColor .. "• %1|r"
+			):gsub(
+				"#N_(.-)_#", "|c".. newColor .. "%1|r"
+			):gsub(
+				"#F_(.-)_#", "|c".. fixColor .. "%1|r"
+			):gsub(
+				"#C_(.-)_#", "|c".. changeColor .. "%1|r"
+			):gsub(
+				"#O_(.-)_#", "|c".. noteColor .. "%1|r"
+			):gsub(
+				"#H_(.-)_#", "|c".. highlightColor .. "%1|r"
+			)
+		end end
+
+		if latest then break end
+	end
+
+	return c
+end
+
+
 --[ Table Management ]
 
 local protectionProxies = {}
@@ -628,8 +663,10 @@ local protectedToolboxRegistry = {}
 
 --| Registration
 
-function ts.Register(addon, version, callback, toolbox)
+function ts.Register(addon, version, callback, toolboxAddon, toolbox)
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or not version then return end
+
+	version = tostring(version)
 
 	--[ Supply Toolbox ]
 
@@ -661,14 +698,12 @@ function ts.Register(addon, version, callback, toolbox)
 
 	--[ Initialize Toolbox ]
 
-	version = tostring(version)
-
 	--| Load the Toolbox addon
 
-	local toolboxAddon = "WidgetToolbox_" .. version
+	if type(toolboxAddon) ~= "string" then toolboxAddon = "WidgetToolbox_" .. version end
 
-	if not C_AddOns.IsAddOnLoadable(toolboxAddon) then
-		ds.Log(function() return "Could not start loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration" end)
+	if not C_AddOns.DoesAddOnExist(toolboxAddon) then
+		ds.Log(function() return "Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.", "Widget Toolbox registration" end)
 
 		return false
 	end
@@ -676,7 +711,7 @@ function ts.Register(addon, version, callback, toolbox)
 	--| Register callback
 
 	us.SetListener(eventFrame, "ADDON_LOADED", function(_, a)
-		if a ~= addon then return end
+		if a ~= toolboxAddon then return end
 
 		eventFrame:UnregisterEvent("ADDON_LOADED")
 
@@ -684,8 +719,8 @@ function ts.Register(addon, version, callback, toolbox)
 		ts.initialization[version] = nil
 
 		ds.Log(function() return
-			"New Toolbox version " .. us.ToString(version) .. " initialization finished for " .. cr(addon, LIGHTBLUE_FONT_COLOR) .. ".",
-			addon .. " ADDON_LOADED"
+			"New Toolbox version " .. us.ToString(version) .. " initialization finished by " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. ".",
+			toolboxAddon .. " ADDON_LOADED"
 		end)
 
 		if type(callback) == "function" then callback(protectedToolboxRegistry[version].toolbox) end
@@ -724,7 +759,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[ Shortcuts ]
 
-	---@type widgetToolbox
+	---@type toolbox
 	local wt = ns[C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-WidgetTools-AddToNamespace")]
 
 	--[ Locals ]
@@ -955,246 +990,321 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 			--[ List Toolbox Versions ]
 
-			for toolboxVersion, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do wt.CreatePanel({
-				parent = canvas,
-				name = "Toolbox" .. toolboxVersion:gsub("[^%w]", "_"),
-				title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", crc(toolboxVersion, "FFFFFFFF"))),
-				arrange = {},
-				size = { h = 32 },
-				arrangement = {
-					margins = { l = 30, },
-					gaps = 10,
-				},
-				initialize = function(toolboxPanel, width)
+			for version, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do
+				local title = entry.toolbox.name
+				if type(title) ~= "string" then title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", version)) end
 
-					--[ List Reliant Addons ]
+				wt.CreatePanel({
+					parent = canvas,
+					name = "Toolbox" .. version:gsub("[^%w]", "_"),
+					title = title,
+					arrange = {},
+					size = { h = 32 },
+					arrangement = {
+						margins = { l = 30, },
+						gaps = 10,
+					},
+					initialize = function(toolboxPanel, width, _, name)
 
-					for i = 1, #entry.addons do if C_AddOns.IsAddOnLoaded(entry.addons[i]) then
-						local data = {
-							title = C_AddOns.GetAddOnMetadata(entry.addons[i], "Title"),
-							version = C_AddOns.GetAddOnMetadata(entry.addons[i], "Version"),
-							day = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Day"),
-							month = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Month"),
-							year = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Year"),
-							category = C_AddOns.GetAddOnMetadata(entry.addons[i], "Category"),
-							notes = C_AddOns.GetAddOnMetadata(entry.addons[i], "Notes"),
-							author = C_AddOns.GetAddOnMetadata(entry.addons[i], "Author"),
-							license = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-License"),
-							curse = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-CurseForge"),
-							wago = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Wago"),
-							repo = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Repository"),
-							issues = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Issues"),
-							sponsors = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-Sponsors"),
-							topSponsors = C_AddOns.GetAddOnMetadata(entry.addons[i], "X-TopSponsors"),
-							logo = C_AddOns.GetAddOnMetadata(entry.addons[i], "IconTexture"),
-						}
+						--[ Toolbox Info ]
 
-						wt.CreatePanel({
-							parent = toolboxPanel,
-							name = entry.addons[i],
-							label = false,
-							arrange = {},
-							size = { w = width - 42, h = 84 },
-							background = { color = { r = 0.1, g = 0.1, b = 0.1, a = 0.6 } },
-							arrangement = {
-								margins = { l = 34, },
-								resize = false,
-							},
-							initialize = function(addonPanel)
-								wt.CreateTexture(addonPanel, {
-									name = "Logo",
-									position = {
-										anchor = "TOP",
-										relativeTo = addonPanel,
-										relativePoint = "TOPLEFT",
-										offset = { x = 3, y = -3 }
+						if entry.toolbox.changelog then
+							local changelogFrame
+
+							wt.CreateButton({
+								parent = toolboxPanel,
+								name = "ChangelogButton",
+								title = wt.strings.about.fullChangelog.open.label,
+								tooltip = { lines = { { text = wt.strings.about.fullChangelog.open.tooltip, }, } },
+								position = {
+									anchor = "TOPRIGHT",
+									offset = { x = -6, y = 30 }
+								},
+								size = { w = 120, },
+								action = function() if changelogFrame then changelogFrame:Show() else changelogFrame = wt.CreatePanel({
+									parent = canvas:GetParent():GetParent(),
+									name = name .. "Changelog",
+									append = false,
+									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
+									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
+									keepInBounds = true,
+									size = { w = 685, h = 615 },
+									frameStrata = "DIALOG",
+									keepOnTop = true,
+									background = { color = { a = 0.94 }, },
+									arrangement = {
+										margins = { l = 16, r = 16, t = 42, b = 16 },
+										resize = false,
 									},
-									size = { w = 38, h = 38 },
-									path = data.logo or ns.rs.textures.missing,
-								})
+									initialize = function(windowPanel)
+										wt.CreateMultilineEditbox({
+											parent = windowPanel,
+											name = "FullChangelog",
+											title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
+											label = false,
+											tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
+											arrange = {},
+											size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
+											font = { normal = "GameFontDisable", },
+											color = ns.rs.colors.grey[2],
+											value = us.FormatChangelog(expose(entry.toolbox.changelog)),
+											readOnly = true,
+											scrollSpeed = 0.2,
+										})
 
-								--| Toggle
+										wt.CreateButton({
+											parent = windowPanel,
+											name = "CloseButton",
+											title = CLOSE,
+											position = {
+												anchor = "TOPRIGHT",
+												offset = { x = -12, y = -12 },
+											},
+											size = { w = 96, },
+											action = function() windowPanel:Hide() end,
+										})
 
-								local function toggleAddon(state)
-									if state then
-										C_AddOns.EnableAddOn(entry.addons[i])
-										addonPanel:SetAlpha(1)
-									else
-										C_AddOns.DisableAddOn(entry.addons[i])
-										addonPanel:SetAlpha(0.5)
-									end
-								end
+										_G[windowPanel:GetName() .. "Title"]:SetPoint("TOPLEFT", 18, -18)
 
-								local toggle = wt.CreateCheckbox({
-									parent = addonPanel,
-									name = "Toggle",
-									title = cr(C_AddOns.GetAddOnMetadata(entry.addons[i], "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
-									tooltip = { lines = { { text = ns.rs.strings.about.toggle.tooltip, }, } },
+										windowPanel:EnableMouse(true)
+									end,
+								}) end end,
+							})
+						end
+
+						--[ List Reliant Addons ]
+
+						for i = 1, #entry.addons do
+							local addon = entry.addons[i]
+
+							if C_AddOns.IsAddOnLoaded(addon) then
+								local data = {
+									title = C_AddOns.GetAddOnMetadata(addon, "Title"),
+									version = C_AddOns.GetAddOnMetadata(addon, "Version"),
+									day = C_AddOns.GetAddOnMetadata(addon, "X-Day"),
+									month = C_AddOns.GetAddOnMetadata(addon, "X-Month"),
+									year = C_AddOns.GetAddOnMetadata(addon, "X-Year"),
+									category = C_AddOns.GetAddOnMetadata(addon, "Category"),
+									notes = C_AddOns.GetAddOnMetadata(addon, "Notes"),
+									author = C_AddOns.GetAddOnMetadata(addon, "Author"),
+									license = C_AddOns.GetAddOnMetadata(addon, "X-License"),
+									curse = C_AddOns.GetAddOnMetadata(addon, "X-CurseForge"),
+									wago = C_AddOns.GetAddOnMetadata(addon, "X-Wago"),
+									repo = C_AddOns.GetAddOnMetadata(addon, "X-Repository"),
+									issues = C_AddOns.GetAddOnMetadata(addon, "X-Issues"),
+									sponsors = C_AddOns.GetAddOnMetadata(addon, "X-Sponsors"),
+									topSponsors = C_AddOns.GetAddOnMetadata(addon, "X-TopSponsors"),
+									logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
+								}
+
+								wt.CreatePanel({
+									parent = toolboxPanel,
+									name = addon,
+									label = false,
 									arrange = {},
-									size = { w = 300, },
-									font = { normal = "GameFontNormalMed1", },
-									getData = function() return C_AddOns.GetAddOnEnableState(entry.addons[i]) > 0 end,
-									saveData = function(state) toggleAddon(state) end,
-									instantSave = false,
-									listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },
-									events = { OnClick = function(_, state) toggleAddon(state) end, },
-									showDefault = false,
-									utilityMenu = false,
-									dataManagement = {
-										category = category,
-										key = keys[1],
+									size = { w = width - 42, h = 84 },
+									background = { color = { r = 0.1, g = 0.1, b = 0.1, a = 0.6 } },
+									arrangement = {
+										margins = { l = 34, },
+										resize = false,
 									},
+									initialize = function(addonPanel)
+										wt.CreateTexture(addonPanel, {
+											name = "Logo",
+											position = {
+												anchor = "TOP",
+												relativeTo = addonPanel,
+												relativePoint = "TOPLEFT",
+												offset = { x = 3, y = -3 }
+											},
+											size = { w = 38, h = 38 },
+											path = data.logo or ns.rs.textures.missing,
+										})
+
+										--| Toggle
+
+										local function toggleAddon(state)
+											if state then
+												C_AddOns.EnableAddOn(addon)
+												addonPanel:SetAlpha(1)
+											else
+												C_AddOns.DisableAddOn(addon)
+												addonPanel:SetAlpha(0.5)
+											end
+										end
+
+										local toggle = wt.CreateCheckbox({
+											parent = addonPanel,
+											name = "Toggle",
+											title = cr(C_AddOns.GetAddOnMetadata(addon, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
+											tooltip = { lines = { { text = ns.rs.strings.about.toggle.tooltip, }, } },
+											arrange = {},
+											size = { w = 300, },
+											font = { normal = "GameFontNormalMed1", },
+											getData = function() return C_AddOns.GetAddOnEnableState(addon) > 0 end,
+											saveData = function(state) toggleAddon(state) end,
+											instantSave = false,
+											listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },
+											events = { OnClick = function(_, state) toggleAddon(state) end, },
+											showDefault = false,
+											utilityMenu = false,
+											dataManagement = {
+												category = category,
+												key = keys[1],
+											},
+										})
+
+										if toggle.frame then toggle.frame:SetIgnoreParentAlpha(true) end
+
+										--| Description
+
+										if data.notes then wt.CreateText({
+											parent = addonPanel,
+											name = "Notes",
+											position = { offset = { x = 16, y = -49 } },
+											width = 318,
+											height = 20,
+											text = data.notes,
+											font = "GameFontHighlightSmall",
+											justify = { h = "LEFT", v = "TOP" },
+										}) end
+
+										--| Information
+
+										local position = { offset = { x = 344, y = -13 } }
+
+										if data.version then
+											local versionLabel = wt.CreateText({
+												parent = addonPanel,
+												name = "VersionTitle",
+												position = position,
+												width = 48,
+												text = wt.strings.about.version,
+												font = "GameFontHighlightSmall",
+												justify = { h = "RIGHT", },
+											})
+
+											wt.CreateText({
+												parent = addonPanel,
+												name = "Version",
+												position = {
+													relativeTo = versionLabel,
+													relativePoint = "TOPRIGHT",
+													offset = { x = 5 }
+												},
+												width = 140,
+												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
+													"#DAY", data.day
+												):gsub(
+													"#MONTH", data.month
+												):gsub(
+													"#YEAR", data.year
+												), NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
+												font = "GameFontNormalSmall",
+												justify = { h = "LEFT", },
+											})
+
+											position.relativeTo = versionLabel
+											position.relativePoint = "BOTTOMLEFT"
+											position.offset.x = 0
+											position.offset.y = -6
+										end
+
+										if data.category then
+											local categoryLabel = wt.CreateText({
+												parent = addonPanel,
+												name = "Category",
+												position = position,
+												width = 48,
+												text = CATEGORY,
+												font = "GameFontHighlightSmall",
+												justify = { h = "RIGHT", },
+												wrap = false,
+											})
+
+											wt.CreateText({
+												parent = addonPanel,
+												name = "Category",
+												position = {
+													relativeTo = categoryLabel,
+													relativePoint = "TOPRIGHT",
+													offset = { x = 5 }
+												},
+												width = 140,
+												text = data.category,
+												font = "GameFontNormalSmall",
+												justify = { h = "LEFT", },
+											})
+
+											position.relativeTo = categoryLabel
+											position.relativePoint = "BOTTOMLEFT"
+											position.offset.x = 0
+											position.offset.y = -6
+										end
+
+										if data.author then
+											local authorLabel = wt.CreateText({
+												parent = addonPanel,
+												name = "AuthorTitle",
+												position = position,
+												width = 48,
+												text = wt.strings.about.author,
+												font = "GameFontHighlightSmall",
+												justify = { h = "RIGHT", },
+											})
+
+											wt.CreateText({
+												parent = addonPanel,
+												name = "Author",
+												position = {
+													relativeTo = authorLabel,
+													relativePoint = "TOPRIGHT",
+													offset = { x = 5 }
+												},
+												width = 140,
+												text = data.author,
+												font = "GameFontNormalSmall",
+												justify = { h = "LEFT", },
+											})
+
+											position.relativeTo = authorLabel
+											position.relativePoint = "BOTTOMLEFT"
+											position.offset.x = 0
+											position.offset.y = -6
+										end
+
+										if data.license then
+											local licenseLabel = wt.CreateText({
+												parent = addonPanel,
+												name = "LicenseTitle",
+												position = position,
+												width = 48,
+												text = wt.strings.about.license,
+												font = "GameFontHighlightSmall",
+												justify = { h = "RIGHT", },
+											})
+
+											wt.CreateText({
+												parent = addonPanel,
+												name = "License",
+												position = {
+													relativeTo = licenseLabel,
+													relativePoint = "TOPRIGHT",
+													offset = { x = 5 }
+												},
+												width = 140,
+												text = data.license,
+												font = "GameFontNormalSmall",
+												justify = { h = "LEFT", },
+											})
+										end
+									end,
 								})
-
-								if toggle.frame then toggle.frame:SetIgnoreParentAlpha(true) end
-
-								--| Description
-
-								if data.notes then wt.CreateText({
-									parent = addonPanel,
-									name = "Notes",
-									position = { offset = { x = 16, y = -49 } },
-									width = 318,
-									height = 20,
-									text = data.notes,
-									font = "GameFontHighlightSmall",
-									justify = { h = "LEFT", v = "TOP" },
-								}) end
-
-								--| Information
-
-								local position = { offset = { x = 344, y = -13 } }
-
-								if data.version then
-									local versionLabel = wt.CreateText({
-										parent = addonPanel,
-										name = "VersionTitle",
-										position = position,
-										width = 48,
-										text = wt.strings.about.version,
-										font = "GameFontHighlightSmall",
-										justify = { h = "RIGHT", },
-									})
-
-									wt.CreateText({
-										parent = addonPanel,
-										name = "Version",
-										position = {
-											relativeTo = versionLabel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 5 }
-										},
-										width = 140,
-										text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
-											"#DAY", data.day
-										):gsub(
-											"#MONTH", data.month
-										):gsub(
-											"#YEAR", data.year
-										), NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
-
-									position.relativeTo = versionLabel
-									position.relativePoint = "BOTTOMLEFT"
-									position.offset.x = 0
-									position.offset.y = -6
-								end
-
-								if data.category then
-									local categoryLabel = wt.CreateText({
-										parent = addonPanel,
-										name = "Category",
-										position = position,
-										width = 48,
-										text = CATEGORY,
-										font = "GameFontHighlightSmall",
-										justify = { h = "RIGHT", },
-										wrap = false,
-									})
-
-									wt.CreateText({
-										parent = addonPanel,
-										name = "Category",
-										position = {
-											relativeTo = categoryLabel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 5 }
-										},
-										width = 140,
-										text = data.category,
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
-
-									position.relativeTo = categoryLabel
-									position.relativePoint = "BOTTOMLEFT"
-									position.offset.x = 0
-									position.offset.y = -6
-								end
-
-								if data.author then
-									local authorLabel = wt.CreateText({
-										parent = addonPanel,
-										name = "AuthorTitle",
-										position = position,
-										width = 48,
-										text = wt.strings.about.author,
-										font = "GameFontHighlightSmall",
-										justify = { h = "RIGHT", },
-									})
-
-									wt.CreateText({
-										parent = addonPanel,
-										name = "Author",
-										position = {
-											relativeTo = authorLabel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 5 }
-										},
-										width = 140,
-										text = data.author,
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
-
-									position.relativeTo = authorLabel
-									position.relativePoint = "BOTTOMLEFT"
-									position.offset.x = 0
-									position.offset.y = -6
-								end
-
-								if data.license then
-									local licenseLabel = wt.CreateText({
-										parent = addonPanel,
-										name = "LicenseTitle",
-										position = position,
-										width = 48,
-										text = wt.strings.about.license,
-										font = "GameFontHighlightSmall",
-										justify = { h = "RIGHT", },
-									})
-
-									wt.CreateText({
-										parent = addonPanel,
-										name = "License",
-										position = {
-											relativeTo = licenseLabel,
-											relativePoint = "TOPRIGHT",
-											offset = { x = 5 }
-										},
-										width = 140,
-										text = data.license,
-										font = "GameFontNormalSmall",
-										justify = { h = "LEFT", },
-									})
-								end
-							end,
-						})
-					end end
-				end,
-			}) end
+							end
+						end
+					end,
+				})
+			end
 		end,
 	})
 
