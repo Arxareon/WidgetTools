@@ -203,6 +203,7 @@ ns.changelog = {
 		"#F_Hotfixs:_#",
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",
 		"Numerous other smaller fixes.",
+		"#O_Note:_# See Widget Toolbox  changelog on the Toolboxes & Addons page for further under the hood changes."
 	},
 	{
 		"#V_Version 2.2_# #H_(23/2/2026)_#",
@@ -308,7 +309,7 @@ ns.changelog = {
 		"#H_Widget Tools has been supporting other addons in the background for over a year. Now, it has been separated into its own addon for more visibility, transparency and to offer wider development options._#",
 		"#N_Update:_#",
 		"Added Dragonflight (Retail 10.0) support with backwards compatibility.",
-	},
+	}
 }
 
 ns.rs.chat = {

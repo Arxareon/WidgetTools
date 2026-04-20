@@ -7,14 +7,14 @@ if not wt then return end
 
 --| References
 
+local cr = WrapTextInColor
+local crc = WrapTextInColorCode
+
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities
 
 ---@type widgetToolsDebugging
 local ds = WidgetTools.debugging
-
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
 
 
 --[ Clipboard ]
@@ -935,8 +935,7 @@ function wt.CreateTextbox(t)
 
 	--| Data
 
-	t.default = type(t.default) == "string" and t.default or ""
-	local default = t.default
+	local default = type(t.default) == "string" and t.default or ""
 	local value = type(t.value) == "string" and t.value or type(t.getData) == "function" and t.getData() or nil
 	value = type(value) == "string" and value or default
 	local snapshot = value

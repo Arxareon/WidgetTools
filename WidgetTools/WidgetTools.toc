@@ -1,4 +1,4 @@
-## Interface: 120001, 50503, 20505, 11508
+## Interface: 120005, 50503, 20505, 11508
 ## Title: Widget Tools
 ## Version: 3.0
 ## X-Day: 20

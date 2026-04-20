@@ -7,6 +7,9 @@ if not wt then return end
 
 --| References
 
+local cr = WrapTextInColor
+local crc = WrapTextInColorCode
+
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
 
@@ -15,9 +18,6 @@ local us = WidgetTools.utilities
 
 ---@type widgetToolsDebugging
 local ds = WidgetTools.debugging
-
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
 
 
 --[[ TOOLTIP ]]
@@ -4470,7 +4470,7 @@ function wt.CreateColorpicker(t, colormanager)
 	--| UX
 
 	---Update the widget UI based on the color value
-	---@param color colorData|colorRGBA
+	---@param color color|colorRGBA
 	local function updateColor(color)
 		colorpicker.button.widget:SetBackdropColor(color.r, color.g, color.b, color.a)
 		colorpicker.button.gradient:SetVertexColor(color.r, color.g, color.b, 1)

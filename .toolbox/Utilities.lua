@@ -7,6 +7,9 @@ if not wt then return end
 
 --| References
 
+local cr = WrapTextInColor
+local crc = WrapTextInColorCode
+
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
 
@@ -15,9 +18,6 @@ local us = WidgetTools.utilities
 
 ---@type widgetToolsDebugging
 local ds = WidgetTools.debugging
-
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
 
 
 --[[ GAME VERSION ]]

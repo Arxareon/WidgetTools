@@ -28,9 +28,6 @@ wt.changelog = {
 		"Several other under the hood changes & improvements.",
 		"#F_Hotfixs:_#",
 		"Numerous other smaller fixes.",
-	},
-	{
-		""
 	}
 }
 
