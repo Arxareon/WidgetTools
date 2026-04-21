@@ -5346,7 +5346,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 						name = name .. "Colorpicker",
 						title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
 						tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-						arrange = { wrap = v.index == 1, index = index },
+						arrange = { wrap = v.index == 1 or v.wrap == true, index = index },
 						dependencies = t.dependencies,
 						getData = function() return getData().colors[k] end,
 						saveData = function(value) getData().colors[k] = value end,
