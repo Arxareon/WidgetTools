@@ -3,10 +3,10 @@
 ---@class addonNamespace
 local ns = select(2, ...)
 
---| References
+--| Shortcuts
 
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
+local cr = C_ColorUtil.WrapTextInColor
+local crc = C_ColorUtil.WrapTextInColorCode
 
 --| Locals
 
@@ -755,14 +755,18 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	ds.LogRaw("Started loading UI.", "WidgetTools PLAYER_LOGIN")
 
-	--[[ REFERENCES ]]
-
-	--[ Shortcuts ]
+	--| Shortcuts
 
 	---@type toolbox
 	local wt = ns[C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-WidgetTools-AddToNamespace")]
 
-	--[ Locals ]
+	if not wt then
+		ds.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
+
+		return
+	end
+
+	--| Locals
 
 	local chatCommands
 

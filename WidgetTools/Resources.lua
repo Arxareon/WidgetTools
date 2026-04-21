@@ -3,7 +3,7 @@
 ---@class addonNamespace
 local ns = select(2, ...)
 
---| Shared resources table
+--| Shared resources
 
 ---@class widgetToolsResources
 ns.rs = {}
@@ -190,7 +190,7 @@ ns.rs.fonts = {
 
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(20/4/2026)_#",
+		"#V_Version 3.0_# #H_(21/4/2026)_#",
 		"#N_New:_#",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
 		"Introduced new debug logging tools (this feature is to be expanded on and to be incorporated into Toolboxes in future updates).",
@@ -1180,3 +1180,25 @@ function localizations.ruRU() return {
 
 ns.rs.strings = localizations[GetLocale()]()
 localizations = nil
+
+
+--[[ CLASSIC SUPPORT ]]
+
+if not C_ColorUtil then
+	---Wraps a given string with color code markup while asserting the provided color table is a valid color object
+	---@param text string
+	---@param color { r: number, g: number, b: number, a: number|nil }
+	---@return string coloredText
+	local function WrapTextInColor_safe(text, color)
+		if type(color) ~= "table" then return text end
+
+		if type(color["GenerateHexColor"]) ~= "function" then color = CreateColor(color.r, color.g, color.b, color.a) end
+
+		return WrapTextInColor(text, color)
+	end
+
+	C_ColorUtil = {
+		WrapTextInColor = WrapTextInColor_safe,
+		WrapTextInColorCode = WrapTextInColorCode,
+	}
+end

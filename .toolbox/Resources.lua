@@ -12,7 +12,7 @@ wt.name = C_AddOns.GetAddOnMetadata(..., "Title")
 
 wt.changelog = {
 	{
-		"#V_Version 3.0_# #H_(20/4/2026)_#",
+		"#V_Version 3.0_# #H_(21/4/2026)_#",
 		"#N_New:_#",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"Added a new advanced settings template for managing Font options (more Font customization options are coming in future updates).",

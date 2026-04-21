@@ -7,8 +7,8 @@ if not wt then return end
 
 --| References
 
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
+local cr = C_ColorUtil.WrapTextInColor
+local crc = C_ColorUtil.WrapTextInColorCode
 
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
@@ -5333,38 +5333,34 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 			--| Font color
 
-			if type(t.colors) ~= "table" then t.colors = {} end
-			local wrapper
-			for k, v in pairs(t.colors) do if v.index == 1 then wrapper = k break end end
+			if type(t.colors) == "table" then
+				---@type (colormanager|colorpicker)[]
+				panel.widgets.colors = {}
 
-			---@type (colormanager|colorpicker)[]
-			panel.widgets.colors = {}
+				for k, v in pairs(t.colors) do if type(v) == "table" then
+					local name = v.name == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
+					local index = type(v.index) == "number" and math.floor(v.index) + widgetCount or nil
 
-			for key in pairs(getData().colors) do
-				if type(t.colors[key]) ~= "table" then t.colors[key] = {} end
-
-				local name = t.colors[key].name == "string" and t.colors[key].name or (key:sub(1,1):upper() .. key:sub(2))
-				local index = type(t.colors[key].index) == "number" and t.colors[key].index + widgetCount or not next(panel.widgets.colors)
-
-				panel.widgets.colors[key] = wt.CreateColorpicker({
-					parent = panelFrame,
-					name = name .. "Colorpicker",
-					title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
-					tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-					arrange = { wrap = wrapper == nil and not next(panel.widgets.colors) or key == wrapper , index = index },
-					dependencies = t.dependencies,
-					getData = function() return getData().colors[key] end,
-					saveData = function(value) getData().colors[key] = value end,
-					default = defaultData.colors[key],
-					dataManagement = {
-						category = t.dataManagement.category,
-						key = t.dataManagement.key,
-						onChange = {
-							CustomColorChangeHandler = function() if type(t.onChangeColor) == "function" then t.onChangeColor(key) end end,
-							UpdateTextColor = function() textline:SetTextColor(wt.UnpackColor(getData().colors[key])) end,
+					panel.widgets.colors[k] = wt.CreateColorpicker({
+						parent = panelFrame,
+						name = name .. "Colorpicker",
+						title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
+						tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
+						arrange = { wrap = v.index == 1, index = index },
+						dependencies = t.dependencies,
+						getData = function() return getData().colors[k] end,
+						saveData = function(value) getData().colors[k] = value end,
+						default = defaultData.colors[k],
+						dataManagement = {
+							category = t.dataManagement.category,
+							key = t.dataManagement.key,
+							onChange = {
+								CustomColorChangeHandler = function() if type(t.onChangeColor) == "function" then t.onChangeColor(k) end end,
+								UpdateTextColor = function() textline:SetTextColor(wt.UnpackColor(getData().colors[k])) end,
+							},
 						},
-					},
-				})
+					})
+				end end
 			end
 		end,
 	})

@@ -7,8 +7,8 @@ if not wt then return end
 
 --| References
 
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
+local cr = C_ColorUtil.WrapTextInColor
+local crc = C_ColorUtil.WrapTextInColorCode
 
 ---@type widgetToolsUtilities
 local us = WidgetTools.utilities

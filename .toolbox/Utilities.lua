@@ -7,8 +7,8 @@ if not wt then return end
 
 --| References
 
-local cr = WrapTextInColor
-local crc = WrapTextInColorCode
+local cr = C_ColorUtil.WrapTextInColor
+local crc = C_ColorUtil.WrapTextInColorCode
 
 ---@type widgetToolsResources
 local rs = WidgetTools.resources
@@ -172,6 +172,8 @@ function wt.AdjustGamma(color, exponent)
 
 	return color
 end
+
+function wt.CreateColor(color) return CreateColor(wt.UnpackColor(color)) end
 
 
 --[[ FORMATTING ]]
