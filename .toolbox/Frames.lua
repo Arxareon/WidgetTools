@@ -5338,7 +5338,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 				panel.widgets.colors = {}
 
 				for k, v in pairs(t.colors) do if type(v) == "table" then
-					local name = v.name == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
+					local name = type(v.name) == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
 					local index = type(v.index) == "number" and math.floor(v.index) + widgetCount or nil
 
 					panel.widgets.colors[k] = wt.CreateColorpicker({
@@ -5346,7 +5346,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 						name = name .. "Colorpicker",
 						title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
 						tooltip = { lines = { { text = wt.strings.font.color.tooltip:gsub("#COLOR_TYPE", name), }, } },
-						arrange = { wrap = v.index == 1 or v.wrap == true, index = index },
+						arrange = { wrap = v.wrap or v.index == 1, index = index },
 						dependencies = t.dependencies,
 						getData = function() return getData().colors[k] end,
 						saveData = function(value) getData().colors[k] = value end,
