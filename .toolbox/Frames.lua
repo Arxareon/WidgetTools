@@ -5334,6 +5334,12 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 			--| Font color
 
 			if type(t.colors) == "table" then
+				if type(t.colors.base) ~= "table" then t.colors.base = {} end
+				if type(getData().colors) ~= "table" then
+					getData().colors = {}
+					wt.VerifyColor(getData().colors.base)
+				end
+
 				---@type (colormanager|colorpicker)[]
 				panel.widgets.colors = {}
 
@@ -5356,7 +5362,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 							key = t.dataManagement.key,
 							onChange = {
 								CustomColorChangeHandler = function() if type(t.onChangeColor) == "function" then t.onChangeColor(k) end end,
-								UpdateTextColor = function() textline:SetTextColor(wt.UnpackColor(getData().colors[k])) end,
+								UpdateTextColor = function() textline:SetTextColor(wt.UnpackColor(getData().colors.base)) end,
 							},
 						},
 					})
