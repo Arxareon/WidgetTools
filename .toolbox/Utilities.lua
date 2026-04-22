@@ -5,7 +5,7 @@ local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "
 
 if not wt then return end
 
---| References
+--| Shortcuts
 
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode

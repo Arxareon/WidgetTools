@@ -15,9 +15,6 @@ local eventFrame = CreateFrame("Frame")
 ---@type widgetToolsDebugging
 local ds = { history = {} --[[ --ADD an option to save logs across sessions ]] }
 
----@type widgetToolsToolboxes
-local ts = { initialization = {} }
-
 
 --[[ UTILITIES ]]
 
@@ -656,6 +653,9 @@ end) end
 
 
 --[[ TOOLBOX REGISTRY ]]
+
+---@type widgetToolsToolboxes
+local ts = { initialization = {} }
 
 ---Read-only list of toolboxes registered under unique version keys with the list of addons registered for using each
 ---@type table<string, widgetToolboxEntry>
