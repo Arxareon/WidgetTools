@@ -773,7 +773,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[[ SETTINGS ]]
 
-	--[ Main Page ]
+	--[ Addon ]
 
 	---@type settingsPage
 	local mainPage = wt.CreateAboutPage(ns.rs.addon, {
@@ -782,7 +782,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		changelog = ns.changelog
 	})
 
-	--[ Specifications Page ]
+	--[ Specifications ]
 
 	---@type checkbox
 	local liteToggle
@@ -978,14 +978,14 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		end,
 	})
 
-	--[ Addons Page ]
+	--[ Toolboxes ]
 
 	---@type settingsPage
-	local addonsPage = wt.CreateSettingsPage(ns.rs.addon, {
+	local toolboxesPage = wt.CreateSettingsPage(ns.rs.addon, {
 		register = mainPage,
 		name = "Addons",
-		title = ns.rs.strings.addons.title,
-		description = ns.rs.strings.addons.description:gsub("#ADDON", ns.rs.title),
+		title = ns.rs.strings.toolboxes.title,
+		description = ns.rs.strings.toolboxes.description:gsub("#ADDON", ns.rs.title),
 		scroll = { speed = 0.2 },
 		static = true,
 		dataManagement = {},
@@ -996,7 +996,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 			for version, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do
 				local title = entry.toolbox.name
-				if type(title) ~= "string" then title = ns.rs.strings.addons.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", version)) end
+				if type(title) ~= "string" then title = ns.rs.strings.toolboxes.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", version)) end
 
 				wt.CreatePanel({
 					parent = canvas,
@@ -1362,8 +1362,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					action = specificationsPage.open
 				})
 				wt.CreateMenuButton(menu, {
-					title = ns.rs.strings.addons.title,
-					action = addonsPage.open
+					title = ns.rs.strings.toolboxes.title,
+					action = toolboxesPage.open
 				})
 			end,
 			rightClickMenu = false,
