@@ -1228,21 +1228,13 @@ localizations = nil
 
 --[[ CLASSIC SUPPORT ]]
 
-if not C_ColorUtil then
-	---Wraps a given string with color code markup while asserting the provided color table is a valid color object
-	---@param text string
-	---@param color { r: number, g: number, b: number, a: number|nil }
-	---@return string coloredText
-	local function WrapTextInColor_safe(text, color)
+if not C_ColorUtil then C_ColorUtil = {
+	WrapTextInColorCode = WrapTextInColorCode,
+	WrapTextInColor = function(text, color)
 		if type(color) ~= "table" then return text end
 
 		if type(color["GenerateHexColor"]) ~= "function" then color = CreateColor(color.r, color.g, color.b, color.a) end
 
 		return WrapTextInColor(text, color)
-	end
-
-	C_ColorUtil = {
-		WrapTextInColor = WrapTextInColor_safe,
-		WrapTextInColorCode = WrapTextInColorCode,
-	}
-end
+	end,
+} end
