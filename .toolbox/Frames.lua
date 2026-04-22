@@ -4699,7 +4699,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 				local applyPreset = function(_, i)
 					if type(panel.presets[i]) ~= "table" or type(panel.presets[i].data) ~= "table" then
-						--Call the specified handler
+						--Call listener
 						if type(t.presets.onPreset) == "function" then t.presets.onPreset(panel.presets[i], i) end
 
 						return
@@ -4755,7 +4755,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					--Update the positioning visual aids
 					if WidgetToolsDB.positioningAids then positioningVisualAids.update(frame, getData().position) end
 
-					--Call the specified handler
+					--Call listener
 					if type(t.presets.onPreset) == "function" then t.presets.onPreset(panel.presets[i], i) end
 				end
 
@@ -4792,7 +4792,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 				if t.presets.custom then
 					t.presets.custom.index = t.presets.custom.index or 1
-					t.presets.items[t.presets.custom.index].data = t.presets.custom.getData()
+					panel.presets[t.presets.custom.index].data = t.presets.custom.getData()
 
 					--| Utilities
 
