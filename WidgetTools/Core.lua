@@ -1050,7 +1050,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											arrange = {},
 											size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
 											font = { normal = "GameFontDisable", },
-											color = ns.rs.colors.grey[2],
+											color = ns.rs.colors.grey[1],
 											value = us.FormatChangelog(expose(entry.toolbox.changelog)),
 											readOnly = true,
 											scrollSpeed = 0.2,

@@ -205,7 +205,7 @@ ns.changelog = {
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",
 		"Numerous other smaller fixes.",
 		"#O_Note:_# See Widget Toolbox  changelog on the Toolboxes & Addons page for further under the hood changes.",
-		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any Lua script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
+		"#H_Thank you all for the help, suggestions & bug reports!_# If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using (when relevant) to give me the best chance of being able to reproduce & fix them. Try proving any Lua script error messages and taint logs (if you know how).",
 	},
 	{
 		"#V_Version 2.2_# #H_(23/2/2026)_#",
@@ -239,7 +239,6 @@ ns.changelog = {
 		"Welcome messages will no longer be spammed each time the interface loads.",
 		"Lite mode can now be enabled without errors.",
 		"Adjusted the appearance of the Reload notice window.",
-		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any LUA script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
 	{
 		"#V_Version 1.12_# #H_(8/9/2023)_#",

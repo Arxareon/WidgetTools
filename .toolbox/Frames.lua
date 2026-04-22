@@ -6054,7 +6054,7 @@ function wt.CreateAboutPage(addon, t)
 						arrange = {},
 						size = { w = panel:GetWidth() - 225, h = panel:GetHeight() - 25 },
 						font = { normal = "GameFontDisableSmall", },
-						color = rs.colors.grey[2],
+						color = rs.colors.grey[1],
 						value = us.FormatChangelog(t.changelog, true),
 						readOnly = true,
 					})
@@ -6103,7 +6103,7 @@ function wt.CreateAboutPage(addon, t)
 									arrange = {},
 									size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
 									font = { normal = "GameFontDisable", },
-									color = rs.colors.grey[2],
+									color = rs.colors.grey[1],
 									value = us.FormatChangelog(t.changelog),
 									readOnly = true,
 									scrollSpeed = 0.2,
