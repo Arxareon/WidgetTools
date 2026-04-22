@@ -190,7 +190,7 @@ ns.rs.fonts = {
 
 ns.changelog = {
 	{
-		"#V_Version 3.0_# #H_(21/4/2026)_#",
+		"#V_Version 3.0_# #H_(22/4/2026)_#",
 		"#N_New:_#",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
 		"Introduced new debug logging tools (this feature is to be expanded on and to be incorporated into Toolboxes in future updates).",
