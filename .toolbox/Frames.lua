@@ -5513,6 +5513,39 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 
 					--[ Active Profile ]
 
+					local function refresh()
+						profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
+
+						--Set focus after text change to set the scroll to the top and refresh the position character counter
+						profiles.backup.box.scrollframe.EditBox:SetFocus()
+						profiles.backup.box.scrollframe.EditBox:ClearFocus()
+					end
+
+					local box = wt.CreateMultilineEditbox({
+						parent = panel,
+						name = "ImportExport",
+						title = wt.strings.backup.box.label,
+						tooltip = { lines = {
+							{ text = wt.strings.backup.box.tooltip[1], },
+							{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
+							{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
+							{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+							{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+						}, },
+						arrange = {},
+						size = { w = panel:GetWidth() - 24, h = panel:GetHeight() - 60 },
+						font = { normal = "GameFontWhiteSmall", },
+						scrollSpeed = 0.2,
+						scrollToTop = false,
+						unfocusOnEnter = false,
+						dataManagement = {
+							category = category,
+							key = keys[1],
+						},
+						listeners = { loaded = { { handler = refresh, }, }, },
+						showDefault = false,
+					})
+
 					local importPopup = wt.RegisterPopupDialog(addon .. "_IMPORT", {
 						text = wt.strings.backup.warning,
 						accept = wt.strings.backup.import,
@@ -5529,39 +5562,27 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						end,
 					})
 
-					---@class profilesPageBackup
-					profiles.backup = {
-						refresh = function()
-							profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
+					local load = wt.CreateButton({
+						parent = panel,
+						name = "Load",
+						title = wt.strings.backup.load.label,
+						tooltip = { lines = {
+							{ text = wt.strings.backup.load.tooltip, },
+							{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+						} },
+						position = {
+							anchor = "TOPRIGHT",
+							relativeTo = box.frame,
+							relativePoint = "BOTTOMRIGHT",
+							offset = { y = -8 }
+						},
+						size = { h = 26 },
+						action = function() StaticPopup_Show(importPopup) end,
+					})
 
-							--Set focus after text change to set the scroll to the top and refresh the position character counter
-							profiles.backup.box.scrollframe.EditBox:SetFocus()
-							profiles.backup.box.scrollframe.EditBox:ClearFocus()
-						end,
-						box = wt.CreateMultilineEditbox({
-							parent = panel,
-							name = "ImportExport",
-							title = wt.strings.backup.box.label,
-							tooltip = { lines = {
-								{ text = wt.strings.backup.box.tooltip[1], },
-								{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
-								{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
-								{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-								{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-							}, },
-							arrange = {},
-							size = { w = panel:GetWidth() - 24, h = panel:GetHeight() - 60 },
-							font = { normal = "GameFontWhiteSmall", },
-							scrollSpeed = 0.2,
-							scrollToTop = false,
-							unfocusOnEnter = false,
-							dataManagement = {
-								category = category,
-								key = keys[1],
-							},
-							listeners = { loaded = { { handler = profiles.backup.refresh, }, }, },
-							showDefault = false,
-						}),
+					profiles.backup = {
+						refresh = refresh,
+						box = box,
 						compact = wt.CreateCheckbox({
 							parent = panel,
 							name = "Compact",
@@ -5573,30 +5594,14 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							dataManagement = {
 								category = addon,
 								key = keys[1],
-								onChange = { RefreshBackupBox = profiles.backup.refresh },
+								onChange = { RefreshBackupBox = refresh },
 							},
 							listeners = { loaded = { { handler = function() profiles.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
 							events = { OnClick = function(_, state) profiles.backupAll.compact.widget:SetChecked(state) end },
 							showDefault = false,
 							utilityMenu = false,
 						}),
-						load = wt.CreateButton({
-							parent = panel,
-							name = "Load",
-							title = wt.strings.backup.load.label,
-							tooltip = { lines = {
-								{ text = wt.strings.backup.load.tooltip, },
-								{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-							} },
-							position = {
-								anchor = "TOPRIGHT",
-								relativeTo = profiles.backup.box.frame,
-								relativePoint = "BOTTOMRIGHT",
-								offset = { y = -8 }
-							},
-							size = { h = 26 },
-							action = function() StaticPopup_Show(importPopup) end,
-						}),
+						load = load,
 						reset = wt.CreateButton({
 							parent = panel,
 							name = "Reset",
@@ -5604,12 +5609,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
 							position = {
 								anchor = "RIGHT",
-								relativeTo = profiles.backup.load.widget,
+								relativeTo = load.widget,
 								relativePoint = "LEFT",
 								offset = { x = -8, }
 							},
 							size = { h = 26 },
-							action = profiles.backup.refresh,
+							action = refresh,
 						}),
 					}
 
@@ -5631,7 +5636,44 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							resize = false,
 						},
 						initialize = function(windowPanel)
-							local allProfilesImportPopup = wt.RegisterPopupDialog(addon .. "_IMPORT_ALL", {
+							local function refreshAll()
+								profiles.backupAll.box.setText(us.TableToString({
+									activeProfile = characterData.activeProfile,
+									profiles = accountData.profiles
+								}, settingsData.compactBackup))
+
+								--Set focus after text change to set the scroll to the top and refresh the position character counter
+								profiles.backupAll.box.scrollframe.EditBox:SetFocus()
+								profiles.backupAll.box.scrollframe.EditBox:ClearFocus()
+							end
+
+							local boxAll = wt.CreateMultilineEditbox({
+								parent = windowPanel,
+								name = "ImportExportAllProfiles",
+								title = wt.strings.backup.allProfiles.label,
+								label = false,
+								tooltip = { lines = {
+									{ text = wt.strings.backup.allProfiles.tooltipLine, },
+									{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
+									{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
+									{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+									{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+								}, },
+								arrange = {},
+								size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 92 },
+								font = { normal = "GameFontWhiteSmall", },
+								scrollSpeed = 0.2,
+								scrollToTop = false,
+								unfocusOnEnter = false,
+								dataManagement = {
+									category = category,
+									key = keys[1],
+								},
+								listeners = { loaded = { { handler = refreshAll, }, }, },
+								showDefault = false,
+							})
+
+							local importPopupAll = wt.RegisterPopupDialog(addon .. "_IMPORT_ALL", {
 								text = wt.strings.backup.warning,
 								accept = wt.strings.backup.import,
 								onAccept = function()
@@ -5644,42 +5686,27 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								end,
 							})
 
-							profiles.backupAll = {
-								refresh = function()
-									profiles.backupAll.box.setText(us.TableToString({
-										activeProfile = characterData.activeProfile,
-										profiles = accountData.profiles
-									}, settingsData.compactBackup))
+							local loadAll = wt.CreateButton({
+								parent = windowPanel,
+								name = "Load",
+								title = wt.strings.backup.load.label,
+								tooltip = { lines = {
+									{ text = wt.strings.backup.load.tooltip, },
+									{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+								} },
+								position = {
+									anchor = "TOPRIGHT",
+									relativeTo = box.frame,
+									relativePoint = "BOTTOMRIGHT",
+									offset = { y = -8 }
+								},
+								size = { h = 26 },
+								action = function() StaticPopup_Show(importPopupAll) end,
+							})
 
-									--Set focus after text change to set the scroll to the top and refresh the position character counter
-									profiles.backupAll.box.scrollframe.EditBox:SetFocus()
-									profiles.backupAll.box.scrollframe.EditBox:ClearFocus()
-								end,
-								box = wt.CreateMultilineEditbox({
-									parent = windowPanel,
-									name = "ImportExportAllProfiles",
-									title = wt.strings.backup.allProfiles.label,
-									label = false,
-									tooltip = { lines = {
-										{ text = wt.strings.backup.allProfiles.tooltipLine, },
-										{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
-										{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
-										{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-										{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-									}, },
-									arrange = {},
-									size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 92 },
-									font = { normal = "GameFontWhiteSmall", },
-									scrollSpeed = 0.2,
-									scrollToTop = false,
-									unfocusOnEnter = false,
-									dataManagement = {
-										category = category,
-										key = keys[1],
-									},
-									listeners = { loaded = { { handler = profiles.backupAll.refresh, }, }, },
-									showDefault = false,
-								}),
+							profiles.backupAll = {
+								refresh = refreshAll,
+								box = boxAll,
 								compact = wt.CreateCheckbox({
 									parent = windowPanel,
 									name = "Compact",
@@ -5688,28 +5715,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 									arrange = {},
 									events = { OnClick = function()
 										profiles.backup.compact.toggleState(true)
-										profiles.backupAll.refresh()
+										refreshAll()
 									end },
 									showDefault = false,
 									utilityMenu = false,
 								}),
-								load = wt.CreateButton({
-									parent = windowPanel,
-									name = "Load",
-									title = wt.strings.backup.load.label,
-									tooltip = { lines = {
-										{ text = wt.strings.backup.load.tooltip, },
-										{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-									} },
-									position = {
-										anchor = "TOPRIGHT",
-										relativeTo = profiles.backupAll.box.frame,
-										relativePoint = "BOTTOMRIGHT",
-										offset = { y = -8 }
-									},
-									size = { h = 26 },
-									action = function() StaticPopup_Show(allProfilesImportPopup) end,
-								}),
+								load = loadAll,
 								reset = wt.CreateButton({
 									parent = windowPanel,
 									name = "Reset",
@@ -5717,12 +5728,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 									tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
 									position = {
 										anchor = "RIGHT",
-										relativeTo = profiles.backupAll.load.widget,
+										relativeTo = load.widget,
 										relativePoint = "LEFT",
 										offset = { x = -8, }
 									},
 									size = { h = 26 },
-									action = profiles.backupAll.refresh,
+									action = refreshAll,
 								})
 							}
 
