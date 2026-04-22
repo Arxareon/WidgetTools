@@ -5410,20 +5410,19 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
-
-					--| Widgets
+					local activate = wt.CreateDropdownRadiogroup({
+						parent = panel,
+						title = wt.strings.profiles.select.label,
+						tooltip = { lines = { { text = wt.strings.profiles.select.tooltip, }, } },
+						arrange = {},
+						width = 180,
+						items = accountData.profiles,
+						value = characterData.activeProfile,
+						listeners = { selected = { { handler = function(_, index, user) profiles.activate(index, user) end, }, }, },
+					})
 
 					profiles.widgets = {
-						activate = wt.CreateDropdownRadiogroup({
-							parent = panel,
-							title = wt.strings.profiles.select.label,
-							tooltip = { lines = { { text = wt.strings.profiles.select.tooltip, }, } },
-							arrange = {},
-							width = 180,
-							items = accountData.profiles,
-							value = characterData.activeProfile,
-							listeners = { selected = { { handler = function(_, index, user) profiles.activate(index, user) end, }, }, },
-						}),
+						activate = activate,
 						create = wt.CreateButton({
 							parent = panel,
 							name = "New",
@@ -5484,7 +5483,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							},
 							size = { w = 72, h = 26 },
 							action = function() profiles.delete(nil, nil, true) end,
-							dependencies = { { frame = profiles.widgets.activate, evaluate = function() return #accountData.profiles > 1 end }, }
+							dependencies = { { frame = activate, evaluate = function() return #accountData.profiles > 1 end }, }
 						}),
 					}
 
@@ -5530,6 +5529,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						end,
 					})
 
+					---@class profilesPageBackup
 					profiles.backup = {
 						refresh = function()
 							profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
