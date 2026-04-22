@@ -12,7 +12,7 @@ wt.name = C_AddOns.GetAddOnMetadata(..., "Title")
 
 wt.changelog = {
 	{
-		"#V_Version 3.0_# #H_(22/4/2026)_#",
+		"#V_Version 3.0_# #H_(23/4/2026)_#",
 		"#N_New:_#",
 		"Added Midnight 12.0.5 support.",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
