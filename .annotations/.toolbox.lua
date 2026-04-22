@@ -1,6 +1,6 @@
----@meta toolbox
+--NOTE: Annotations are for development purposes only, providing live documentation via Lua Language Server. This file does not need to be loaded by the game client.
 
---NOTE: Annotations are for development purposes only, providing documentation for use with Lua Language Server. This file does not need to be loaded by the game client.
+---@meta toolbox
 
 
 --[[ TOOLBOX ]]
