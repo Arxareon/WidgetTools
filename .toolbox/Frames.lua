@@ -795,7 +795,7 @@ function wt.CreatePopupMenu(t)
 	t.size.w = t.size.w or 180
 	t.size.h = t.size.h or 26
 
-	local buttonFrame = wt.CreateCustomFrame({
+	local trigger = wt.CreateCustomFrame({
 		parent = t.parent,
 		name = t.name or "PopupMenu",
 		position = t.position,
@@ -877,14 +877,14 @@ function wt.CreatePopupMenu(t)
 
 	local menu = wt.CreateContextMenu({
 		triggers = { {
-			frame = buttonFrame,
+			frame = trigger,
 			leftClick = true,
 			rightClick = false,
 		}, },
 		initialize = t.initialize,
 	})
 
-	return buttonFrame, menu
+	return trigger, menu
 end
 
 function wt.CreateSubmenu(menu, t)
@@ -3555,7 +3555,7 @@ function wt.CreateSlider(t, numeric)
 
 	if WidgetToolsDB.lite and t.lite ~= false then return numeric end
 
-	---@type customSlider|numeric
+	---@type numericSlider|numeric
 	local slider = numeric
 
 	--[ Getters & Setters ]
@@ -4693,8 +4693,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 			--[ Presets ]
 
 			if t.presets then
-				panel.widgets.presets = {}
-				panel.presets = t.presets.items
+				panel.presets = us.Clone(t.presets.items)
 
 				--| Utilities
 
@@ -4769,9 +4768,9 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					return true
 				end
 
-				--| Options widgets
+				--| Widgets
 
-				panel.widgets.presets.applyButton, panel.widgets.presets.applyMenu = wt.CreatePopupMenu({
+				local applyButton, applyMenu = wt.CreatePopupMenu({
 					parent = panelFrame,
 					name = "ApplyPreset",
 					title = wt.strings.presets.apply.label,
@@ -4786,6 +4785,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						}) end
 					end,
 				})
+
+				panel.widgets.presets = { applyButton = applyButton, applyMenu = applyMenu, }
 
 				--[ Custom Preset ]
 
@@ -4834,7 +4835,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						panel.applyPreset(t.presets.custom.index)
 					end
 
-					--| Options Widgets
+					--| Widgets
 
 					local savePopup = wt.RegisterPopupDialog(addon .. "_SAVE_PRESET", {
 						text = wt.strings.presets.save.warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
@@ -4875,161 +4876,152 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 			--[ Position ]
 
-			panel.widgets.position = { offset = {}, }
-
-			--| Options widgets
-
-			panel.widgets.position.relativePoint = wt.CreateSpecialRadiogroup("anchor", {
-				parent = panelFrame,
-				name = "RelativePoint",
-				title = wt.strings.position.relativePoint.label,
-				tooltip = { lines = { { text = wt.strings.position.relativePoint.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = {},
-				width = 140,
-				dependencies = t.dependencies,
-				getData = function() return getData().position.relativePoint end,
-				saveData = function(value) getData().position.relativePoint = value end,
-				default = defaultData.position.relativePoint,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					onChange = {
-						CustomPositionChangeHandler = function() if type(t.onChangePosition) == "function" then t.onChangePosition() end end,
-						UpdateFramePosition = function() wt.SetPosition(frame, getData().position, true) end,
-						UpdatePositioningVisualAids = function() if WidgetToolsDB.positioningAids then positioningVisualAids.update(frame, getData().position) end end,
+			panel.widgets.position = {
+				relativePoint = wt.CreateSpecialRadiogroup("anchor", {
+					parent = panelFrame,
+					name = "RelativePoint",
+					title = wt.strings.position.relativePoint.label,
+					tooltip = { lines = { { text = wt.strings.position.relativePoint.tooltip:gsub("#FRAME", t.name), }, } },
+					arrange = {},
+					width = 140,
+					dependencies = t.dependencies,
+					getData = function() return getData().position.relativePoint end,
+					saveData = function(value) getData().position.relativePoint = value end,
+					default = defaultData.position.relativePoint,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						onChange = {
+							CustomPositionChangeHandler = function() if type(t.onChangePosition) == "function" then t.onChangePosition() end end,
+							UpdateFramePosition = function() wt.SetPosition(frame, getData().position, true) end,
+							UpdatePositioningVisualAids = function() if WidgetToolsDB.positioningAids then positioningVisualAids.update(frame, getData().position) end end,
+						},
 					},
-				},
-			})
+				}),
+				anchor = wt.CreateSpecialRadiogroup("anchor", {
+					parent = panelFrame,
+					name = "AnchorPoint",
+					title = wt.strings.position.anchor.label,
+					tooltip = { lines = { { text = wt.strings.position.anchor.tooltip:gsub("#FRAME", t.name), }, } },
+					arrange = { wrap = false, },
+					width = 140,
+					dependencies = t.dependencies,
+					getData = function() return getData().position.anchor end,
+					saveData = function(value) getData().position.anchor = value end,
+					default = defaultData.position.anchor,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						index = 1,
+						onChange = {
+							"CustomPositionChangeHandler",
+							UpdateFrameOffsetsAndPosition = function() if not settingsData.keepInPlace then wt.SetPosition(frame, getData().position, true) else
+								local x, y = wt.SetAnchor(frame, getData().position.anchor)
 
-			panel.widgets.position.anchor = wt.CreateSpecialRadiogroup("anchor", {
-				parent = panelFrame,
-				name = "AnchorPoint",
-				title = wt.strings.position.anchor.label,
-				tooltip = { lines = { { text = wt.strings.position.anchor.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = { wrap = false, },
-				width = 140,
-				dependencies = t.dependencies,
-				getData = function() return getData().position.anchor end,
-				saveData = function(value) getData().position.anchor = value end,
-				default = defaultData.position.anchor,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					index = 1,
-					onChange = {
-						"CustomPositionChangeHandler",
-						UpdateFrameOffsetsAndPosition = function() if not settingsData.keepInPlace then wt.SetPosition(frame, getData().position, true) else
-							local x, y = wt.SetAnchor(frame, getData().position.anchor)
-
-							--Update offsets
-							panel.widgets.position.offset.x.setData(x, false)
-							panel.widgets.position.offset.y.setData(y, false)
-						end end,
-						"UpdatePositioningVisualAids"
+								--Update offsets
+								panel.widgets.position.offset.x.setData(x, false)
+								panel.widgets.position.offset.y.setData(y, false)
+							end end,
+							"UpdatePositioningVisualAids"
+						},
 					},
-				},
-			})
-
-			panel.widgets.position.keepInPlace = wt.CreateCheckbox({
-				parent = panelFrame,
-				name = "KeepInPlace",
-				title = wt.strings.position.keepInPlace.label,
-				tooltip = { lines = { { text = wt.strings.position.keepInPlace.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = { wrap = false, },
-				dependencies = t.dependencies,
-				getData = function() return settingsData.keepInPlace end,
-				saveData = function(state) settingsData.keepInPlace = state end,
-				default = true,
-				showDefault = false,
-				utilityMenu = false,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-				},
-			})
-
-			panel.widgets.position.offset.x = wt.CreateSlider({
-				parent = panelFrame,
-				name = "OffsetX",
-				title = wt.strings.position.offsetX.label,
-				tooltip = { lines = { { text = wt.strings.position.offsetX.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = {},
-				min = -500,
-				max = 500,
-				fractional = 2,
-				step = 1,
-				altStep = 25,
-				hardStep = false,
-				dependencies = t.dependencies,
-				getData = function() return getData().position.offset.x end,
-				saveData = function(value) getData().position.offset.x = value end,
-				default = defaultData.position.offset.x,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					index = 3,
-					onChange = {
-						"CustomPositionChangeHandler",
-						"UpdateFramePosition",
+				}),
+				keepInPlace = wt.CreateCheckbox({
+					parent = panelFrame,
+					name = "KeepInPlace",
+					title = wt.strings.position.keepInPlace.label,
+					tooltip = { lines = { { text = wt.strings.position.keepInPlace.tooltip:gsub("#FRAME", t.name), }, } },
+					arrange = { wrap = false, },
+					dependencies = t.dependencies,
+					getData = function() return settingsData.keepInPlace end,
+					saveData = function(state) settingsData.keepInPlace = state end,
+					default = true,
+					showDefault = false,
+					utilityMenu = false,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
 					},
+				}),
+				offset = {
+					x = wt.CreateSlider({
+						parent = panelFrame,
+						name = "OffsetX",
+						title = wt.strings.position.offsetX.label,
+						tooltip = { lines = { { text = wt.strings.position.offsetX.tooltip:gsub("#FRAME", t.name), }, } },
+						arrange = {},
+						min = -500,
+						max = 500,
+						fractional = 2,
+						step = 1,
+						altStep = 25,
+						hardStep = false,
+						dependencies = t.dependencies,
+						getData = function() return getData().position.offset.x end,
+						saveData = function(value) getData().position.offset.x = value end,
+						default = defaultData.position.offset.x,
+						dataManagement = {
+							category = t.dataManagement.category,
+							key = t.dataManagement.key,
+							index = 3,
+							onChange = {
+								"CustomPositionChangeHandler",
+								"UpdateFramePosition",
+							},
+						},
+					}),
+					y = wt.CreateSlider({
+						parent = panelFrame,
+						name = "OffsetY",
+						title = wt.strings.position.offsetY.label,
+						tooltip = { lines = { { text = wt.strings.position.offsetY.tooltip:gsub("#FRAME", t.name), }, } },
+						arrange = { wrap = false, },
+						min = -500,
+						max = 500,
+						fractional = 2,
+						step = 1,
+						altStep = 25,
+						hardStep = false,
+						dependencies = t.dependencies,
+						getData = function() return getData().position.offset.y end,
+						saveData = function(value) getData().position.offset.y = value end,
+						default = defaultData.position.offset.y,
+						dataManagement = {
+							category = t.dataManagement.category,
+							key = t.dataManagement.key,
+							index = 4,
+							onChange = {
+								"CustomPositionChangeHandler",
+								"UpdateFramePosition",
+							},
+						},
+					}),
 				},
-			})
-
-			panel.widgets.position.offset.y = wt.CreateSlider({
-				parent = panelFrame,
-				name = "OffsetY",
-				title = wt.strings.position.offsetY.label,
-				tooltip = { lines = { { text = wt.strings.position.offsetY.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = { wrap = false, },
-				min = -500,
-				max = 500,
-				fractional = 2,
-				step = 1,
-				altStep = 25,
-				hardStep = false,
-				dependencies = t.dependencies,
-				getData = function() return getData().position.offset.y end,
-				saveData = function(value) getData().position.offset.y = value end,
-				default = defaultData.position.offset.y,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					index = 4,
-					onChange = {
-						"CustomPositionChangeHandler",
-						"UpdateFramePosition",
+				keepInBounds = getData().keepInBounds ~= nil and wt.CreateCheckbox({
+					parent = panelFrame,
+					name = "KeepInBounds",
+					title = wt.strings.position.keepInBounds.label,
+					tooltip = { lines = { { text = wt.strings.position.keepInBounds.tooltip:gsub("#FRAME", t.name), }, } },
+					arrange = { wrap = false, },
+					dependencies = t.dependencies,
+					getData = function() return getData().keepInBounds end,
+					saveData = function(state) getData().keepInBounds = state end,
+					default = defaultData.keepInBounds,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						onChange = {
+							CustomKeepInBoundsChangeHandler = function() if type(t.onChangeKeepInBounds) == "function" then t.onChangeKeepInBounds() end end,
+							UpdateScreenClamp = function() frame:SetClampedToScreen(getData().keepInBounds) end,
+						},
 					},
-				},
-			})
-
-			if getData().keepInBounds ~= nil then panel.widgets.position.keepInBounds = wt.CreateCheckbox({
-				parent = panelFrame,
-				name = "KeepInBounds",
-				title = wt.strings.position.keepInBounds.label,
-				tooltip = { lines = { { text = wt.strings.position.keepInBounds.tooltip:gsub("#FRAME", t.name), }, } },
-				arrange = { wrap = false, },
-				dependencies = t.dependencies,
-				getData = function() return getData().keepInBounds end,
-				saveData = function(state) getData().keepInBounds = state end,
-				default = defaultData.keepInBounds,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					onChange = {
-						CustomKeepInBoundsChangeHandler = function() if type(t.onChangeKeepInBounds) == "function" then t.onChangeKeepInBounds() end end,
-						UpdateScreenClamp = function() frame:SetClampedToScreen(getData().keepInBounds) end,
-					},
-				},
-			}) end
+				}) or nil,
+			}
 
 			--[ Screen Layer ]
 
-			if getData().layer and next(getData().layer) then
-				panel.widgets.layer = {}
-
-				--| Options widgets
-
-				if getData().layer.strata then panel.widgets.layer.strata = wt.CreateSpecialRadiogroup("strata", {
+			if getData().layer and next(getData().layer) then panel.widgets.layer = {
+				strata = getData().layer.strata and wt.CreateSpecialRadiogroup("strata", {
 					parent = panelFrame,
 					name = "FrameStrata",
 					title = wt.strings.layer.strata.label,
@@ -5048,9 +5040,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							UpdateFrameStrata = function() frame:SetFrameStrata(getData().layer.strata) end,
 						},
 					},
-				}) end
-
-				if getData().layer.keepOnTop ~= nil then panel.widgets.layer.keepOnTop = wt.CreateCheckbox({
+				}) or nil,
+				keepOnTop = getData().layer.keepOnTop ~= nil and wt.CreateCheckbox({
 					parent = panelFrame,
 					name = "KeepOnTop",
 					title = wt.strings.layer.keepOnTop.label,
@@ -5068,9 +5059,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							UpdateTopLevel = function() frame:SetToplevel(getData().layer.keepOnTop) end,
 						},
 					},
-				}) end
-
-				if getData().layer.level then panel.widgets.layer.level = wt.CreateSlider({
+				}) or nil,
+				level = getData().layer.level and wt.CreateSlider({
 					parent = panelFrame,
 					name = "FrameLevel",
 					title = wt.strings.layer.level.label,
@@ -5092,8 +5082,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							UpdateFrameLevel = function() frame:SetFrameLevel(getData().layer.level) end,
 						},
 					},
-				}) end
-			end
+				}) or nil,
+			} end
 		end,
 	})
 
@@ -5156,23 +5146,22 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 	---@type fontPanel
 	---@diagnostic disable-next-line: missing-fields --NOTE: Added later --REMOVE after the logical core is separated
-	local panel = { widgets = {}, }
+	local fontPanel = {}
 
 	--[ Getters & Setters ]
 
-	function panel.getType() return "FontOptions" end
-	function panel.isType(type) return type == "FontOptions" end
+	function fontPanel.getType() return "FontOptions" end
+	function fontPanel.isType(type) return type == "FontOptions" end
 
 	--[ Options Panel ]
 
-	panel.frame = wt.CreatePanel({
+	fontPanel.frame = wt.CreatePanel({
 		parent = t.canvas,
 		name = "Font",
 		title = wt.strings.font.title,
 		arrange = {},
 		arrangement = {},
 		initialize = function(panelFrame)
-			local widgetCount = 0
 
 			--| Font family
 
@@ -5227,109 +5216,98 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 				end
 			end
 
-			panel.widgets.path = wt.CreateDropdownRadiogroup({
-				parent = panelFrame,
-				name = "Path",
-				title = wt.strings.font.path.label,
-				tooltip = { lines = { { text = wt.strings.font.path.tooltip, }, } },
-				width = 184,
-				arrange = {},
-				items = fontItems,
-				dependencies = t.dependencies,
-				getData = function() return us.FindIndex(fonts, getData().path) end,
-				saveData = function(value) getData().path = fonts[value].path end,
-				default = us.FindIndex(fonts, defaultData.path),
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					onChange = {
-						CustomFontChangeHandler = function() if type(t.onChangeFont) == "function" then t.onChangeFont() end end,
-						UpdateTextFont = function() textline:SetFont(getData().path, getData().size, "OUTLINE") end,
-						UpdateFontDropdownText = not WidgetToolsDB.lite and function()
-							local _, size, flags = panel.widgets.path.toggle.label:GetFont()
+			--| Widgets
 
-							panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
-						end or nil,
+			fontPanel.widgets = {
+				path = wt.CreateDropdownRadiogroup({
+					parent = panelFrame,
+					name = "Path",
+					title = wt.strings.font.path.label,
+					tooltip = { lines = { { text = wt.strings.font.path.tooltip, }, } },
+					width = 184,
+					arrange = {},
+					items = fontItems,
+					dependencies = t.dependencies,
+					getData = function() return us.FindIndex(fonts, getData().path) end,
+					saveData = function(value) getData().path = fonts[value].path end,
+					default = us.FindIndex(fonts, defaultData.path),
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						onChange = {
+							CustomFontChangeHandler = function() if type(t.onChangeFont) == "function" then t.onChangeFont() end end,
+							UpdateTextFont = function() textline:SetFont(getData().path, getData().size, "OUTLINE") end,
+							UpdateFontDropdownText = not WidgetToolsDB.lite and function()
+								local _, size, flags = fontPanel.widgets.path.toggle.label:GetFont()
+
+								fontPanel.widgets.path.toggle.label:SetFont(fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+							end or nil,
+						},
 					},
-				},
-				events = { OnShow = function()
-					local _, size, flags = panel.widgets.path.toggle.label:GetFont()
+					events = { OnShow = function()
+						local _, size, flags = fontPanel.widgets.path.toggle.label:GetFont()
 
-					panel.widgets.path.toggle.label:SetFont(fonts[panel.widgets.path.getSelected() or 1].path, size, flags)
-				end },
-			})
+						fontPanel.widgets.path.toggle.label:SetFont(fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+					end },
+				}),
+				size = wt.CreateSlider({
+					parent = panelFrame,
+					name = "Size",
+					title = wt.strings.font.size.label,
+					tooltip = { lines = { { text = wt.strings.font.size.tooltip, }, } },
+					arrange = { wrap = false, },
+					min = 8,
+					max = 64,
+					step = 1,
+					altStep = 3,
+					dependencies = t.dependencies,
+					getData = function() return getData().size end,
+					saveData = function(value) getData().size = value end,
+					default = defaultData.size,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						onChange = {
+							CustomSizeChangeHandler = function() if type(t.onChangeSize) == "function" then t.onChangeSize() end end,
+							"UpdateTextFont",
+						},
+					},
+				}),
+				alignment = wt.CreateSpecialRadiogroup("justifyH", {
+					parent = panelFrame,
+					name = "Alignment",
+					title = wt.strings.font.alignment.label,
+					tooltip = { lines = { { text = wt.strings.font.alignment.tooltip, }, } },
+					arrange = { wrap = false, },
+					width = 140,
+					dependencies = t.dependencies,
+					getData = function() return getData().alignment end,
+					saveData = function(value) getData().alignment = value end,
+					default = defaultData.alignment,
+					dataManagement = {
+						category = t.dataManagement.category,
+						key = t.dataManagement.key,
+						onChange = {
+							CustomAlignmentChangeHandler = function() if type(t.onChangeAlignment) == "function" then t.onChangeAlignment() end end,
+							UpdateTextAlignment = function() textline:SetJustifyH(getData().alignment) end,
+						},
+					},
+				}),
+			}
 
-			--Update the font of the dropdown items
-			if panel.widgets.path.frame then
-				for i = 1, #panel.widgets.path.toggles do if panel.widgets.path.toggles[i].label then
-					local _, size, flags = panel.widgets.path.toggles[i].label:GetFont()
-					panel.widgets.path.toggles[i].label:SetFont(fonts[i].path, size, flags)
+			--Update the font of the font selection dropdown items
+			if fontPanel.widgets.path.frame then
+				for i = 1, #fontPanel.widgets.path.toggles do if fontPanel.widgets.path.toggles[i].label then
+					local _, size, flags = fontPanel.widgets.path.toggles[i].label:GetFont()
+					fontPanel.widgets.path.toggles[i].label:SetFont(fonts[i].path, size, flags)
 				end end
 
-				if panel.widgets.path.toggles[1].label then panel.widgets.path.toggles[1].label:SetTextColor(0.4, 1, 0.4) end
+				if fontPanel.widgets.path.toggles[1].label then fontPanel.widgets.path.toggles[1].label:SetTextColor(0.4, 1, 0.4) end
 
 				if type(WidgetToolsDB.customFonts) == "table" then for i = #fonts - #WidgetToolsDB.customFonts + 1, #fonts do
-					if panel.widgets.path.toggles[i].label then panel.widgets.path.toggles[i].label:SetTextColor(1, 0.4, 0.4) end
+					if fontPanel.widgets.path.toggles[i].label then fontPanel.widgets.path.toggles[i].label:SetTextColor(1, 0.4, 0.4) end
 				end end
 			end
-
-			widgetCount = widgetCount + 1
-
-			--| Size
-
-			panel.widgets.size = wt.CreateSlider({
-				parent = panelFrame,
-				name = "Size",
-				title = wt.strings.font.size.label,
-				tooltip = { lines = { { text = wt.strings.font.size.tooltip, }, } },
-				arrange = { wrap = false, },
-				min = 8,
-				max = 64,
-				step = 1,
-				altStep = 3,
-				dependencies = t.dependencies,
-				getData = function() return getData().size end,
-				saveData = function(value) getData().size = value end,
-				default = defaultData.size,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					onChange = {
-						CustomSizeChangeHandler = function() if type(t.onChangeSize) == "function" then t.onChangeSize() end end,
-						"UpdateTextFont",
-					},
-				},
-			})
-
-			widgetCount = widgetCount + 1
-
-			--| Alignment
-
-			---@diagnostic disable-next-line: missing-fields --NOTE: Added later
-			panel.widgets.alignment = {}
-
-			panel.widgets.alignment = wt.CreateSpecialRadiogroup("justifyH", {
-				parent = panelFrame,
-				name = "Alignment",
-				title = wt.strings.font.alignment.label,
-				tooltip = { lines = { { text = wt.strings.font.alignment.tooltip, }, } },
-				arrange = { wrap = false, },
-				width = 140,
-				dependencies = t.dependencies,
-				getData = function() return getData().alignment end,
-				saveData = function(value) getData().alignment = value end,
-				default = defaultData.alignment,
-				dataManagement = {
-					category = t.dataManagement.category,
-					key = t.dataManagement.key,
-					onChange = {
-						CustomAlignmentChangeHandler = function() if type(t.onChangeAlignment) == "function" then t.onChangeAlignment() end end,
-						UpdateTextAlignment = function() textline:SetJustifyH(getData().alignment) end,
-					},
-				},
-			})
-
-			widgetCount = widgetCount + 1
 
 			--| Font color
 
@@ -5340,14 +5318,15 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 					wt.VerifyColor(getData().colors.base)
 				end
 
-				---@type (colormanager|colorpicker)[]
-				panel.widgets.colors = {}
+				--| Widgets
+
+				fontPanel.widgets.colors = {}
 
 				for k, v in pairs(t.colors) do if type(v) == "table" then
 					local name = type(v.name) == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
-					local index = type(v.index) == "number" and math.floor(v.index) + widgetCount or nil
+					local index = type(v.index) == "number" and math.floor(v.index) + 3 or nil
 
-					panel.widgets.colors[k] = wt.CreateColorpicker({
+					fontPanel.widgets.colors[k] = wt.CreateColorpicker({
 						parent = panelFrame,
 						name = name .. "Colorpicker",
 						title = wt.strings.font.color.label:gsub("#COLOR_TYPE", name),
@@ -5371,7 +5350,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		end,
 	})
 
-	return panel
+	return fontPanel
 end
 
 
@@ -5423,8 +5402,6 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 
 			--[ Profiles ]
 
-			profiles.widgets = {}
-
 			local profilesPanel = wt.CreatePanel({
 				parent = canvas,
 				name = "Profiles",
@@ -5434,86 +5411,82 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 				arrangement = {},
 				initialize = function(panel)
 
-					--[ Frame Setup ]
+					--| Widgets
 
-					profiles.widgets.activate = wt.CreateDropdownRadiogroup({
-						parent = panel,
-						title = wt.strings.profiles.select.label,
-						tooltip = { lines = { { text = wt.strings.profiles.select.tooltip, }, } },
-						arrange = {},
-						width = 180,
-						items = accountData.profiles,
-						value = characterData.activeProfile,
-						listeners = { selected = { { handler = function(_, index, user) profiles.activate(index, user) end, }, }, },
-					})
+					profiles.widgets = {
+						activate = wt.CreateDropdownRadiogroup({
+							parent = panel,
+							title = wt.strings.profiles.select.label,
+							tooltip = { lines = { { text = wt.strings.profiles.select.tooltip, }, } },
+							arrange = {},
+							width = 180,
+							items = accountData.profiles,
+							value = characterData.activeProfile,
+							listeners = { selected = { { handler = function(_, index, user) profiles.activate(index, user) end, }, }, },
+						}),
+						create = wt.CreateButton({
+							parent = panel,
+							name = "New",
+							title = wt.strings.profiles.new.label,
+							tooltip = { lines = { { text = wt.strings.profiles.new.tooltip, }, } },
+							position = {
+								anchor = "TOPRIGHT",
+								offset = { x = -312, y = -21 }
+							},
+							size = { w = 112, h = 26 },
+							action = function() profiles.create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
+						}),
+						duplicate = wt.CreateButton({
+							parent = panel,
+							name = "Duplicate",
+							title = wt.strings.profiles.duplicate.label,
+							tooltip = { lines = { { text = wt.strings.profiles.duplicate.tooltip, }, } },
+							position = {
+								anchor = "TOPRIGHT",
+								offset = { x = -192, y = -21 }
+							},
+							size = { w = 112, h = 26 },
+							action = function() profiles.create(nil, nil, characterData.activeProfile, nil, nil, true) end,
+						}),
+						rename = wt.CreateButton({
+							parent = panel,
+							name = "Rename",
+							title = wt.strings.profiles.rename.label,
+							tooltip = { lines = { { text = wt.strings.profiles.rename.tooltip, }, } },
+							position = {
+								anchor = "TOPRIGHT",
+								offset = { x = -92, y = -21 }
+							},
+							size = { w = 92, h = 26 },
+							action = function()
+								local title = accountData.profiles[characterData.activeProfile].title
 
-					profiles.widgets.create = wt.CreateButton({
-						parent = panel,
-						name = "New",
-						title = wt.strings.profiles.new.label,
-						tooltip = { lines = { { text = wt.strings.profiles.new.tooltip, }, } },
-						position = {
-							anchor = "TOPRIGHT",
-							offset = { x = -312, y = -21 }
-						},
-						size = { w = 112, h = 26 },
-						action = function() profiles.create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
-					})
-
-					profiles.widgets.duplicate = wt.CreateButton({
-						parent = panel,
-						name = "Duplicate",
-						title = wt.strings.profiles.duplicate.label,
-						tooltip = { lines = { { text = wt.strings.profiles.duplicate.tooltip, }, } },
-						position = {
-							anchor = "TOPRIGHT",
-							offset = { x = -192, y = -21 }
-						},
-						size = { w = 112, h = 26 },
-						action = function() profiles.create(nil, nil, characterData.activeProfile, nil, nil, true) end,
-					})
-
-					profiles.widgets.rename = wt.CreateButton({
-						parent = panel,
-						name = "Rename",
-						title = wt.strings.profiles.rename.label,
-						tooltip = { lines = { { text = wt.strings.profiles.rename.tooltip, }, } },
-						position = {
-							anchor = "TOPRIGHT",
-							offset = { x = -92, y = -21 }
-						},
-						size = { w = 92, h = 26 },
-						action = function()
-							local title = accountData.profiles[characterData.activeProfile].title
-
-							wt.CreatePopupInputBox({
-								title = wt.strings.profiles.rename.description:gsub("#PROFILE", crc(title, "FFFFFFFF")),
-								position = {
-									anchor = "TOPRIGHT",
-									offset = { x = -92, y = -21 },
-									relativeTo = panel,
-								},
-								text = title,
-								accept = function(text) profiles.rename(nil, text, nil, true) end,
-							})
-						end,
-					})
-
-					profiles.widgets.delete = wt.CreateButton({
-						parent = panel,
-						name = "Delete",
-						title = DELETE,
-						tooltip = { lines = { { text = wt.strings.profiles.delete.tooltip, }, } },
-						position = {
-							anchor = "TOPRIGHT",
-							offset = { x = -12, y = -21 }
-						},
-						size = { w = 72, h = 26 },
-						action = function() profiles.delete(nil, nil, true) end,
-						dependencies = { { frame = profiles.widgets.activate, evaluate = function() return #accountData.profiles > 1 end }, }
-					})
-
-					--[ Events ]
+								wt.CreatePopupInputBox({
+									title = wt.strings.profiles.rename.description:gsub("#PROFILE", crc(title, "FFFFFFFF")),
+									position = {
+										anchor = "TOPRIGHT",
+										offset = { x = -92, y = -21 },
+										relativeTo = panel,
+									},
+									text = title,
+									accept = function(text) profiles.rename(nil, text, nil, true) end,
+								})
+							end,
+						}),
+						delete = wt.CreateButton({
+							parent = panel,
+							name = "Delete",
+							title = DELETE,
+							tooltip = { lines = { { text = wt.strings.profiles.delete.tooltip, }, } },
+							position = {
+								anchor = "TOPRIGHT",
+								offset = { x = -12, y = -21 }
+							},
+							size = { w = 72, h = 26 },
+							action = function() profiles.delete(nil, nil, true) end,
+							dependencies = { { frame = profiles.widgets.activate, evaluate = function() return #accountData.profiles > 1 end }, }
+						}),
+					}
 
 					--| UX
 
@@ -5529,9 +5502,6 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 
 			--[ Backup ]
 
-			profiles.backup = {}
-			profiles.backupAll = {}
-
 			wt.CreatePanel({
 				parent = canvas,
 				name = keys[1],
@@ -5542,74 +5512,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 				arrangement = { resize = false, },
 				initialize = function(panel)
 
-					--[ Utilities ]
-
-					--Update the backup box and load the current profile data of the selected scope to the backup string, formatted based on the compact setting
-					function profiles.backup.refresh()
-						profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
-
-						--Set focus after text change to set the scroll to the top and refresh the position character counter
-						profiles.backup.box.scrollframe.EditBox:SetFocus()
-						profiles.backup.box.scrollframe.EditBox:ClearFocus()
-					end
-
-					--Update the backup box and load all addon profile data of the selected scope to the backup string, formatted based on the compact setting
-					function profiles.backupAll.refresh()
-						profiles.backupAll.box.setText(us.TableToString({
-							activeProfile = characterData.activeProfile,
-							profiles = accountData.profiles
-						}, settingsData.compactBackup))
-
-						--Set focus after text change to set the scroll to the top and refresh the position character counter
-						profiles.backupAll.box.scrollframe.EditBox:SetFocus()
-						profiles.backupAll.box.scrollframe.EditBox:ClearFocus()
-					end
-
 					--[ Active Profile ]
-
-					profiles.backup.box = wt.CreateMultilineEditbox({
-						parent = panel,
-						name = "ImportExport",
-						title = wt.strings.backup.box.label,
-						tooltip = { lines = {
-							{ text = wt.strings.backup.box.tooltip[1], },
-							{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
-							{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
-							{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-							{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-						}, },
-						arrange = {},
-						size = { w = panel:GetWidth() - 24, h = panel:GetHeight() - 60 },
-						font = { normal = "GameFontWhiteSmall", },
-						scrollSpeed = 0.2,
-						scrollToTop = false,
-						unfocusOnEnter = false,
-						dataManagement = {
-							category = category,
-							key = keys[1],
-						},
-						listeners = { loaded = { { handler = profiles.backup.refresh, }, }, },
-						showDefault = false,
-					})
-
-					profiles.backup.compact = wt.CreateCheckbox({
-						parent = panel,
-						name = "Compact",
-						title = wt.strings.backup.compact.label,
-						tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
-						arrange = {},
-						getData = function() return settingsData.compactBackup end,
-						saveData = function(state) settingsData.compactBackup = state end,
-						dataManagement = {
-							category = addon,
-							key = keys[1],
-							onChange = { RefreshBackupBox = profiles.backup.refresh },
-						},
-						listeners = { loaded = { { handler = function() profiles.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
-						events = { OnClick = function(_, state) profiles.backupAll.compact.widget:SetChecked(state) end },
-						showDefault = false,
-						utilityMenu = false,
-					})
 
 					local importPopup = wt.RegisterPopupDialog(addon .. "_IMPORT", {
 						text = wt.strings.backup.warning,
@@ -5627,38 +5530,88 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						end,
 					})
 
-					profiles.backup.load = wt.CreateButton({
-						parent = panel,
-						name = "Load",
-						title = wt.strings.backup.load.label,
-						tooltip = { lines = {
-							{ text = wt.strings.backup.load.tooltip, },
-							{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-						} },
-						position = {
-							anchor = "TOPRIGHT",
-							relativeTo = profiles.backup.box.frame,
-							relativePoint = "BOTTOMRIGHT",
-							offset = { y = -8 }
-						},
-						size = { h = 26 },
-						action = function() StaticPopup_Show(importPopup) end,
-					})
+					profiles.backup = {
+						refresh = function()
+							profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
 
-					profiles.backup.reset = wt.CreateButton({
-						parent = panel,
-						name = "Reset",
-						title = RESET,
-						tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
-						position = {
-							anchor = "RIGHT",
-							relativeTo = profiles.backup.load.widget,
-							relativePoint = "LEFT",
-							offset = { x = -8, }
-						},
-						size = { h = 26 },
-						action = profiles.backup.refresh,
-					})
+							--Set focus after text change to set the scroll to the top and refresh the position character counter
+							profiles.backup.box.scrollframe.EditBox:SetFocus()
+							profiles.backup.box.scrollframe.EditBox:ClearFocus()
+						end,
+						box = wt.CreateMultilineEditbox({
+							parent = panel,
+							name = "ImportExport",
+							title = wt.strings.backup.box.label,
+							tooltip = { lines = {
+								{ text = wt.strings.backup.box.tooltip[1], },
+								{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
+								{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
+								{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+								{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+							}, },
+							arrange = {},
+							size = { w = panel:GetWidth() - 24, h = panel:GetHeight() - 60 },
+							font = { normal = "GameFontWhiteSmall", },
+							scrollSpeed = 0.2,
+							scrollToTop = false,
+							unfocusOnEnter = false,
+							dataManagement = {
+								category = category,
+								key = keys[1],
+							},
+							listeners = { loaded = { { handler = profiles.backup.refresh, }, }, },
+							showDefault = false,
+						}),
+						compact = wt.CreateCheckbox({
+							parent = panel,
+							name = "Compact",
+							title = wt.strings.backup.compact.label,
+							tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
+							arrange = {},
+							getData = function() return settingsData.compactBackup end,
+							saveData = function(state) settingsData.compactBackup = state end,
+							dataManagement = {
+								category = addon,
+								key = keys[1],
+								onChange = { RefreshBackupBox = profiles.backup.refresh },
+							},
+							listeners = { loaded = { { handler = function() profiles.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
+							events = { OnClick = function(_, state) profiles.backupAll.compact.widget:SetChecked(state) end },
+							showDefault = false,
+							utilityMenu = false,
+						}),
+						load = wt.CreateButton({
+							parent = panel,
+							name = "Load",
+							title = wt.strings.backup.load.label,
+							tooltip = { lines = {
+								{ text = wt.strings.backup.load.tooltip, },
+								{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+							} },
+							position = {
+								anchor = "TOPRIGHT",
+								relativeTo = profiles.backup.box.frame,
+								relativePoint = "BOTTOMRIGHT",
+								offset = { y = -8 }
+							},
+							size = { h = 26 },
+							action = function() StaticPopup_Show(importPopup) end,
+						}),
+						reset = wt.CreateButton({
+							parent = panel,
+							name = "Reset",
+							title = RESET,
+							tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
+							position = {
+								anchor = "RIGHT",
+								relativeTo = profiles.backup.load.widget,
+								relativePoint = "LEFT",
+								offset = { x = -8, }
+							},
+							size = { h = 26 },
+							action = profiles.backup.refresh,
+						}),
+					}
 
 					--[ All Profiles ]
 
@@ -5678,45 +5631,100 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 							resize = false,
 						},
 						initialize = function(windowPanel)
-							profiles.backupAll.box = wt.CreateMultilineEditbox({
-								parent = windowPanel,
-								name = "ImportExportAllProfiles",
-								title = wt.strings.backup.allProfiles.label,
-								label = false,
-								tooltip = { lines = {
-									{ text = wt.strings.backup.allProfiles.tooltipLine, },
-									{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
-									{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
-									{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-									{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-								}, },
-								arrange = {},
-								size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 92 },
-								font = { normal = "GameFontWhiteSmall", },
-								scrollSpeed = 0.2,
-								scrollToTop = false,
-								unfocusOnEnter = false,
-								dataManagement = {
-									category = category,
-									key = keys[1],
-								},
-								listeners = { loaded = { { handler = profiles.backupAll.refresh, }, }, },
-								showDefault = false,
+							local allProfilesImportPopup = wt.RegisterPopupDialog(addon .. "_IMPORT_ALL", {
+								text = wt.strings.backup.warning,
+								accept = wt.strings.backup.import,
+								onAccept = function()
+									local success, data = pcall(loadstring("return " .. wt.Clear(profiles.backupAll.box.getText())))
+									data = type(data) == "table" and data or {}
+
+									if success then profiles.load(data.profiles, data.activeProfile, true) end
+
+									t.onImportAllProfiles(success and type(data) == "table", data)
+								end,
 							})
 
-							profiles.backupAll.compact = wt.CreateCheckbox({
-								parent = windowPanel,
-								name = "Compact",
-								title = wt.strings.backup.compact.label,
-								tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
-								arrange = {},
-								events = { OnClick = function()
-									profiles.backup.compact.toggleState(true)
-									profiles.backupAll.refresh()
-								end },
-								showDefault = false,
-								utilityMenu = false,
-							})
+							profiles.backupAll = {
+								refresh = function()
+									profiles.backupAll.box.setText(us.TableToString({
+										activeProfile = characterData.activeProfile,
+										profiles = accountData.profiles
+									}, settingsData.compactBackup))
+
+									--Set focus after text change to set the scroll to the top and refresh the position character counter
+									profiles.backupAll.box.scrollframe.EditBox:SetFocus()
+									profiles.backupAll.box.scrollframe.EditBox:ClearFocus()
+								end,
+								box = wt.CreateMultilineEditbox({
+									parent = windowPanel,
+									name = "ImportExportAllProfiles",
+									title = wt.strings.backup.allProfiles.label,
+									label = false,
+									tooltip = { lines = {
+										{ text = wt.strings.backup.allProfiles.tooltipLine, },
+										{ text = "\n" .. wt.strings.backup.box.tooltip[2], },
+										{ text = "\n" .. wt.strings.backup.box.tooltip[3], },
+										{ text = wt.strings.backup.box.tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+										{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+									}, },
+									arrange = {},
+									size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 92 },
+									font = { normal = "GameFontWhiteSmall", },
+									scrollSpeed = 0.2,
+									scrollToTop = false,
+									unfocusOnEnter = false,
+									dataManagement = {
+										category = category,
+										key = keys[1],
+									},
+									listeners = { loaded = { { handler = profiles.backupAll.refresh, }, }, },
+									showDefault = false,
+								}),
+								compact = wt.CreateCheckbox({
+									parent = windowPanel,
+									name = "Compact",
+									title = wt.strings.backup.compact.label,
+									tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
+									arrange = {},
+									events = { OnClick = function()
+										profiles.backup.compact.toggleState(true)
+										profiles.backupAll.refresh()
+									end },
+									showDefault = false,
+									utilityMenu = false,
+								}),
+								load = wt.CreateButton({
+									parent = windowPanel,
+									name = "Load",
+									title = wt.strings.backup.load.label,
+									tooltip = { lines = {
+										{ text = wt.strings.backup.load.tooltip, },
+										{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+									} },
+									position = {
+										anchor = "TOPRIGHT",
+										relativeTo = profiles.backupAll.box.frame,
+										relativePoint = "BOTTOMRIGHT",
+										offset = { y = -8 }
+									},
+									size = { h = 26 },
+									action = function() StaticPopup_Show(allProfilesImportPopup) end,
+								}),
+								reset = wt.CreateButton({
+									parent = windowPanel,
+									name = "Reset",
+									title = RESET,
+									tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
+									position = {
+										anchor = "RIGHT",
+										relativeTo = profiles.backupAll.load.widget,
+										relativePoint = "LEFT",
+										offset = { x = -8, }
+									},
+									size = { h = 26 },
+									action = profiles.backupAll.refresh,
+								})
+							}
 
 							wt.CreateButton({
 								parent = windowPanel,
@@ -5761,52 +5769,6 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 
 							profiles.backupAll.refresh()
 						end,
-					})
-
-					local allProfilesImportPopup = wt.RegisterPopupDialog(addon .. "_IMPORT_ALL", {
-						text = wt.strings.backup.warning,
-						accept = wt.strings.backup.import,
-						onAccept = function()
-							local success, data = pcall(loadstring("return " .. wt.Clear(profiles.backupAll.box.getText())))
-							data = type(data) == "table" and data or {}
-
-							if success then profiles.load(data.profiles, data.activeProfile, true) end
-
-							t.onImportAllProfiles(success and type(data) == "table", data)
-						end,
-					})
-
-					profiles.backupAll.load = wt.CreateButton({
-						parent = allProfilesBackupFrame,
-						name = "Load",
-						title = wt.strings.backup.load.label,
-						tooltip = { lines = {
-							{ text = wt.strings.backup.load.tooltip, },
-							{ text = "\n" .. wt.strings.backup.box.tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
-						} },
-						position = {
-							anchor = "TOPRIGHT",
-							relativeTo = profiles.backupAll.box.frame,
-							relativePoint = "BOTTOMRIGHT",
-							offset = { y = -8 }
-						},
-						size = { h = 26 },
-						action = function() StaticPopup_Show(allProfilesImportPopup) end,
-					})
-
-					profiles.backupAll.reset = wt.CreateButton({
-						parent = allProfilesBackupFrame,
-						name = "Reset",
-						title = RESET,
-						tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
-						position = {
-							anchor = "RIGHT",
-							relativeTo = profiles.backupAll.load.widget,
-							relativePoint = "LEFT",
-							offset = { x = -8, }
-						},
-						size = { h = 26 },
-						action = profiles.backupAll.refresh,
 					})
 				end,
 			})
