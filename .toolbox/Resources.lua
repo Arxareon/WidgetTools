@@ -14,6 +14,7 @@ wt.changelog = {
 	{
 		"#V_Version 3.0_# #H_(22/4/2026)_#",
 		"#N_New:_#",
+		"Added Midnight 12.0.5 support.",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",
 		"Added a new advanced settings template for managing Font options (more Font customization options are coming in future updates).",
 		"#C_Changes:_#",
@@ -28,6 +29,7 @@ wt.changelog = {
 		"Several other under the hood changes & improvements.",
 		"#F_Hotfixs:_#",
 		"Numerous other smaller fixes.",
+		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any Lua script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	}
 }
 

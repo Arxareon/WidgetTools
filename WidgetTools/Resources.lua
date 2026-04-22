@@ -192,6 +192,7 @@ ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(22/4/2026)_#",
 		"#N_New:_#",
+		"Added Midnight 12.0.5 support.",
 		"A shared list of custom fonts have been added that all addons can now access via the global WidgetTools.resources collection.",
 		"Introduced new debug logging tools (this feature is to be expanded on and to be incorporated into Toolboxes in future updates).",
 		"#C_Changes:_#",
@@ -203,7 +204,8 @@ ns.changelog = {
 		"#F_Hotfixs:_#",
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",
 		"Numerous other smaller fixes.",
-		"#O_Note:_# See Widget Toolbox  changelog on the Toolboxes & Addons page for further under the hood changes."
+		"#O_Note:_# See Widget Toolbox  changelog on the Toolboxes & Addons page for further under the hood changes.",
+		"#H_If you encounter any issues, do not hesitate to report them! Try including when & how they occur, and which other addons are you using to give me the best chance of being able to reproduce & fix them. Try proving any Lua script error messages and if you know how, taint logs as well (when relevant). Thanks a lot for helping!_#",
 	},
 	{
 		"#V_Version 2.2_# #H_(23/2/2026)_#",
