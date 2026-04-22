@@ -24,7 +24,7 @@ wt.changelog = {
 		"Toolbox-specific data will no longer be injected into frame tables but housed in a Toolbox-specific tables (including tooltip or container content arrangement data).",
 		"Updated the event handling backend system managing Blizzard global OnEvent (and custom event) handlers for Frames with new utilities accessible globally via the WidgetTools.utilities collection.",
 		"Customizable Frames, Buttons and other widgets must now be created via new constructors, the customizable flags have been removed from their base counterparts.",
-		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size. (This effort will be continued with the Toolbox-specific annotations in future updates.)",
+		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size.",
 		"Separated the logic of data management settings page construction (now called profiles page) into a profilemanager widget and a GUI mutation on top to allow for further development flexibility and more customization.",
 		"Several other under the hood changes & improvements.",
 		"#F_Hotfixs:_#",
