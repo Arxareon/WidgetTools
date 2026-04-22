@@ -5696,7 +5696,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								} },
 								position = {
 									anchor = "TOPRIGHT",
-									relativeTo = box.frame,
+									relativeTo = boxAll.frame,
 									relativePoint = "BOTTOMRIGHT",
 									offset = { y = -8 }
 								},
@@ -5728,7 +5728,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 									tooltip = { lines = { { text = wt.strings.backup.reset.tooltip, }, } },
 									position = {
 										anchor = "RIGHT",
-										relativeTo = load.widget,
+										relativeTo = loadAll.widget,
 										relativePoint = "LEFT",
 										offset = { x = -8, }
 									},
