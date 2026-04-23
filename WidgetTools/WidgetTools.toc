@@ -10,10 +10,11 @@
 ## IconTexture: Interface/AddOns/WidgetTools/Textures/Logo.tga
 ## X-Sponsors: Celierra
 ## X-License: All Rights Reserved
-## X-CurseForge: curseforge.com/wow/addons/widget-tools
-## X-Wago: addons.wago.io/addons/widget-tools
 ## X-Repository: github.com/Arxareon/WidgetTools
 ## X-Issues: github.com/Arxareon/WidgetTools/issues
+## X-CurseForge: curseforge.com/wow/addons/widget-tools
+## X-Wago: addons.wago.io/addons/widget-tools
+## X-Wago-ID: vEGPDjG1
 ## AddonCompartmentFunc: AddonCompartment_OnClick_WidgetTools
 ## AddonCompartmentFuncOnEnter: AddonCompartment_OnEnter_WidgetTools
 ## AddonCompartmentFuncOnLeave: AddonCompartment_OnLeave_WidgetTools
