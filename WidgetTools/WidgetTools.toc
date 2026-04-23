@@ -14,7 +14,7 @@
 ## X-Issues: github.com/Arxareon/WidgetTools/issues
 ## X-CurseForge: curseforge.com/wow/addons/widget-tools
 ## X-Wago: addons.wago.io/addons/widget-tools
-## X-Wago-ID: vEGPDjG1
+## X-Wago-ID: 2jK8erGy
 ## AddonCompartmentFunc: AddonCompartment_OnClick_WidgetTools
 ## AddonCompartmentFuncOnEnter: AddonCompartment_OnEnter_WidgetTools
 ## AddonCompartmentFuncOnLeave: AddonCompartment_OnLeave_WidgetTools

@@ -124,9 +124,9 @@ ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(23/4/2026)_#",
 		"#F_Hotfix (Version 3.0.1):_#",
-		"#H_The custom font file support has been reverted to the previous solution (but now handled by Widget Tools) until the next update because an oversight caused critical errors._# I have also removed several fonts to save on disk space. Once the planned custom font support is finished and released, any number of fully custom fonts will be usable to there will be little need to keep so many fonts bundled in.",
-		"#H_To add a custom font file with this temporary solution, similarly like before, replace_# #O_Interface/Addons/WidgetTools/Fonts/CUSTOM.ttf_# #H_with any TrueTypeFont file, while keeping this exact file name._#",
-		"Several fonts have been removed and will no longer be bundled in due to the needlessly larger size.",
+		"#H_The custom font file support has been reverted to the previous solution (but now handled by Widget Tools) until the next update because an oversight caused critical errors._# I have also removed several fonts to save on disk space. Once the planned custom font support is finished and released, any number of fully custom fonts will be usable to there will be little need to keep so many fonts bundled in. #H_To add a custom font file with this temporary solution, similarly like before, replace_# #O_Interface/Addons/WidgetTools/Fonts/CUSTOM.ttf_# #H_with any TrueTypeFont file, while keeping this exact file name._#",
+		"Several fonts have been removed and will no not be bundled in because I would rather prioritize smaller file sizes, and having large font files that offer little benefit for most is in opposition to that goal.",
+		"Added Wago ID information to help Wago to find and download addon dependencies automatically.",
 		"#N_New:_#",
 		"Added Midnight 12.0.5 support.",
 		"A shared list of custom fonts have been added that all addons can now access via the global #H_WidgetTools.resources_# collection. #H_One custom font file named_# #O_CUSTOM.ttf_# #H_can now be placed in the main_# #O_Fonts_# #H_folder right inside the WoW client folder._# to be recognized by Widget Tools. Custom font file management is planned to be extended on in future updates.",
