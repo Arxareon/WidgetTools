@@ -13,6 +13,8 @@ wt.name = C_AddOns.GetAddOnMetadata(..., "Title")
 wt.changelog = {
 	{
 		"#V_Version 3.0_# #H_(23/4/2026)_#",
+		"#F_Hotfix (Version 3.0.1):_#",
+		"Added safeguards in several places to prevent missing or invalid asset file paths (fonts or textures) to cause critical errors.",
 		"#N_New:_#",
 		"Added Midnight 12.0.5 support.",
 		"The previously added right-click menus for settings have been further enhanced with copy & paste functionality to be able to easily move values across similar types of settings.",

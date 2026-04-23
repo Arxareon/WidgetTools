@@ -1,6 +1,6 @@
 ## Interface: 120005, 50503, 20505, 11508
 ## Title: Widget Tools
-## Version: 3.0
+## Version: 3.0.1
 ## X-Day: 23
 ## X-Month: 4
 ## X-Year: 2026
@@ -19,7 +19,7 @@
 ## AddonCompartmentFuncOnLeave: AddonCompartment_OnLeave_WidgetTools
 ## SavedVariables: WidgetToolsDB
 ## LoadSavedVariablesFirst: 1
-## X-WidgetTools-ToolboxVersion: 3.0
+## X-WidgetTools-ToolboxVersion: 3.0.1
 ## X-WidgetTools-AddToNamespace: wt
 
 Resources.lua

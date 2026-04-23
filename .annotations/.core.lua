@@ -946,6 +946,8 @@ end
 
 --[ Validation ]
 
+--| Frame
+
 ---Check if a variable is a frame (or a backdrop object)
 ---@param t Frame|any
 ---***
@@ -975,6 +977,42 @@ function utilities.ToFrame(s)
 	---| Slider
 	---| Texture
 	---| FontString
+end
+
+--| Font path
+
+---Test the specified font path on the specified object by trying to set it to see if the font file is valid, exists and it's loaded by the client
+---***
+---@param path TryFont_param1 Font file path to test
+---@param object? TryFont_param2 Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+---@param size? TryFont_param3 Font size to set | ***Default:*** `12`
+---@param flags? TryFont_param4 Font styling options | ***Default:*** *(no styling):* `""`
+---***
+---@return boolean # True, if `path` was valid and the font could be applied to `object`
+function utilities.TryFont(path, object, size, flags)
+
+	--| Parameters
+
+	---Font file path to test
+	---@alias TryFont_param1
+	---| string
+
+	---Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+	--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+	---@alias TryFont_param2
+	---| Font
+	---| FontString
+
+	---Font size to set | ***Default:*** `12`
+	---@alias TryFont_param3
+	---| number
+
+	---Font styling options | ***Default:*** *(no styling):* `""`
+	---@alias TryFont_param4
+	---| TBFFlags
+
+	return false
 end
 
 --[ Formatting ]

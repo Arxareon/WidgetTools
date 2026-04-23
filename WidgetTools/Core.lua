@@ -68,6 +68,8 @@ end
 
 --[ Validation ]
 
+--| Frame
+
 function us.IsFrame(t)
 	if type(t) ~= "table" then return false end
 
@@ -81,6 +83,23 @@ function us.ToFrame(s)
 	if type(s) == "string" then for name in s:gmatch("[^.]+") do frame = frame and frame[name] or _G[name] end end
 
 	return us.IsFrame(frame) and frame or nil
+end
+
+--| Font path
+
+local fontTestDummy
+
+function us.TryFont(path, object, size, flags)
+	if type(path) ~= "string" then return false end
+
+	if type(object) ~= "table" or type(object.SetFont) ~= "function" then
+		if not fontTestDummy then fontTestDummy = CreateFont("WidgetToolsFontPathTestDummy") end
+		object = fontTestDummy
+	end
+
+	if not pcall(object.SetFont, object, path, size or 12, flags or "") then return false end
+
+	return object:GetFont() == path
 end
 
 --[ Formatting ]
@@ -532,7 +551,7 @@ end
 WidgetToolsDB = us.VerifyData(type(WidgetToolsDB) == "table" and WidgetToolsDB or {}, {
 	lite = false,
 	positioningAids = true,
-	customFonts = { "CUSTOM", }, --REPLACE with custom font management
+	-- customFonts = { "CUSTOM", }, --REPLACE with custom font management
 	debugging = false,
 	frameAttributes = {
 		enabled = false,

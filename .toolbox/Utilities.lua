@@ -637,7 +637,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 		t.background.texture.insets = type(t.background.texture.insets) == "table" and t.background.texture.insets or {}
 		t.border.texture = type(t.border.texture) == "table" and t.border.texture or {}
 
-		if next(t.background.texture) or next(t.border.texture) then frame:SetBackdrop({
+		if next(t.background.texture) or next(t.border.texture) then pcall(frame.SetBackdrop, frame, {
 			bgFile = next(t.background.texture) and (t.background.texture.path or "Interface/ChatFrame/ChatFrameBackground") or nil,
 			tile = t.background.texture.tile ~= false,
 			tileSize = t.background.texture.size,

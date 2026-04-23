@@ -44,28 +44,12 @@ ns.rs.textures = {
 
 ns.rs.fonts = {
 	{
-		name = "Amarante",
-		path = ns.rs.root .. "Fonts/Amarante.ttf",
-	},
-	{
-		name = "Anton",
-		path = ns.rs.root .. "Fonts/Anton.ttf",
-	},
-	{
 		name = "Arbutus Slab",
 		path = ns.rs.root .. "Fonts/ArbutusSlab.ttf",
 	},
 	{
 		name = "Arial Narrow",
 		path = "Fonts/ARIALN.ttf",
-	},
-	{
-		name = "Aubrey",
-		path = ns.rs.root .. "Fonts/Aubrey.ttf",
-	},
-	{
-		name = "Black Ops One",
-		path = ns.rs.root .. "Fonts/BlackOpsOne.ttf",
 	},
 	{
 		name = "Bonbon",
@@ -84,28 +68,8 @@ ns.rs.fonts = {
 		path = "Fonts/FRIZQT__.TTF",
 	},
 	{
-		name = "Geologica",
-		path = ns.rs.root .. "Fonts/Geologica.ttf",
-	},
-	{
 		name = "Germania One",
 		path = ns.rs.root .. "Fonts/GermaniaOne.ttf",
-	},
-	{
-		name = "Grechen Fuemen",
-		path = ns.rs.root .. "Fonts/GrechenFuemen.ttf",
-	},
-	{
-		name = "Iosevka Charon",
-		path = ns.rs.root .. "Fonts/IosevkaCharon.ttf",
-	},
-	{
-		name = "Kirang Haerang",
-		path = ns.rs.root .. "Fonts/KirangHaerang.ttf",
-	},
-	{
-		name = "Lacquer",
-		path = ns.rs.root .. "Fonts/Lacquer.ttf",
 	},
 	{
 		name = "Molle",
@@ -124,24 +88,8 @@ ns.rs.fonts = {
 		path = ns.rs.root .. "Fonts/Oxanium.ttf",
 	},
 	{
-		name = "Pattaya",
-		path = ns.rs.root .. "Fonts/Pattaya.ttf",
-	},
-	{
-		name = "Racing Sans One",
-		path = ns.rs.root .. "Fonts/RacingSansOne.ttf",
-	},
-	{
-		name = "Ranchers",
-		path = ns.rs.root .. "Fonts/Ranchers.ttf",
-	},
-	{
 		name = "Reem Kufi",
 		path = ns.rs.root .. "Fonts/ReemKufi.ttf",
-	},
-	{
-		name = "Reggae One",
-		path = ns.rs.root .. "Fonts/ReggaeOne.ttf",
 	},
 	{
 		name = "Righteous",
@@ -152,28 +100,8 @@ ns.rs.fonts = {
 		path = ns.rs.root .. "Fonts/Sancreek.ttf",
 	},
 	{
-		name = "Sansation",
-		path = ns.rs.root .. "Fonts/Sansation.ttf",
-	},
-	{
 		name = "Skurri",
 		path = "Fonts/skurri.ttf",
-	},
-	{
-		name = "Sora",
-		path = ns.rs.root .. "Fonts/Sora.ttf",
-	},
-	{
-		name = "Source Code Pro",
-		path = ns.rs.root .. "Fonts/SourceCodePro.ttf",
-	},
-	{
-		name = "Special Elite",
-		path = ns.rs.root .. "Fonts/SpecialElite.ttf",
-	},
-	{
-		name = "Stylish",
-		path =  ns.rs.root .. "Fonts/Stylish.ttf",
 	},
 	{
 		name = "Underdog",
@@ -183,6 +111,10 @@ ns.rs.fonts = {
 		name = "Zen Dots",
 		path =  ns.rs.root .. "Fonts/ZenDots.ttf",
 	},
+	{
+		name = "CUSTOM", --REMOVE temporarily reinstated CUSTOM font solution once full custom font file support has been added
+		path =  ns.rs.root .. "Fonts/CUSTOM.ttf",
+	},
 }
 
 
@@ -191,6 +123,10 @@ ns.rs.fonts = {
 ns.changelog = {
 	{
 		"#V_Version 3.0_# #H_(23/4/2026)_#",
+		"#F_Hotfix (Version 3.0.1):_#",
+		"#H_The custom font file support has been reverted to the previous solution (but now handled by Widget Tools) until the next update because an oversight caused critical errors._# I have also removed several fonts to save on disk space. Once the planned custom font support is finished and released, any number of fully custom fonts will be usable to there will be little need to keep so many fonts bundled in.",
+		"#H_To add a custom font file with this temporary solution, similarly like before, replace_# #O_Interface/Addons/WidgetTools/Fonts/CUSTOM.ttf_# #H_with any TrueTypeFont file, while keeping this exact file name._#",
+		"Several fonts have been removed and will no longer be bundled in due to the needlessly larger size.",
 		"#N_New:_#",
 		"Added Midnight 12.0.5 support.",
 		"A shared list of custom fonts have been added that all addons can now access via the global #H_WidgetTools.resources_# collection. #H_One custom font file named_# #O_CUSTOM.ttf_# #H_can now be placed in the main_# #O_Fonts_# #H_folder right inside the WoW client folder._# to be recognized by Widget Tools. Custom font file management is planned to be extended on in future updates.",
@@ -201,7 +137,7 @@ ns.changelog = {
 		"Updated the event handling backend system managing Blizzard global OnEvent (and custom event) handlers for Frames with new utilities accessible globally via the #H_WidgetTools.utilities_# collection.",
 		"Most annotations that offer development-only benefits have been moved outside of installed addon files to greatly reduce install size.",
 		"Several other under the hood changes & improvements.",
-		"#F_Hotfixs:_#",
+		"#F_Fixes:_#",
 		"The AddOns menu context menu for Widget Tools will no longer take over the clickable screen space after being opened once.",
 		"Numerous other smaller fixes.",
 		"#O_Note:_# See Widget Toolbox  changelog on the Toolboxes & Addons page for further under the hood changes.",

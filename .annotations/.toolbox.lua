@@ -3936,7 +3936,7 @@ function wt.SetVisibility(frame, visible) end
 
 --[ Backdrop ]
 
----Set the backdrop of a frame with BackdropTemplate with the specified parameters
+---Set the backdrop of a frame with BackdropTemplate with the specified parameters safely
 ---***
 ---@param frame backdropFrame|BackdropTemplate|AnyFrameObject Reference to the frame to set the backdrop of<ul><li>***Note:*** The template of **frame** must have been set as: `BackdropTemplateMixin and "BackdropTemplate"`.</li></ul>
 ---@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** nil *(remove the backdrop)*

@@ -269,7 +269,7 @@ function wt.CreateFont(name, t)
 	if type(t.template) == "string" then font:CopyFontObject(t.template) end
 
 	--Set display font
-	if t.font then font:SetFont(t.font.path, t.font.size, t.font.style) end
+	if type(t.font) == "table" then pcall(font.SetFont, font, t.font.path, t.font.size, t.font.style) end
 
 	--Set appearance
 	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(us.Fill(t.color, { r = 1, g = 1, b = 1 }))) end
@@ -423,8 +423,8 @@ function wt.CreateTexture(frame, t, updates)
 
 		--| Asset & color
 
-		if t.atlas then texture:SetAtlas(t.atlas, true) else
-			texture:SetTexture(data.path or t.path, data.wrap.h or t.wrap.h, data.wrap.v or t.wrap.v, data.filterMode or t.filterMode)
+		if t.atlas then pcall(texture.SetAtlas, texture, t.atlas, true) else
+			pcall(texture.SetTexture, texture, data.path or t.path, data.wrap.h or t.wrap.h, data.wrap.v or t.wrap.v, data.filterMode or t.filterMode)
 		end
 		if data.layer then if data.level then texture:SetDrawLayer(data.layer, data.level) else texture:SetDrawLayer(data.layer) end end
 		if data.flip then texture:SetTexCoord(t.flip.h and 1 or 0, t.flip.h and 0 or 1, t.flip.v and 1 or 0, t.flip.v and 0 or 1) end
@@ -5236,18 +5236,22 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 						key = t.dataManagement.key,
 						onChange = {
 							CustomFontChangeHandler = function() if type(t.onChangeFont) == "function" then t.onChangeFont() end end,
-							UpdateTextFont = function() textline:SetFont(getData().path, getData().size, "OUTLINE") end,
+							UpdateTextFont = function() pcall(textline.SetFont, textline, getData().path, getData().size, "OUTLINE") end,
 							UpdateFontDropdownText = not WidgetToolsDB.lite and function()
-								local _, size, flags = fontPanel.widgets.path.toggle.label:GetFont()
+								---@type FontString
+								local label = fontPanel.widgets.path.toggle.label
+								local _, size, flags = label:GetFont()
 
-								fontPanel.widgets.path.toggle.label:SetFont(fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+								pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
 							end or nil,
 						},
 					},
 					events = { OnShow = function()
-						local _, size, flags = fontPanel.widgets.path.toggle.label:GetFont()
+						---@type FontString
+						local label = fontPanel.widgets.path.toggle.label
+						local _, size, flags = label:GetFont()
 
-						fontPanel.widgets.path.toggle.label:SetFont(fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+						pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
 					end },
 				}),
 				size = wt.CreateSlider({
@@ -5297,15 +5301,29 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 			--Update the font of the font selection dropdown items
 			if fontPanel.widgets.path.frame then
-				for i = 1, #fontPanel.widgets.path.toggles do if fontPanel.widgets.path.toggles[i].label then
-					local _, size, flags = fontPanel.widgets.path.toggles[i].label:GetFont()
-					fontPanel.widgets.path.toggles[i].label:SetFont(fonts[i].path, size, flags)
-				end end
 
-				if fontPanel.widgets.path.toggles[1].label then fontPanel.widgets.path.toggles[1].label:SetTextColor(0.4, 1, 0.4) end
+				--| Font paths
+
+				for i = 1, #fontPanel.widgets.path.toggles do
+					local label = fontPanel.widgets.path.toggles[i].label
+
+					if label then
+						local _, size, flags = label:GetFont()
+
+						pcall(label.SetFont, label, fonts[i].path, size, flags)
+					end
+				end
+
+				--| Colors
+
+				local labelDefault = fontPanel.widgets.path.toggles[1].label
+
+				if labelDefault then labelDefault:SetTextColor(0.4, 1, 0.4) end
 
 				if type(WidgetToolsDB.customFonts) == "table" then for i = #fonts - #WidgetToolsDB.customFonts + 1, #fonts do
-					if fontPanel.widgets.path.toggles[i].label then fontPanel.widgets.path.toggles[i].label:SetTextColor(1, 0.4, 0.4) end
+					local label = fontPanel.widgets.path.toggles[i].label
+
+					if label then label:SetTextColor(1, 0.4, 0.4) end
 				end end
 			end
 

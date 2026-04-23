@@ -1,6 +1,6 @@
 ## Interface: 120005, 50503, 20505, 11508
-## Title: Widget Toolbox (3.0)
-## Version: 3.0
+## Title: Widget Toolbox (3.0.1)
+## Version: 3.0.1
 ## X-Day: 23
 ## X-Month: 4
 ## X-Year: 2026
