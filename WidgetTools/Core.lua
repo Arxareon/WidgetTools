@@ -32,11 +32,21 @@ local modifierKeyDownCheckers = {
 }
 
 ---@type widgetToolsUtilities
-local us = { isKeyDown = setmetatable({}, {
-	__index = function (_, k) return modifierKeyDownCheckers[k] or IsModifierKeyDown end,
-	__newindex = function() end,
-	__metatable = "protected",
-}), }
+local us = {
+	isKeyDown = setmetatable({}, {
+		__index = function (_, k) return modifierKeyDownCheckers[k] or IsModifierKeyDown end,
+		__newindex = function() end,
+		__metatable = "protected",
+	}),
+	applyColorMarkup = {
+		V = function(s) return crc("• " .. s, "FFFFFFFF") end,
+		H = function(s) return crc(s, "FFFFFFFF") end,
+		N = function(s) return crc(s, "FF66EE66") end,
+		F = function(s) return crc(s, "FFEE4444") end,
+		C = function(s) return crc(s, "FF8888EE") end,
+		O = function(s) return crc(s, "FFEEEE66") end,
+	},
+}
 
 --[ General ]
 
@@ -183,11 +193,10 @@ function us.TableToString(table, compact)
 	return formatTableString(table, compact, compact and "" or " ", compact and "" or "\n", "    ")
 end
 
-local highlightColor, newColor, fixColor, changeColor, noteColor = "FFFFFFFF", "FF66EE66", "FFEE4444", "FF8888EE", "FFEEEE66"
+function us.FormatChangelog(changelog, latest, apply)
+	if type(changelog) ~= "table" then return "" end
 
-function us.FormatChangelog(changelog, latest)
 	local c = ""
-	if type(changelog) ~= "table" then return c end
 
 	for i = 1, #changelog do
 		local firstLine = latest and 2 or 1
@@ -195,21 +204,16 @@ function us.FormatChangelog(changelog, latest)
 
 		if type(version) ~= "table" then return c end
 
-		for j = firstLine, #version do if type(version[j]) == "string" then
-			c = c .. (j > firstLine and "\n\n" or "") .. version[j]:gsub(
-				"#V_(.-)_#", (i > 1 and "\n\n\n" or "") .. "|c" .. highlightColor .. "• %1|r"
-			):gsub(
-				"#N_(.-)_#", "|c".. newColor .. "%1|r"
-			):gsub(
-				"#F_(.-)_#", "|c".. fixColor .. "%1|r"
-			):gsub(
-				"#C_(.-)_#", "|c".. changeColor .. "%1|r"
-			):gsub(
-				"#O_(.-)_#", "|c".. noteColor .. "%1|r"
-			):gsub(
-				"#H_(.-)_#", "|c".. highlightColor .. "%1|r"
-			)
-		end end
+		for j = firstLine, #version do
+			local line = version[j]
+
+			if type(line) == "string" then
+				line = line:gsub("#([A-Z])_(.-)_#", function(markup, s) return us.applyColorMarkup[markup](s) end)
+				c = c .. (j > firstLine and "\n\n" or "") .. (i > 1 and "\n\n\n" or "") .. line
+
+				if apply ~= false then version[j] = line end
+			end
+		end
 
 		if latest then break end
 	end

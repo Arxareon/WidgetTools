@@ -16,13 +16,11 @@ local us = WidgetTools.utilities
 ---@type widgetToolsDebugging
 local ds = WidgetTools.debugging
 
-
 --[ Clipboard ]
 
 wt.clipboard = {}
 
-
---[[ UTILITIES ]]
+--[ Utilities ]
 
 ---Register a handler as a listener for `event`
 ---@param listeners table<string, function[]>

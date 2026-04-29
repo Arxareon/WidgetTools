@@ -273,6 +273,147 @@ end
 
 --[[ FRAME MANAGEMENT ]]
 
+--[ Constructors ]
+
+---Set the parameters of a frame
+---@param frame Frame
+---@param t frameCreationData
+local function setUpFrame(frame, t)
+	t.size = t.size or {}
+	t.size.w = t.size.w or 0
+	t.size.h = t.size.h or 0
+
+	--| Position & dimensions
+
+	local arrange = type(t.arrange) == "table" and t.arrange or {}
+
+	if not t.arrange and t.position then wt.SetPosition(frame, t.position) end
+	wt.SetArrangementDirective(frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+
+	if t.keepInBounds then frame:SetClampedToScreen(true) end
+
+	if t.size then frame:SetSize(t.size.w, t.size.h) end
+
+	--| Visibility
+
+	wt.SetVisibility(frame, t.visible ~= false)
+
+	if t.frameStrata then frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then frame:SetToplevel(t.keepOnTop) end
+
+	--[ Events ]
+
+	--Register script event handlers
+	if t.events then for key, value in pairs(t.events) do
+		if key == "attribute" then frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else frame:HookScript(key, value) end
+	end end
+
+	--| Global events
+
+	if type(t.onEvent) == "table" then for event, handler in pairs(t.onEvent) do if type(handler) == "function" then us.SetListener(frame, event, handler) end end end
+
+	--[ Initialization ]
+
+	--Add content, performs tasks
+	if type(t.initialize) == "function" then
+		t.initialize(frame, t.size.w, t.size.h, t.name)
+
+		--Arrange content
+		if t.arrangement and frame then wt.ArrangeContent(frame, t.arrangement) end
+	end
+end
+
+--| Base frame
+
+function wt.CreateFrame(t)
+	t = type(t) == "table" and t or {}
+
+	--[ Frame Setup ]
+
+	local name = t.name and ((t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. t.name:gsub("%s+", "")) or nil
+	local frame = CreateFrame("Frame", name, t.parent)
+
+	--| Shared setup
+
+	setUpFrame(frame, t)
+
+	return frame
+end
+
+function wt.CreateCustomFrame(t)
+	t = type(t) == "table" and t or {}
+
+	--[ Frame Setup ]
+
+	local name = t.name and ((t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. t.name:gsub("%s+", "")) or nil
+	local frame = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
+
+	--| Shared setup
+
+	setUpFrame(frame, t)
+
+	return frame
+end
+
+--| Scrollframe
+
+function wt.CreateScrollframe(t)
+	t = type(t) == "table" and t or {}
+	t.scrollSize = type(t.scrollSize) == "table" and t.scrollSize or {}
+
+	--[ Frame Setup ]
+
+	local parentName = t.parent and t.parent:GetName() or ""
+	local name = t.name and t.name:gsub("%s+", "")
+
+	local scrollframe = CreateFrame("ScrollFrame", parentName .. (name or "") .. "ScrollParent", t.parent, ScrollControllerMixin and "ScrollFrameTemplate")
+
+	--| Position & dimensions
+
+	t.size = t.size or t.parent and { w = t.parent:GetWidth(), h = t.parent:GetHeight() } or { w = 0, h = 0 }
+
+	wt.SetPosition(scrollframe, t.position)
+
+	scrollframe:SetSize(t.size.w, t.size.h)
+
+	--Scrollbar
+	wt.SetPosition(scrollframe.ScrollBar, {
+		anchor = "RIGHT",
+		relativeTo = scrollframe,
+		relativePoint = "RIGHT",
+		offset = { x = -4, y = 1 }
+	})
+	scrollframe.ScrollBar:SetHeight(t.size.h - 10)
+
+	--[ Scroll Child ]
+
+	--Create scrollable child frame
+	local scrollChild = wt.CreateFrame({
+		parent = scrollframe,
+		name = parentName .. (name or "Scroller"),
+		append = false,
+		size = { w = t.scrollSize.w or scrollframe:GetWidth() - (wt.classic and 32 or 16), h = t.scrollSize.h },
+		initialize = t.initialize,
+		arrangement = t.arrangement
+	})
+
+	--Register for scroll
+	scrollframe:SetScrollChild(scrollChild)
+
+	--Update scroll speed
+	t.scrollSpeed = (t.scrollSpeed or 0.25)
+
+	--Override the built-in update function
+	scrollframe.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way to overriding the built-in update function
+		local height = scrollframe:GetHeight()
+		scrollframe.ScrollBar.panExtentPercentage = height * t.scrollSpeed / math.abs(scrollChild:GetHeight() - height)
+	end
+
+	return scrollChild, scrollframe
+end
+
 --[ Position ]
 
 --Used for a transitional step to avoid anchor family connections during safe frame positioning
@@ -734,28 +875,26 @@ end
 function wt.AddDependencies(rules, setState)
 	if type(rules) ~= "table" or type(setState) ~= "function" then return end
 
-	--Update utility
 	local setter = function() setState(wt.CheckDependencies(rules)) end
 
-	--Set listeners
-	for i = 1, #rules do if rules[i].frame then
-		local t
+	for i = 1, #rules do
+		local f = rules[i].frame
+		local t = wt.IsWidget(f)
 
-		if us.IsFrame(rules[i].frame) then t = rules[i].frame:GetObjectType() else
-			t = wt.IsWidget(rules[i].frame)
+		if t then
+			f.setListener.loaded(function(_, success) if success then setter() end end)
 
-			--Watch value load events
-			if t then rules[i].frame.setListener.loaded(function(_, success) if success then setter() end end) end
+			if t == "Toggle" then f.setListener.toggled(setter)
+			elseif t == "Selector" or t == "Multiselector" or t == "SpecialSelector" then f.setListener.selected(setter)
+			elseif t == "Textbox" or t == "Numeric" then f.setListener.changed(setter) end
+		elseif us.IsFrame(f) then
+			t = f:GetObjectType()
+
+			if t == "CheckButton" then f:HookScript("OnClick", setter)
+			elseif t == "EditBox" then f:HookScript("OnTextChanged", setter)
+			elseif t == "Slider" then f:HookScript("OnValueChanged", setter) end
 		end
-
-		--Watch value change events
-		if t == "CheckButton" then rules[i].frame:HookScript("OnClick", setter)
-		elseif t == "EditBox" then rules[i].frame:HookScript("OnTextChanged", setter)
-		elseif t == "Slider" then rules[i].frame:HookScript("OnValueChanged", setter)
-		elseif t == "Toggle" then rules[i].frame.setListener.toggled(setter)
-		elseif t == "Selector" or t == "Multiselector" or t == "SpecialSelector" then rules[i].frame.setListener.selected(setter)
-		elseif t == "Textbox" or t == "Numeric" then rules[i].frame.setListener.changed(setter) end
-	end end
+	end
 
 	--Initialize state
 	setter()
@@ -767,18 +906,26 @@ function wt.CheckDependencies(rules)
 	local state = true
 
 	for i = 1, #rules do
-		if us.IsFrame(rules[i].frame) then --Base Blizzard frame objects
-			if rules[i].frame:IsObjectType("CheckButton") then state = rules[i].evaluate and rules[i].evaluate(rules[i].frame:GetChecked()) or rules[i].frame:GetChecked()
-			elseif rules[i].frame:IsObjectType("EditBox") then state = rules[i].evaluate(rules[i].frame:GetText())
-			elseif rules[i].frame:IsObjectType("Slider") then state = rules[i].evaluate(rules[i].frame:GetValue())
+		local f = rules[i].frame
+		local e = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
+		local t = wt.IsWidget(f)
+
+		if t then
+			if t == "Toggle" then if e then state = e(f.getState()) else state = f.getState() end
+			elseif e then
+				if t == "Selector" then state = e(f.getSelected())
+				elseif t == "SpecialSelector" then state = e(f.getSelected())
+				elseif t == "Multiselector" then state = e(f.getSelections())
+				elseif t == "Textbox" then state = e(f.getText())
+				elseif t == "Numeric" then state = e(f.getNumber()) end
 			end
-		elseif rules[i].frame.isType then --Custom WidgetTools widgets
-			if rules[i].frame.isType("Toggle") then if rules[i].evaluate then state = rules[i].evaluate(rules[i].frame.getState()) else state = rules[i].frame.getState() end
-			elseif rules[i].frame.isType("Selector") then state = rules[i].evaluate(rules[i].frame.getSelected())
-			elseif rules[i].frame.isType("SpecialSelector") then state = rules[i].evaluate(rules[i].frame.getSelected())
-			elseif rules[i].frame.isType("Multiselector") then state = rules[i].evaluate(rules[i].frame.getSelections())
-			elseif rules[i].frame.isType("Textbox") then state = rules[i].evaluate(rules[i].frame.getText())
-			elseif rules[i].frame.isType("Numeric") then state = rules[i].evaluate(rules[i].frame.getNumber())
+		elseif us.IsFrame(f) then
+			t = f:GetObjectType()
+
+			if t == "CheckButton" then if e then state = e(f:GetChecked()) else state = f:GetChecked() end
+			elseif e then
+				if t == "EditBox" then state = e(f:GetText())
+				elseif t == "Slider" then state = e(f:GetValue()) end
 			end
 		end
 
@@ -789,7 +936,292 @@ function wt.CheckDependencies(rules)
 end
 
 
---[[ TOOLTIP MANAGEMENT ]]
+--[[ TEXT ]]
+
+--[ Font ]
+
+function wt.CreateFont(name, t)
+	t = type(t) == "table" and t or {}
+
+	if type(name) ~= "string" or name == "" then return "GameFontNormal", GameFontNormal end
+	if _G[name] then return name, _G[name] end
+
+	--[ Font Setup ]
+
+	local font = CreateFont(name)
+	if type(t.template) == "string" then font:CopyFontObject(t.template) end
+
+	--Set display font
+	if type(t.font) == "table" then pcall(font.SetFont, font, t.font.path, t.font.size, t.font.style) end
+
+	--Set appearance
+	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(us.Fill(t.color, { r = 1, g = 1, b = 1 }))) end
+	if type(t.spacing) == "number" then font:SetSpacing(t.spacing) end
+	if type(t.shadow) == "table" then
+		font:SetShadowOffset(t.shadow.offset.x or 1, t.shadow.offset.y)
+		font:SetShadowColor(wt.UnpackColor(us.Fill(t.shadow.color, { r = 0, g = 0, b = 0 })))
+	end
+
+	--Set text positioning
+	if  type(t.justify) == "table" then
+		if t.justify.h then font:SetJustifyH(t.justify.h) end
+		if t.justify.v then font:SetJustifyV(t.justify.v) end
+	end
+	if t.wrap == true then font:SetIndentedWordWrap(true) elseif t.wrap == false then font:SetIndentedWordWrap(false) end
+
+	return name, font
+end
+
+--Create missing fonts for Classic
+if wt.classic then
+	wt.CreateFont("GameFontDisableMed2", {
+		template = "GameFontHighlightMedium",
+		color = wt.PackColor(GameFontDisable:GetTextColor()),
+	})
+
+	wt.CreateFont("NumberFont_Shadow_Large", { font = { path = "Fonts/ARIALN.TTF", size = 20, style = "OUTLINE" }, })
+end
+
+--[ Textline ]
+
+function wt.CreateText(t)
+	t = type(t) == "table" and t or {}
+	t.parent = us.IsFrame(t.parent) and t.parent or UIParent
+
+	local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
+
+	--| Position & dimensions
+
+	wt.SetPosition(text, t.position)
+
+	if type(t.width) == "number" then text:SetWidth(t.width) end
+	if type(t.height) == "number" then text:SetHeight(t.height) end
+
+	--| Font & text
+
+	if t.color then text:SetTextColor(wt.UnpackColor(t.color)) end
+	if t.justify then
+		if t.justify.h then text:SetJustifyH(t.justify.h) end
+		if t.justify.v then text:SetJustifyV(t.justify.v) end
+	end
+	if t.wrap == false then text:SetWordWrap(false) end
+	if t.text then text:SetText(t.text) end
+
+	return text
+end
+
+function wt.CreateTitle(frame, t)
+	t = type(t) == "table" and t or {}
+
+	if not us.IsFrame(frame) then return end
+
+	return wt.CreateText({
+		parent = frame,
+		name = "Title",
+		position = {
+			anchor = t.anchor,
+			offset = t.offset,
+		},
+		width = t.width,
+		layer = "ARTWORK",
+		text = t.text,
+		font = t.font or "GameFontHighlight",
+		color = t.color,
+		justify = { h = t.justify or "LEFT", },
+	})
+end
+
+function wt.CreateDescription(title, t)
+	t = type(t) == "table" and t or {}
+
+	if type(title) ~= "table" or type(title.GetFont) ~= "function" then return end
+
+	local parent = title:GetParent()
+
+	if not us.IsFrame(parent) then return end
+
+	t.justify = type(t.justify) == "string" and t.justify or "LEFT"
+	local anchor = t.justify ~= "RIGHT" and "LEFT" or "RIGHT"
+	local relativePoint = t.justify ~= "RIGHT" and "RIGHT" or "LEFT"
+	t.offset = type(t.offset) == "table" and t.offset or {}
+	t.offset.x = type(t.offset.x) == "number" and t.offset.x or 0
+	t.offset.y = type(t.offset.y) == "number" and t.offset.y or 1
+	t.spacer = (type(t.spacer) == "number" and t.spacer or 5) * (t.justify ~= "LEFT" and -1 or 1)
+	t.color = type(t.color) == "table" and t.color or us.Fill({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
+
+	local separator = wt.CreateText({
+		parent = parent,
+		name = "Separator",
+		position = {
+			anchor = anchor,
+			relativeTo = title,
+			relativePoint = relativePoint,
+			offset = { x = t.spacer, }
+		},
+		layer = "ARTWORK",
+		text = "•",
+		font = title:GetFontObject():GetName(),
+		color = t.color,
+	})
+
+	return wt.CreateText({
+		parent = parent,
+		name = "Description",
+		position = {
+			anchor = anchor,
+			relativeTo = separator,
+			relativePoint = relativePoint,
+			offset = { x = t.offset.x + t.spacer + 4, y = t.offset.y }
+		},
+		width = t.width or parent:GetWidth() - title:GetWidth() - separator:GetWidth() - t.spacer * 2 + (t.widthOffset or 0),
+		layer = "ARTWORK",
+		text = t.text,
+		font = t.font or "GameFontHighlightSmall2",
+		color = t.color,
+		justify = { h = t.justify, v = "MIDDLE", },
+	})
+end
+
+
+--[[ TEXTURE ]]
+
+function wt.CreateTexture(frame, t, updates)
+	if not us.IsFrame(frame) then return end
+
+	t = type(t) == "table" and t or {}
+
+	local texture = frame:CreateTexture((frame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Texture"))
+
+	--[ Set Texture Utility ]
+
+	---@param data textureUpdateData|textureCreationData
+	local function setTexture(data)
+
+		--| Position & dimensions
+
+		wt.SetPosition(texture, data.position)
+
+		texture:SetSize(data.size.w or t.size.w or frame:GetWidth(), data.size.h or t.size.h or frame:GetHeight())
+
+		--| Asset & color
+
+		if t.atlas then pcall(texture.SetAtlas, texture, t.atlas, true) else
+			pcall(texture.SetTexture, texture, data.path or t.path, data.wrap.h or t.wrap.h, data.wrap.v or t.wrap.v, data.filterMode or t.filterMode)
+		end
+		if data.layer then if data.level then texture:SetDrawLayer(data.layer, data.level) else texture:SetDrawLayer(data.layer) end end
+		if data.flip then texture:SetTexCoord(t.flip.h and 1 or 0, t.flip.h and 0 or 1, t.flip.v and 1 or 0, t.flip.v and 0 or 1) end
+		if data.color then texture:SetVertexColor(wt.UnpackColor(data.color)) end
+		if data.tile then
+			texture:SetHorizTile(data.tile.h ~= nil and data.tile.h)
+			texture:SetVertTile(data.tile.v ~= nil and data.tile.v)
+		end
+		if data.edges then
+			texture:SetTexCoord(data.edges.l or 0, data.edges.r or 1, data.edges.t or 0, data.edges.b or 1)
+		elseif data.vertices then
+			data.vertices.topLeft = data.vertices.topLeft or {}
+			data.vertices.topRight = data.vertices.topRight or {}
+			data.vertices.bottomLeft = data.vertices.bottomLeft or {}
+			data.vertices.bottomRight = data.vertices.bottomRight or {}
+
+			texture:SetTexCoord(
+				data.vertices.topLeft.x or 0,
+				data.vertices.topLeft.y or 0,
+				data.vertices.topRight.x or 1,
+				data.vertices.topRight.y or 0,
+				data.vertices.bottomLeft.x or 0,
+				data.vertices.bottomLeft.y or 1,
+				data.vertices.bottomRight.x or 1,
+				data.vertices.bottomRight.y or 1
+			)
+		end
+	end
+
+	--| Set the base texture
+
+	t.path = type(t.path) == "string" and t.path or "Interface/ChatFrame/ChatFrameBackground"
+	t.size = type(t.size) == "table" and t.size or {}
+	t.wrap = type(t.wrap) == "table" and t.wrap or {}
+	t.tile = type(t.tile) == "table" and t.tile or {}
+
+	setTexture(t)
+
+	--[ Events ]
+
+	--Register script event handlers
+	if type(t.events) == "table" then for key, value in pairs(t.events) do
+		if key == "attribute" then texture:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else texture:HookScript(key, value) end
+	end end
+
+	--[ Texture Updates ]
+
+	if updates then for key, value in pairs(updates) do
+		value.frame = value.frame or frame
+
+		--Set the script
+		if value.frame:HasScript(key) then value.frame:HookScript(key, function(self, ...)
+			--Unconditional: Restore the base backdrop on trigger
+			if not value.rule then
+				setTexture(t)
+
+				return
+			end
+
+			--Conditional: Evaluate the rule & fill texture update date with the base values
+			local data = us.Fill(value.rule(self, ...), t)
+
+			--Update the texture
+			setTexture(data)
+		end) end
+	end end
+
+	return texture
+end
+
+function wt.CreateLine(frame, t)
+	t = type(t) == "table" and t or {}
+
+	if not us.IsFrame(frame) then return end
+
+	t.startPosition.offset = t.startPosition.offset or {}
+	t.endPosition.offset = t.endPosition.offset or {}
+
+	local line = frame:CreateLine((frame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Line"), t.layer, nil, t.level)
+
+	--Positions
+	line:ClearAllPoints()
+	line:SetStartPoint(t.startPosition.relativePoint, t.startPosition.relativeTo, t.startPosition.offset.x, t.startPosition.offset.y)
+	line:SetEndPoint(t.endPosition.relativePoint, t.endPosition.relativeTo, t.endPosition.offset.x, t.endPosition.offset.y)
+
+	--Color & thickness
+	if t.thickness then line:SetThickness(t.thickness) end
+	if t.color then line:SetColorTexture(wt.UnpackColor(t.color)) end
+
+	return line
+end
+
+
+--[[ TOOLTIP ]]
+
+--[ Game Tooltip ]
+
+function wt.CreateTooltip(name)
+	local tooltip = CreateFrame("GameTooltip", name .. "GameTooltip", nil, "GameTooltipTemplate")
+
+	--| Visibility
+
+	tooltip:SetFrameStrata("TOOLTIP")
+	tooltip:SetScale(UIParent:GetScale())
+
+	--| Title
+
+	_G[tooltip:GetName() .. "TextLeft" .. 1]:SetFontObject("GameFontNormalMed1")
+	_G[tooltip:GetName() .. "TextRight" .. 1]:SetFontObject("GameFontNormalMed1")
+
+	return tooltip
+end
+
+--[ Management ]
 
 --Default reusable tooltip frame
 local defaultTooltip
@@ -964,7 +1396,9 @@ function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 end
 
 
---[[ POPUP MANAGEMENT ]]
+--[[ POPUP ]]
+
+--[ Dialog ]
 
 function wt.RegisterPopupDialog(key, t)
 	key = type(key) == "string" and key:len() > 0 and key:upper() or nil
@@ -1003,6 +1437,285 @@ function wt.UpdatePopupDialog(key, t)
 	if t.onAlt then StaticPopupDialogs[key].OnAlt = t.onAlt end
 
 	return key
+end
+
+--[ Reload Notice ]
+
+local reloadFrame
+
+function wt.CreateReloadNotice(t) --FIX lite
+	t = type(t) == "table" and t or {}
+
+	if reloadFrame then
+		wt.SetPosition(reloadFrame, type(t.position) == "table" and t.position or {
+			anchor = "TOPRIGHT",
+			offset = { x = -300, y = -100 }
+		})
+		reloadFrame:Show()
+
+		return reloadFrame
+	end
+
+	--[ Frame Setup ]
+
+	reloadFrame = wt.CreatePanel({
+		parent = UIParent,
+		name = "WidgetToolsReloadNotice",
+		title = t.title or wt.strings.reload.title,
+		position = t.position or {
+			anchor = "TOPRIGHT",
+			offset = { x = -300, y = -100 }
+		},
+		keepInBounds = true,
+		size = { w = 240, h = 102 },
+		frameStrata = "DIALOG",
+		keepOnTop = true,
+		background = { color = { a = 0.9 }, },
+		lite = false,
+	})
+
+	--| Position & dimensions
+
+	wt.SetMovability(reloadFrame, true)
+
+	--| Title & description
+
+	reloadFrame.title:SetPoint("TOPLEFT", 14, -14)
+
+	wt.CreateText({
+		parent = reloadFrame,
+		name = "Description",
+		position = {
+			anchor = "TOPLEFT",
+			offset = { x = 14, y = -38 }
+		},
+		width = 214,
+		justify = { h = "LEFT", },
+		text = t.message or wt.strings.reload.description,
+	})
+
+	--| Buttons
+
+	wt.CreateButton({
+		parent = reloadFrame,
+		name = "ReloadButton",
+		title = wt.strings.reload.accept.label,
+		tooltip = { lines = { { text = wt.strings.reload.accept.tooltip, }, } },
+		position = {
+			anchor = "BOTTOMLEFT",
+			offset = { x = 12, y = 12 }
+		},
+		size = { w = 120, },
+		action = function() ReloadUI() end,
+		lite = false,
+	})
+
+	wt.CreateButton({
+		parent = reloadFrame,
+		name = "CancelButton",
+		title = wt.strings.reload.cancel.label,
+		tooltip = { lines = { { text = wt.strings.reload.cancel.tooltip, }, } },
+		position = {
+			anchor = "BOTTOMRIGHT",
+			offset = { x = -12, y = 12 }
+		},
+		action = function() reloadFrame:Hide() end,
+		lite = false,
+	})
+
+	return reloadFrame
+end
+
+
+--[[ CONTEXT MENU ]]
+
+function wt.CreateContextMenu(t)
+	t = type(t) == "table" and t or {}
+
+	--[ Menu Setup ]
+
+	---@type contextMenu
+	local menu = {}
+
+	--| Utilities
+
+	function menu.open(trigger, action)
+		trigger = type(trigger) == "number" and Clamp(trigger, 1, #t.triggers) or 1
+
+		if type(t.triggers[trigger].condition) == "function" and not t.triggers[trigger].condition(action) then return end
+
+		MenuUtil.CreateContextMenu(t.triggers[trigger].frame, function(_, rootDescription)
+			menu.rootDescription = rootDescription
+
+			--Adding items
+			if type(t.initialize) == "function" then t.initialize(menu) end
+		end)
+	end
+
+	--| Trigger events
+
+	if type(t.triggers) ~= "table" then t.triggers = { { frame = UIParent, }, } else for i = 1, #t.triggers do
+		if not us.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
+
+		if t.triggers[i].rightClick ~= false or t.triggers[i].leftClick then t.triggers[i].frame:HookScript("OnMouseUp", function(_, button, isInside)
+			if not isInside or (button == "RightButton" and t.triggers[i].rightClick == false) or (button == "LeftButton" and not t.triggers[i].leftClick) then return end
+
+			menu.open(i, "click")
+		end) end
+
+		if t.triggers[i].hover then t.triggers[i].frame:HookScript("OnEnter", function() menu.open(i, "hover") end) end
+	end end
+
+	return menu
+end
+
+function wt.CreatePopupMenu(t)
+	t = type(t) == "table" and t or {}
+	t.size = t.size or {}
+	t.size.w = t.size.w or 180
+	t.size.h = t.size.h or 26
+
+	local trigger = wt.CreateCustomFrame({
+		parent = t.parent,
+		name = t.name or "PopupMenu",
+		position = t.position,
+		arrange = t.arrange,
+		size = t.size,
+		events = t.events,
+		onEvent = t.onEvent,
+		initialize = function(frame)
+			local label = wt.CreateText({
+				parent = frame,
+				name = "Label",
+				text = t.title,
+				position = { anchor = "LEFT", offset = { x = 12, }, },
+				justify = { h = "LEFT", },
+				width = t.size.w - 48,
+				font = "GameFontNormal",
+			})
+
+			local arrow = wt.CreateText({
+				parent = frame,
+				name = "Arrow",
+				text = "►",
+				position = { anchor = "RIGHT", offset = { x = -12, }, },
+				justify = { h = "RIGHT", },
+				width = 16,
+				font = "ChatFontNormal",
+				color = NORMAL_FONT_COLOR,
+			})
+
+			if type(t.tooltip) == "table" then wt.AddTooltip(frame, {
+				title = t.tooltip.title or t.title,
+				lines = t.tooltip.lines,
+				anchor = "ANCHOR_RIGHT",
+			}) end
+
+			wt.SetBackdrop(frame, {
+				background = {
+					texture = {
+						size = 5,
+						insets = { l = 3, r = 3, t = 3, b = 3 },
+					},
+					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 },
+				},
+				border = {
+					texture = { width = 14, },
+					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 },
+				}
+			},
+			{ { rules = {
+				OnEnter = function()
+					local r, g, b = HIGHLIGHT_FONT_COLOR:GetRGB()
+
+					label:SetTextColor(r, g, b)
+					arrow:SetTextColor(r, g, b)
+
+					return IsMouseButtonDown("LeftButton") and {
+						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+					} or {
+						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
+						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
+					}
+				end,
+				OnLeave = function()
+					local r, g, b = NORMAL_FONT_COLOR:GetRGB()
+
+					label:SetTextColor(r, g, b)
+					arrow:SetTextColor(r, g, b)
+
+					return {}, true
+				end,
+				OnMouseDown = function() return IsMouseButtonDown("LeftButton") and {
+					background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
+					border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
+				} or {} end,
+			}, }, })
+		end
+	})
+
+	local menu = wt.CreateContextMenu({
+		triggers = { {
+			frame = trigger,
+			leftClick = true,
+			rightClick = false,
+		}, },
+		initialize = t.initialize,
+	})
+
+	return trigger, menu
+end
+
+function wt.CreateSubmenu(menu, t)
+	if type(menu) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	--[ Menu Setup ]
+
+	---@type contextSubmenu
+	---@diagnostic disable-next-line: missing-parameter --REMOVE when the annotations get fixed
+	local submenu = { rootDescription = menu.rootDescription:CreateButton(t.title or "Submenu") }
+
+	--Adding items
+	if type(t.initialize) == "function" then t.initialize(submenu) end
+
+	return submenu
+end
+
+--[ Elements ]
+
+function wt.CreateMenuTextline(menu, t)
+	if type(menu) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	return t.queue ~= true and menu.rootDescription:CreateTitle(t.text or "Title") or menu.rootDescription:QueueTitle(t.text or "Title")
+end
+
+function wt.CreateMenuDivider(menu, t)
+	if type(menu) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	return t.queue ~= true and menu.rootDescription:CreateDivider() or menu.rootDescription:QueueDivider()
+end
+
+function wt.CreateMenuSpacer(menu, t)
+	if type(menu) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	return t.queue ~= true and menu.rootDescription:CreateSpacer() or menu.rootDescription:QueueSpacer()
+end
+
+function wt.CreateMenuButton(menu, t)
+	if type(menu) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	return menu.rootDescription:CreateButton(t.title or "Button", t.action)
 end
 
 
@@ -1174,7 +1887,7 @@ function wt.RegisterChatCommands(addon, keywords, t)
 end
 
 
---[[ SETTINGS MANAGEMENT ]]
+--[[ SETTINGS ]]
 
 function wt.RegisterSettingsPage(page, parent, icon)
 	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
@@ -1195,7 +1908,7 @@ function wt.RegisterSettingsPage(page, parent, icon)
 	Settings.RegisterAddOnCategory(page.category)
 end
 
---| Settings data
+--[ Data Management ]
 
 ---@type settingsRegistry
 local settingsData = { rules = {}, changeHandlers = {} }
