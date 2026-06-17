@@ -7,8 +7,13 @@
 
 ---Read-only reference to the Widget Toolbox table
 ---@class toolbox : widgetToolbox
----@field strings toolboxStrings
+---@field addon string Toolbox sub-addon namespace name
+---@field title string Toolbox sub-addon display title
+---@field root string Toolbox sub-addon root folder path
 ---@field classic boolean Classic vs modern UI code separation
+---@field textures { alphaBG: string,  gradientBG: string }
+---@field strings toolboxStrings
+---@field changelog string[][]
 ---@field clipboard toolboxClipboard
 local wt = {}
 
@@ -93,19 +98,20 @@ function wt.IsColor(t)
 	--| Returns
 
 	---@alias color
+	---| rgbData
 	---| colorData
 	---| colorRGBA
 	---| colorRGB
 
-		---@class colorData : rgbData_base, alpha_opaqueDefault
+		---@class colorData : rgbData, alpha_opaqueDefault
 
-			---@class rgbData_base
+			---@class rgbData
 			---@field r number Red | ***Range:*** (0, 1)
 			---@field g number Green | ***Range:*** (0, 1)
 			---@field b number Blue | ***Range:*** (0, 1)
 
 			---@class alpha_opaqueDefault
-		---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 1
+			---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 1
 end
 
 ---Check & silently repair a color data table
@@ -922,7 +928,7 @@ function wt.AddTooltip(frame, t, toggle, duplicate)
 			---@class tooltipLineData
 			---@field text string Text to be displayed in the line
 			---@field font? string|FontObject The [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to set for this line | ***Default:*** GameTooltipTextSmall
-			---@field color? rgbData_base Table containing the RGB values to color this line with (overriding **font**)
+			---@field color? rgbData Table containing the RGB values to color this line with (overriding **font**)
 			---@field wrap? boolean Allow the text in this line to be wrapped | ***Default:*** `true`
 
 	---@class tooltipToggleData # toggle
@@ -3568,9 +3574,9 @@ function wt.CreateCopybox(t)
 	--| Returns
 
 	---@class copybox
-	---@field frame Frame
+	---@field frame Frame|nil
 	---@field label FontString|nil
-	---@field textbox customEditbox|textbox
+	---@field textbox customEditbox|textbox|nil
 
 	return {}
 end
@@ -4386,7 +4392,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		---@class textColorInfo
 		---@field index? integer Ordering index of the color | ***Default:*** *unspecified*
 		---@field name? string Display name to set their widget and tooltip titles paired to their data management keys | ***Default:*** *data management key in Title case*
-		---@field wrap? boolean If true, wrap the list of colors at this color (stasrting this one in a new row) | ***Default:*** **index** == 1
+		---@field wrap? boolean If true, wrap the list of colors at this color (starting this one in a new row) | ***Default:*** **index** == 1
 
 		---@class settingsData_font : settingsData_base
 		---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Font"

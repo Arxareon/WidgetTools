@@ -83,12 +83,14 @@
 			"COLOR",
 			"Round",
 			"CHAT",
-			"YELL"
+			"YELL",
+			"NOTE"
 		],
 		"Lua.workspace.ignoreDir": [
 			"WidgetToolbox_*"
 		],
 		"Lua.type.weakUnionCheck": true,
 		"todo-tree.tree.scanMode": "current file",
+		"better-todo-tree.tree.scanMode": "current file",
 	}
 }

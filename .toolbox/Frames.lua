@@ -35,6 +35,7 @@ if WidgetToolsDB.lite then
 	wt.CreateEditbox = wt.CreateTextbox
 	wt.CreateCustomEditbox = wt.CreateTextbox
 	wt.CreateMultilineEditbox = wt.CreateTextbox
+	wt.CreateCopybox = function() return {} end --FIX lite
 	wt.CreateSlider = wt.CreateNumeric
 	wt.CreateClassicSlider = wt.CreateNumeric
 	wt.CreateColorpicker = wt.CreateColormanager
@@ -2615,97 +2616,92 @@ function wt.CreateCopybox(t) --FIX lite
 
 	--[ Widget ]
 
-	---@class copybox
+	---@type copybox
 	local copybox = {}
 
-	--[ GUI ]
+	--[ Frame Setup ]
 
-	if not WidgetToolsDB.lite or t.lite == false then
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Copybox")
 
-		--[ Frame Setup ]
+	copybox.frame = CreateFrame("Frame", name, t.parent)
 
-		local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Copybox")
+	--| Position & dimensions
 
-		copybox.frame = CreateFrame("Frame", name, t.parent)
+	t.size = t.size or {}
+	t.size.w = t.size.w or 180
+	t.size.h = t.size.h or 18
+	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
-		--| Position & dimensions
+	if not t.arrange and t.position then wt.SetPosition(copybox.frame, t.position) end
+	wt.SetArrangementDirective(copybox.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-		t.size = t.size or {}
-		t.size.w = t.size.w or 180
-		t.size.h = t.size.h or 18
-		local arrange = type(t.arrange) == "table" and t.arrange or {}
+	copybox.frame:SetSize(t.size.w, t.size.h + (t.label ~= false and 12 or 0))
 
-		if not t.arrange and t.position then wt.SetPosition(copybox.frame, t.position) end
-		wt.SetArrangementDirective(copybox.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+	--| Visibility
 
-		copybox.frame:SetSize(t.size.w, t.size.h + (t.label ~= false and 12 or 0))
+	wt.SetVisibility(copybox.frame, t.visible ~= false)
 
-		--| Visibility
+	if t.frameStrata then copybox.frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then copybox.frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then copybox.frame:SetToplevel(t.keepOnTop) end
 
-		wt.SetVisibility(copybox.frame, t.visible ~= false)
+	--| Label
 
-		if t.frameStrata then copybox.frame:SetFrameStrata(t.frameStrata) end
-		if t.frameLevel then copybox.frame:SetFrameLevel(t.frameLevel) end
-		if t.keepOnTop then copybox.frame:SetToplevel(t.keepOnTop) end
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Copybox"
 
-		--| Label
+	copybox.label = t.label ~= false and wt.CreateTitle(copybox.frame, {
+		offset = { x = -1, },
+		width = t.size.w,
+		text = title,
+		font = "GameFontNormal",
+	}) or nil
 
-		local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Copybox"
+	--| Textbox
 
-		copybox.label = t.label ~= false and wt.CreateTitle(copybox.frame, {
-			offset = { x = -1, },
-			width = t.size.w,
-			text = title,
-			font = "GameFontNormal",
-		}) or nil
+	t.font = t.font or "GameFontNormalSmall"
+	t.color = t.color or { r = 0.6, g = 0.8, b = 1, a = 1 }
+	t.colorOnMouse = t.colorOnMouse or { r = 0.8, g = 0.95, b = 1, a = 1 }
 
-		--| Textbox
+	copybox.textbox = wt.CreateCustomEditbox({
+		parent = copybox.frame,
+		name = "Textline",
+		title = title,
+		label = false,
+		tooltip = { lines = { { text = wt.strings.copyBox, }, } },
+		position = { anchor = "BOTTOMLEFT", },
+		size = t.size,
+		font = { normal = t.font, disabled = t.font },
+		color = t.color,
+		justify = { h = t.justify, },
+		events = {
+			OnTextChanged = function(self, _, user)
+				if not user then return end
 
-		t.font = t.font or "GameFontNormalSmall"
-		t.color = t.color or { r = 0.6, g = 0.8, b = 1, a = 1 }
-		t.colorOnMouse = t.colorOnMouse or { r = 0.8, g = 0.95, b = 1, a = 1 }
-
-		copybox.textbox = wt.CreateCustomEditbox({
-			parent = copybox.frame,
-			name = "Textline",
-			title = title,
-			label = false,
-			tooltip = { lines = { { text = wt.strings.copyBox, }, } },
-			position = { anchor = "BOTTOMLEFT", },
-			size = t.size,
-			font = { normal = t.font, disabled = t.font },
-			color = t.color,
-			justify = { h = t.justify, },
-			events = {
-				OnTextChanged = function(self, _, user)
-					if not user then return end
-
-					self:SetText(cr(text, t.colorOnMouse))
-					self:SetCursorPosition(0)
-					self:HighlightText()
-				end,
-				OnEnter = function(self)
-					self:SetText(cr(text, t.colorOnMouse))
-					self:SetCursorPosition(0)
-					self:HighlightText()
-					self:SetFocus()
-				end,
-				OnLeave = function(self)
-					self:SetText(cr(text, t.color))
-					self:SetCursorPosition(0)
-					self:ClearHighlightText()
-					self:ClearFocus()
-				end,
-				OnMouseUp = function(self)
-					self:SetCursorPosition(0)
-					self:HighlightText()
-				end,
-			},
-			value = text,
-			showDefault = false,
-			utilityMenu = false,
-		})
-	end
+				self:SetText(cr(text, t.colorOnMouse))
+				self:SetCursorPosition(0)
+				self:HighlightText()
+			end,
+			OnEnter = function(self)
+				self:SetText(cr(text, t.colorOnMouse))
+				self:SetCursorPosition(0)
+				self:HighlightText()
+				self:SetFocus()
+			end,
+			OnLeave = function(self)
+				self:SetText(cr(text, t.color))
+				self:SetCursorPosition(0)
+				self:ClearHighlightText()
+				self:ClearFocus()
+			end,
+			OnMouseUp = function(self)
+				self:SetCursorPosition(0)
+				self:HighlightText()
+			end,
+		},
+		value = text,
+		showDefault = false,
+		utilityMenu = false,
+	})
 
 	return copybox
 end
@@ -3674,7 +3670,7 @@ function wt.CreateColorpicker(t, colormanager)
 		name = "ColorGradient",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 17, h = 17 },
-		path = rs.textures.gradientBG,
+		path = wt.textures.gradientBG,
 		layer = "BACKGROUND",
 		level = -7,
 	})
@@ -3683,7 +3679,7 @@ function wt.CreateColorpicker(t, colormanager)
 		name = "AlphaBG",
 		position = { offset = { x = 2.5, y = -2.5 } },
 		size = { w = 29, h = 17 },
-		path = rs.textures.alphaBG,
+		path = wt.textures.alphaBG,
 		layer = "BACKGROUND",
 		level = -8,
 		tile = { h = true, v = true },

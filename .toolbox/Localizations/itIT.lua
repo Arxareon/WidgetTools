@@ -1,13 +1,36 @@
---| Locale
-
-if GetLocale() ~= "itIT" then return end
-
 --| Toolbox
 
 ---@type toolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
 
 if not wt then return end
+
+--[ Changelog ]
+
+wt.changelog = {
+    {
+        "#V_Version 3.0_# #H_(23/4/2026)_#",
+        "#F_Hotfix (Versione 3.0.1):_#",
+        "Sono state aggiunte protezioni in vari punti per impedire che percorsi mancanti o non validi di file di risorse (font o texture) causino errori critici.",
+        "#N_Nuovo:_#",
+        "Aggiunto il supporto per Midnight 12.0.5.",
+        "I menu di clic destro per le impostazioni aggiunti in precedenza sono stati ulteriormente migliorati con funzionalità di copia e incolla per spostare facilmente i valori tra tipi di impostazioni simili.",
+        "Aggiunto un nuovo modello avanzato di impostazioni per la gestione delle opzioni dei Font (ulteriori opzioni di personalizzazione arriveranno in aggiornamenti futuri).",
+        "#C_Modifiche:_#",
+        "L’aspetto degli slider numerici delle impostazioni è stato aggiornato per allinearsi ai nuovi slider Blizzard, mantenendo tutte le funzionalità avanzate tipiche degli addon costruiti con Widget Tools Toolboxes.",
+        "La struttura di caricamento della Toolbox è stata revisionata; le versioni precedenti non sono più supportate.",
+        "Molte funzioni di utilità di base sono state trasferite a Widget Tools (e non sono più specifiche della Toolbox), accessibili globalmente tramite la collezione WidgetTools.utilities.",
+        "I dati specifici della Toolbox non verranno più iniettati nelle tabelle dei frame, ma conservati in tabelle dedicate alla Toolbox (inclusi i dati di disposizione di tooltip o contenitori).",
+        "Il sistema backend di gestione degli eventi per gli handler OnEvent globali di Blizzard (e gli eventi personalizzati) è stato aggiornato, con nuove utilità accessibili globalmente tramite WidgetTools.utilities.",
+        "I Frame, Pulsanti e altri widget personalizzabili devono ora essere creati tramite nuovi costruttori; i flag di personalizzazione sono stati rimossi dalle loro versioni base.",
+        "La maggior parte delle annotazioni destinate esclusivamente allo sviluppo è stata spostata fuori dai file installati dell’addon per ridurre notevolmente la dimensione dell’installazione.",
+        "La logica di costruzione della pagina di gestione dei dati (ora chiamata pagina dei profili) è stata separata in un widget profilemanager e una mutazione GUI sovrastante, per consentire maggiore flessibilità e personalizzazione.",
+        "Altre varie modifiche e miglioramenti interni.",
+        "#F_Correzioni:_#",
+        "Numerose altre piccole correzioni.",
+        "#H_Grazie a tutti per l’aiuto, i suggerimenti e le segnalazioni di bug !_# Se riscontrate problemi, non esitate a segnalarli! Cercate di includere quando e come si verificano, e quali altri addon utilizzate (se rilevante), per darmi la migliore possibilità di riprodurli e risolverli. Fornite eventuali messaggi di errore Lua e log di taint se sapete come ottenerli.",
+    }
+}
 
 --[ Strings ]
 

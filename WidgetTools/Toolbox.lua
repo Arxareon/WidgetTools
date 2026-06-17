@@ -1,33 +1,31 @@
+--| Dependency
+
+if not C_AddOns.IsAddOnLoaded("WidgetTools") then return end
+
+--| Namespace
+
+local addon, ns = ...
+
 --| Metadata
 
---Local addon namespace name
-local addon = ...
-
 local version = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-ToolboxVersion")
-local namespaceKey = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")
+local nsKey = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")
 
 if not version then return end
 
---| Registration
 
-local addToNamespace = nil
+--[[ REGISTRATION ]]
 
-if namespaceKey then
-	--Local addon namespace table
-	local ns = select(2, ...)
+local insert = nsKey and function(toolbox)
+	ns[nsKey] = toolbox
 
-	--Add the toolbox reference to local addon namespace table
-	addToNamespace = function(toolbox)
-		ns[namespaceKey] = toolbox
+	WidgetTools.debugging.Log(function()
+		local ts = WidgetTools.utilities.ToString
 
-		WidgetTools.debugging.Log(function()
-			local ts = WidgetTools.utilities.ToString
-
-			return "Toolbox version " .. ts(version) .. " has been added to the " .. WrapTextInColor(addon, LIGHTBLUE_FONT_COLOR) .. " namespace table under the " .. ts(namespaceKey) .. " key.", "Widget Toolbox loaded"
-		end)
-	end
+		return "Added Toolbox version " .. ts(version) .. " to the " .. ts(addon) .. " namespace " .. ts(ns) .. " under key " .. ts(nsKey) .. ".", "Widget Toolbox loaded"
+	end)
 end
 
-local toolbox = WidgetTools.toolboxes.Register(addon, version, addToNamespace)
+local toolbox = WidgetTools.toolboxes.Register(addon, version, insert)
 
-if toolbox and addToNamespace then addToNamespace(toolbox) end
+if toolbox and insert then insert(toolbox) end

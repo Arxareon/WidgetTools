@@ -1,13 +1,36 @@
---| Locale
-
-if GetLocale() ~= "ptBR" then return end
-
 --| Toolbox
 
 ---@type toolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
 
 if not wt then return end
+
+--[ Changelog ]
+
+wt.changelog = {
+    {
+        "#V_Version 3.0_# #H_(23/4/2026)_#",
+        "#F_Hotfix (Versão 3.0.1):_#",
+        "Foram adicionadas proteções em vários pontos para evitar que caminhos de arquivos de recursos ausentes ou inválidos (fontes ou texturas) causem erros críticos.",
+        "#N_Novo:_#",
+        "Adicionado suporte ao Midnight 12.0.5.",
+        "Os menus de clique direito para configurações, adicionados anteriormente, foram aprimorados com funcionalidades de copiar e colar para facilitar a transferência de valores entre tipos de configurações semelhantes.",
+        "Adicionado um novo modelo avançado de configurações para gerenciar opções de Fontes (mais opções de personalização chegarão em futuras atualizações).",
+        "#C_Alterações:_#",
+        "A aparência dos controles deslizantes numéricos de configuração foi atualizada para combinar com os novos sliders da Blizzard, mantendo todas as funcionalidades aprimoradas usuais para addons construídos com Widget Tools Toolboxes.",
+        "A estrutura de carregamento da Toolbox foi reformulada; versões antigas não são mais suportadas.",
+        "Muitas funções utilitárias básicas foram transferidas para o Widget Tools (e não são mais específicas da Toolbox), acessíveis globalmente pela coleção WidgetTools.utilities.",
+        "Dados específicos da Toolbox não serão mais injetados nas tabelas dos frames, mas armazenados em tabelas próprias da Toolbox (incluindo dados de organização de tooltips ou contêineres).",
+        "O sistema backend de gerenciamento de eventos para os handlers OnEvent globais da Blizzard (e eventos personalizados) foi atualizado, com novas utilidades acessíveis globalmente via WidgetTools.utilities.",
+        "Frames, Botões e outros widgets personalizáveis agora devem ser criados por meio de novos construtores; as flags de personalização foram removidas das versões base.",
+        "A maioria das anotações destinadas apenas ao desenvolvimento foi movida para fora dos arquivos instalados do addon, reduzindo significativamente o tamanho da instalação.",
+        "A lógica de construção da página de gerenciamento de dados (agora chamada página de perfis) foi separada em um widget profilemanager e uma mutação de GUI sobreposta, permitindo maior flexibilidade e personalização.",
+        "Várias outras melhorias e alterações internas.",
+        "#F_Correções:_#",
+        "Diversas outras pequenas correções.",
+        "#H_Obrigado a todos pela ajuda, sugestões e relatos de bugs !_# Caso encontre algum problema, não hesite em relatar! Inclua quando e como ocorreu, e quais outros addons você usa (quando relevante), para me dar a melhor chance de reproduzir e corrigir o problema. Inclua mensagens de erro Lua e logs de taint, se souber como obtê-los.",
+    }
+}
 
 --[ Strings ]
 

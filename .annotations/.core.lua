@@ -6,7 +6,7 @@
 --[[ NAMESPACE ]]
 
 ---Addon namespace table
----@class addonNamespace
+---@class namespace
 local ns = select(2, ...)
 
 
@@ -18,11 +18,11 @@ local ns = select(2, ...)
 ---@field title string Addon display title: `"Widget Tools"`
 ---@field root string Addon root folder path
 ---@field chat table List of chat keywords and commands
----@field changelog string[][]
+---@field colors widgetToolsColors
+---@field textures widgetToolsTextures
+---@field fonts fontFileData[]
 ---@field strings widgetToolsStrings
----@field colors table
----@field textures table
----@field fonts table
+---@field changelog string[][]
 
 	---Localized strings
 	--- - ***Note:*** `#FLAGS` will be replaced by text or number values via code; `\n` represents the newline character.
@@ -38,6 +38,19 @@ local ns = select(2, ...)
 	---| widgetToolsStrings_zhTW
 	---| widgetToolsStrings_zhCN
 	---| widgetToolsStrings_ruRU
+
+	---@class widgetToolsColors
+	---@field grey rgbData[]
+	---@field gold rgbData[]
+	---@field halfTransparent { grey: colorData, blue: colorData, yellow: colorData }
+
+	---@class widgetToolsTextures
+	---@field logo string
+	---@field missing string
+
+	---@class fontFileData
+	---@field path string
+	---@field name string
 
 
 --[[ UTILITIES ]]
@@ -258,7 +271,7 @@ end
 ---Get an assembled & fully formatted string of a specifically assembled changelog table
 ---***
 ---@param changelog FormatChangelog_param1 Ordered (descending) list of update note subtables of textlines with formatting directives<ul><li>***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
----@param latest? FormatChangelog_param2 If true, get the update notes (withouth the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
+---@param latest? FormatChangelog_param2 If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
 ---***
 ---@return string c # ***Default:*** ""
 function utilities.FormatChangelog(changelog, latest)
@@ -274,7 +287,7 @@ function utilities.FormatChangelog(changelog, latest)
 	---@alias FormatChangelog_param1 # changelog
 	---| string[][]
 
-	---If true, get the update notes (withouth the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
+	---If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
 	---@alias FormatChangelog_param2 # latest
 	---| boolean
 
@@ -284,7 +297,7 @@ end
 
 --[ Table Management ]
 
----Shield a table by creating a deep proxy through which value access will be read-only via a protective metatable ruleset
+---Protect a table by creating a deep proxy surrogate reference through which value access will be read-only via a protective metatable ruleset
 --- - ***Note:*** The protection will "infect" any and all subtables when they are indexed through a proxy, meaning the read-only protection will be extended at any depth, including new subtables added to the original table structure of `t` after it was protected.
 --- - ***Note:*** Tables for which `getmetatable(t)` returns "public" or "protected", will not be wrapped behind a new proxy.
 ---   - ***Example:*** Use `setmetatable(t, { __metatable = "public" })` to whitelist any table from getting read-only protection.
@@ -755,7 +768,7 @@ end
 local toolboxes = {}
 
 	---@class widgetToolbox
-	---@field name? string Display name of the toolbox
+	---@field title? string Display name of the toolbox
 	---@field changelog? string[][] 
 
 ---@class widgetToolboxEntry
@@ -768,19 +781,19 @@ local toolboxes = {}
 --- - ***Note:*** If a toolbox of `version` already exists in the registry, get a read-only reference to it and register `addon` for use, `callback` will not be called.
 --- - ***Note:*** If no existing toolbox entry was found, and `toolbox` is not provided or it's not a valid table, start the initialization of a new toolbox in the a readable table accessible via `WidgetTools.toolboxes.initialization[version]`, and call `callback` when `toolboxAddon` finished loading, returning a read-only reference to the newly initialized toolbox bundled from this initialization table which itself will be cleared.
 ---***
----@param addon Register_param1 Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
+---@param userAddon Register_param1 Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
 ---@param version Register_param2 Version key the `toolbox` should be registered under (always converted to string)
 ---@param callback? Register_param3 Function to be called after a new toolbox initialization has finished when `toolboxAddon` loaded, returning a read-only reference to the new toolbox table
 ---@param toolboxAddon? Register_param4 Namespace name of the **LoadOnDemand** toolbox initializer addon to load to start initializing a new toolbox | ***Default:*** `"WidgetToolbox_" .. version`
 ---@param toolbox? Register_param5 Reference to an existing toolbox table to register as a new entry
 ---***
 ---@return widgetToolbox|table|boolean? toolbox Read-only reference to the registered toolbox table, or `false` if the toolbox construction addon named `"WidgetToolbox_" .. version` could not be loaded while attempting the initialization of a new toolbox | ***Default:*** *nil*
-function toolboxes.Register(addon, version, callback, toolboxAddon, toolbox)
+function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox)
 
 	--| Parameters
 
 	---Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
-	---@alias Register_param1 # addon
+	---@alias Register_param1 # userAddon
 	---| string
 
 	---Version key the `toolbox` should be registered under (always converted to string)

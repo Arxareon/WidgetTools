@@ -1,9 +1,21 @@
 --| Namespace
 
----@class addonNamespace
+---@class namespace
 local ns = select(2, ...)
 
 --| Shortcuts
+
+--Create a simplified C_ColorUtil surrogate for Classic compatibility
+if not C_ColorUtil then C_ColorUtil = {
+	WrapTextInColorCode = WrapTextInColorCode,
+	WrapTextInColor = function(text, color)
+		if type(color) ~= "table" then return text end
+
+		if type(color["GenerateHexColor"]) ~= "function" then color = CreateColor(color.r, color.g, color.b, color.a) end
+
+		return WrapTextInColor(text, color)
+	end,
+} end
 
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
@@ -14,6 +26,123 @@ local eventFrame = CreateFrame("Frame")
 
 ---@type widgetToolsDebugging
 local ds = { history = {} --[[ --ADD an option to save logs across sessions ]] }
+
+
+--[[ RESOURCES ]]
+
+local addon = ...
+local title = select(2, C_AddOns.GetAddOnInfo(addon)):gsub("^%s*(.-)%s*$", "%1")
+local root = "Interface/AddOns/" .. addon .. "/"
+
+---@type widgetToolsResources
+local rs = {
+	addon = addon,
+	title = title,
+	root = root,
+	chat = {
+		keyword = "wt",
+		commands = {
+			about = "about",
+			lite = "lite",
+			debug = "debug",
+		}
+	},
+	colors = {
+		grey = {
+			{ r = 0.7, g = 0.7, b = 0.7 },
+			{ r = 0.54, g = 0.54, b = 0.54 },
+		},
+		gold = {
+			{ r = 1, g = 0.76, b = 0.07 },
+			{ r = 0.8, g = 0.62, b = 0.1 },
+		},
+		halfTransparent = {
+			grey = { r = 0.7, g = 0.7, b = 0.7, a = 0.5 },
+			blue = { r = 0.7, g = 0.9, b = 1, a = 0.5 },
+			yellow = { r = 1, g = 0.9, b = 0.7, a = 0.5 },
+		},
+	},
+	textures = {
+		logo = root .. "Textures/Logo.tga",
+		missing = root .. "Textures/MissingLogo.tga",
+	},
+	fonts = {
+		{
+			name = "Arbutus Slab",
+			path = root .. "Fonts/ArbutusSlab.ttf",
+		},
+		{
+			name = "Arial Narrow",
+			path = "Fonts/ARIALN.ttf",
+		},
+		{
+			name = "Bonbon",
+			path = root .. "Fonts/Bonbon.ttf",
+		},
+		{
+			name = "Caesar Dressing",
+			path = root .. "Fonts/CaesarDressing.ttf",
+		},
+		{
+			name = "Domine",
+			path = root .. "Fonts/Domine.ttf",
+		},
+		{
+			name = "Friz Quadrata",
+			path = "Fonts/FRIZQT__.TTF",
+		},
+		{
+			name = "Germania One",
+			path = root .. "Fonts/GermaniaOne.ttf",
+		},
+		{
+			name = "Molle",
+			path = root .. "Fonts/Molle.ttf",
+		},
+		{
+			name = "Morpheus",
+			path = "Fonts/MORPHEUS.ttf",
+		},
+		{
+			name = "Oregano",
+			path = root .. "Fonts/Oregano.ttf",
+		},
+		{
+			name = "Oxanium",
+			path = root .. "Fonts/Oxanium.ttf",
+		},
+		{
+			name = "Reem Kufi",
+			path = root .. "Fonts/ReemKufi.ttf",
+		},
+		{
+			name = "Righteous",
+			path = root .. "Fonts/Righteous.ttf",
+		},
+		{
+			name = "Sancreek",
+			path = root .. "Fonts/Sancreek.ttf",
+		},
+		{
+			name = "Skurri",
+			path = "Fonts/skurri.ttf",
+		},
+		{
+			name = "Underdog",
+			path =  root .. "Fonts/Underdog.ttf",
+		},
+		{
+			name = "Zen Dots",
+			path =  root .. "Fonts/ZenDots.ttf",
+		},
+		{
+			name = "CUSTOM", --REMOVE temporarily reinstated CUSTOM font solution once full custom font file support has been added
+			path =  root .. "Fonts/CUSTOM.ttf",
+		},
+	},
+	strings = ns.strings,
+	changelog = ns.changelog,
+}
 
 
 --[[ UTILITIES ]]
@@ -50,19 +179,28 @@ local us = {
 
 --[ General ]
 
+local function compare(x, y)
+	if type(x) == "number" and type(y) == "number" then return x < y end
+	return tostring(x) < tostring(y)
+end
+
 function us.SortedPairs(t)
+	if type(t) ~= "table" then return function() end end
+
 	local s = {}
 
 	for k in pairs(t) do table.insert(s, k) end
-	table.sort(s, function(x, y) if type(x) == "number" and type(y) == "number" then return x < y else return tostring(x) < tostring(y) end end)
+	table.sort(s, compare)
+
+	--| Iterator
 
 	local i = 0
-	local iterator = function()
+
+	return function()
 		i = i + 1
+
 		if s[i] == nil then return nil else return s[i], t[s[i]] end
 	end
-
-	return iterator
 end
 
 --[ Math ]
@@ -120,17 +258,12 @@ function us.Thousands(value, decimals, round, trim)
 	value = round == false and value or us.Round(value, decimals)
 	local sign = value < 0 and "-" or ""
 	local fraction = math.abs(value) % 1
-	local integer = tostring(math.abs(value) - fraction)
+	local integer = tostring(math.abs(value) - fraction):reverse():gsub("(%d%d%d)", "%1" .. rs.strings.separator):reverse()
 	local decimalText = tostring(fraction):sub(3, (decimals or 0) + 2)
-	local leftover
 
-	while true do
-		integer, leftover = string.gsub(integer, "^(-?%d+)(%d%d%d)", '%1' .. ns.rs.strings.separator .. '%2')
-		if leftover == 0 then break end
-	end
 	if trim == false then for i = 1, (decimals or 0) - #decimalText do decimalText = decimalText .. "0" end end
 
-	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and ns.rs.strings.decimal .. decimalText or "")
+	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and rs.strings.decimal .. decimalText or "")
 end
 
 function us.ToString(object)
@@ -226,12 +359,18 @@ end
 
 local protectionProxies = {}
 
+---Get the raw table reference of a protection proxy
+---@param proxy table
+---@return table
 local function expose(proxy)
 	if getmetatable(proxy) == "protected" then for key, value in pairs(protectionProxies) do if value == proxy then return key end end end
 
 	return proxy
 end
 
+---Deep-traverse a protected table to create the protection proxies at full depth
+---@param t table
+---@param p table
 local function infect(t, p) for k, v in pairs(t) do if type(v) == "table" then infect(v, p[k]) else return end end end
 
 function us.Protect(t)
@@ -259,10 +398,7 @@ function us.Protect(t)
 				return subproxy
 			end,
 			__newindex = function(_, k, v)
-				ds.Log(function() return
-					"Prevented setting a value in the protected " .. tostring(t) .. " at key: [ " .. tostring(k) .. " ] to ( " .. tostring(v) .. " ).",
-					"Read-only protection"
-				end)
+				ds.Log(function() return "Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v), "Read-only protection" end)
 			end,
 			__metatable = "protected",
 		})
@@ -579,7 +715,7 @@ if WidgetToolsDB.debugging then
 
 		table.insert(ds.history, date("%Y.%m.%d. %H:%M:%S\t", time()) .. trace .. "\t" ..message)
 
-		print("|T" .. ns.rs.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
+		print("|T" .. rs.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
 	end
 
 	function ds.Log(passer) if type(passer) ~= "function" then return else ds.LogRaw(passer()) end end
@@ -765,7 +901,7 @@ end
 
 --[[ GLOBAL TOOLS ]]
 
-local widgetToolsWrapper = { resources = ns.rs, utilities = us, debugging = ds, toolboxes = ts }
+local widgetToolsWrapper = { resources = rs, utilities = us, debugging = ds, toolboxes = ts }
 
 ---@type widgetTools
 WidgetTools = us.Protect(widgetToolsWrapper)
@@ -778,10 +914,10 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	ds.LogRaw("Started loading UI.", "WidgetTools PLAYER_LOGIN")
 
-	--| Shortcuts
+	--| Toolbox
 
 	---@type toolbox
-	local wt = ns[C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-WidgetTools-AddToNamespace")]
+	local wt = ns[C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-AddToNamespace")]
 
 	if not wt then
 		ds.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
@@ -799,7 +935,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[ Addon ]
 
 	---@type settingsPage
-	local mainPage = wt.CreateAboutPage(ns.rs.addon, {
+	local mainPage = wt.CreateAboutPage(rs.addon, {
 		register = true,
 		name = "About",
 		changelog = ns.changelog
@@ -814,50 +950,50 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local debugToggle
 
 	---@type settingsPage
-	local specificationsPage = wt.CreateSettingsPage(ns.rs.addon, {
+	local specificationsPage = wt.CreateSettingsPage(rs.addon, {
 		register = mainPage,
 		name = "Specifications",
-		title = ns.rs.strings.specifications.title,
-		description = ns.rs.strings.specifications.description,
+		title = rs.strings.specifications.title,
+		description = rs.strings.specifications.description,
 		dataManagement = {},
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			wt.CreatePanel({
 				parent = canvas,
 				name = "General",
-				title = ns.rs.strings.specifications.general.title,
-				description = ns.rs.strings.specifications.general.description,
+				title = rs.strings.specifications.general.title,
+				description = rs.strings.specifications.general.description,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
 					local silentSave = false
 
-					local enableLitePopup = wt.RegisterPopupDialog(ns.rs.addon .. "_ENABLE_LITE_MODE", {
-						text = ns.rs.strings.lite.enable.warning:gsub("#ADDON", ns.rs.title),
-						accept = ns.rs.strings.lite.enable.accept,
+					local enableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_ENABLE_LITE_MODE", {
+						text = rs.strings.lite.enable.warning:gsub("#ADDON", rs.title),
+						accept = rs.strings.lite.enable.accept,
 						onAccept = function()
 							liteToggle.setState(true)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
-					local disableLitePopup = wt.RegisterPopupDialog(ns.rs.addon .. "_DISABLE_LITE_MODE", {
-						text = ns.rs.strings.lite.disable.warning:gsub("#ADDON", ns.rs.title),
-						accept = ns.rs.strings.lite.disable.accept,
+					local disableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_DISABLE_LITE_MODE", {
+						text = rs.strings.lite.disable.warning:gsub("#ADDON", rs.title),
+						accept = rs.strings.lite.disable.accept,
 						onAccept = function()
 							liteToggle.setState(false)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(ns.rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
 					liteToggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "LiteMode",
-						title = ns.rs.strings.specifications.general.lite.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
+						title = rs.strings.specifications.general.lite.label,
+						tooltip = { lines = { { text = rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.lite end,
 						saveData = function(state) WidgetToolsDB.lite = state end,
@@ -887,8 +1023,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					wt.CreateCheckbox({
 						parent = panel,
 						name = "PositioningAids",
-						title = ns.rs.strings.specifications.general.positioningAids.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.general.positioningAids.tooltip, }, } },
+						title = rs.strings.specifications.general.positioningAids.label,
+						tooltip = { lines = { { text = rs.strings.specifications.general.positioningAids.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.positioningAids end,
 						saveData = function(state) WidgetToolsDB.positioningAids = state end,
@@ -906,15 +1042,15 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			wt.CreatePanel({
 				parent = canvas,
 				name = "DevTools",
-				title = ns.rs.strings.specifications.dev.title,
+				title = rs.strings.specifications.dev.title,
 				arrange = {},
 				arrangement = {},
 				initialize = function(panel)
 					debugToggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "ToggleDebugging",
-						title = ns.rs.strings.specifications.dev.debugging.enabled.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.debugging.enabled.tooltip, }, } },
+						title = rs.strings.specifications.dev.debugging.enabled.label,
+						tooltip = { lines = { { text = rs.strings.specifications.dev.debugging.enabled.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.debugging end,
 						saveData = function(state) WidgetToolsDB.debugging = state end,
@@ -923,7 +1059,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							toggled = { { handler = function (self, state, user)
 								if not user then return end
 
-								chatCommands.print(ns.rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
+								chatCommands.print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
 							end, }, },
 						},
 						instantSave = false,
@@ -937,8 +1073,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					local toggle = wt.CreateCheckbox({
 						parent = panel,
 						name = "ToggleWideFrameAttributes",
-						title = ns.rs.strings.specifications.dev.frameAttributes.enabled.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
+						title = rs.strings.specifications.dev.frameAttributes.enabled.label,
+						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.frameAttributes.enabled end,
 						saveData = function(state) WidgetToolsDB.frameAttributes.enabled = state end,
@@ -976,8 +1112,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					wt.CreateSlider({
 						parent = panel,
 						name = "FrameAttributesWidth",
-						title = ns.rs.strings.specifications.dev.frameAttributes.width.label,
-						tooltip = { lines = { { text = ns.rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
+						title = rs.strings.specifications.dev.frameAttributes.width.label,
+						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
 						arrange = { wrap = false, },
 						min = 200,
 						max = 1400,
@@ -1004,11 +1140,11 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[ Toolboxes ]
 
 	---@type settingsPage
-	local toolboxesPage = wt.CreateSettingsPage(ns.rs.addon, {
+	local toolboxesPage = wt.CreateSettingsPage(rs.addon, {
 		register = mainPage,
 		name = "Addons",
-		title = ns.rs.strings.toolboxes.title,
-		description = ns.rs.strings.toolboxes.description:gsub("#ADDON", ns.rs.title),
+		title = rs.strings.toolboxes.title,
+		description = rs.strings.toolboxes.description:gsub("#ADDON", rs.title),
 		scroll = { speed = 0.2 },
 		static = true,
 		dataManagement = {},
@@ -1019,7 +1155,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 			for version, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do
 				local title = entry.toolbox.name
-				if type(title) ~= "string" then title = ns.rs.strings.toolboxes.toolbox:gsub("#VERSION", ns.rs.strings.about.version:gsub("#VERSION", version)) end
+				if type(title) ~= "string" then title = rs.strings.toolboxes.toolbox:gsub("#VERSION", rs.strings.about.version:gsub("#VERSION", version)) end
 
 				wt.CreatePanel({
 					parent = canvas,
@@ -1073,7 +1209,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											arrange = {},
 											size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
 											font = { normal = "GameFontDisable", },
-											color = ns.rs.colors.grey[1],
+											color = rs.colors.grey[1],
 											value = us.FormatChangelog(expose(entry.toolbox.changelog)),
 											readOnly = true,
 											scrollSpeed = 0.2,
@@ -1145,7 +1281,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												offset = { x = 3, y = -3 }
 											},
 											size = { w = 38, h = 38 },
-											path = data.logo or ns.rs.textures.missing,
+											path = data.logo or rs.textures.missing,
 										})
 
 										--| Toggle
@@ -1163,8 +1299,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										local toggle = wt.CreateCheckbox({
 											parent = addonPanel,
 											name = "Toggle",
-											title = cr(C_AddOns.GetAddOnMetadata(addon, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. ns.rs.strings.about.toggle.label .. ")",
-											tooltip = { lines = { { text = ns.rs.strings.about.toggle.tooltip, }, } },
+											title = cr(C_AddOns.GetAddOnMetadata(addon, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
+											tooltip = { lines = { { text = rs.strings.about.toggle.tooltip, }, } },
 											arrange = {},
 											size = { w = 300, },
 											font = { normal = "GameFontNormalMed1", },
@@ -1339,21 +1475,21 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[[ CHAT CONTROL ]]
 
 	---@type chatCommandManager
-	chatCommands = wt.RegisterChatCommands(ns.rs.addon, { ns.rs.chat.keyword }, {
+	chatCommands = wt.RegisterChatCommands(rs.addon, { rs.chat.keyword }, {
 		commands = {
 			{
-				command = ns.rs.chat.commands.about,
-				description = ns.rs.strings.chat.about.description,
+				command = rs.chat.commands.about,
+				description = rs.strings.chat.about.description,
 				handler = mainPage.open,
 			},
 			{
-				command = ns.rs.chat.commands.lite,
-				description = ns.rs.strings.chat.lite.description,
+				command = rs.chat.commands.lite,
+				description = rs.strings.chat.lite.description,
 				handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
 			},
 			{
-				command = ns.rs.chat.commands.debug,
-				description = ns.rs.strings.chat.debug.description,
+				command = rs.chat.commands.debug,
+				description = rs.strings.chat.debug.description,
 				handler = function()
 					debugToggle.setState(not WidgetToolsDB.debugging, true)
 
@@ -1362,53 +1498,53 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			}
 		},
 		colors = {
-			title = ns.rs.colors.gold[1],
-			content = ns.rs.colors.gold[2],
+			title = rs.colors.gold[1],
+			content = rs.colors.gold[2],
 			command = { r = 1, g = 1, b = 1, },
-			description = ns.rs.colors.grey[1]
+			description = rs.colors.grey[1]
 		},
 	})
 
 
 	--[[ ADDON COMPARTMENT ]]
 
-	wt.SetUpAddonCompartment(ns.rs.addon, {
+	wt.SetUpAddonCompartment(rs.addon, {
 		onClick = function() if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
 			initialize = function(menu)
-				wt.CreateMenuTextline(menu, { text = ns.rs.title, })
+				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {
 					title = wt.strings.about.title,
 					action = mainPage.open
 				})
 				wt.CreateMenuButton(menu, {
-					title = ns.rs.strings.specifications.title,
+					title = rs.strings.specifications.title,
 					action = specificationsPage.open
 				})
 				wt.CreateMenuButton(menu, {
-					title = ns.rs.strings.toolboxes.title,
+					title = rs.strings.toolboxes.title,
 					action = toolboxesPage.open
 				})
 			end,
 			rightClickMenu = false,
 		}).open() end end,
 	}, { lines = {
-		{ text = ns.rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "Version") or "?", "FFFFFFFF")), },
-		{ text = ns.rs.strings.about.date:gsub(
+		{ text = rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Version") or "?", "FFFFFFFF")), },
+		{ text = rs.strings.about.date:gsub(
 			"#DATE", crc(wt.strings.date:gsub(
-				"#DAY", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Day") or "?"
+				"#DAY", C_AddOns.GetAddOnMetadata(rs.addon, "X-Day") or "?"
 			):gsub(
-				"#MONTH", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Month") or "?"
+				"#MONTH", C_AddOns.GetAddOnMetadata(rs.addon, "X-Month") or "?"
 			):gsub(
-				"#YEAR", C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-Year") or "?"
+				"#YEAR", C_AddOns.GetAddOnMetadata(rs.addon, "X-Year") or "?"
 			), "FFFFFFFF")
 		), },
-		{ text = ns.rs.strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "Author") or "?", "FFFFFFFF")), },
-		{ text = ns.rs.strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(ns.rs.addon, "X-License") or "?", "FFFFFFFF")), },
+		{ text = rs.strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Author") or "?", "FFFFFFFF")), },
+		{ text = rs.strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(rs.addon, "X-License") or "?", "FFFFFFFF")), },
 		{ text = " ", },
 		{
-			text = (WidgetToolsDB.lite and ns.rs.strings.compartment.lite or ns.rs.strings.compartment.open),
+			text = (WidgetToolsDB.lite and rs.strings.compartment.lite or rs.strings.compartment.open),
 			font = GameFontNormalSmall,
-			color = ns.rs.colors.grey[1],
+			color = rs.colors.grey[1],
 		},
 	} })
 

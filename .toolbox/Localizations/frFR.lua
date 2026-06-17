@@ -1,13 +1,36 @@
---| Locale
-
-if GetLocale() ~= "frFR" then return end
-
 --| Toolbox
 
 ---@type toolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
 
 if not wt then return end
+
+--[ Changelog ]
+
+wt.changelog = {
+    {
+        "#V_Version 3.0_# #H_(23/4/2026)_#",
+        "#F_Hotfix (Version 3.0.1):_#",
+        "Des sécurités ont été ajoutées à plusieurs endroits pour empêcher que des chemins de fichiers de ressources manquants ou invalides (polices ou textures) provoquent des erreurs critiques.",
+        "#N_Nouveau:_#",
+        "Ajout de la compatibilité avec Midnight 12.0.5.",
+        "Les menus contextuels (clic droit) ajoutés précédemment pour les paramètres ont été améliorés avec des fonctions de copier/coller permettant de transférer facilement des valeurs entre types de paramètres similaires.",
+        "Ajout d’un nouveau modèle avancé de paramètres pour la gestion des options de Polices (davantage d’options de personnalisation arriveront dans de futures mises à jour).",
+        "#C_Modifications:_#",
+        "L’apparence des curseurs numériques de paramètres a été mise à jour pour correspondre aux nouveaux curseurs Blizzard, tout en conservant toutes les fonctionnalités améliorées habituelles pour les addons construits avec Widget Tools Toolboxes.",
+        "La structure de chargement de la Toolbox a été remaniée ; les anciennes versions ne sont plus prises en charge.",
+        "De nombreuses fonctions utilitaires de base ont été transférées vers Widget Tools (et ne sont plus spécifiques à la Toolbox), accessibles globalement via la collection WidgetTools.utilities.",
+        "Les données spécifiques à la Toolbox ne seront plus injectées dans les tables de frames, mais stockées dans des tables dédiées à la Toolbox (y compris les données d’agencement de tooltips ou de conteneurs).",
+        "Le système backend de gestion des événements pour les gestionnaires OnEvent globaux de Blizzard (et les événements personnalisés) a été mis à jour, avec de nouveaux utilitaires accessibles globalement via WidgetTools.utilities.",
+        "Les Frames, Boutons et autres widgets personnalisables doivent désormais être créés via de nouveaux constructeurs ; les indicateurs de personnalisation ont été retirés de leurs versions de base.",
+        "La plupart des annotations destinées uniquement au développement ont été déplacées hors des fichiers installés de l’addon afin de réduire considérablement la taille d’installation.",
+        "La logique de construction de la page de gestion des données (désormais appelée page de profils) a été séparée en un widget profilemanager et une mutation d’interface par-dessus, permettant davantage de flexibilité et de personnalisation.",
+        "Plusieurs autres améliorations et changements internes.",
+        "#F_Correctifs:_#",
+        "De nombreux autres correctifs mineurs.",
+        "#H_Merci à tous pour votre aide, vos suggestions et vos rapports de bugs !_# Si vous rencontrez un problème, n’hésitez pas à le signaler ! Essayez d’indiquer quand et comment il se produit, ainsi que les autres addons utilisés (si pertinent), afin de me donner les meilleures chances de le reproduire et de le corriger. Fournissez si possible les messages d’erreur Lua et les journaux de taint (si vous savez comment les obtenir).",
+    }
+}
 
 --[ Strings ]
 

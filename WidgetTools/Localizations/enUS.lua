@@ -1,19 +1,9 @@
 --| Namespace
 
----@class addonNamespace
+---@class namespace
 local ns = select(2, ...)
 
---| Shared resources
-
----@class widgetToolsResources
-ns.rs = {}
-
-ns.rs.addon = ...
-ns.rs.title = select(2, C_AddOns.GetAddOnInfo(ns.rs.addon)):gsub("^%s*(.-)%s*$", "%1")
-ns.rs.root = "Interface/AddOns/" .. ns.rs.addon .. "/"
-
-
---[[ STRINGS ]]
+--[ Changelog ]
 
 ns.changelog = {
 	{
@@ -144,130 +134,93 @@ ns.changelog = {
 	}
 }
 
-ns.rs.chat = {
-	keyword = "wt",
-	commands = {
-		about = "about",
-		lite = "lite",
-		debug = "debug",
-	}
+--[ Strings ]
+
+--NOTE: #FLAGS will be replaced by text or number values via code; \n represents the newline character
+
+---English
+---@class widgetToolsStrings_enUS
+ns.strings = {
+	about = {
+		version = "Version: #VERSION",
+		date = "Date: #DATE",
+		author = "Author: #AUTHOR",
+		license = "License: #LICENSE",
+		toggle = {
+			label = "Enabled",
+			tooltip = "Uncheck to disable this addon.\n\nThis change will only take effect after the interface is reloaded. Once it has been disabled, this addon will not show up in this list until it's reenabled within the main AddOns menu.",
+		},
+	},
+	specifications = {
+		title = "Specifications",
+		description = "Tune & toggle select optional features. Type /wt in chat to use chat commands.",
+		general = {
+			title = "General",
+			description = "Options affecting all reliant addons.",
+			lite = {
+				label = "Lite Mode",
+				tooltip = "Disable the settings of ALL addons using Widget Toolboxes to conserve resources and make the interface load faster.\nAddon settings data will still be saved & loaded in the background, and chat control will remain available for addons that use it.\n\nTo turn Lite Mode off and settings back on, use the #COMMAND chat command, or click on Widget Tools within the AddOns list under the calendar button in the header of the Minimap (not available in Classic)",
+			},
+			positioningAids = {
+				label = "Positioning Visual Aids",
+				tooltip = "Display visual aids when positioning frames wia settings widgets of addons which use Widget Toolboxes under the hood.",
+			},
+		},
+		dev = {
+			title = "Development Tools",
+			debugging = {
+				enabled = {
+					label = "Debugging Mode",
+					tooltip = "Toggle to create, save and print debugging log entries to the chat window.",
+				},
+			},
+			frameAttributes = {
+				enabled = {
+					label = "Resize Frame Attributes",
+					tooltip = "Customize the width of the table inside the Frame Attributes window (TableAttributeDisplay Frame).",
+				},
+				width = {
+					label = "Frame Attributes Width",
+					tooltip = "Specify the width of the scrollable content table in the Frame Attributes window.",
+				},
+			},
+		},
+	},
+	toolboxes = {
+		title = "Toolboxes & Addons",
+		description = "The list of currently loaded addons using specific versions of registered #ADDON toolboxes.",
+		toolbox = "Toolbox (#VERSION)",
+	},
+	compartment = {
+		open = "Click to open specific settings.",
+		lite = "Lite mode is enabled. Click to disable.",
+	},
+	lite = {
+		enable = {
+			warning = "When #ADDON is in Lite Mode, the settings UI for dependant addons will not be loaded.\n\nAre you sure you want to turn on Lite Mode and disable full settings functionality?",
+			accept = "Enable Lite Mode",
+		},
+		disable = {
+			warning = "#ADDON is in Lite Mode, the settings UI for dependant addons have not been loaded.\n\nDo you wish to turn off Lite Mode to reenable settings with full functionality?",
+			accept = "Disable Lite Mode",
+		},
+	},
+	chat = {
+		about = {
+			description = "Open the Widget Tools about page",
+		},
+		lite = {
+			description = "Toggle Lite Mode: to load dependant addon settings or not",
+			response = "Lite Mode will be #STATE after the interface is reloaded.",
+			reminder = "Lite Mode is enabled, settings for dependant addons have not been loaded.\n#HINT",
+			hint = "Type #COMMAND to disable Lite Mode.",
+		},
+		debug = {
+			description = "Toggle Debugging Mode: save and display debug logs in chat",
+			response = "Debugging will be #STATE after the interface is reloaded.",
+			hint = "Type #COMMAND to disable Debugging Mode.",
+		},
+	},
+	separator = ",", --Thousand separator character
+	decimal = ".", --Decimal character
 }
-
-
---[[ ASSETS ]]
-
-ns.rs.colors = {
-	grey = {
-		{ r = 0.7, g = 0.7, b = 0.7 },
-		{ r = 0.54, g = 0.54, b = 0.54 },
-	},
-	gold = {
-		{ r = 1, g = 0.76, b = 0.07 },
-		{ r = 0.8, g = 0.62, b = 0.1 },
-	},
-	halfTransparent = {
-		grey = { r = 0.7, g = 0.7, b = 0.7, a = 0.5 },
-		blue = { r = 0.7, g = 0.9, b = 1, a = 0.5 },
-		yellow = { r = 1, g = 0.9, b = 0.7, a = 0.5 },
-	},
-	-- normal = NORMAL_FONT_COLOR,
-	-- highlight = HIGHLIGHT_FONT_COLOR,
-	-- disabled = GRAY_FONT_COLOR,
-	-- warning = RED_FONT_COLOR,
-}
-
-ns.rs.textures = {
-	logo = ns.rs.root .. "Textures/Logo.tga",
-	missing = ns.rs.root .. "Textures/MissingLogo.tga",
-	alphaBG = ns.rs.root .. "Textures/AlphaBG.tga",
-	gradientBG = ns.rs.root .. "Textures/GradientBG.tga",
-}
-
-ns.rs.fonts = {
-	{
-		name = "Arbutus Slab",
-		path = ns.rs.root .. "Fonts/ArbutusSlab.ttf",
-	},
-	{
-		name = "Arial Narrow",
-		path = "Fonts/ARIALN.ttf",
-	},
-	{
-		name = "Bonbon",
-		path = ns.rs.root .. "Fonts/Bonbon.ttf",
-	},
-	{
-		name = "Caesar Dressing",
-		path = ns.rs.root .. "Fonts/CaesarDressing.ttf",
-	},
-	{
-		name = "Domine",
-		path = ns.rs.root .. "Fonts/Domine.ttf",
-	},
-	{
-		name = "Friz Quadrata",
-		path = "Fonts/FRIZQT__.TTF",
-	},
-	{
-		name = "Germania One",
-		path = ns.rs.root .. "Fonts/GermaniaOne.ttf",
-	},
-	{
-		name = "Molle",
-		path = ns.rs.root .. "Fonts/Molle.ttf",
-	},
-	{
-		name = "Morpheus",
-		path = "Fonts/MORPHEUS.ttf",
-	},
-	{
-		name = "Oregano",
-		path = ns.rs.root .. "Fonts/Oregano.ttf",
-	},
-	{
-		name = "Oxanium",
-		path = ns.rs.root .. "Fonts/Oxanium.ttf",
-	},
-	{
-		name = "Reem Kufi",
-		path = ns.rs.root .. "Fonts/ReemKufi.ttf",
-	},
-	{
-		name = "Righteous",
-		path = ns.rs.root .. "Fonts/Righteous.ttf",
-	},
-	{
-		name = "Sancreek",
-		path = ns.rs.root .. "Fonts/Sancreek.ttf",
-	},
-	{
-		name = "Skurri",
-		path = "Fonts/skurri.ttf",
-	},
-	{
-		name = "Underdog",
-		path =  ns.rs.root .. "Fonts/Underdog.ttf",
-	},
-	{
-		name = "Zen Dots",
-		path =  ns.rs.root .. "Fonts/ZenDots.ttf",
-	},
-	{
-		name = "CUSTOM", --REMOVE temporarily reinstated CUSTOM font solution once full custom font file support has been added
-		path =  ns.rs.root .. "Fonts/CUSTOM.ttf",
-	},
-}
-
-
---[[ CLASSIC SUPPORT ]]
-
-if not C_ColorUtil then C_ColorUtil = {
-	WrapTextInColorCode = WrapTextInColorCode,
-	WrapTextInColor = function(text, color)
-		if type(color) ~= "table" then return text end
-
-		if type(color["GenerateHexColor"]) ~= "function" then color = CreateColor(color.r, color.g, color.b, color.a) end
-
-		return WrapTextInColor(text, color)
-	end,
-} end

@@ -20,9 +20,33 @@ local us = WidgetTools.utilities
 local ds = WidgetTools.debugging
 
 
---[[ GAME VERSION ]]
+--[[ RESOURCES ]]
 
+wt.addon = ...
+wt.title = C_AddOns.GetAddOnMetadata(..., "Title")
+wt.root = "Interface/AddOns/" .. wt.addon .. "/"
 wt.classic = select(4, GetBuildInfo()) < 100000
+
+--[ Textures ]
+
+wt.textures = {
+	alphaBG = wt.root .. "Textures/AlphaBG.tga",
+	gradientBG = wt.root .. "Textures/GradientBG.tga",
+}
+
+--[ Strings ]
+
+--| Fill static & internal localization references
+
+wt.strings.backup.box.tooltip[3] = wt.strings.backup.box.tooltip[3]:gsub("#LOAD", wt.strings.backup.load.label)
+wt.strings.position.keepInPlace.tooltip = wt.strings.position.keepInPlace.tooltip:gsub("#ANCHOR", wt.strings.position.anchor.label)
+wt.strings.position.offsetX.tooltip = wt.strings.position.offsetX.tooltip:gsub("#ANCHOR", wt.strings.position.anchor.label)
+wt.strings.position.offsetY.tooltip = wt.strings.position.offsetY.tooltip:gsub("#ANCHOR", wt.strings.position.anchor.label)
+wt.strings.position.relativePoint.tooltip = wt.strings.position.relativePoint.tooltip:gsub("#ANCHOR", wt.strings.position.anchor.label)
+wt.strings.layer.keepOnTop.tooltip = wt.strings.layer.keepOnTop.tooltip:gsub("#STRATA", wt.strings.layer.strata.label)
+wt.strings.layer.level.tooltip = wt.strings.layer.level.tooltip:gsub("#STRATA", wt.strings.layer.strata.label)
+wt.strings.about.changelog.tooltip = wt.strings.about.changelog.tooltip .. "\n\nThe changelog is only available in English for now."
+wt.strings.about.fullChangelog.tooltip = wt.strings.about.fullChangelog.tooltip .. "\n\nThe changelog is only available in English for now."
 
 
 --[[ TABLE MANAGEMENT ]]

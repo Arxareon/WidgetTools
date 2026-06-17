@@ -1,13 +1,36 @@
---| Locale
-
-if GetLocale() ~= "deDE" then return end
-
 --| Toolbox
 
 ---@type toolbox
 local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
 
 if not wt then return end
+
+--[ Changelog ]
+
+wt.changelog = {
+    {
+        "#V_Version 3.0_# #H_(23/4/2026)_#",
+        "#F_Hotfix (Version 3.0.1):_#",
+        "An mehreren Stellen wurden Schutzmechanismen hinzugefügt, um zu verhindern, dass fehlende oder ungültige Asset-Dateipfade (Schriftarten oder Texturen) kritische Fehler verursachen.",
+        "#N_Neu:_#",
+        "Unterstützung für Midnight 12.0.5 hinzugefügt.",
+        "Die zuvor hinzugefügten Rechtsklick-Menüs für Einstellungen wurden weiter verbessert und verfügen nun über Kopieren-&-Einfügen‑Funktionen, um Werte leicht zwischen ähnlichen Einstellungstypen zu übertragen.",
+        "Eine neue Vorlage für erweiterte Einstellungen zur Verwaltung von Schriftoptionen wurde hinzugefügt (weitere Schriftanpassungsoptionen folgen in zukünftigen Updates).",
+        "#C_Änderungen:_#",
+        "Das Aussehen der numerischen Einstellungs‑Slider wurde aktualisiert, um den neuen Blizzard‑Slidern zu entsprechen, wobei alle erweiterten Funktionen für mit Widget Tools Toolboxes erstellte Addons erhalten bleiben.",
+        "Die Lade‑Struktur der Toolbox wurde überarbeitet; ältere Versionen werden nicht mehr unterstützt.",
+        "Viele grundlegende Dienstprogramme wurden an Widget Tools übergeben (und sind nicht länger Toolbox‑spezifisch) und sind nun global über die WidgetTools.utilities‑Sammlung zugänglich.",
+        "Toolbox‑spezifische Daten werden nicht länger in Frame‑Tabellen injiziert, sondern in toolbox‑spezifischen Tabellen gespeichert (einschließlich Tooltip‑ oder Container‑Layout‑Daten).",
+        "Das Backend‑System zur Ereignisverwaltung für Blizzard‑weite OnEvent‑Handler (und benutzerdefinierte Events) für Frames wurde aktualisiert, mit neuen global zugänglichen Dienstprogrammen über die WidgetTools.utilities‑Sammlung.",
+        "Anpassbare Frames, Buttons und andere Widgets müssen nun über neue Konstruktoren erstellt werden; die anpassbaren Flags wurden aus ihren Basisvarianten entfernt.",
+        "Die meisten Annotations, die nur für die Entwicklung gedacht waren, wurden aus den installierten Addon‑Dateien ausgelagert, um die Installationsgröße deutlich zu reduzieren.",
+        "Die Logik der Konstruktion der Datenverwaltungs‑Einstellungsseite (jetzt „Profile‑Seite“ genannt) wurde in ein Profilemanager‑Widget und eine darauf aufbauende GUI‑Mutation aufgeteilt, um mehr Flexibilität und Anpassbarkeit zu ermöglichen.",
+        "Mehrere weitere interne Änderungen und Verbesserungen.",
+        "#F_Hotfixes:_#",
+        "Zahlreiche weitere kleinere Fehlerbehebungen.",
+        "#H_Vielen Dank für eure Hilfe, Vorschläge & Fehlermeldungen!_# Wenn ihr auf Probleme stoßt, zögert nicht, sie zu melden! Gebt möglichst an, wann & wie sie auftreten und welche anderen Addons ihr verwendet (falls relevant), um mir die beste Chance zu geben, sie zu reproduzieren & zu beheben. Fügt nach Möglichkeit Lua‑Fehlermeldungen und Taint‑Logs bei (falls ihr wisst, wie man sie findet).",
+    }
+}
 
 --[ Strings ]
 

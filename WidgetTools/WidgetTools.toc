@@ -1,8 +1,8 @@
-## Interface: 120005, 50503, 20505, 11508
+## Interface: 120007, 50504, 20505, 11508
 ## Title: Widget Tools
 ## Version: 3.1
-## X-Day: 23
-## X-Month: 4
+## X-Day: 17
+## X-Month: 6
 ## X-Year: 2026
 ## Category: Development Tools
 ## Notes: Responsible for doing the heavy lifting for other addons built with it in the background & provides extra development tools.
@@ -23,17 +23,6 @@
 ## X-WidgetTools-ToolboxVersion: 3.1
 ## X-WidgetTools-AddToNamespace: wt
 
-Resources.lua
-Localizations/deDE.lua
-Localizations/esES.lua
-Localizations/esMX.lua
-Localizations/frFR.lua
-Localizations/itIT.lua
-Localizations/krKR.lua
-Localizations/ptBR.lua
-Localizations/ruRU.lua
-Localizations/zhCN.lua
-Localizations/zhTW.lua
-Localizations/enUS_Default.lua
+Localizations/[TextLocale].lua
 Core.lua
 Toolbox.lua
