@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "Entwicklertools",
+			debugging = {
+				enabled = {
+					label = "Debugging-Modus",
+					tooltip = "Umschalten, um Debugging-Protokolle zu erstellen, zu speichern und im Chatfenster auszugeben.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "Frame-Attribute skalieren",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "Der Lite-Modus wird nach dem Neuladen der Oberfläche #STATE sein.",
 			reminder = "Lite-Modus ist aktiviert, Einstellungen für abhängige Addons wurden nicht geladen.\n#HINT",
 			hint = "Gib #COMMAND ein, um den Lite-Modus zu deaktivieren.",
+		},
+		debug = {
+			description = "Debugging-Modus umschalten: speichert und zeigt Debug-Protokolle im Chat an",
+			response = "Debugging wird nach dem Neuladen der Benutzeroberfläche #STATE sein.",
+			hint = "Gib #COMMAND ein, um den Debugging-Modus zu deaktivieren.",
 		},
 	},
 	separator = ".", -- Tausendertrennzeichen

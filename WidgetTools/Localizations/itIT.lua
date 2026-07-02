@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "Strumenti di Sviluppo",
+			debugging = {
+				enabled = {
+					label = "Modalità Debug",
+					tooltip = "Attiva per creare, salvare e mostrare voci di registro di debug nella finestra della chat.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "Ridimensiona Attributi del Frame",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "La Modalità Lite sarà #STATE dopo il ricaricamento dell'interfaccia.",
 			reminder = "La Modalità Lite è abilitata, le impostazioni per gli addon dipendenti non sono state caricate.\n#HINT",
 			hint = "Digita #COMMAND per disabilitare la Modalità Lite.",
+		},
+		debug = {
+			description = "Attiva la Modalità Debug: salva e mostra i registri di debug nella finestra della chat",
+			response = "La modalità debug sarà #STATE dopo il ricaricamento dell’interfaccia.",
+			hint = "Digita #COMMAND per disattivare la Modalità Debug.",
 		},
 	},
 	separator = ".", -- Separatore delle migliaia

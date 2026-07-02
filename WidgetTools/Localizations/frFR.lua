@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "Outils de Développement",
+			debugging = {
+				enabled = {
+					label = "Mode Débogage",
+					tooltip = "Active pour créer, enregistrer et afficher des entrées de journal de débogage dans la fenêtre de discussion.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "Redimensionner les attributs du cadre",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "Le Mode Léger sera #STATE après le rechargement de l'interface.",
 			reminder = "Le Mode Léger est activé, les paramètres des addons dépendants n'ont pas été chargés.\n#HINT",
 			hint = "Tapez #COMMAND pour désactiver le Mode Léger.",
+		},
+		debug = {
+			description = "Activer le Mode Débogage : enregistre et affiche les journaux de débogage dans la fenêtre de discussion",
+			response = "Le mode de débogage sera #STATE après le rechargement de l’interface.",
+			hint = "Tapez #COMMAND pour désactiver le Mode Débogage.",
 		},
 	},
 	separator = " ", -- Séparateur de milliers

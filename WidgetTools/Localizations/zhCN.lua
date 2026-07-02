@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "开发工具",
+			debugging = {
+				enabled = {
+					label = "调试模式",
+					tooltip = "启用后将在聊天窗口中创建、保存并输出调试日志条目。",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "调整框体属性大小",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "界面重新加载后，精简模式将为 #STATE。",
 			reminder = "精简模式已启用，依赖插件设置尚未加载。\n#HINT",
 			hint = "输入 #COMMAND 以禁用精简模式。",
+		},
+		debug = {
+			description = "切换调试模式：在聊天窗口保存并显示调试日志",
+			response = "界面重新加载后，调试模式将变为 #STATE。",
+			hint = "输入 #COMMAND 以关闭调试模式。",
 		},
 	},
 	separator = ",", -- 千位分隔符

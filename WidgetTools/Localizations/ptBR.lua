@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "Ferramentas de Desenvolvimento",
+			debugging = {
+				enabled = {
+					label = "Modo de Depuração",
+					tooltip = "Ative para criar, salvar e exibir entradas de log de depuração na janela de chat.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "Redimensionar Atributos do Quadro",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "O Modo Lite será #STATE após a interface ser recarregada.",
 			reminder = "Modo Lite está ativado, as configurações dos addons dependentes não foram carregadas.\n#HINT",
 			hint = "Digite #COMMAND para desativar o Modo Lite.",
+		},
+		debug = {
+			description = "Ativar o Modo de Depuração: salva e exibe logs de depuração no chat",
+			response = "O modo de depuração ficará #STATE após recarregar a interface.",
+			hint = "Digite #COMMAND para desativar o Modo de Depuração.",
 		},
 	},
 	separator = ".", -- Separador de milhar

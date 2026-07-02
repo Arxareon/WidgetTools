@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "開發工具",
+			debugging = {
+				enabled = {
+					label = "除錯模式",
+					tooltip = "啟用後會在聊天視窗中建立、儲存並輸出除錯紀錄。",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "調整框架屬性大小",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "介面重新載入後，精簡模式將會是 #STATE。",
 			reminder = "精簡模式已啟用，相依插件設定尚未載入。\n#HINT",
 			hint = "輸入 #COMMAND 以停用精簡模式。",
+		},
+		debug = {
+			description = "切換除錯模式：在聊天視窗中儲存並顯示除錯紀錄",
+			response = "介面重新載入後，除錯模式將變為 #STATE。",
+			hint = "輸入 #COMMAND 以停用除錯模式。",
 		},
 	},
 	separator = ",", -- 千分位分隔符號

@@ -168,6 +168,12 @@ ns.strings = {
 		},
 		dev = {
 			title = "개발 도구",
+			debugging = {
+				enabled = {
+					label = "디버깅 모드",
+					tooltip = "디버깅 로그 항목을 생성, 저장하고 채팅창에 출력하도록 설정합니다.",
+				},
+			},
 			frameAttributes = {
 				enabled = {
 					label = "프레임 속성 크기 조절",
@@ -208,6 +214,11 @@ ns.strings = {
 			response = "인터페이스를 다시 불러온 후 라이트 모드는 #STATE 상태가 됩니다.",
 			reminder = "라이트 모드가 활성화되어 의존 애드온의 설정이 로드되지 않았습니다.\n#HINT",
 			hint = "#COMMAND를 입력하여 라이트 모드를 비활성화하세요.",
+		},
+		debug = {
+			description = "디버깅 모드 전환: 디버그 로그를 저장하고 채팅창에 표시합니다",
+			response = "인터페이스를 다시 불러온 후 디버깅 모드는 #STATE 상태가 됩니다.",
+			hint = "#COMMAND 를 입력하여 디버깅 모드를 비활성화하세요.",
 		},
 	},
 	separator = ",", -- 천 단위 구분자
