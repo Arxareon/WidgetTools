@@ -32,7 +32,7 @@ local wt = {}
 	---| toolboxStrings_zhCN
 	---| toolboxStrings_ruRU
 
-	--Widget data clipboard
+	---Widget data clipboard
 	---@class toolboxClipboard
 	---@field toggle boolean|nil Toggle value
 	---@field selection wrappedInteger|nil Selector index
@@ -250,52 +250,52 @@ function wt.SetHyperlinkHandler(addon, linkType, handler) end
 ---Check if a variable is a recognizable WidgetTools custom table
 ---@param t any
 ---***
----@return boolean|AnyTypeName # Return the type name of the object if recognized, false if not
+---@return boolean|typename # Return the type name of the object if recognized, false if not
 ---<p></p>
 function wt.IsWidget(t)
 
 	--| Returns
 
-	---@alias AnyTypeName
-	---| WidgetTypeName
-	---| MutatedWidgetTypeName
-	---| SettingsPageTypeName
-	---| OptionsTemplateTypeName
-	---| "SettingsCategory"
+	---@alias typename
+	---| baseTypename
+	---| mutatedTypename
 
-		---@alias WidgetTypeName
-		---| "Action"
-		---| "Toggle"
-		---| "Selector"
-		---| "SpecialSelector"
-		---| "Multiselector"
-		---| "Textbox"
-		---| "Numeric"
-		---| "Colormanager"
-		---| "Profilemanager"
+		---@alias baseTypename
+		---| typename_action
+		---| typename_toggle
+		---| typename_selector
+		---| typename_specialSelector
+		---| typename_multiselector
+		---| typename_textbox
+		---| typename_numeric
+		---| typename_colormanager
+		---| typename_positionmanager
+		---| typename_fontmanager
+		---| typename_settingsmanager
+		---| typename_profilemanager
+		---| typename_addonmanager
+		---| typename_settingsCategory
 
-		---@alias MutatedWidgetTypeName
-		---| "Button"
-		---| "CustomButton"
-		---| "Radiobutton"
-		---| "Checkbox"
-		---| "Radiogroup"
-		---| "DropdownRadiogroup"
-		---| "SpecialRadiogroup"
-		---| "Checkgroup"
-		---| "Editbox"
-		---| "MultilineEditbox"
-		---| "Slider"
-		---| "ClassicSlider"
-		---| "Colorpicker"
-
-		---@alias SettingsPageTypeName
-		---| "SettingsPage"
-		---| "ProfilesPage"
-
-		---@alias OptionsTemplateTypeName
-		---| "PositionOptions"
-		---| "FontOptions"
+		---@alias mutatedTypename
+		---| typename_button
+		---| typename_customButton
+		---| typename_radiobutton
+		---| typename_checkbox
+		---| typename_classicCheckbox
+		---| typename_radiogroup
+		---| typename_dropdownRadiogroup
+		---| typename_specialRadiogroup
+		---| typename_checkgroup
+		---| typename_editbox
+		---| typename_multilineEditbox
+		---| typename_slider
+		---| typename_classicSlider
+		---| typename_colorpicker
+		---| typename_positionOptions
+		---| typename_fontOptions
+		---| typename_settingsPage
+		---| typename_profilesPage
+		---| typename_addonPage
 
 	return false
 end
@@ -733,7 +733,7 @@ end
 ---Add a description to a titled frame
 ---***
 ---@param title FontString Reference to the already existing title textline to place the description next to
----@param t? descriptionCreationData Table of parameters to create a description
+---@param t? descriptionCreationData Optional parameters
 ---***
 ---@return FontString? # ***Default:*** nil
 function wt.CreateDescription(title, t)
@@ -1423,6 +1423,7 @@ function wt.CreateMenuTextline(menu, t)
 	---@class menuTextlineCreationData : queuedMenuItem # t
 	---@field text? string Text to be shown on the textline item within the parent menu | ***Default:*** "Title"
 
+		---Optional parameters
 		---@class queuedMenuItem
 		---@field queue? boolean If true, the item will only appear when additional items are added to the menu | ***Default:*** `false`
 end
@@ -1459,185 +1460,6 @@ function wt.CreateMenuButton(menu, t)
 end
 
 
---[[ SETTINGS PAGE ]]
-
----Create an new Settings Panel frame and add it to the Options
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param t? settingsPageCreationData Optional parameters
----***
----@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
-function wt.CreateSettingsPage(addon, t)
-
-	--| Parameters
-
-	---@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsCategoryData, settingsPageEvents, initializableOptionsContainer, liteObject # t
-	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
-	---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
-	---@field titleIcon? boolean Append **t.icon** to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if **t.register == true**
-	---@field scroll? settingsPageScrollData If set, make the canvas frame scrollable by creating a [ScrollFrame](https://warcraft.wiki.gg/wiki/UIOBJECT_ScrollFrame) as its child
-	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
-
-		---@class settingsPageCreationData_base
-		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
-		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
-		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
-
-		---@class settingsCategoryData
-		---@field dataManagement? settingsData_collection If set, register this settings page to settings data management for batched data saving & loading and handling data changes of all linked widgets
-
-			---@class settingsData_collection : settingsData_base
-			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
-
-				---@class settingsData_base
-				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
-
-		---@class settingsPageEvents
-		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
-
-		---@class initializableOptionsContainer : initializableContainer
-		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
-
-		---@class settingsPageScrollData : scrollSpeedData
-		---@field height? number Set the height of the scrollable child frame to the specified value | ***Default:*** 0 *(no height)*
-		---@field speed? number Percentage of one page of content to scroll at a time | ***Range:*** (0, 1) | ***Default:*** 0.25
-
-		---@class arrangementData_settingsPage : arrangementRules
-		---@field margins? spacingData_settingsPage Inset the content inside the canvas frame by the specified amount on each side
-		---@field gaps? number The amount of space to leave between rows | ***Default:*** 44
-		---@field resize? boolean Set the height of the canvas frame to match the space taken up by the arranged content (including margins) | ***Default:*** **t.scroll** ~= nil
-
-			---@class spacingData_settingsPage
-			---@field l? number Space to leave on the left side | 10
-			---@field r? number Space to leave on the right side (doesn't need to be negated) | ***Default:*** 10
-			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** 44
-			---@field b? number Space to leave at the bottom | ***Default:*** 44
-
-	--| Returns
-
-	---@class settingsPage
-	---@field canvas? canvasFrame|Frame The settings page main canvas frame
-	---@field category? table The registered settings category page
-	---@field content? Frame The content frame to house the settings widgets or other page content
-	---@field header? Frame The header frame containing the page title, description and icon
-	---@field title FontString
-	---@field description? FontString
-	---@field iconTexture? string
-	---@field icon? Texture
-	local _ = {}
-
-		---@class canvasFrame : Frame
-		---@field OnCommit function
-		---@field OnRefresh function
-		---@field OnDefault function
-
-		---Returns the type of this object
-		---***
-		---@return "SettingsPage"
-		---<p></p>
-		function _.getType() return "SettingsPage" end
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
-		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
-		---***
-		---@param state boolean? ***Default:*** `true`
-		function _.setStatic(state) end
-
-		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
-		---@return string
-		function _.getResetPopupKey() return "" end
-
-		---Open the Settings window to this category page
-		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
-		function _.open() end
-
-		---Force update all linked settings widgets in this category page
-		---***
-		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.load(handleChanges, user) end
-
-		---Force save all settings data of this category page from all linked widgets
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.save(user) end
-
-		---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.apply(user) end
-
-		---Revert any changes made in this category page and reload all linked widget data
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.revert(user) end
-
-		---Reset all settings data of this category page to default values
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.reset(user) end
-end
-
----Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
----***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
----@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under **parent**<ul><li>***Note:*** Already registered pages (which contain a **category** value) will be skipped and won't be included in the new category.</li></ul>
----@param t? settingsCategoryCreationData Optional parameters
----***
----@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified **parent** was invalid
-function wt.CreateSettingsCategory(addon, parent, pages, t)
-
-	--| Parameters
-
-	---@class settingsCategoryCreationData # t
-	---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to all pages of this settings category has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-	---@field onDefaults? fun(user: boolean) Called after settings data handled by all pages of this settings category has been restored to default values (for example when the "All Settings" option is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-
-	--| Returns
-
-	---@class settingsCategory
-	---@field pages settingsPage[]
-	local _ = {}
-
-		---Returns the type of this object
-		---***
-		---@return "SettingsCategory"
-		---<p></p>
-		function _.getType() return "SettingsCategory" end
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
-		---Force update the settings widgets for all pages in this category
-		---***
-		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.load(handleChanges, user) end
-
-		---Reset all settings data to their default values for all pages in this category
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** `true`
-		function _.defaults(user, callListeners) end
-end
-
-
 --[[ ACTION ]]
 
 ---Create a non-GUI action widget
@@ -1649,7 +1471,6 @@ function wt.CreateAction(t)
 
 	--| Parameters
 
-	---Optional parameters
 	---@class actionCreationData : togglableObject # t
 	---@field action? fun(self: action, user?: boolean) Function to call when the button is triggered (clicked by the user or triggered programmatically)<ul><li>***Note:*** This function will be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" script event happens, there's no need to register it again under **t.events.OnClick**.</li></ul><hr><p>@*param* `self` action — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
 	---@field listeners? actionEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -1705,12 +1526,15 @@ function wt.CreateAction(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Action"
+		---@return typename_action
 		---<p></p>
 		function _.getType() return "Action" end
 
+			---@alias typename_action
+			---| "Action"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -1779,7 +1603,6 @@ function wt.CreateButton(t, action)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class actionButtonCreationData : actionCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** "Button"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field titleOffset? offsetData Offset the position of the label of the button
@@ -1806,13 +1629,16 @@ function wt.CreateButton(t, action)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Action"
-		---@return "Button"
+		---@return typename_action
+		---@return typename_button
 		---<p></p>
 		function _.getType() return "Action", "Button" end
 
+			---@alias typename_button
+			---| "Button"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -1830,7 +1656,6 @@ function wt.CreateCustomButton(t, action)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class customButtonCreationData : actionButtonCreationData, customizableObject # t
 	---@field font? labelFontOptions_small_highlight Table of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via ***WidgetToolbox*.CreateFont(...)** (even within this table definition).</li></ul>
 
@@ -1852,13 +1677,16 @@ function wt.CreateCustomButton(t, action)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Action"
-		---@return "CustomButton"
+		---@return typename_action
+		---@return typename_customButton
 		---<p></p>
 		function _.getType() return "Action", "CustomButton" end
 
+			---@alias typename_customButton
+			---| "CustomButton"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -1878,7 +1706,6 @@ function wt.CreateToggle(t)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class toggleCreationData : togglableObject, settingsWidget # t
 	---@field listeners? toggleEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** `false`</p>
@@ -1947,12 +1774,15 @@ function wt.CreateToggle(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Toggle"
+		---@return typename_toggle
 		---<p></p>
 		function _.getType() return "Toggle" end
 
+			---@alias typename_toggle
+			---| "Toggle"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2102,7 +1932,6 @@ function wt.CreateCheckbox(t, toggle)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class checkboxCreationData : toggleCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_checkbox|sizeData
@@ -2136,13 +1965,16 @@ function wt.CreateCheckbox(t, toggle)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Toggle"
-		---@return "Checkbox"
+		---@return typename_toggle
+		---@return typename_checkbox
 		---<p></p>
 		function _.getType() return "Toggle", "Checkbox" end
 
+			---@alias typename_checkbox
+			---| "Checkbox"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2168,13 +2000,16 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Toggle"
-		---@return "ClassicCheckbox"
+		---@return typename_toggle
+		---@return typename_classicCheckbox
 		---<p></p>
 		function _.getType() return "Toggle", "ClassicCheckbox" end
 
+			---@alias typename_classicCheckbox
+			---| "ClassicCheckbox"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2194,7 +2029,6 @@ function wt.CreateRadiobutton(t, toggle)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class radiobuttonCreationData : checkboxCreationData # t
 	---@field size? sizeData_radiobutton|sizeData
 	---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** `false`<ul><li>***Note:*** The radio button will be registered for "RightButtonUp" triggers to call "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" events with **button** = "RightButton".</li></ul>
@@ -2218,13 +2052,16 @@ function wt.CreateRadiobutton(t, toggle)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Toggle"
-		---@return "Radiobutton"
+		---@return typename_toggle
+		---@return typename_radiobutton
 		---<p></p>
 		function _.getType() return "Toggle", "Radiobutton" end
 
+			---@alias typename_radiobutton
+			---| "Radiobutton"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2244,7 +2081,6 @@ function wt.CreateSelector(t)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class selectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
 	---@field items? (selectorItem|selectorToggle|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
 	---@field listeners? selectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -2336,12 +2172,15 @@ function wt.CreateSelector(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Selector"
+		---@return typename_selector
 		---<p></p>
 		function _.getType() return "Selector" end
 
+			---@alias typename_selector
+			---| "Selector"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2497,7 +2336,7 @@ end
 
 ---Create a non-GUI special selector widget (managing a set of toggle widgets) with data management logic specific to the specified **itemset**
 ---***
----@param itemset SpecialSelectorItemset Specify what type of selector should be created
+---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelectorCreationData Optional parameters
 ---***
 ---@return specialSelector specialSelector Reference to the new selector widget, utility functions and more wrapped in a table
@@ -2515,7 +2354,6 @@ function wt.CreateSpecialSelector(itemset, t)
 		---| "justifyV" Using the set of vertical text alignment items (JustifyV)
 		---| "strata" Using the set of [FrameStrata](https://warcraft.wiki.gg/wiki/Frame_Strata) items (excluding "WORLD")
 
-	--Optional parameters
 	---@class specialSelectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
 	---@field listeners? specialSelectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** nil *(no selection)*</p>
@@ -2580,12 +2418,15 @@ function wt.CreateSpecialSelector(itemset, t)
 
 		---Returns the type of this object
 		---***
-		---@return "SpecialSelector"
+		---@return typename_specialSelector
 		---<p></p>
 		function _.getType() return "SpecialSelector" end
 
+			---@alias typename_specialSelector
+			---| "SpecialSelector"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -2743,7 +2584,6 @@ function wt.CreateMultiselector(t)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class multiselectorCreationData : togglableObject, settingsWidget # t
 	---@field items? (selectorItem|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
 	---@field limits? limitValues Parameters to specify the limits of the number of selectable items
@@ -2829,12 +2669,15 @@ function wt.CreateMultiselector(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Multiselector"
+		---@return typename_multiselector
 		---<p></p>
 		function _.getType() return "Multiselector" end
 
+			---@alias typename_multiselector
+			---| "Multiselector"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3011,7 +2854,7 @@ end
 ---Create a radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
 ---***
 ---@param t? radiogroupCreationData Optional parameters
----@param selector? selector|specialSelector Reference to an already existing selector to mutate into a radio selector instead of creating a new base widget
+---@param selector? CreateRadiogroup_param2 Reference to an already existing selector to mutate into a radio selector instead of creating a new base widget
 ---***
 ---@return radiogroup|specialRadiogroup|selector|specialSelector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a table
 function wt.CreateRadiogroup(t, selector)
@@ -3031,6 +2874,11 @@ function wt.CreateRadiogroup(t, selector)
 		---@class radiogroupCreationData_base : tooltipDescribableSettingsWidget
 		---@field clearable? boolean If true, the selector input should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
 
+	---Reference to an already existing selector to mutate into a radio selector instead of creating a new base widget
+	---@alias CreateRadiogroup_param2
+	---| selector
+	---| specialSelector
+
 	--| Returns
 
 	---@class radiogroup : selector
@@ -3043,13 +2891,16 @@ function wt.CreateRadiogroup(t, selector)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Selector"
-		---@return "Radiogroup"
+		---@return typename_selector
+		---@return typename_radiogroup
 		---<p></p>
 		function _.getType() return "Selector", "Radiogroup" end
 
+			---@alias typename_radiogroup
+			---| "Radiogroup"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3092,14 +2943,17 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Selector"
-		---@return "Radiogroup"
-		---@return "DropdownRadiogroup"
+		---@return typename_selector
+		---@return typename_radiogroup
+		---@return typename_dropdownRadiogroup
 		---<p></p>
 		function _.getType() return "Selector", "Radiogroup", "DropdownRadiogroup" end
 
+			---@alias typename_dropdownRadiogroup
+			---| "DropdownRadiogroup"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3140,13 +2994,16 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "SpecialSelector"
-		---@return "SpecialRadiogroup"
+		---@return typename_specialSelector
+		---@return typename_specialRadiogroup
 		---<p></p>
 		function _.getType() return "SpecialSelector", "SpecialRadiogroup" end
 
+			---@alias typename_specialRadiogroup
+			---| "SpecialRadiogroup"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3182,13 +3039,16 @@ function wt.CreateCheckgroup(t, selector)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Multiselector"
-		---@return "Checkgroup"
+		---@return typename_multiselector
+		---@return typename_checkgroup
 		---<p></p>
 		function _.getType() return "Multiselector", "Checkgroup" end
 
+			---@alias typename_checkgroup
+			---| "Checkgroup"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3208,7 +3068,6 @@ function wt.CreateTextbox(t)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class textboxCreationData : togglableObject, settingsWidget # t
 	---@field color? color Apply the specified color to all text in the editbox (overriding all font objects set in **t.font**)
 	---@field listeners? textboxEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -3269,12 +3128,15 @@ function wt.CreateTextbox(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Textbox"
+		---@return typename_textbox
 		---<p></p>
 		function _.getType() return "Textbox" end
 
+			---@alias typename_textbox
+			---| "Textbox"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3449,13 +3311,16 @@ function wt.CreateEditbox(t, textbox)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Textbox"
-		---@return "Editbox"
+		---@return typename_textbox
+		---@return typename_editbox
 		---<p></p>
 		function _.getType() return "Textbox", "Editbox" end
 
+			---@alias typename_editbox
+			---| "Editbox"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3485,13 +3350,16 @@ function wt.CreateCustomEditbox(t, textbox)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Textbox"
-		---@return "CustomEditbox"
+		---@return typename_textbox
+		---@return typename_customEditbox
 		---<p></p>
 		function _.getType() return "Textbox", "CustomEditbox" end
 
+			---@alias typename_customEditbox
+			---| "CustomEditbox"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3537,13 +3405,16 @@ function wt.CreateMultilineEditbox(t, textbox)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Textbox"
-		---@return "MultilineEditbox"
+		---@return typename_textbox
+		---@return typename_multilineEditbox
 		---<p></p>
 		function _.getType() return "Textbox", "MultilineEditbox" end
 
+			---@alias typename_multilineEditbox
+			---| "MultilineEditbox"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3612,7 +3483,6 @@ function wt.CreateNumeric(t)
 
 	--| Parameters
 
-	--Optional parameters
 	---@class numericCreationData : togglableObject, settingsWidget # t
 	---@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* **t.min**, **t.max** *or* **t.step**
 	---@field min? number Lower numeric value limit | ***Range:*** (any, **t.max**) | ***Default:*** 0
@@ -3690,12 +3560,15 @@ function wt.CreateNumeric(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Numeric"
+		---@return typename_numeric
 		---<p></p>
 		function _.getType() return "Numeric" end
 
+			---@alias typename_numeric
+			---| "Numeric"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3912,13 +3785,16 @@ function wt.CreateSlider(t, numeric)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Numeric"
-		---@return "Slider"
+		---@return typename_numeric
+		---@return typename_slider
 		---<p></p>
 		function _.getType() return "Numeric", "Slider" end
 
+			---@alias typename_slider
+			---| "Slider"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3954,13 +3830,16 @@ function wt.CreateClassicSlider(t, numeric)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Numeric"
-		---@return "ClassicSlider"
+		---@return typename_numeric
+		---@return typename_classicSlider
 		---<p></p>
 		function _.getType() return "Numeric", "ClassicSlider" end
 
+			---@alias typename_classicSlider
+			---| "ClassicSlider"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -3975,7 +3854,7 @@ end
 ---***
 ---@param t? colormanagerCreationData Optional parameters
 ---***
----@return colormanager colorer Reference to the new color pick manager widget, utility functions and more wrapped in a table
+---@return colormanager colormanager Reference to the new color pick manager widget, utility functions and more wrapped in a table
 function wt.CreateColormanager(t)
 
 	--| Parameters
@@ -4038,12 +3917,15 @@ function wt.CreateColormanager(t)
 
 		---Returns the type of this object
 		---***
-		---@return "Colormanager"
+		---@return typename_colormanager
 		---<p></p>
 		function _.getType() return "Colormanager" end
 
+			---@alias typename_colormanager
+			---| "Colormanager"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -4211,13 +4093,16 @@ function wt.CreateColorpicker(t, colormanager)
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Colormanager"
-		---@return "Colorpicker"
+		---@return typename_colormanager
+		---@return typename_colorpicker
 		---<p></p>
 		function _.getType() return "Colormanager", "Colorpicker" end
 
+			---@alias typename_colorpicker
+			---| "Colorpicker"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -4227,6 +4112,13 @@ end
 
 
 --[[ POSITION DATA ]]
+
+function wt.CreatePositionmanager()
+	---@alias typename_positionmanager
+	---| "Positionmanager"
+end
+
+--| Options Panel
 
 ---Create and set up position management for a specified frame within a panel frame
 ---***
@@ -4327,12 +4219,15 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		---Returns the type of this object
 		---***
-		---@return "PositionOptions" string
+		---@return typename_positionOptions
 		---<p></p>
 		function _.getType() return "PositionOptions" end
 
+			---@alias typename_positionOptions
+			---| "PositionOptions"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -4355,6 +4250,13 @@ end
 
 
 --[[ FONT DATA ]]
+
+function wt.CreateFontmanager()
+	---@alias typename_fontmanager
+	---| "Fontmanager"
+end
+
+--| Options Panel
 
 ---Create and set up font management for a specified text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) including access to a font family selector dropdown to pick a custom font from the Widget Tools fonts list
 ---***
@@ -4412,15 +4314,295 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 		---Returns the type of this object
 		---***
-		---@return "FontOptions" string
+		---@return typename_fontOptions
 		---<p></p>
 		function _.getType() return "FontOptions" end
 
+			---@alias typename_fontOptions
+			---| "FontOptions"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
+end
+
+
+--[[ SETTINGS DATA ]]
+
+---Create a non-GUI settings data manager widget
+---***
+---@param t settingsmanagerCreationData Optional parameters
+---***
+---@return settingsmanager settingsmanager Reference to the new settings data manager widget, utility functions and more wrapped in a table
+function wt.CreateSettingsmanager(t)
+
+	--| Parameters
+	---| string
+
+	---@class settingsmanagerCreationData # t
+	---@field autoLoad boolean
+	---@field autoSave boolean
+	---@field dataManagement unknown
+	---@field name string
+	---@field onApply function
+	---@field onCancel function
+	---@field onDefault function
+	---@field onLoad function
+	---@field onSave function
+	---@field titleIcon string
+
+	--| Returns
+
+	---@class settingsmanager
+	---@field invoke settingsmanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener settingsmanager_setListener Hook a handler function as a listener for a custom widget event
+	local _ = {}
+
+		---Returns the type of this object
+		---***
+		---@return typename_settingsmanager
+		---<p></p>
+		function _.getType() return "Settingsmanager" end
+
+			---@alias typename_settingsmanager
+			---| "Settingsmanager"
+
+		---Checks and returns if the type of this object is equal to the string provided
+		---@param type string|typename
+		---@return boolean
+		---<p></p>
+		function _.isType(type) return false end
+
+		---@class settingsmanager_invoke
+		local invoke = {}
+
+			--Invoke an "enabled" event calling registered listeners
+			function invoke.enabled() end
+
+			---Invoke a "loaded" event calling registered listeners
+			---@param success boolean
+			function invoke.loaded(success) end
+
+			---Invoke a "saved" event calling registered listeners
+			---@param success boolean
+			function invoke.saved(success) end
+
+			---Invoke a custom event calling registered listeners
+			---@param event string Custom event tag
+			---@param ... any Any number of leftover arguments passed to listeners
+			function invoke._(event, ...) end
+
+		---@class settingsmanager_setListener
+		local setListener = {}
+
+			---Register a listener for a "enabled" event trigger
+			---@param listener ColormanagerEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
+			---Register a listener for a "loaded" event trigger
+			---@param listener ColormanagerEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.loaded(listener, callIndex) end
+
+			---Register a listener for a "saved" event trigger
+			---@param listener ColormanagerEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(listener, callIndex) end
+
+			---Register a listener for a custom event trigger
+			---@param event string Custom event tag
+			---@param listener ColormanagerEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener._(event, listener, callIndex) end
+
+	return _
+end
+
+--| Settings Page
+
+---Create an new Settings Panel frame and add it to the Options
+---***
+---@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param t? settingsPageCreationData Optional parameters
+---***
+---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
+function wt.CreateSettingsPage(addon, t)
+
+	--| Parameters
+
+	---@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsCategoryData, settingsPageEvents, initializableOptionsContainer, liteObject # t
+	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
+	---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
+	---@field titleIcon? boolean Append **t.icon** to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if **t.register == true**
+	---@field scroll? settingsPageScrollData If set, make the canvas frame scrollable by creating a [ScrollFrame](https://warcraft.wiki.gg/wiki/UIOBJECT_ScrollFrame) as its child
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
+
+		---@class settingsPageCreationData_base
+		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
+		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
+		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
+
+		---@class settingsCategoryData
+		---@field dataManagement? settingsData_collection If set, register this settings page to settings data management for batched data saving & loading and handling data changes of all linked widgets
+
+			---@class settingsData_collection : settingsData_base
+			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
+
+				---@class settingsData_base
+				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
+
+		---@class settingsPageEvents
+		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
+
+		---@class initializableOptionsContainer : initializableContainer
+		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+
+		---@class settingsPageScrollData : scrollSpeedData
+		---@field height? number Set the height of the scrollable child frame to the specified value | ***Default:*** 0 *(no height)*
+		---@field speed? number Percentage of one page of content to scroll at a time | ***Range:*** (0, 1) | ***Default:*** 0.25
+
+		---@class arrangementData_settingsPage : arrangementRules
+		---@field margins? spacingData_settingsPage Inset the content inside the canvas frame by the specified amount on each side
+		---@field gaps? number The amount of space to leave between rows | ***Default:*** 44
+		---@field resize? boolean Set the height of the canvas frame to match the space taken up by the arranged content (including margins) | ***Default:*** **t.scroll** ~= nil
+
+			---@class spacingData_settingsPage
+			---@field l? number Space to leave on the left side | 10
+			---@field r? number Space to leave on the right side (doesn't need to be negated) | ***Default:*** 10
+			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** 44
+			---@field b? number Space to leave at the bottom | ***Default:*** 44
+
+	--| Returns
+
+	---@class settingsPage
+	---@field canvas? canvasFrame|Frame The settings page main canvas frame
+	---@field category? table The registered settings category page
+	---@field content? Frame The content frame to house the settings widgets or other page content
+	---@field header? Frame The header frame containing the page title, description and icon
+	---@field title FontString
+	---@field description? FontString
+	---@field iconTexture? string
+	---@field icon? Texture
+	local _ = {}
+
+		---@class canvasFrame : Frame
+		---@field OnCommit function
+		---@field OnRefresh function
+		---@field OnDefault function
+
+		---Returns the type of this object
+		---***
+		---@return typename_settingsPage
+		---<p></p>
+		function _.getType() return "SettingsPage" end
+
+			---@alias typename_settingsPage
+			---| "SettingsPage"
+
+		---Checks and returns if the type of this object is equal to the string provided
+		---@param type string|typename
+		---@return boolean
+		---<p></p>
+		function _.isType(type) return false end
+
+		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
+		---***
+		---@param state boolean? ***Default:*** `true`
+		function _.setStatic(state) end
+
+		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
+		---@return string
+		function _.getResetPopupKey() return "" end
+
+		---Open the Settings window to this category page
+		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
+		function _.open() end
+
+		---Force update all linked settings widgets in this category page
+		---***
+		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.load(handleChanges, user) end
+
+		---Force save all settings data of this category page from all linked widgets
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.save(user) end
+
+		---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.apply(user) end
+
+		---Revert any changes made in this category page and reload all linked widget data
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.revert(user) end
+
+		---Reset all settings data of this category page to default values
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.reset(user) end
+end
+
+---Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
+---***
+---@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
+---@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under **parent**<ul><li>***Note:*** Already registered pages (which contain a **category** value) will be skipped and won't be included in the new category.</li></ul>
+---@param t? settingsCategoryCreationData Optional parameters
+---***
+---@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified **parent** was invalid
+function wt.CreateSettingsCategory(addon, parent, pages, t)
+
+	--| Parameters
+
+	---@class settingsCategoryCreationData # t
+	---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to all pages of this settings category has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+	---@field onDefaults? fun(user: boolean) Called after settings data handled by all pages of this settings category has been restored to default values (for example when the "All Settings" option is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+
+	--| Returns
+
+	---@class settingsCategory
+	---@field pages settingsPage[]
+	local _ = {}
+
+		---Returns the type of this object
+		---***
+		---@return typename_settingsCategory
+		---<p></p>
+		function _.getType() return "SettingsCategory" end
+
+			---@alias typename_settingsCategory
+			---| "SettingsCategory"
+
+		---Checks and returns if the type of this object is equal to the string provided
+		---@param type string|typename
+		---@return boolean
+		---<p></p>
+		function _.isType(type) return false end
+
+		---Force update the settings widgets for all pages in this category
+		---***
+		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		function _.load(handleChanges, user) end
+
+		---Reset all settings data to their default values for all pages in this category
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** `true`
+		function _.defaults(user, callListeners) end
 end
 
 
@@ -4531,12 +4713,15 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 		---Returns the type of this object
 		---***
-		---@return "Profilemanager"
+		---@return typename_profilemanager
 		---<p></p>
 		function _.getType() return "Profilemanager" end
 
+			---@alias typename_profilemanager
+			---| "Profilemanager"
+
 		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -4752,13 +4937,16 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 
 		---Returns all object types of this mutated widget
 		---***
-		---@return "Profilemanager"
-		---@return "ProfilesPage"
+		---@return typename_profilemanager
+		---@return typename_profilesPage
 		---<p></p>
 		function _.getType() return "Profilemanager", "ProfilesPage" end
 
+			---@alias typename_profilesPage
+			---| "ProfilesPage"
+
 		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|AnyTypeName
+		---@param type string|typename
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
@@ -4766,6 +4954,13 @@ end
 
 
 --[[ ADDON INFO ]]
+
+function wt.CreateAddonmanager()
+	---@alias typename_addonmanager
+	---| "Addonmanager"
+end
+
+--| Addon Page
 
 ---Create and set up a new settings page with about into for an addon
 ---***
@@ -4781,4 +4976,9 @@ function wt.CreateAboutPage(addon, t)
 	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "Notes")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
 	---@field changelog? { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 	---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `true`
+
+	--| Returns
+
+	---@alias typename_addonPage
+	---| "AddonPage"
 end

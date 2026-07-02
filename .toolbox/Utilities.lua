@@ -430,7 +430,7 @@ function wt.CreateScrollframe(t)
 	t.scrollSpeed = (t.scrollSpeed or 0.25)
 
 	--Override the built-in update function
-	scrollframe.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way to overriding the built-in update function
+	scrollframe.ScrollBar.SetPanExtentPercentage = function() --WATCH to change when Blizzard provides a better way to overriding the built-in update function
 		local height = scrollframe:GetHeight()
 		scrollframe.ScrollBar.panExtentPercentage = height * t.scrollSpeed / math.abs(scrollChild:GetHeight() - height)
 	end

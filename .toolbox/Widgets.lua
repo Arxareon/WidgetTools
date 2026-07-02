@@ -54,12 +54,12 @@ end
 function wt.CreateAction(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type action
-	local action = { invoke = {}, setListener = {}, }
-
 	--[ Properties ]
+
+	---@type typename_action
+	local typename = "Action"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -68,10 +68,15 @@ function wt.CreateAction(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type action
+	local action = { invoke = {}, setListener = {}, }
+
 	--[ Getters & Setters ]
 
-	function action.getType() return "Action" end
-	function action.isType(type) return type == "Action" end
+	function action.getType() return typename end
+	function action.isType(type) return type == typename end
 
 	--| Events
 
@@ -119,12 +124,12 @@ end
 function wt.CreateToggle(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type toggle
-	local toggle = { invoke = {}, setListener = {}, }
-
 	--[ Properties ]
+
+	---@type typename_toggle
+	local typename = "Toggle"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -140,10 +145,15 @@ function wt.CreateToggle(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type toggle
+	local toggle = { invoke = {}, setListener = {}, }
+
 	--[ Getters & Setters ]
 
-	function toggle.getType() return "Toggle" end
-	function toggle.isType(type) return type == "Toggle" end
+	function toggle.getType() return typename end
+	function toggle.isType(type) return type == typename end
 
 	--| Events
 
@@ -285,12 +295,12 @@ local itemsets = {
 function wt.CreateSelector(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type selector
-	local selector = { invoke = {}, setListener = {}, toggles = {} }
-
 	--[ Properties ]
+
+	---@type typename_selector
+	local typename = "Selector"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -323,10 +333,15 @@ function wt.CreateSelector(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type selector
+	local selector = { invoke = {}, setListener = {}, toggles = {} }
+
 	--[ Getters & Setters ]
 
-	function selector.getType() return "Selector" end
-	function selector.isType(type) return type == "Selector" end
+	function selector.getType() return typename end
+	function selector.isType(type) return type == typename end
 
 	--| Events
 
@@ -493,12 +508,12 @@ end
 function wt.CreateSpecialSelector(itemset, t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type specialSelector
-	local specialSelector = { invoke = {}, setListener = {}, toggles = {} }
-
 	--[ Properties ]
+
+	---@type typename_specialSelector
+	local typename = "SpecialSelector"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -542,10 +557,15 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type specialSelector
+	local specialSelector = { invoke = {}, setListener = {}, toggles = {} }
+
 	--[ Getters & Setters ]
 
-	function specialSelector.getType() return "SpecialSelector" end
-	function specialSelector.isType(type) return type == "SpecialSelector" end
+	function specialSelector.getType() return typename end
+	function specialSelector.isType(type) return type == typename end
 
 	function specialSelector.getItemset() return itemset end
 
@@ -669,12 +689,12 @@ end
 function wt.CreateMultiselector(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type multiselector
-	local multiselector = { invoke = {}, setListener = {}, toggles = {} }
-
 	--[ Properties ]
+
+	---@type typename_multiselector
+	local typename = "Multiselector"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -712,10 +732,15 @@ function wt.CreateMultiselector(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type multiselector
+	local multiselector = { invoke = {}, setListener = {}, toggles = {} }
+
 	--[ Getters & Setters ]
 
-	function multiselector.getType() return "Multiselector" end
-	function multiselector.isType(type) return type == "Multiselector" end
+	function multiselector.getType() return typename end
+	function multiselector.isType(type) return type == typename end
 
 	--| Events
 
@@ -921,12 +946,12 @@ end
 function wt.CreateTextbox(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type textbox
-	local textbox = { invoke = {}, setListener = {}, }
-
 	--[ Properties ]
+
+	---@type typename_textbox
+	local typename = "Textbox"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -942,10 +967,15 @@ function wt.CreateTextbox(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type textbox
+	local textbox = { invoke = {}, setListener = {}, }
+
 	--[ Getters & Setters ]
 
-	function textbox.getType() return "Textbox" end
-	function textbox.isType(type) return type == "Textbox" end
+	function textbox.getType() return typename end
+	function textbox.isType(type) return type == typename end
 
 	--| Events
 
@@ -1043,12 +1073,12 @@ end
 function wt.CreateNumeric(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type numeric
-	local numeric = { invoke = {}, setListener = {}, }
-
 	--[ Properties ]
+
+	---@type typename_numeric
+	local typename = "Numeric"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -1082,10 +1112,15 @@ function wt.CreateNumeric(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type numeric
+	local numeric = { invoke = {}, setListener = {}, }
+
 	--[ Getters & Setters ]
 
-	function numeric.getType() return "Numeric" end
-	function numeric.isType(type) return type == "Numeric" end
+	function numeric.getType() return typename end
+	function numeric.isType(type) return type == typename end
 
 	--| Events
 
@@ -1211,17 +1246,17 @@ end
 function wt.CreateColormanager(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Widget ]
-
-	---@type colormanager
-	local colormanager = { invoke = {}, setListener = {}, }
-
 	--[ Properties ]
+
+	---@type typename_colormanager
+	local typename = "Colormanager"
+
+	local active = false
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
-
-	local active = false
 
 	--| Data
 
@@ -1234,10 +1269,15 @@ function wt.CreateColormanager(t)
 
 	local enabled = t.disabled ~= true
 
+	--[ Widget ]
+
+	---@type colormanager
+	local colormanager = { invoke = {}, setListener = {}, }
+
 	--[ Getters & Setters ]
 
-	function colormanager.getType() return "Colormanager" end
-	function colormanager.isType(type) return type == "Colormanager" end
+	function colormanager.getType() return typename end
+	function colormanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -1373,6 +1413,234 @@ function wt.CreateColormanager(t)
 end
 
 
+--[[ POSITION DATA ]]
+
+
+
+
+--[[ FONT DATA ]]
+
+
+
+
+--[[ SETTINGS DATA ]]
+
+function wt.CreateSettingsmanager(t)
+	t = type(t) == "table" and t or {}
+
+	--[ Properties ]
+
+	---@type typename_settingsmanager
+	local typename = "Settingsmanager"
+
+	--| Events
+
+	---@type table<string, function[]>
+	local listeners = {}
+
+	--| Data management
+
+	local data = type(t.dataManagement) == "table" and t.dataManagement or {}
+	data.category = type(data.category) == "string" and data.category or type(t.name) == "string" and t.name:gsub("%s+", "") or tostring(data)
+	data.keys = type((data.keys or {})[1]) == "string" and data.keys or { data.category }
+
+	--| State
+
+	local enabled = t.disabled ~= true
+
+	--[ Widget ]
+
+	---@type settingsmanager
+	local settingsmanager = { invoke = {}, setListener = {}, }
+
+	--[ Getters & Setters ]
+
+	function settingsmanager.getType() return typename end
+	function settingsmanager.isType(type) return type == typename end
+
+	--| Events
+
+	function settingsmanager.invoke.enabled() callListeners(settingsmanager, listeners, "enabled", enabled) end
+	function settingsmanager.invoke.loaded(success) callListeners(settingsmanager, listeners, "loaded", success) end
+	function settingsmanager.invoke.saved(success) callListeners(settingsmanager, listeners, "saved", success) end
+	function settingsmanager.invoke._(event, ...) callListeners(settingsmanager, listeners, event, ...) end
+
+	function settingsmanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function settingsmanager.setListener.activated(listener, callIndex) addListener(listeners, "activated", listener, callIndex) end
+	function settingsmanager.setListener.created(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
+	function settingsmanager.setListener.renamed(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
+	function settingsmanager.setListener.deleted(listener, callIndex) addListener(listeners, "deleted", listener, callIndex) end
+	function settingsmanager.setListener.reset(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end
+	function settingsmanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+
+	--| State
+
+	function settingsmanager.isEnabled() return enabled end
+	function settingsmanager.setEnabled(state, silent)
+		enabled = state ~= false
+
+		if not silent then settingsmanager.invoke.enabled() end
+	end
+
+	--| Utilities
+
+	function settingsmanager.open()
+		if WidgetToolsDB.lite or not settingsmanager.category then
+			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
+				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
+					"#COMMAND", cr("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
+				), rs.colors.grey[1])
+			), rs.colors.gold[2]))
+
+			return
+		end
+
+		Settings.OpenToCategory(settingsmanager.category:GetID())
+	end
+
+	--| Batched settings data management
+
+	function settingsmanager.load(handleChanges, user)
+		--Update settings widgets
+		if t.autoLoad ~= false and type(data) == "table" then for i = 1, #data.keys do
+			wt.LoadSettingsData(data.category, data.keys[i], handleChanges)
+			wt.SnapshotSettingsData(data.category, data.keys[i])
+		end end
+
+		--Call listener
+		if type(t.onLoad) == "function" then t.onLoad(user == true) end
+	end
+
+	function settingsmanager.save(user)
+		--Retrieve data from settings widgets and commit to storage
+		if t.autoSave ~= false and type(data) == "table" then for i = 1, #data.keys do
+			wt.SaveSettingsData(data.category, data.keys[i])
+		end end
+
+		--Call listener
+		if type(t.onSave) == "function" then t.onSave(user == true) end
+	end
+
+	function settingsmanager.apply(user)
+		if type(data) == "table" then for i = 1, #data.keys do wt.ApplySettingsData(data.category, data.keys[i]) end end
+
+		--Call listener
+		if type(t.onApply) == "function" then t.onApply(user == true) end
+	end
+
+	function settingsmanager.revert(user)
+		--Update settings widgets
+		if type(data) == "table" then for i = 1, #data.keys do wt.RevertSettingsData(data.category, data.keys[i]) end end
+
+		--Call listener
+		if type(t.onCancel) == "function" then t.onCancel(user == true) end
+	end
+
+	function settingsmanager.reset(user)
+		--Update with default values
+		if type(data) == "table" then for i = 1, #data.keys do wt.ResetSettingsData(data.category, data.keys[i]) end end
+
+		--Call listener
+		if type(t.onDefault) == "function" then t.onDefault(user == true, false) end
+	end
+
+	--[ Category Resources ]
+
+	---@diagnostic disable-next-line: inject-field --REMOVE when replaced
+	settingsmanager.categorySyncer = { onDefault = t.onDefault, dataManagement = data, titleIcon = t.titleIcon } --REPLACE temporary solution
+
+	return settingsmanager
+end
+
+function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	---@type settingsCategory
+	local category = { pages = {} }
+
+	--[ Getters & Setters ]
+
+	function category.getType() return "SettingsCategory" end
+	function category.isType(type) return type == "SettingsCategory" end
+
+	--[ Utilities ]
+
+	--| Batched settings data management
+
+	function category.load(handleChanges, user)
+		for i = 1, #category.pages do category.pages[i].load(handleChanges, user) end
+
+		--Call listener
+		if t.onLoad then t.onLoad(user == true) end
+	end
+
+	function category.defaults(user, callListeners)
+		for i = 1, #category.pages do
+			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
+			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
+			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
+			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
+
+			--Update with default values
+			if type(dataManagement) == "table" and type(dataManagement.keys) == "table" then for j = 1, #dataManagement.keys do
+				wt.ResetSettingsData(dataManagement.category, dataManagement.keys[j])
+			end end
+
+			--Call listeners
+			if type(onDefault) == "function" then onDefault(user == true, true) end
+		end
+
+		--Call listener
+		if type(t.onDefaults) == "function" then t.onDefaults(user == true) end
+	end
+
+	--[ Category Pages ]
+
+	--| Parent
+
+	local parentTitle = parent.title and parent.title:GetText() or ""
+
+	table.insert(category.pages, parent)
+
+	wt.RegisterSettingsPage(parent)
+
+	--Override defaults warning and add all defaults option to dialog
+	wt.UpdatePopupDialog(parent.getResetPopupKey(), {
+		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
+		accept = ALL_SETTINGS,
+		alt = CURRENT_SETTINGS,
+		onAccept = function() category.defaults(true) end,
+		onAlt = function() parent.reset(true) end,
+	})
+
+	--| Subcategories
+
+	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
+		if type(pages[i].isType) ~= "function" and not pages[i].isType("SettingsPage") then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
+
+		table.insert(category.pages, pages[i])
+
+		---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
+		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
+
+		--Override defaults warning and add all defaults option to dialog
+		wt.UpdatePopupDialog(pages[i].getResetPopupKey(), {
+			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
+				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
+			),
+			accept = ALL_SETTINGS,
+			alt = CURRENT_SETTINGS,
+			onAccept = function() category.defaults(true) end,
+			onAlt = function() pages[i].reset(true) end,
+		})
+	end end end
+
+	return category
+end
+
+
 --[[ PROFILE DATA ]]
 
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
@@ -1381,18 +1649,12 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	t = type(t) == "table" and t or {}
 	t.category = type(t.category) == "string" and t.category or ""
 
-	--[ Widget ]
-
-	---@type profilemanager
-	local profilemanager = {
-		data = {},
-		firstLoad = type(accountData.profiles) ~= "table",
-		newCharacter = type(characterData.activeProfile) ~= "number",
-		invoke = {},
-		setListener = {},
-	}
-
 	--[ Properties ]
+
+	---@type typename_profilemanager
+	local typename = "Profilemanager"
+
+	--| Events
 
 	---@type table<string, function[]>
 	local listeners = {}
@@ -1414,10 +1676,21 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	--Profile reset confirmation
 	local resetProfilePopup = wt.RegisterPopupDialog(category .. "RESET_PROFILE")
 
+	--[ Widget ]
+
+	---@type profilemanager
+	local profilemanager = {
+		data = {},
+		firstLoad = type(accountData.profiles) ~= "table",
+		newCharacter = type(characterData.activeProfile) ~= "number",
+		invoke = {},
+		setListener = {},
+	}
+
 	--[ Getters & Setters ]
 
-	function profilemanager.getType() return "Profilemanager" end
-	function profilemanager.isType(type) return type == "Profilemanager" end
+	function profilemanager.getType() return typename end
+	function profilemanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -1692,223 +1965,4 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 end
 
 
---[[ SETTINGS DATA ]]
-
-function wt.CreateSettingsmanager(addon, t) --FIX lite
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
-
-	t = type(t) == "table" and t or {}
-	t.name = t.name and t.name:gsub("%s+", "")
-	if type(t.dataManagement) == "table" then
-		t.dataManagement.category = t.dataManagement.category or addon
-		t.dataManagement.keys = type((t.dataManagement.keys or {})[1]) == "string" and t.dataManagement.keys or { t.name or addon }
-	end
-
-	--[ Properties ]
-
-	---@type table<string, function[]>
-	local listeners = {}
-
-	---@type string, action, action
-	local resetWarning, resetAction, revertAction
-
-	--[ Widget ]
-
-	local settingsmanager = {
-		invoke = {},
-		setListener = {},
-	}
-
-	--[ Getters & Setters ]
-
-	function settingsmanager.getType() return "Settingsmanager" end
-	function settingsmanager.isType(type) return type == "Settingsmanager" end
-
-	function settingsmanager.getResetPopupKey() return resetWarning end
-
-	--| Events
-
-	function settingsmanager.invoke.loaded(user) callListeners(settingsmanager, listeners, "loaded", user) end
-	function settingsmanager.invoke.activated(success, user) callListeners(settingsmanager, listeners, "activated", activeIndex, accountData.profiles[activeIndex].title, success, user) end
-	function settingsmanager.invoke.created(index, title, user) callListeners(settingsmanager, listeners, "created", index, title, user) end
-	function settingsmanager.invoke.renamed(success, user, index, title) callListeners(settingsmanager, listeners, "renamed", success, index, title, user) end
-	function settingsmanager.invoke.deleted(success, user, index, title) callListeners(settingsmanager, listeners, "deleted", success, index, title, user) end
-	function settingsmanager.invoke.reset(success, user, index, title) callListeners(settingsmanager, listeners, "reset", success, index, title, user) end
-	function settingsmanager.invoke._(event, ...) callListeners(settingsmanager, listeners, event, ...) end
-
-	function settingsmanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	function settingsmanager.setListener.activated(listener, callIndex) addListener(listeners, "activated", listener, callIndex) end
-	function settingsmanager.setListener.created(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
-	function settingsmanager.setListener.renamed(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
-	function settingsmanager.setListener.deleted(listener, callIndex) addListener(listeners, "deleted", listener, callIndex) end
-	function settingsmanager.setListener.reset(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end
-	function settingsmanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
-
-	--| Utilities
-
-	--| State
-
-	function settingsmanager.setStatic(state)
-		state = state == false
-
-		resetAction.setEnabled(state)
-		revertAction.setEnabled(state)
-	end
-
-	--| Utilities
-
-	function settingsmanager.open()
-		if WidgetToolsDB.lite or not settingsmanager.category then
-			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
-				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
-					"#COMMAND", cr("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
-				), rs.colors.grey[1])
-			), rs.colors.gold[2]))
-
-			return
-		end
-
-		Settings.OpenToCategory(settingsmanager.category:GetID())
-	end
-
-	--| Batched settings data management
-
-	function settingsmanager.load(handleChanges, user)
-		--Update settings widgets
-		if t.autoLoad ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
-			wt.LoadSettingsData(t.dataManagement.category, t.dataManagement.keys[i], handleChanges)
-			wt.SnapshotSettingsData(t.dataManagement.category, t.dataManagement.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onLoad) == "function" then t.onLoad(user == true) end
-	end
-
-	function settingsmanager.save(user)
-		--Retrieve data from settings widgets and commit to storage
-		if t.autoSave ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
-			wt.SaveSettingsData(t.dataManagement.category, t.dataManagement.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onSave) == "function" then t.onSave(user == true) end
-	end
-
-	function settingsmanager.apply(user)
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ApplySettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onApply) == "function" then t.onApply(user == true) end
-	end
-
-	function settingsmanager.revert(user)
-		--Update settings widgets
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.RevertSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onCancel) == "function" then t.onCancel(user == true) end
-	end
-
-	function settingsmanager.reset(user)
-		--Update with default values
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ResetSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onDefault) == "function" then t.onDefault(user == true, false) end
-	end
-
-	--[ Category Resources ]
-
-	---@diagnostic disable-next-line: inject-field --REMOVE when replaced
-	settingsmanager.categorySyncer = { onDefault = t.onDefault, dataManagement = t.dataManagement, titleIcon = t.titleIcon } --REPLACE temporary solution
-
-	return settingsmanager
-end
-
-function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
-
-	t = type(t) == "table" and t or {}
-
-	---@type settingsCategory
-	local category = { pages = {} }
-
-	--[ Getters & Setters ]
-
-	function category.getType() return "SettingsCategory" end
-	function category.isType(type) return type == "SettingsCategory" end
-
-	--[ Utilities ]
-
-	--| Batched settings data management
-
-	function category.load(handleChanges, user)
-		for i = 1, #category.pages do category.pages[i].load(handleChanges, user) end
-
-		--Call listener
-		if t.onLoad then t.onLoad(user == true) end
-	end
-
-	function category.defaults(user, callListeners)
-		for i = 1, #category.pages do
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
-			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
-			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
-
-			--Update with default values
-			if type(dataManagement) == "table" and type(dataManagement.keys) == "table" then for j = 1, #dataManagement.keys do
-				wt.ResetSettingsData(dataManagement.category, dataManagement.keys[j])
-			end end
-
-			--Call listeners
-			if type(onDefault) == "function" then onDefault(user == true, true) end
-		end
-
-		--Call listener
-		if type(t.onDefaults) == "function" then t.onDefaults(user == true) end
-	end
-
-	--[ Category Pages ]
-
-	--| Parent
-
-	local parentTitle = parent.title and parent.title:GetText() or ""
-
-	table.insert(category.pages, parent)
-
-	wt.RegisterSettingsPage(parent)
-
-	--Override defaults warning and add all defaults option to dialog
-	wt.UpdatePopupDialog(parent.getResetPopupKey(), {
-		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
-		accept = ALL_SETTINGS,
-		alt = CURRENT_SETTINGS,
-		onAccept = function() category.defaults(true) end,
-		onAlt = function() parent.reset(true) end,
-	})
-
-	--| Subcategories
-
-	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
-		if type(pages[i].isType) ~= "function" and not pages[i].isType("SettingsPage") then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
-
-		table.insert(category.pages, pages[i])
-
-		---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
-		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
-
-		--Override defaults warning and add all defaults option to dialog
-		wt.UpdatePopupDialog(pages[i].getResetPopupKey(), {
-			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
-				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
-			),
-			accept = ALL_SETTINGS,
-			alt = CURRENT_SETTINGS,
-			onAccept = function() category.defaults(true) end,
-			onAlt = function() pages[i].reset(true) end,
-		})
-	end end end
-
-	return category
-end
+--[[ ADDON INFO ]]
