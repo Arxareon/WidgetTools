@@ -4437,8 +4437,10 @@ end
 
 --[[ SETTINGS DATA ]]
 
-function wt.CreateSettingsPage(addon, t) --FIX lite
+function wt.CreateSettingsPage(addon, t, settingsmanager) --FIX lite
 	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
+
+	t = type(t) == "table" and t or {}
 
 	--[ Parameters ]
 
@@ -4448,19 +4450,22 @@ function wt.CreateSettingsPage(addon, t) --FIX lite
 	---@type typename_settingsPage
 	local typename = "SettingsPage"
 
-	t = type(t) == "table" and t or {}
 	t.name = t.name and t.name:gsub("%s+", "")
+	local title = type(t.title) == "string" and t.title or C_AddOns.GetAddOnMetadata(addon, "title")
+
+	local width, height = 0, 0
+
 	if type(t.dataManagement) == "table" then
 		t.dataManagement.category = t.dataManagement.category or addon
 		t.dataManagement.keys = type((t.dataManagement.keys or {})[1]) == "string" and t.dataManagement.keys or { t.name or addon }
 	end
-	local width, height = 0, 0
 
 	---@type string, actionButton, actionButton, FontString
 	local resetWarning, resetButton, revertButton, saveNotice
 
+	--[ Widget ]
+
 	---@type settingsPage
-	---@diagnostic disable-next-line: missing-fields --NOTE: Added later
 	local page = {}
 
 	--[ Getters & Setters ]
@@ -4570,8 +4575,6 @@ function wt.CreateSettingsPage(addon, t) --FIX lite
 		})
 
 		--| Title & description
-
-		local title = type(t.title) == "string" and t.title or C_AddOns.GetAddOnMetadata(addon, "title")
 
 		page.title = wt.CreateTitle(page.canvas, {
 			name = "Title",

@@ -3871,14 +3871,14 @@ function wt.CreateColormanager(t)
 		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called
 		---@field loaded? colormanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colormanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field colored? colormanagerEventListener_colored[] Ordered list of functions to call when a "colored" event is invoked after **colormanager.setColor(...)** was called
+		---@field colored? colormanagerEventListener_applied[] Ordered list of functions to call when a "colored" event is invoked after **colormanager.setColor(...)** was called
 		---@field [string]? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class colormanagerEventListener_enabled : eventHandlerIndex
 			---@field handler ColormanagerEventHandler_enabled Handler function to register for call
 
 				---@alias ColormanagerEventHandler_enabled
-				---| fun(self: ColormanagerType, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` ColorPickerType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+				---| fun(self: ColormanagerType, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 					---@alias ColormanagerType
 					---| colormanager
@@ -3888,25 +3888,25 @@ function wt.CreateColormanager(t)
 			---@field handler ColormanagerEventHandler_loaded Handler function to register for call
 
 				---@alias ColormanagerEventHandler_loaded
-				---| fun(self: ColormanagerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ColorPickerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---| fun(self: ColormanagerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class colormanagerEventListener_saved : eventHandlerIndex
 			---@field handler ColormanagerEventHandler_saved Handler function to register for call
 
 				---@alias ColormanagerEventHandler_saved
-				---| fun(self: ColormanagerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ColorPickerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---| fun(self: ColormanagerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
-			---@class colormanagerEventListener_colored : eventHandlerIndex
+			---@class colormanagerEventListener_applied : eventHandlerIndex
 			---@field handler ColormanagerEventHandler_colored Handler function to register for call
 
 				---@alias ColormanagerEventHandler_colored
-				---| fun(self: ColormanagerType, color: color, user: boolean) Called when an "colored" event is invoked after **colormanager.setColor(...)** was called<hr><p>@*param* `self` ColorPickerType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: ColormanagerType, color: color, user: boolean) Called when an "colored" event is invoked after **colormanager.setColor(...)** was called<hr><p>@*param* `self` ColormanagerType ― Reference to the toggle widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colormanagerEventListener_any : eventTag, eventHandlerIndex
 			---@field handler ColormanagerEventHandler_any Handler function to register for call
 
 				---@alias ColormanagerEventHandler_any
-				---| fun(self: ColormanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ColorPickerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: ColormanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -4339,19 +4339,92 @@ end
 function wt.CreateSettingsmanager(t)
 
 	--| Parameters
-	---| string
 
-	---@class settingsmanagerCreationData # t
-	---@field autoLoad boolean
-	---@field autoSave boolean
-	---@field dataManagement unknown
-	---@field name string
-	---@field onApply function
-	---@field onCancel function
-	---@field onDefault function
-	---@field onLoad function
-	---@field onSave function
-	---@field titleIcon string
+	---@class settingsmanagerCreationData : settingsPageCreationData_base, describableObject, togglableObject, settingsCategoryData, settingsPageEvents, initializableOptionsContainer, liteObject # t
+	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field listeners? settingsmanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+
+		---@class settingsPageCreationData_base
+		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
+		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
+		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
+
+		---@class settingsCategoryData
+		---@field dataManagement? settingsData_collection If set, register this settings page to settings data management for batched data saving & loading and handling data changes of all linked widgets
+
+			---@class settingsData_collection : settingsData_base
+			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
+
+				---@class settingsData_base
+				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
+
+		---@class settingsPageEvents
+		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
+		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
+
+		---@class initializableOptionsContainer : initializableContainer
+		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+
+		---@class settingsmanagerEventListeners
+		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **settingsmanager.setEnabled(...)** was called
+		---@field loaded? colormanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after **settingsmanager.load(...)** was called
+		---@field saved? colormanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after **settingsmanager.save(...)** was called
+		---@field applied? colormanagerEventListener_applied[] Ordered list of functions to call when a "applied" event is invoked after **settingsmanager.apply(...)** was called
+		---@field reverted? settingsmanagerEventListener_reverted[] Ordered list of functions to call when a "reverted" event is invoked after **settingsmanager.revert(...)** was called
+		---@field reset? settingsmanagerEventListener_reset[] Ordered list of functions to call when a "reset" event is invoked after **settingsmanager.reset(...)** was called
+		---@field [string]? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
+
+			---@class settingsmanagerEventListener_enabled : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_enabled Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_enabled
+				---| fun(self: SettingsmanagerType, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+					---@alias SettingsmanagerType
+					---| settingsmanager
+					---| settingsPage
+
+			---@class settingsmanagerEventListener_loaded : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_loaded Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_loaded
+				---| fun(self: SettingsmanagerType, user: boolean) Called when an "loaded" event is invoked after **settingsmanager.load(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_saved : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_saved Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_saved
+				---| fun(self: SettingsmanagerType, user: boolean) Called when an "saved" event is invoked after **settingsmanager.save(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_applied : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_applied Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_applied
+				---| fun(self: SettingsmanagerType, user: boolean) Called when an "applied" event is invoked after **settingsmanager.apply(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_reverted : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_reverted Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_reverted
+				---| fun(self: SettingsmanagerType, user: boolean) Called when an "revert" event is invoked after **settingsmanager.revert(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><<p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_reset : eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_reset Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_reset
+				---| fun(self: SettingsmanagerType, user: boolean) Called when an "reset" event is invoked after **settingsmanager.reset(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_any : eventTag, eventHandlerIndex
+			---@field handler SettingsmanagerEventHandler_any Handler function to register for call
+
+				---@alias SettingsmanagerEventHandler_any
+				---| fun(self: SettingsmanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SettingsmanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>	
 
 	--| Returns
 
@@ -4382,12 +4455,24 @@ function wt.CreateSettingsmanager(t)
 			function invoke.enabled() end
 
 			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
+			---@param user boolean
+			function invoke.loaded(user) end
 
 			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
+			---@param user boolean
+			function invoke.saved(user) end
+
+			---Invoke a "applied" event calling registered listeners
+			---@param user boolean
+			function invoke.applied(user) end
+
+			---Invoke a "reverted" event calling registered listeners
+			---@param user boolean
+			function invoke.reverted(user) end
+
+			---Invoke a "reset" event calling registered listeners
+			---@param user boolean
+			function invoke.reset(user) end
 
 			---Invoke a custom event calling registered listeners
 			---@param event string Custom event tag
@@ -4398,25 +4483,83 @@ function wt.CreateSettingsmanager(t)
 		local setListener = {}
 
 			---Register a listener for a "enabled" event trigger
-			---@param listener ColormanagerEventHandler_enabled Handler function to set
+			---@param listener SettingsmanagerEventHandler_enabled Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(listener, callIndex) end
 
 			---Register a listener for a "loaded" event trigger
-			---@param listener ColormanagerEventHandler_loaded Handler function to set
+			---@param listener SettingsmanagerEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener ColormanagerEventHandler_saved Handler function to set
+			---@param listener SettingsmanagerEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
+			---Register a listener for a "applied" event trigger
+			---@param listener SettingsmanagerEventHandler_applied Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.applied(listener, callIndex) end
+
+			---Register a listener for a "reverted" event trigger
+			---@param listener SettingsmanagerEventHandler_reverted Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.reverted(listener, callIndex) end
+
+			---Register a listener for a "reset" event trigger
+			---@param listener SettingsmanagerEventHandler_reset Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.reset(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener ColormanagerEventHandler_any Handler function to set
+			---@param listener SettingsmanagerEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
+
+		---Force update all linked settings widgets in this category page
+		---***
+		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _.load(handleChanges, user, silent) end
+
+		---Force save all settings data of this category page from all linked widgets
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
+		function _.save(user, silent) end
+
+		---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke an "applied" event and call registered listeners | ***Default:*** `false`
+		function _.apply(user, silent) end
+
+		---Revert any changes made in this category page and reload all linked widget data
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "reverted" event and call registered listeners | ***Default:*** `false`
+		function _.revert(user, silent) end
+
+		---Reset all settings data of this category page to default values
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "reset" event and call registered listeners | ***Default:*** `false`
+		function _.reset(user, silent) end
+
+		--| State
+
+		---Return the current enabled state of the widget
+		---@return boolean enabled True, if the widget is enabled
+		function _.isEnabled() return false end
+
+		---Enable or disable the widget based on the specified value
+		---***
+		---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
+		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
+		function _.setEnabled(state, silent) end
 
 	return _
 end
@@ -4441,31 +4584,6 @@ function wt.CreateSettingsPage(addon, t)
 	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
-
-		---@class settingsPageCreationData_base
-		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
-		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
-		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
-
-		---@class settingsCategoryData
-		---@field dataManagement? settingsData_collection If set, register this settings page to settings data management for batched data saving & loading and handling data changes of all linked widgets
-
-			---@class settingsData_collection : settingsData_base
-			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
-
-				---@class settingsData_base
-				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
-
-		---@class settingsPageEvents
-		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
-
-		---@class initializableOptionsContainer : initializableContainer
-		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 		---@class settingsPageScrollData : scrollSpeedData
 		---@field height? number Set the height of the scrollable child frame to the specified value | ***Default:*** 0 *(no height)*
@@ -4502,9 +4620,10 @@ function wt.CreateSettingsPage(addon, t)
 
 		---Returns the type of this object
 		---***
+		---@return typename_settingsmanager
 		---@return typename_settingsPage
 		---<p></p>
-		function _.getType() return "SettingsPage" end
+		function _.getType() return "Settingsmanager", "SettingsPage" end
 
 			---@alias typename_settingsPage
 			---| "SettingsPage"
@@ -4515,11 +4634,6 @@ function wt.CreateSettingsPage(addon, t)
 		---<p></p>
 		function _.isType(type) return false end
 
-		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
-		---***
-		---@param state boolean? ***Default:*** `true`
-		function _.setStatic(state) end
-
 		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 		---@return string
 		function _.getResetPopupKey() return "" end
@@ -4528,31 +4642,10 @@ function wt.CreateSettingsPage(addon, t)
 		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
 		function _.open() end
 
-		---Force update all linked settings widgets in this category page
+		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
 		---***
-		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.load(handleChanges, user) end
-
-		---Force save all settings data of this category page from all linked widgets
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.save(user) end
-
-		---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.apply(user) end
-
-		---Revert any changes made in this category page and reload all linked widget data
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.revert(user) end
-
-		---Reset all settings data of this category page to default values
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.reset(user) end
+		---@param state boolean? ***Default:*** `true`
+		function _.setStatic(state) end
 end
 
 ---Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them

@@ -1440,9 +1440,13 @@ function wt.CreateSettingsmanager(t)
 
 	--| Data management
 
-	local data = type(t.dataManagement) == "table" and t.dataManagement or {}
-	data.category = type(data.category) == "string" and data.category or type(t.name) == "string" and t.name:gsub("%s+", "") or tostring(data)
-	data.keys = type((data.keys or {})[1]) == "string" and data.keys or { data.category }
+	local data, autoLoad, autoSave
+
+	if type(t.dataManagement) == "table" then
+		data, autoLoad, autoSave = t.dataManagement or {}, t.autoLoad ~= false, t.autoSave ~= false
+		data.category = type(data.category) == "string" and data.category or type(t.name) == "string" and t.name:gsub("%s+", "") or tostring(data)
+		data.keys = type((data.keys or {})[1]) == "string" and data.keys or { data.category }
+	end
 
 	--| State
 
@@ -1461,17 +1465,59 @@ function wt.CreateSettingsmanager(t)
 	--| Events
 
 	function settingsmanager.invoke.enabled() callListeners(settingsmanager, listeners, "enabled", enabled) end
-	function settingsmanager.invoke.loaded(success) callListeners(settingsmanager, listeners, "loaded", success) end
-	function settingsmanager.invoke.saved(success) callListeners(settingsmanager, listeners, "saved", success) end
+	function settingsmanager.invoke.loaded(user) callListeners(settingsmanager, listeners, "loaded", user) end
+	function settingsmanager.invoke.saved(user) callListeners(settingsmanager, listeners, "saved", user) end
+	function settingsmanager.invoke.applied(user) callListeners(settingsmanager, listeners, "applied", user) end
+	function settingsmanager.invoke.reverted(user) callListeners(settingsmanager, listeners, "reverted", user) end
+	function settingsmanager.invoke.reset(user) callListeners(settingsmanager, listeners, "reset", user) end
 	function settingsmanager.invoke._(event, ...) callListeners(settingsmanager, listeners, event, ...) end
 
 	function settingsmanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	function settingsmanager.setListener.activated(listener, callIndex) addListener(listeners, "activated", listener, callIndex) end
-	function settingsmanager.setListener.created(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
-	function settingsmanager.setListener.renamed(listener, callIndex) addListener(listeners, "created", listener, callIndex) end
-	function settingsmanager.setListener.deleted(listener, callIndex) addListener(listeners, "deleted", listener, callIndex) end
+	function settingsmanager.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function settingsmanager.setListener.applied(listener, callIndex) addListener(listeners, "applied", listener, callIndex) end
+	function settingsmanager.setListener.reverted(listener, callIndex) addListener(listeners, "reverted", listener, callIndex) end
 	function settingsmanager.setListener.reset(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end
 	function settingsmanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+
+	--| Batched settings data management
+
+	function settingsmanager.load(handleChanges, user, silent)
+		if autoLoad then for i = 1, #data.keys do
+			wt.LoadSettingsData(data.category, data.keys[i], handleChanges)
+			wt.SnapshotSettingsData(data.category, data.keys[i])
+		end end
+
+		--Call listeners
+		if not silent then settingsmanager.invoke.loaded(user == true) end
+	end
+
+	function settingsmanager.save(user, silent)
+		if autoSave then for i = 1, #data.keys do wt.SaveSettingsData(data.category, data.keys[i]) end end
+
+		--Call listeners
+		if not silent then settingsmanager.invoke.saved(user == true) end
+	end
+
+	function settingsmanager.apply(user, silent)
+		if data then for i = 1, #data.keys do wt.ApplySettingsData(data.category, data.keys[i]) end end
+
+		--Call listeners
+		if not silent then settingsmanager.invoke.applied(user == true) end
+	end
+
+	function settingsmanager.revert(user, silent)
+		if data then for i = 1, #data.keys do wt.RevertSettingsData(data.category, data.keys[i]) end end
+
+		--Call listeners
+		if not silent then settingsmanager.invoke.reverted(user == true) end
+	end
+
+	function settingsmanager.reset(user, silent)
+		if data then for i = 1, #data.keys do wt.ResetSettingsData(data.category, data.keys[i]) end end
+
+		--Call listeners
+		if not silent then settingsmanager.invoke.reset(user == true) end
+	end
 
 	--| State
 
@@ -1482,72 +1528,15 @@ function wt.CreateSettingsmanager(t)
 		if not silent then settingsmanager.invoke.enabled() end
 	end
 
-	--| Utilities
+	--[ Initialization ]
 
-	function settingsmanager.open()
-		if WidgetToolsDB.lite or not settingsmanager.category then
-			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
-				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
-					"#COMMAND", cr("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
-				), rs.colors.grey[1])
-			), rs.colors.gold[2]))
+	--Register event handlers
+	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+		if k == "_" then settingsmanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else settingsmanager.setListener[k](v[i].handler, v[i].callIndex) end
+	end end end end
 
-			return
-		end
-
-		Settings.OpenToCategory(settingsmanager.category:GetID())
-	end
-
-	--| Batched settings data management
-
-	function settingsmanager.load(handleChanges, user)
-		--Update settings widgets
-		if t.autoLoad ~= false and type(data) == "table" then for i = 1, #data.keys do
-			wt.LoadSettingsData(data.category, data.keys[i], handleChanges)
-			wt.SnapshotSettingsData(data.category, data.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onLoad) == "function" then t.onLoad(user == true) end
-	end
-
-	function settingsmanager.save(user)
-		--Retrieve data from settings widgets and commit to storage
-		if t.autoSave ~= false and type(data) == "table" then for i = 1, #data.keys do
-			wt.SaveSettingsData(data.category, data.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onSave) == "function" then t.onSave(user == true) end
-	end
-
-	function settingsmanager.apply(user)
-		if type(data) == "table" then for i = 1, #data.keys do wt.ApplySettingsData(data.category, data.keys[i]) end end
-
-		--Call listener
-		if type(t.onApply) == "function" then t.onApply(user == true) end
-	end
-
-	function settingsmanager.revert(user)
-		--Update settings widgets
-		if type(data) == "table" then for i = 1, #data.keys do wt.RevertSettingsData(data.category, data.keys[i]) end end
-
-		--Call listener
-		if type(t.onCancel) == "function" then t.onCancel(user == true) end
-	end
-
-	function settingsmanager.reset(user)
-		--Update with default values
-		if type(data) == "table" then for i = 1, #data.keys do wt.ResetSettingsData(data.category, data.keys[i]) end end
-
-		--Call listener
-		if type(t.onDefault) == "function" then t.onDefault(user == true, false) end
-	end
-
-	--[ Category Resources ]
-
-	---@diagnostic disable-next-line: inject-field --REMOVE when replaced
-	settingsmanager.categorySyncer = { onDefault = t.onDefault, dataManagement = data, titleIcon = t.titleIcon } --REPLACE temporary solution
+	--Assign dependencies
+	if t.dependencies then wt.AddDependencies(t.dependencies, settingsmanager.setEnabled) end
 
 	return settingsmanager
 end
