@@ -112,10 +112,12 @@ function utilities.Round(number, decimals)
 	---A fractional number value to round | ***Default:*** `0`
 	---@alias Round_param1 # number
 	---| number
+	---| nil
 
 	---Specify the number of decimal places to round the number to | ***Default:*** `0`
 	---@alias Round_param2 # decimals
 	---| integer
+	---| nil
 
 	return 0
 end
@@ -179,14 +181,17 @@ function utilities.TryFont(path, object, size, flags)
 	---@alias TryFont_param2
 	---| Font
 	---| FontString
+	---| nil
 
 	---Font size to set | ***Default:*** `12`
 	---@alias TryFont_param3
 	---| number
+	---| nil
 
 	---Font styling options | ***Default:*** *(no styling):* `""`
 	---@alias TryFont_param4
 	---| TBFFlags
+	---| nil
 
 	return false
 end
@@ -212,14 +217,17 @@ function utilities.Thousands(value, decimals, round, trim)
 	---Specify the number of decimal places to display if the number is a fractional value | ***Default:*** `0`
 	---@alias Thousands_param2 # decimals
 	---| number
+	---| nil
 
 	---Round the number value to the specified number of decimal places | ***Default:*** `true`
 	---@alias Thousands_param3 # round
 	---| boolean
+	---| nil
 
 	---Trim trailing zeros in decimal places | ***Default:*** `true`
 	---@alias Thousands_param4 # trim
 	---| boolean
+	---| nil
 
 	return ""
 end
@@ -270,7 +278,16 @@ end
 
 ---Get an assembled & fully formatted string of a specifically assembled changelog table
 ---***
----@param changelog FormatChangelog_param1 Ordered (descending) list of update note subtables of textlines with formatting directives<ul><li>***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
+---@param changelog FormatChangelog_param1 Ordered (descending) list of update note subtables of textlines with formatting directives
+--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
+--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+--- - ***Examples:***
+---   - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
+---   - **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
+---   - **Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)
+---   - **Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)
+---   - **Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)
+---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 ---@param latest? FormatChangelog_param2 If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
 ---***
 ---@return string c # ***Default:*** ""
@@ -279,17 +296,22 @@ function utilities.FormatChangelog(changelog, latest)
 	--| Parameters
 
 	---Ordered (descending) list of update note subtables of textlines with formatting directives
-	---***Note:*** The first line in version tables is expected to be the title containing the version number and/or the date of release.
-	---***Note:*** Version tables are expected to be listed in descending order by date of release (latest release first).
-	---***Examples:***
-	--- - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
-	--- **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
+	--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
+	--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+	--- - ***Examples:***
+	---   - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
+	---   - **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
+	---   - **Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)
+	---   - **Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)
+	---   - **Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)
+	---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 	---@alias FormatChangelog_param1 # changelog
 	---| string[][]
 
 	---If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
 	---@alias FormatChangelog_param2 # latest
 	---| boolean
+	---| nil
 
 	return ""
 end
@@ -503,6 +525,7 @@ function utilities.Prune(target, validate)
 	---Helper function for validating values, returning true if the value is to be accepted as valid
 	---@alias Prune_param2 # validate
 	---| fun(k: number|string, v: any): boolean
+	---| nil
 end
 
 ---Remove unused or outdated data from a table while comparing it to another table while restoring any removed values
@@ -528,12 +551,13 @@ function utilities.Filter(target, sample, recoveryMap, onRecovery)
 	---Static map or function returning a dynamically creatable map for removed but recoverable data
 	---@alias Filter_param3 # recoveryMap
 	---| table<string, recoveryData>
-	---| fun(tableToCheck: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>
+	---| fun(target: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>
 	---| nil
 
 	---Function called after the data has been has been recovered via the `recoveryMap`
 	---@alias Filter_param4 # onRecovery
-	---| fun(tableToCheck: table)
+	---| nil
+	---| fun(target: table)
 end
 
 ---Verify data in a table and harmonize it with a sample table, removing invalid data & filling defaults
@@ -585,6 +609,7 @@ function utilities.SetListener(parent, event, handler, registration)
 	---If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) of it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
 	---@alias SetListener_param4 # registration
 	---| boolean
+	---| nil
 end
 
 ---Call a registered event handler
@@ -657,6 +682,7 @@ function debugging.Log(passer)
 	---Passer function returning the logged message and a custom log trace to help identify the exact log source included in the entry as a string | ***Default:*** `"nil", "(source not traced)"`
 	---@alias Log_param1 # passer
 	---| fun(): message: any, trace: any
+	---| nil
 end
 
 ---Dump an object and its contents to the in-game chat
@@ -708,6 +734,7 @@ function debugging.Dump(object, name, blockrule, depth, digTables, digFrames, li
 	---A name to print out | ***Default:*** *the dumped object will not be named*
 	---@alias Dump_param2 # name
 	---| string
+	---| nil
 
 	---Manually filter further exploring subtables under specific keys, skipping it if the value returned is true
 	--- - ***Example:*** **Match:** Skip a specific matching key
@@ -740,23 +767,28 @@ function debugging.Dump(object, name, blockrule, depth, digTables, digFrames, li
 	--- 	```
 	---@alias Dump_param3 # blockrule
 	---| fun(key: integer|string): boolean
+	---| nil
 
 	---How many levels of subtables to print out (root level: `0`) | ***Default:*** *full depth*
 	---@alias Dump_param4 # depth
 	---| integer
+	---| nil
 
 	---If `true`, explore and dump the non-subtable values of table objects | ***Default:*** `true`
 	---@alias Dump_param5 # digTables
 	---| boolean
+	---| nil
 
 	---If `true`, explore and dump the insides of objects recognized as frames | ***Default:*** `false`
 	---@alias Dump_param6 # digFrames
 	---| boolean
+	---| nil
 
 	---Print the specified number of output lines in a single chat message to be able to display more message history and allow faster scrolling | ***Default:*** `2`
 	--- - ***Note:*** Set to `0` to print all lines in a single message.
 	---@alias Dump_param7 # linesPerMessage
 	---| integer
+	---| nil
 end
 
 
@@ -803,15 +835,18 @@ function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox)
 
 	---Function to be called after a new toolbox initialization has finished when `addon` loaded, returning a read-only reference to the new toolbox table
 	---@alias Register_param3 # callback
+	---| nil
 	---| fun(toolbox: widgetToolbox|table?)
 
 	---Namespace name of the **LoadOnDemand** toolbox initializer addon to load | ***Default:*** `"WidgetToolbox_" .. version`
 	---@alias Register_param4 # toolboxAddon
 	---| string
+	---| nil
 
 	---Reference to an existing toolbox table to register
 	---@alias Register_param5 # toolbox
 	---| table
+	---| nil
 end
 
 

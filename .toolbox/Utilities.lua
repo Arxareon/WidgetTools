@@ -207,10 +207,7 @@ function wt.CreateColor(color) return CreateColor(wt.UnpackColor(color)) end
 function wt.Texture(path, width, height, offsetX, offsetY, t)
 	if type(path) ~= "string" then return "" end
 
-	if type(width) ~= "number" then width = nil end
-	if type(height) ~= "number" then width = nil end
-	if type(offsetX) ~= "number" then width = nil end
-	if type(offsetY) ~= "number" then width = nil end
+	if type(width) ~= "number" or type(height) ~= "number" or type(offsetX) ~= "number" or type(offsetY) ~= "number" then width = nil end
 
 	if type(t) == "table" then
 		return CreateSimpleTextureMarkup(path, height, width, offsetX, offsetY) --REPLACE with [CreateTextureMarkup](https://warcraft.wiki.gg/wiki/FrameXML_functions#:~:text=(role)-,CreateTextureMarkup,-(file%2C%20fileWidth)
@@ -249,8 +246,8 @@ function wt.Hyperlink(linkType, content, text)
 	if not linkType or not content or not text then return "" else return "\124H" .. linkType .. ":" .. (content or "") .. "\124h" .. text .. "\124h" end
 end
 
-function wt.CustomHyperlink(addon, type, content, text)
-	if not addon then return "" else return wt.Hyperlink("addon", addon .. ":" .. (type or "-") .. ":" .. (content or ""), text) end
+function wt.CustomHyperlink(addon, linkType, content, text)
+	if not addon then return "" else return wt.Hyperlink("addon", addon .. ":" .. (linkType or "-") .. ":" .. (content or ""), text) end
 end
 
 --Hyperlink handler script registry
@@ -1746,7 +1743,9 @@ end
 --[[ ADDON COMPARTMENT ]]
 
 function wt.SetUpAddonCompartment(addon, calls, tooltip)
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return end
+	local addon_type = type(addon)
+
+	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) then return end
 
 	calls = type(calls) == "table" and calls or {}
 
@@ -1790,7 +1789,9 @@ end
 --[[ CHAT CONTROL ]]
 
 function wt.RegisterChatCommands(addon, keywords, t)
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return end
+	local addon_type = type(addon)
+
+	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return end
 
 	t = type(t) == "table" and t or {}
 
@@ -1812,7 +1813,7 @@ function wt.RegisterChatCommands(addon, keywords, t)
 	---@type chatCommandManager
 	local manager = {}
 
-	addon = addon:upper()
+	addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
 
 	--Register the keywords
 	for i = 1, #keywords do

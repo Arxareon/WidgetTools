@@ -1673,14 +1673,14 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	---@type typename_specialRadiogroup
 	local typename = "SpecialRadiogroup"
 
-	--[ Widget ]
-
-	selector = wt.IsWidget(selector) == typenameBase and selector or wt.CreateSpecialSelector(itemset, t)
-
-	--[ Properties ]
-
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
+
+	--[ Widget ]
+
+	if wt.IsWidget(selector) == typenameBase then itemset = selector.getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
+
+	--[ Frame ]
 
 	---@type specialRadiogroupCreationData|radiogroupCreationData
 	t = us.Pull(t or {}, {
@@ -1689,8 +1689,6 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		showDefault = false,
 		utilityMenu = false,
 	})
-
-	--[ Frame ]
 
 	---@type specialRadiogroup
 	local radiogroup = wt.CreateRadiogroup(t, selector)
@@ -4437,9 +4435,7 @@ end
 
 --[[ SETTINGS DATA ]]
 
-function wt.CreateSettingsPage(addon, t, settingsmanager) --FIX lite
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
-
+function wt.CreateSettingsPage(t, settingsmanager)
 	t = type(t) == "table" and t or {}
 
 	--[ Parameters ]
@@ -4451,7 +4447,7 @@ function wt.CreateSettingsPage(addon, t, settingsmanager) --FIX lite
 	local typename = "SettingsPage"
 
 	t.name = t.name and t.name:gsub("%s+", "")
-	local title = type(t.title) == "string" and t.title or C_AddOns.GetAddOnMetadata(addon, "title")
+	local title = type(t.title) == "string" and t.title or addonmanager.getTitle()
 
 	local width, height = 0, 0
 
@@ -4465,8 +4461,10 @@ function wt.CreateSettingsPage(addon, t, settingsmanager) --FIX lite
 
 	--[ Widget ]
 
-	---@type settingsPage
-	local page = {}
+	settingsmanager = wt.IsWidget(settingsmanager) == typenameBase and settingsmanager or wt.CreateSettingsmanager(t)
+
+	---@type settingsPage|settingsmanager
+	local page = settingsmanager
 
 	--[ Getters & Setters ]
 
@@ -4498,52 +4496,6 @@ function wt.CreateSettingsPage(addon, t, settingsmanager) --FIX lite
 		end
 
 		Settings.OpenToCategory(page.category:GetID())
-	end
-
-	--| Batched settings data management
-
-	function page.load(handleChanges, user)
-		--Update settings widgets
-		if t.autoLoad ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
-			wt.LoadSettingsData(t.dataManagement.category, t.dataManagement.keys[i], handleChanges)
-			wt.SnapshotSettingsData(t.dataManagement.category, t.dataManagement.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onLoad) == "function" then t.onLoad(user == true) end
-	end
-
-	function page.save(user)
-		--Retrieve data from settings widgets and commit to storage
-		if t.autoSave ~= false and type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do
-			wt.SaveSettingsData(t.dataManagement.category, t.dataManagement.keys[i])
-		end end
-
-		--Call listener
-		if type(t.onSave) == "function" then t.onSave(user == true) end
-	end
-
-	function page.apply(user)
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ApplySettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onApply) == "function" then t.onApply(user == true) end
-	end
-
-	function page.revert(user)
-		--Update settings widgets
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.RevertSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onCancel) == "function" then t.onCancel(user == true) end
-	end
-
-	function page.reset(user)
-		--Update with default values
-		if type(t.dataManagement) == "table" then for i = 1, #t.dataManagement.keys do wt.ResetSettingsData(t.dataManagement.category, t.dataManagement.keys[i]) end end
-
-		--Call listener
-		if type(t.onDefault) == "function" then t.onDefault(user == true, false) end
 	end
 
 	--[ Settings Page ]
@@ -4788,40 +4740,36 @@ end
 
 --[[ PROFILE DATA ]]
 
-function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, settingsData, t, profilemanager) --FIX lite
+function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
+	t = type(t) == "table" and t or {}
 
 	--[ Parameters ]
 
 	---@type typename_profilemanager
 	local typenameBase = "Profilemanager"
 
+	---@type typename_profilesPage
+	local typename = "ProfilesPage"
+
 	--[ Widget ]
 
 	profilemanager = wt.IsWidget(profilemanager) == typenameBase and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
-	if not profilemanager or type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) or type(settingsData) ~= "table" then return profilemanager end
+	if not profilemanager or type(settingsData) ~= "table" then return profilemanager end
 
 	---@type profilesPage|profilemanager
-	local profiles = profilemanager
-
-	--[ Properties ]
-
-	t = type(t) == "table" and t or {}
-
-	---@type typename_profilesPage
-	local typename = "ProfilesPage"
-
-	local addonTitle = C_AddOns.GetAddOnMetadata(addon, "Title")
-	local onDefault = type(t.onDefault) == "function" and t.onDefault or nil
+	local profilesPage = profilemanager
 
 	--[ Getters & Setters ]
 
-	function profiles.getType() return typenameBase, typename end
-	function profiles.isType(type) return type == typenameBase or type == typename end
+	function profilesPage.getType() return typenameBase, typename end
+	function profilesPage.isType(type) return type == typenameBase or type == typename end
 
 	--[ Settings Page ]
 
-	profiles.settings = wt.CreateSettingsPage(addon, {
+	local onDefault = type(t.onDefault) == "function" and t.onDefault or nil
+
+	profilesPage.settings = wt.CreateSettingsPage({
 		register = t.register,
 		name = t.name or "DataManagement",
 		title = t.title or wt.strings.dataManagement.title,
@@ -4834,9 +4782,10 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 		onLoad = t.onLoad,
 		onCancel = t.onCancel,
 		onDefault = onDefault and function(user, category)
-			if not category then profiles.reset() end
+			if not category then profilesPage.reset() end
+
 			onDefault(user, category)
-		end or function(_, category) if not category then profiles.reset() end end,
+		end or function(_, category) if not category then profilesPage.reset() end end,
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys) if not WidgetToolsDB.lite or t.lite == false then
 
@@ -4858,10 +4807,10 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						width = 180,
 						items = accountData.profiles,
 						value = characterData.activeProfile,
-						listeners = { selected = { { handler = function(_, index, user) profiles.activate(index, user) end, }, }, },
+						listeners = { selected = { { handler = function(_, index, user) profilesPage.activate(index, user) end, }, }, },
 					})
 
-					profiles.widgets = {
+					profilesPage.widgets = {
 						activate = activate,
 						create = wt.CreateButton({
 							parent = panel,
@@ -4873,7 +4822,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								offset = { x = -312, y = -21 }
 							},
 							size = { w = 112, h = 26 },
-							action = function() profiles.create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
+							action = function() profilesPage.create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
 						}),
 						duplicate = wt.CreateButton({
 							parent = panel,
@@ -4885,7 +4834,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								offset = { x = -192, y = -21 }
 							},
 							size = { w = 112, h = 26 },
-							action = function() profiles.create(nil, nil, characterData.activeProfile, nil, nil, true) end,
+							action = function() profilesPage.create(nil, nil, characterData.activeProfile, nil, nil, true) end,
 						}),
 						rename = wt.CreateButton({
 							parent = panel,
@@ -4908,7 +4857,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 										relativeTo = panel,
 									},
 									text = title,
-									accept = function(text) profiles.rename(nil, text, nil, true) end,
+									accept = function(text) profilesPage.rename(nil, text, nil, true) end,
 								})
 							end,
 						}),
@@ -4922,7 +4871,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								offset = { x = -12, y = -21 }
 							},
 							size = { w = 72, h = 26 },
-							action = function() profiles.delete(nil, nil, true) end,
+							action = function() profilesPage.delete(nil, nil, true) end,
 							dependencies = { { frame = activate, evaluate = function() return #accountData.profiles > 1 end }, }
 						}),
 					}
@@ -4930,12 +4879,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 					--| UX
 
 					--Update the activation widget UI based on profile data changes
-					profiles.setListener.activated(function(_, index) profiles.widgets.activate.setSelected(index, false, true) end)
-					profiles.setListener.created(function() profiles.widgets.activate.updateItems(accountData.profiles) end)
-					profiles.setListener.renamed(function() profiles.widgets.activate.updateItems(accountData.profiles) end)
-					profiles.setListener.deleted(function() profiles.widgets.activate.updateItems(accountData.profiles) end)
-					profiles.setListener.reset(function() profiles.widgets.activate.updateItems(accountData.profiles) end)
-					profiles.setListener.loaded(function() profiles.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.setListener.activated(function(_, index) profilesPage.widgets.activate.setSelected(index, false, true) end)
+					profilesPage.setListener.created(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.setListener.renamed(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.setListener.deleted(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.setListener.reset(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.setListener.loaded(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
 				end,
 			})
 
@@ -4954,11 +4903,11 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 					--[ Active Profile ]
 
 					local function refresh()
-						profiles.backup.box.setText(us.TableToString(profiles.data, settingsData.compactBackup))
+						profilesPage.backup.box.setText(us.TableToString(profilesPage.data, settingsData.compactBackup))
 
 						--Set focus after text change to set the scroll to the top and refresh the position character counter
-						profiles.backup.box.scrollframe.EditBox:SetFocus()
-						profiles.backup.box.scrollframe.EditBox:ClearFocus()
+						profilesPage.backup.box.scrollframe.EditBox:SetFocus()
+						profilesPage.backup.box.scrollframe.EditBox:ClearFocus()
 					end
 
 					local box = wt.CreateMultilineEditbox({
@@ -4990,12 +4939,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						text = wt.strings.backup.warning,
 						accept = wt.strings.backup.import,
 						onAccept = function()
-							local success, load = pcall(loadstring("return " .. wt.Clear(profiles.backup.box.getText())))
+							local success, load = pcall(loadstring("return " .. wt.Clear(profilesPage.backup.box.getText())))
 							success = success and type(load) == "table"
 
 							if success then
-								profiles.validate(load, profiles.data)
-								us.CopyValues(profiles.data, load)
+								profilesPage.validate(load, profilesPage.data)
+								us.CopyValues(profilesPage.data, load)
 							end
 
 							t.onImport(success, load)
@@ -5020,7 +4969,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						action = function() StaticPopup_Show(importPopup) end,
 					})
 
-					profiles.backup = {
+					profilesPage.backup = {
 						refresh = refresh,
 						box = box,
 						compact = wt.CreateCheckbox({
@@ -5036,8 +4985,8 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								key = keys[1],
 								onChange = { RefreshBackupBox = refresh },
 							},
-							listeners = { loaded = { { handler = function() profiles.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
-							events = { OnClick = function(_, state) profiles.backupAll.compact.widget:SetChecked(state) end },
+							listeners = { loaded = { { handler = function() profilesPage.backupAll.compact.widget:SetChecked(settingsData.compactBackup) end, }, }, },
+							events = { OnClick = function(_, state) profilesPage.backupAll.compact.widget:SetChecked(state) end },
 							showDefault = false,
 							utilityMenu = false,
 						}),
@@ -5077,14 +5026,14 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						},
 						initialize = function(windowPanel)
 							local function refreshAll()
-								profiles.backupAll.box.setText(us.TableToString({
+								profilesPage.backupAll.box.setText(us.TableToString({
 									activeProfile = characterData.activeProfile,
 									profiles = accountData.profiles
 								}, settingsData.compactBackup))
 
 								--Set focus after text change to set the scroll to the top and refresh the position character counter
-								profiles.backupAll.box.scrollframe.EditBox:SetFocus()
-								profiles.backupAll.box.scrollframe.EditBox:ClearFocus()
+								profilesPage.backupAll.box.scrollframe.EditBox:SetFocus()
+								profilesPage.backupAll.box.scrollframe.EditBox:ClearFocus()
 							end
 
 							local boxAll = wt.CreateMultilineEditbox({
@@ -5117,10 +5066,10 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								text = wt.strings.backup.warning,
 								accept = wt.strings.backup.import,
 								onAccept = function()
-									local success, data = pcall(loadstring("return " .. wt.Clear(profiles.backupAll.box.getText())))
+									local success, data = pcall(loadstring("return " .. wt.Clear(profilesPage.backupAll.box.getText())))
 									data = type(data) == "table" and data or {}
 
-									if success then profiles.load(data.profiles, data.activeProfile, true) end
+									if success then profilesPage.load(data.profiles, data.activeProfile, true) end
 
 									t.onImportAllProfiles(success and type(data) == "table", data)
 								end,
@@ -5144,7 +5093,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 								action = function() StaticPopup_Show(importPopupAll) end,
 							})
 
-							profiles.backupAll = {
+							profilesPage.backupAll = {
 								refresh = refreshAll,
 								box = boxAll,
 								compact = wt.CreateCheckbox({
@@ -5154,7 +5103,7 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 									tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
 									arrange = {},
 									events = { OnClick = function()
-										profiles.backup.compact.toggleState(true)
+										profilesPage.backup.compact.toggleState(true)
 										refreshAll()
 									end },
 									showDefault = false,
@@ -5203,12 +5152,12 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						tooltip = { lines = { { text = wt.strings.backup.allProfiles.open.tooltip, }, } },
 						position = {
 							anchor = "TOPRIGHT",
-							relativeTo = profiles.backup.box.frame,
+							relativeTo = profilesPage.backup.box.frame,
 							relativePoint = "TOPRIGHT",
 							offset = { x = -1, y = 2 }
 						},
 						size = { w = 100, h = 17 },
-						frameLevel = profiles.backup.box.frame:GetFrameLevel() + 1, --Make sure it's on top to be clickable
+						frameLevel = profilesPage.backup.box.frame:GetFrameLevel() + 1, --Make sure it's on top to be clickable
 						font = {
 							normal = "GameFontNormalSmall",
 							highlight = "GameFontHighlightSmall",
@@ -5216,9 +5165,9 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 						action = function()
 							allProfilesBackupFrame:Show()
 
-							profiles.backupAll.compact.setState(settingsData.compactBackup, nil, true)
+							profilesPage.backupAll.compact.setState(settingsData.compactBackup, nil, true)
 
-							profiles.backupAll.refresh()
+							profilesPage.backupAll.refresh()
 						end,
 					})
 				end,
@@ -5226,43 +5175,46 @@ function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, s
 		end end,
 	})
 
-	return profiles
+	return profilesPage
 end
 
 
 --[[ ADDON INFO ]]
 
-function wt.CreateAboutPage(addon, t) --FIX lite
-	if type(addon) ~= "string" or not C_AddOns.IsAddOnLoaded(addon) then return nil end
-
+function wt.CreateAddonPage(addon, t, addonmanager)
 	t = type(t) == "table" and t or {}
 
-	local data = {
-		title = C_AddOns.GetAddOnMetadata(addon, "Title"),
-		version = C_AddOns.GetAddOnMetadata(addon, "Version"),
-		day = C_AddOns.GetAddOnMetadata(addon, "X-Day"),
-		month = C_AddOns.GetAddOnMetadata(addon, "X-Month"),
-		year = C_AddOns.GetAddOnMetadata(addon, "X-Year"),
-		category = C_AddOns.GetAddOnMetadata(addon, "Category"),
-		notes = C_AddOns.GetAddOnMetadata(addon, "Notes"),
-		author = C_AddOns.GetAddOnMetadata(addon, "Author"),
-		license = C_AddOns.GetAddOnMetadata(addon, "X-License"),
-		curse = C_AddOns.GetAddOnMetadata(addon, "X-CurseForge"),
-		wago = C_AddOns.GetAddOnMetadata(addon, "X-Wago"),
-		repo = C_AddOns.GetAddOnMetadata(addon, "X-Repository"),
-		issues = C_AddOns.GetAddOnMetadata(addon, "X-Issues"),
-		sponsors = C_AddOns.GetAddOnMetadata(addon, "X-Sponsors"),
-		topSponsors = C_AddOns.GetAddOnMetadata(addon, "X-TopSponsors"),
-		logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
-	}
+	--[ Parameters ]
 
-	--[ Settings Page ] --TODO create utility logical core, add addon-wide preset management capability
+	---@type typename_addonmanager
+	local typenameBase = "Addonmanager"
 
-	return wt.CreateSettingsPage(addon, not WidgetToolsDB.lite and next(data) and {
+	---@type typename_addonPage
+	local typename = "AddonPage"
+
+	--[ Widget ]
+
+	addonmanager = wt.IsWidget(addonmanager) == typenameBase and addonmanager or wt.CreateAddonmanager(addon, t)
+
+	if not addonmanager then return nil end
+
+	---@type addonPage|addonmanager
+	local addonPage = addonmanager
+
+	--[ Getters & Setters ]
+
+	function addonPage.getType() return typenameBase, typename end
+	function addonPage.isType(type) return type == typenameBase or type == typename end
+
+	--[ Settings Page ]
+
+	local title = addonmanager.getTitle()
+
+	addonPage.settings = wt.CreateSettingsPage({
 		register = t.register,
 		name = t.name or "About",
-		title = t.title or data.title,
-		description = t.description or data.notes,
+		title = t.title or title,
+		description = t.description or addonmanager.getNotes(),
 		static = t.static ~= false,
 		arrangement = {},
 		initialize = function(canvas)
@@ -5273,7 +5225,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 				parent = canvas,
 				name = "About",
 				title = wt.strings.about.title,
-				description = wt.strings.about.description:gsub("#ADDON", data.title),
+				description = wt.strings.about.description:gsub("#ADDON", title),
 				arrange = {},
 				size = { h = 240 },
 				arrangement = {
@@ -5286,7 +5238,17 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 
 					local position = { offset = { x = 16, y = -14 } }
 
-					if data.version then
+					local version = addonmanager.getVersion()
+					local date = addonmanager.getDate()
+					local category = addonmanager.getCategory()
+					local author = addonmanager.getAuthor()
+					local license = addonmanager.getLicense()
+					local curse = addonmanager.getCurseForgeLink()
+					local wago = addonmanager.getWagoLink()
+					local repo = addonmanager.getRepositoryLink()
+					local issues = addonmanager.getIssuesLink()
+
+					if version then
 						local versionLabel = wt.CreateText({
 							parent = panel,
 							name = "VersionTitle",
@@ -5307,13 +5269,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
-								"#DAY", data.day
-							):gsub(
-								"#MONTH", data.month
-							):gsub(
-								"#YEAR", data.year
-							), NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
+							text = version .. date and (crc(" ( " .. wt.strings.about.date .. ": " .. cr(date, NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 							wrap = false,
@@ -5325,7 +5281,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -6
 					end
 
-					if data.category then
+					if category then
 						local categoryLabel = wt.CreateText({
 							parent = panel,
 							name = "CategoryTitle",
@@ -5346,7 +5302,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.category,
+							text = category,
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 						})
@@ -5357,7 +5313,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -6
 					end
 
-					if data.author then
+					if author then
 						local authorLabel = wt.CreateText({
 							parent = panel,
 							name = "AuthorTitle",
@@ -5377,7 +5333,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.author,
+							text = author,
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 							wrap = false,
@@ -5389,7 +5345,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -6
 					end
 
-					if data.license then
+					if license then
 						local licenseLabel = wt.CreateText({
 							parent = panel,
 							name = "LicenseTitle",
@@ -5410,7 +5366,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.license,
+							text = license,
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 							wrap = false,
@@ -5425,14 +5381,14 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 
 					if position.relativeTo then position.offset.y = -14 end
 
-					if data.curse then
+					if curse then
 						local curseLink = wt.CreateCopybox({
 							parent = panel,
 							name = "CurseForge",
 							title = wt.strings.about.curseForge,
 							position = position,
 							size = { w = 190, },
-							value = data.curse,
+							value = curse,
 						})
 
 						position.relativeTo = curseLink.frame
@@ -5441,14 +5397,14 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -8
 					end
 
-					if data.wago then
+					if wago then
 						local wagoLink = wt.CreateCopybox({
 							parent = panel,
 							name = "Wago",
 							title = wt.strings.about.wago,
 							position = position,
 							size = { w = 190, },
-							value = data.wago,
+							value = wago,
 						})
 
 						position.relativeTo = wagoLink.frame
@@ -5457,14 +5413,14 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -8
 					end
 
-					if data.repo then
+					if repo then
 						local repoLink = wt.CreateCopybox({
 							parent = panel,
 							name = "Repository",
 							title = wt.strings.about.repository,
 							position = position,
 							size = { w = 190, },
-							value = data.repo,
+							value = repo,
 						})
 
 						position.relativeTo = repoLink.frame
@@ -5473,31 +5429,35 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 						position.offset.y = -8
 					end
 
-					if data.issues then wt.CreateCopybox({
+					if issues then wt.CreateCopybox({
 						parent = panel,
 						name = "Issues",
 						title = wt.strings.about.issues,
 						position = position,
 						size = { w = 190, },
-						value = data.issues,
+						value = issues,
 					}) end
 
 					--[ Changelog ]
 
-					if not t.changelog then return end
+					local changelog, fullChangelog = addonmanager.getChangelog()
+
+					if not changelog then return end
 
 					local changelogTextbox = wt.CreateMultilineEditbox({
 						parent = panel,
 						name = "Changelog",
 						title = wt.strings.about.changelog.label,
-						tooltip = { lines = { { text = wt.strings.about.changelog.tooltip:gsub("#VERSION", crc(data.version, "FFFFFFFF")), }, } },
+						tooltip = { lines = { { text = wt.strings.about.changelog.tooltip:gsub("#VERSION", crc(version or "?", "FFFFFFFF")), }, } },
 						arrange = {},
 						size = { w = panel:GetWidth() - 225, h = panel:GetHeight() - 25 },
 						font = { normal = "GameFontDisableSmall", },
 						color = rs.colors.grey[1],
-						value = us.FormatChangelog(t.changelog, true),
+						value = changelog,
 						readOnly = true,
 					})
+
+					if not fullChangelog then return end
 
 					local fullChangelogFrame
 
@@ -5522,7 +5482,7 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 							parent = canvas:GetParent(),
 							name = addon .. "Changelog",
 							append = false,
-							title = wt.strings.about.fullChangelog.label:gsub("#ADDON", data.title),
+							title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 							position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 							keepInBounds = true,
 							size = { w = 685, h = 615 },
@@ -5537,14 +5497,14 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 								wt.CreateMultilineEditbox({
 									parent = windowPanel,
 									name = "FullChangelog",
-									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", data.title),
+									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 									label = false,
 									tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
 									arrange = {},
 									size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
 									font = { normal = "GameFontDisable", },
 									color = rs.colors.grey[1],
-									value = us.FormatChangelog(t.changelog),
+									value = fullChangelog,
 									readOnly = true,
 									scrollSpeed = 0.2,
 								})
@@ -5572,31 +5532,33 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 
 			--[ Sponsors ]
 
-			if data.topSponsors or data.sponsors then
+			local sponsors, topSponsors = addonmanager.getSponsors():split("; ")
+
+			if sponsors then
 				local sponsorsPanel = wt.CreatePanel({
 					parent = canvas,
 					name = "Sponsors",
 					title = wt.strings.sponsors.title,
 					description = wt.strings.sponsors.description,
 					arrange = {},
-					size = { h = 46 + (data.topSponsors and data.sponsors and 24 or 0) },
+					size = { h = 46 + (topSponsors and sponsors and 24 or 0) },
 					initialize = function(panel)
-						if data.topSponsors then wt.CreateText({
+						if topSponsors then wt.CreateText({
 							parent = panel,
 							name = "Top",
 							position = { offset = { x = 16, y = -12 } },
 							width = panel:GetWidth() - 46,
-							text = data.topSponsors:gsub("|", " • "),
+							text = topSponsors,
 							font = "GameFontNormalLarge",
 							justify = { h = "LEFT", },
 						}) end
 
-						if data.sponsors then wt.CreateText({
+						if sponsors then wt.CreateText({
 							parent = panel,
 							name = "Normal",
-							position = { offset = { x = 16, y = -16 -(data.topSponsors and 24 or 0) } },
+							position = { offset = { x = 16, y = -16 -(topSponsors and 24 or 0) } },
 							width = panel:GetWidth() - 46,
-							text = data.sponsors:gsub("|", " • "),
+							text = sponsors,
 							font = "GameFontNormalMed1",
 							justify = { h = "LEFT", },
 						}) end
@@ -5618,4 +5580,6 @@ function wt.CreateAboutPage(addon, t) --FIX lite
 			end
 		end,
 	})
+
+	return addonPage
 end

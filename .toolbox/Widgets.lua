@@ -1191,15 +1191,6 @@ function wt.CreateNumeric(t)
 	function numeric.decrease(alt, user, silent) numeric.setNumber(value - (alt and altStep or step), user, silent) end
 	function numeric.increase(alt, user, silent) numeric.setNumber(value + (alt and altStep or step), user, silent) end
 
-	--| State
-
-	function numeric.isEnabled() return enabled end
-	function numeric.setEnabled(state, silent)
-		enabled = state ~= false
-
-		if not silent then numeric.invoke.enabled() end
-	end
-
 	--| Value limits
 
 	function numeric.getMin() return limitMin end
@@ -1220,6 +1211,15 @@ function wt.CreateNumeric(t)
 
 	function numeric.getStep() return step end
 	function numeric.getAltStep() return altStep end
+
+	--| State
+
+	function numeric.isEnabled() return enabled end
+	function numeric.setEnabled(state, silent)
+		enabled = state ~= false
+
+		if not silent then numeric.invoke.enabled() end
+	end
 
 	--[ Initialization ]
 
@@ -1479,7 +1479,7 @@ function wt.CreateSettingsmanager(t)
 	function settingsmanager.setListener.reset(listener, callIndex) addListener(listeners, "reset", listener, callIndex) end
 	function settingsmanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
-	--| Batched settings data management
+	--| Batched data management
 
 	function settingsmanager.load(handleChanges, user, silent)
 		if autoLoad then for i = 1, #data.keys do
@@ -1633,7 +1633,7 @@ end
 --[[ PROFILE DATA ]]
 
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
-	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return end
+	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
 	t = type(t) == "table" and t or {}
 	t.category = type(t.category) == "string" and t.category or ""
@@ -1735,8 +1735,8 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	---Find an unused profile name to be able to use it as an identifying display title
 	---***
-	---@param name? string ***Default:*** "Profile"
-	---@param number? integer ***Default:*** 2
+	---@param name? string ***Default:*** `"Profile"`
+	---@param number? integer ***Default:*** `2`
 	---@param skipFirst? boolean ***Default:*** `false`
 	---@return string title
 	local function checkName(name, number, skipFirst)
@@ -1955,3 +1955,107 @@ end
 
 
 --[[ ADDON INFO ]]
+
+function wt.CreateAddonmanager(addon, t)
+	local addon_type = type(addon)
+
+	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	--[ Properties ]
+
+	---@type typename_addonmanager
+	local typename = "Addonmanager"
+
+	--| Events
+
+	---@type table<string, function[]>
+	local listeners = {}
+
+	--| Metadata
+
+	local title, version, date, day, month, year, category, notes, author, license, curse, wago, repo, issues, sponsors, logo, changelogLatest, changelog
+
+	--[ Widget ]
+
+	---@type addonmanager
+	local addonmanager = {
+		invoke = {},
+		setListener = {},
+	}
+
+	--[ Getters & Setters ]
+
+	function addonmanager.getType() return typename end
+	function addonmanager.isType(type) return type == typename end
+
+	--| Events
+
+	function addonmanager.invoke.changed(user) callListeners(addonmanager, listeners, "managed", user) end
+	function addonmanager.invoke._(event, ...) callListeners(addonmanager, listeners, event, ...) end
+
+	function addonmanager.setListener.changed(listener, callIndex) addListener(listeners, "managed", listener, callIndex) end
+	function addonmanager.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+
+	--| Metadata
+
+	function addonmanager.getAddon() return addon end
+	function addonmanager.getTitle() return title end
+	function addonmanager.getVersion() return version end
+	function addonmanager.getDate() return date, day, month, year end
+	function addonmanager.getCategory() return category end
+	function addonmanager.getNotes() return notes end
+	function addonmanager.getAuthor() return author end
+	function addonmanager.getLicense() return license end
+	function addonmanager.getCurseForgeLink() return curse end
+	function addonmanager.getWagoLink() return wago end
+	function addonmanager.getRepositoryLink() return repo end
+	function addonmanager.getIssuesLink() return issues end
+	function addonmanager.getSponsors() return sponsors end
+	function addonmanager.getLogo() return logo end
+	function addonmanager.getChangelog() return changelogLatest, changelog end
+
+	--| Redefine
+
+	function addonmanager.setAddon(newAddon, newChangelog, user, silent)
+		if newAddon == addon then return true end
+
+		local a_type = type(newAddon)
+
+		if (a_type ~= "string" or a_type ~= "number") or not C_AddOns.IsAddOnLoaded(newAddon) then return false end
+
+		addon = a_type ~= "string" and C_AddOns.GetAddOnName(newAddon) or newAddon
+		title = C_AddOns.GetAddOnTitle(addon)
+		version = C_AddOns.GetAddOnMetadata(addon, "Version")
+		day = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Day"))
+		month = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Month"))
+		year = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Year"))
+		date = day and month and year and wt.strings.date:gsub("#DAY", day):gsub("#MONTH", month):gsub("#YEAR", year) or nil
+		category = C_AddOns.GetAddOnMetadata(addon, "Category")
+		notes = C_AddOns.GetAddOnNotes(addon)
+		author = C_AddOns.GetAddOnMetadata(addon, "Author")
+		license = C_AddOns.GetAddOnMetadata(addon, "X-License")
+		curse = C_AddOns.GetAddOnMetadata(addon, "X-CurseForge")
+		wago = C_AddOns.GetAddOnMetadata(addon, "X-Wago")
+		repo = C_AddOns.GetAddOnMetadata(addon, "X-Repository")
+		issues = C_AddOns.GetAddOnMetadata(addon, "X-Issues")
+		sponsors = C_AddOns.GetAddOnMetadata(addon, "X-Sponsors")
+		logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+		changelogLatest, changelog = nil, nil
+
+		if newChangelog then changelogLatest, changelog = us.FormatChangelog(newChangelog, true), us.FormatChangelog(newChangelog) end
+
+		--Call listeners
+		if not silent then addonmanager.invoke.changed(addon, user == true) end
+
+		return true
+	end
+
+	--[ Initialization ]
+
+	--Load metadata
+	addonmanager.setAddon(addon, t.changelog)
+
+	return addonmanager
+end

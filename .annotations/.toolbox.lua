@@ -1,6 +1,6 @@
 --NOTE: Annotations are for development purposes only, providing live documentation via Lua Language Server. This file does not need to be loaded by the game client.
 
----@meta toolbox
+----@meta toolbox --TODO Reinstate
 
 
 --[[ TOOLBOX ]]
@@ -191,15 +191,45 @@ function wt.CreateColor(color) return {} end
 
 ---Create a markup texture string snippet via escape sequences based on the specified values
 ---***
----@param path string Path to the specific texture file relative to the root directory of the specific WoW client<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
----@param width? number ***Default:*** *width of the texture file*
----@param height? number ***Default:*** **width**
----@param offsetX? number | ***Default:*** 0
----@param offsetY? number | ***Default:*** 0
----@param t? table Additional parameters are to be provided in this table
+---@param path Texture_param1 Path to the specific texture file relative to the root directory of the specific WoW client
+--- - ***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.
+--- - ***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.
+--- - ***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.
+---@param width? Texture_param2 ***Default:*** *width of the texture file*
+---@param height? Texture_param3 ***Default:*** **width**
+---@param offsetX? Texture_param4-5 ***Default:*** 0
+---@param offsetY? Texture_param4-5 ***Default:*** 0
+---@param t? table Optional parameters
 ---***
 ---@return string # ***Default:*** ""
-function wt.Texture(path, width, height, offsetX, offsetY, t) return "" end
+function wt.Texture(path, width, height, offsetX, offsetY, t)
+
+	--| Parameters
+
+	---Path to the specific texture file relative to the root directory of the specific WoW client
+	--- - ***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.
+	--- - ***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.
+	--- - ***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.
+	---@alias Texture_param1 # path
+	---| string
+
+	---***Default:*** *width of the texture file*
+	---@alias Texture_param2 # width
+	---| number
+	---| nil
+
+	---***Default:*** **width**
+	---@alias Texture_param3 # height
+	---| number
+	---| nil
+
+	---***Default:*** 0
+	---@alias Texture_param4-5 # offsetX
+	---| number
+	---| nil
+
+	return ""
+end
 
 ---Remove most visual formatting (like coloring) & other (like hyperlink) [escape sequences](https://warcraft.wiki.gg/wiki/UI_escape_sequences) from a string
 --- - ***Note:*** *Grammar* escape sequences are not yet supported, and will not be removed.
@@ -211,7 +241,7 @@ function wt.Clear(s) return "" end
 
 ---Format a clickable hyperlink text via escape sequences
 ---***
----@param linkType ExtendedHyperlinkType [Type of the hyperlink](https://warcraft.wiki.gg/wiki/Hyperlinks#Types) determining how it's being handled and what payload it carries
+---@param linkType Hyperlink_param1 [Type of the hyperlink](https://warcraft.wiki.gg/wiki/Hyperlinks#Types) determining how it's being handled and what payload it carries
 ---@param content? string A colon-separated chain of parameters determined by **type** (Example: "content1:content2:content3") | ***Default:*** ""
 ---@param text string Clickable text to be displayed as the hyperlink
 ---***
@@ -221,28 +251,75 @@ function wt.Hyperlink(linkType, content, text)
 
 	--| Parameters
 
-	---@alias ExtendedHyperlinkType # linkType
+	---[Type of the hyperlink](https://warcraft.wiki.gg/wiki/Hyperlinks#Types) determining how it's being handled and what payload it carries
+	---@alias Hyperlink_param1 # linkType
 	---| HyperlinkType
 	---| "addon"
 	---| "mawpower"
+
+	---A colon-separated chain of parameters determined by **type** (Example: "content1:content2:content3") | ***Default:*** ""
+	---@alias Hyperlink_param2 # content
+	---| string
+	---| nil
+
+	---Clickable text to be displayed as the hyperlink
+	---@alias Hyperlink_param3 # text
+	---| string
 
 	return ""
 end
 
 ---Format a custom clickable addon hyperlink text via escape sequences
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param type? string A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via ***WidgetToolbox*.SetHyperlinkHandler(...)** | ***Default:*** "-"
----@param content? string A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
----@param text string Clickable text to be displayed as the hyperlink
-function wt.CustomHyperlink(addon, type, content, text) end
+---@param addon CustomHyperlink_param1 The name of the addon's folder (the addon namespace, not its displayed title)
+---@param linkType? CustomHyperlink_param2 A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via ***WidgetToolbox*.SetHyperlinkHandler(...)** | ***Default:*** "-"
+---@param content? CustomHyperlink_param3 A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
+---@param text Hyperlink_param3 Clickable text to be displayed as the hyperlink
+---***
+---@return string # ***Default:*** ""
+function wt.CustomHyperlink(addon, linkType, content, text)
+
+	--| Parameters
+
+	---The name of the addon's folder (the addon namespace, not its displayed title)
+	---@alias CustomHyperlink_param1 # addon
+	---| string
+
+	---A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via ***WidgetToolbox*.SetHyperlinkHandler(...)** | ***Default:*** "-"
+	---@alias CustomHyperlink_param2 # linkType
+	---| string
+	---| nil
+
+	---A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
+	---@alias CustomHyperlink_param3 # content
+	---| string
+	---| nil
+
+	return ""
+end
 
 ---Register a function to handle custom hyperlink clicks
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)<ul><li>***Note:*** Duplicate addon key that already had rules registered under will be overwritten.</li></ul>
----@param linkType? string Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
----@param handler fun(...) Function to be called with the list of content data strings carried by the hyperlink returned one by one when clicking on a hyperlink text created via ***WidgetToolbox*.CustomHyperlink(...)**
-function wt.SetHyperlinkHandler(addon, linkType, handler) end
+---@param addon SetHyperlinkHandler_param1 The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index<ul><li>***Note:*** Duplicate addon key that already had rules registered under will be overwritten.</li></ul>
+---@param linkType? SetHyperlinkHandler_param2 Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
+---@param handler SetHyperlinkHandler_param3 Function to be called with the list of content data strings carried by the hyperlink returned one by one when clicking on a hyperlink text created via ***WidgetToolbox*.CustomHyperlink(...)**
+function wt.SetHyperlinkHandler(addon, linkType, handler)
+
+	--| Parameters
+
+	---The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index<ul><li>***Note:*** Duplicate addon key that already had rules registered under will be overwritten.</li></ul>
+	---@alias SetHyperlinkHandler_param1 # addon
+	---| string
+
+	---Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
+	---@alias SetHyperlinkHandler_param2 # linkType
+	---| string
+	---| nil
+
+	---Function to be called with the list of content data strings carried by the hyperlink returned one by one when clicking on a hyperlink text created via ***WidgetToolbox*.CustomHyperlink(...)**
+	---@alias SetHyperlinkHandler_param3 # handler
+	---| fun(...)
+end
 
 
 --[[ WIDGET MANAGEMENT ]]
@@ -316,8 +393,8 @@ function wt.CreateFrame(t)
 	--| Parameters
 
 	---@class frameCreationData : positionableScreenObject, arrangeableObject, visibleObject_base, initializableContainer # t
-	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** nil *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
-	---@field name? string Unique string used to set the name of the new frame | ***Default:*** nil *(anonymous frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
+	---@field name? string Unique string used to set the name of the new frame | ***Default:*** `nil` *(anonymous frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append **t.name** to the name of **t.parent** instead | ***Default:*** `true` if **t.name** ~= nil and **t.parent** ~= nil and **t.parent** ~= UIParent
 	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
 	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
@@ -428,8 +505,8 @@ function wt.SetPosition(frame, position, unlink, userPlaced) end
 ---@param frame AnyFrameObject Reference to the frame to be update
 ---@param anchor FramePoint New anchor point to set
 ---***
----@return number? offsetX The new horizontal offset value | ***Default:*** nil
----@return number? offsetY The new vertical offset value | ***Default:*** nil
+---@return number? offsetX The new horizontal offset value | ***Default:*** `nil`
+---@return number? offsetY The new vertical offset value | ***Default:*** `nil`
 ---<p></p>
 function wt.SetAnchor(frame, anchor) end
 
@@ -467,7 +544,7 @@ function wt.SetMovability(frame, movable, t)
 	--| Parameters
 
 	---@class movabilityData # t
-	---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** nil *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+	---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** `nil` *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 	---@field triggers? Frame[] List of frames that should handle inputs to initiate or stop the movement when interacted with | ***Default:*** **t.frame**
 	---@field events? movementEvents Table containing functions to call when certain movement events occur
 	---@field cursor? boolean If true, change the cursor to a movement cross when mousing over **t.frame** and **t.modifier** is pressed down if set | ***Default:*** **t.modifier** ~= nil
@@ -492,7 +569,7 @@ function wt.SetVisibility(frame, visible) end
 ---Set the backdrop of a frame with BackdropTemplate with the specified parameters safely
 ---***
 ---@param frame backdropFrame|BackdropTemplate|AnyFrameObject Reference to the frame to set the backdrop of<ul><li>***Note:*** The template of **frame** must have been set as: `BackdropTemplateMixin and "BackdropTemplate"`.</li></ul>
----@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** nil *(remove the backdrop)*
+---@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** `nil` *(remove the backdrop)*
 ---@param updates? backdropUpdateRule[] Table of backdrop update rules, modifying the specified parameters on trigger<ul><li>***Note:*** All update rules are additive, calling ***WidgetToolbox*.SetBackdrop(...)** multiple times with **updates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via ***WidgetToolbox*.SetBackdrop(...)** either!</li></ul>
 function wt.SetBackdrop(frame, backdrop, updates)
 
@@ -515,7 +592,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 
 	---@class backdropUpdateRule # updates
 	---@field triggers? AnyFrameObject[] References to the frames to add the listener script to | ***Default:*** { **frame** }
-	---@field rules table<AnyScriptType, string|fun(frame: AnyFrameObject, self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `frame` AnyFrameObject ― Reference to backdrop frame</p><p>@*param* `self` AnyFrameObject ― Reference to the specific trigger frame</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** nil *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
+	---@field rules table<AnyScriptType, string|fun(frame: AnyFrameObject, self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `frame` AnyFrameObject ― Reference to backdrop frame</p><p>@*param* `self` AnyFrameObject ― Reference to the specific trigger frame</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** `nil` *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
 
 		---@alias AnyScriptType
 		---| "OnLoad"
@@ -715,7 +792,7 @@ end
 ---@param frame AnyFrameObject Reference to the frame to add the title textline to
 ---@param t? titleCreationData Optional parameters
 ---***
----@return FontString? # ***Default:*** nil
+---@return FontString? # ***Default:*** `nil`
 function wt.CreateTitle(frame, t)
 
 	--| Parameters
@@ -735,7 +812,7 @@ end
 ---@param title FontString Reference to the already existing title textline to place the description next to
 ---@param t? descriptionCreationData Optional parameters
 ---***
----@return FontString? # ***Default:*** nil
+---@return FontString? # ***Default:*** `nil`
 function wt.CreateDescription(title, t)
 
 	--| Parameters
@@ -766,7 +843,7 @@ end
 ---@param t textureCreationData Optional parameters
 ---@param updates? table<AnyScriptType, textureUpdateRule> Table of key, value pairs containing the list of events to link texture changes to, and what parameters to change
 ---***
----@return Texture? texture ***Default:*** nil
+---@return Texture? texture ***Default:*** `nil`
 function wt.CreateTexture(frame, t, updates)
 
 	--| Parameters
@@ -861,7 +938,7 @@ end
 ---@param frame AnyFrameObject Reference to the frame to set as the parent of the new line
 ---@param t lineCreationData Optional parameters
 ---***
----@return Line? line ***Default:*** nil
+---@return Line? line ***Default:*** `nil`
 function wt.CreateLine(frame, t)
 
 	--| Parameters
@@ -907,7 +984,7 @@ function wt.CreateTooltip(name) return {} end
 ---@param toggle? tooltipToggleData Additional toggle rule parameters are to be provided in this table
 ---@param duplicate? boolean If true, execute even if tooltip data has already been registered for **owner**, potentially adding duplicate toggle triggers, or, automatically call ***WidgetToolbox*.UpdateTooltipData(...)** instead to avoid this | ***Default:*** false
 ---***
----@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** nil
+---@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** `nil`
 function wt.AddTooltip(frame, t, toggle, duplicate)
 
 	--| Parameters
@@ -1003,7 +1080,7 @@ end
 ---@param key string The unique identifier key representing the defaults warning popup dialog in the global `StaticPopupDialogs` table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 ---@param t? popupDialogData Optional parameters
 ---***
----@return string? key The unique identifier key created for this popup in the global `StaticPopupDialogs` table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide) | ***Default:*** nil
+---@return string? key The unique identifier key created for this popup in the global `StaticPopupDialogs` table used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide) | ***Default:*** `nil`
 function wt.UpdatePopupDialog(key, t) end
 
 --[ Reload Notice ]
@@ -1038,7 +1115,7 @@ end
 
 ---Set up the [Addon Compartment](https://warcraft.wiki.gg/wiki/Addon_compartment#Automatic_registration) functionality by registering global functions for call
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
 ---@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
 function wt.SetUpAddonCompartment(addon, calls, tooltip)
@@ -1059,11 +1136,11 @@ end
 
 ---Register a list of chat keywords and related commands for use
 ---***
----@param addon string The name of the addon's folder (the addon namespace not the display title)
+---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands<ul><li>***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.</li></ul>
 ---@param t chatCommandManagerCreationData Optional parameters
 ---***
----@return chatCommandManager? manager Table containing command handler functions | ***Default:*** nil
+---@return chatCommandManager? manager Table containing command handler functions | ***Default:*** `nil`
 function wt.RegisterChatCommands(addon, keywords, t)
 
 	--| Parameters
@@ -1077,7 +1154,7 @@ function wt.RegisterChatCommands(addon, keywords, t)
 		---@class chatCommandData
 		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
 		---@field description? string|fun(): string Note to append to the first specified keyword and **command** in this command's line in the list printed out via the help command(s)
-		---@field handler? fun(manager: chatCommandManager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<hr><p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><hr><p>@*return* `result`? boolean|nil ― Call **[*value*].onSuccess** if true or **[*value*].onError** if false (not nil) after the operation | ***Default:*** nil *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
+		---@field handler? fun(manager: chatCommandManager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<hr><p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><hr><p>@*return* `result`? boolean|nil ― Call **[*value*].onSuccess** if true or **[*value*].onError** if false (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
 		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after **commands[*value*].handler** returns with true<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
 		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after **commands[*value*].handler** returns with false (not nil)<hr><p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
 		---@field onSuccess? fun(manager: chatCommandManager, ...: any) Function to call after **commands[*value*].handler** returns with true to handle a successful result (after **success** is printed)<hr><p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
@@ -1151,7 +1228,7 @@ function wt.RegisterSettingsPage(page, parent, icon) end
 ---@param widget AnyWidgetType|AnyGUIWidgetType Reference to the widget to be saved & loaded data to/from with defined **widget.loadData()** & **widget.saveData()** functions
 ---@param t settingsData Optional parameters
 ---***
----@return integer|nil index The index for the new entry for **widget** where it ended up in the settings data management registry | ***Default:*** nil
+---@return integer|nil index The index for the new entry for **widget** where it ended up in the settings data management registry | ***Default:*** `nil`
 function wt.AddSettingsDataManagementEntry(widget, t)
 
 	--| Parameters
@@ -1378,7 +1455,7 @@ function wt.CreatePopupMenu(t)
 	--| Parameters
 
 	---@class popupMenuCreationData : labeledChildObject, tooltipDescribableWidget, positionableScreenObject, arrangeableObject, visibleObject_base, contextMenuCreationData_base # t
-	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** nil *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
+	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the frame name | ***Default:*** "PopupMenu"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_menuButton|sizeData
 	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
@@ -1539,6 +1616,8 @@ function wt.CreateAction(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class action_invoke
 		local invoke = {}
 
@@ -1573,6 +1652,8 @@ function wt.CreateAction(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| State
+
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
 		function _.isEnabled() return false end
@@ -1582,6 +1663,8 @@ function wt.CreateAction(t)
 		---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
 		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 		function _.setEnabled(state, silent) end
+
+		--| Action
 
 		---Trigger the action registered for the button (if it is enabled)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
@@ -1787,6 +1870,8 @@ function wt.CreateToggle(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class toggle_invoke
 		local invoke = {}
 
@@ -1838,6 +1923,8 @@ function wt.CreateToggle(t)
 			---@param listener ToggleEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
+
+		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
@@ -1906,6 +1993,8 @@ function wt.CreateToggle(t)
 		---@param state? boolean ***Default:*** *(current value)*
 		---@return string
 		function _.formatValue(state) return "" end
+
+		--| State
 
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
@@ -2084,7 +2173,7 @@ function wt.CreateSelector(t)
 	---@class selectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
 	---@field items? (selectorItem|selectorToggle|toggle)[] Table containing subtables with data used to create item widgets, or already existing toggles
 	---@field listeners? selectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** nil *(no selection)*</p>
+	---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(selected?: integer) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selected`? integer</p>
 	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** **t.getData()** or **t.default** if invalid or 1 if **t.clearable** is false
 	---@field default? integer Default value of the widget | ***Default:*** 1 or nil *(no selection)* if **t.clearable** is true
@@ -2185,6 +2274,8 @@ function wt.CreateSelector(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class selector_invoke
 		local invoke = {}
 
@@ -2254,6 +2345,8 @@ function wt.CreateSelector(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Toggle items
+
 		---Update the list of items currently set for the selector widget, updating its parameters and toggle widgets
 		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
 		--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
@@ -2261,6 +2354,8 @@ function wt.CreateSelector(t)
 		---@param newItems (selectorItem|toggle|selectorToggle)[] Table containing subtables with data used to update the toggle widgets, or already existing toggle widgets
 		---@param silent? boolean If false, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 		function _.updateItems(newItems, silent) end
+
+		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
@@ -2275,7 +2370,7 @@ function wt.CreateSelector(t)
 		function _.saveData(data, silent) end
 
 			---@class wrappedInteger
-			---@field index? integer ***Default:*** nil *(no selection)*
+			---@field index? integer ***Default:*** `nil` *(no selection)*
 
 		---Get the currently stored data via **t.getData()**
 		---@return integer|nil
@@ -2316,10 +2411,12 @@ function wt.CreateSelector(t)
 
 		---Verify and set the specified item as selected
 		---***
-		---@param index? integer ***Default:*** nil *(no selection)*
+		---@param index? integer ***Default:*** `nil` *(no selection)*
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke a "selected" event and call registered listeners | ***Default:*** `false`
 		function _.setSelected(index, user, silent) end
+
+		--| State
 
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
@@ -2356,7 +2453,7 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	---@class specialSelectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
 	---@field listeners? specialSelectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** nil *(no selection)*</p>
+	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: specialSelectorValueTypes) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
 	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** **t.getData()** or **t.default** if invalid or *option 1* if **t.clearable** is false
 	---@field default? integer|specialSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if **t.clearable** is true
@@ -2435,6 +2532,8 @@ function wt.CreateSpecialSelector(itemset, t)
 		---@return SpecialSelectorItemset itemset
 		function _.getItemset() return "anchor" end
 
+		--| Events
+
 		---@class specialSelector_invoke
 		local invoke = {}
 
@@ -2487,6 +2586,8 @@ function wt.CreateSpecialSelector(itemset, t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Data management
+
 		---Read the data from storage then verify and load it to the widget
 		---***
 		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
@@ -2500,16 +2601,16 @@ function wt.CreateSpecialSelector(itemset, t)
 		function _.saveData(data, silent) end
 
 			---@class wrappedAnchor
-			---@field value? FramePoint ***Default:*** nil *(no selection)*
+			---@field value? FramePoint ***Default:*** `nil` *(no selection)*
 
 			---@class wrappedJustifyH
-			---@field value? JustifyHorizontal ***Default:*** nil *(no selection)*
+			---@field value? JustifyHorizontal ***Default:*** `nil` *(no selection)*
 
 			---@class wrappedJustifyV
-			---@field value? JustifyVertical ***Default:*** nil *(no selection)*
+			---@field value? JustifyVertical ***Default:*** `nil` *(no selection)*
 
 			---@class wrappedStrata
-			---@field value? FrameStrata ***Default:*** nil *(no selection)*
+			---@field value? FrameStrata ***Default:*** `nil` *(no selection)*
 
 		---Get the currently stored data via **t.getData()**
 		---@return specialSelectorValueTypes|nil
@@ -2561,6 +2662,8 @@ function wt.CreateSpecialSelector(itemset, t)
 		---@param silent? boolean If false, invoke a "selected" event and call registered listeners | ***Default:*** `false`
 		---<p></p>
 		function _.setSelected(selected, user, silent) end
+
+		--| State
 
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
@@ -2682,6 +2785,8 @@ function wt.CreateMultiselector(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class multiselector_invoke
 		local invoke = {}
 
@@ -2760,6 +2865,8 @@ function wt.CreateMultiselector(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Toggle items
+
 		---Update the list of items currently set for the selector widget, updating its parameters and toggle widgets
 		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
 		--- - ***Note:*** The currently selected item may not be the same after item were removed. In that case, the new item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Make sure to use **selector.setSelected(...)** to correct the selection if needed!
@@ -2767,6 +2874,8 @@ function wt.CreateMultiselector(t)
 		---@param newItems (selectorItem|toggle|selectorToggle)[] Table containing subtables with data used to update the toggle widgets, or already existing toggle widgets
 		---@param silent? boolean If false, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 		function _.updateItems(newItems, silent) end
+
+		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
@@ -2836,6 +2945,8 @@ function wt.CreateMultiselector(t)
 		---@param silent? boolean If false, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
 		function _.setSelected(index, selected, user, silent) end
 
+		--| State
+
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
 		function _.isEnabled() return false end
@@ -2878,6 +2989,7 @@ function wt.CreateRadiogroup(t, selector)
 	---@alias CreateRadiogroup_param2
 	---| selector
 	---| specialSelector
+	---| nil
 
 	--| Returns
 
@@ -2973,7 +3085,8 @@ end
 
 ---Create a special radio button selector GUI frame to pick an Anchor Point, a horizontal or vertical text alignment or Frame Strata value with enhanced widget functionality
 ---***
----@param itemset SpecialSelectorItemset Specify what type of selector should be created
+---@param itemset CreateSpecialRadiogroup_param1 Specify what type of selector should be created
+--- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroupCreationData Optional parameters
 ---@param selector? specialSelector|selector Reference to an already existing special selector widget to mutate into a special selector frame instead of creating a new base widget
 ---***
@@ -2981,6 +3094,12 @@ end
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	--| Parameters
+
+	---Specify what type of selector should be created
+	--- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
+	---@alias CreateSpecialRadiogroup_param1 # itemset
+	---| SpecialSelectorItemset
+	---| nil
 
 	---@class specialRadiogroupCreationData : specialSelectorCreationData, selectorFrameCreationData, radiogroupCreationData_base # t
 
@@ -3141,6 +3260,8 @@ function wt.CreateTextbox(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class textbox_invoke
 		local invoke = {}
 
@@ -3192,6 +3313,8 @@ function wt.CreateTextbox(t)
 			---@param listener TextboxEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
+
+		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
@@ -3248,6 +3371,8 @@ function wt.CreateTextbox(t)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 		function _.setText(text, user, silent) end
+
+		--| State
 
 		---Return the current enabled state of the widget
 		---@return boolean enabled True, if the widget is enabled
@@ -3573,6 +3698,8 @@ function wt.CreateNumeric(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class numeric_invoke
 		local invoke = {}
 
@@ -3641,6 +3768,8 @@ function wt.CreateNumeric(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Data management
+
 		---Read the data from storage then verify and load it to the widget
 		---***
 		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
@@ -3708,15 +3837,7 @@ function wt.CreateNumeric(t)
 		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 		function _.increase(alt, user, silent) end
 
-		---Return the current enabled state of the widget
-		---@return boolean enabled True, if the widget is enabled
-		function _.isEnabled() return false end
-
-		---Enable or disable the widget based on the specified value
-		---***
-		---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
-		function _.setEnabled(state, silent) end
+		--| Value limits
 
 		---Return the current lower value limit of the widget
 		---@return number
@@ -3738,6 +3859,8 @@ function wt.CreateNumeric(t)
 		---@param silent? boolean If false, invoke a "max" event and call registered listeners | ***Default:*** `false`
 		function _.setMax(number, silent) end
 
+		--| Value step
+
 		---Return the current value step of the widget
 		---@return number
 		function _.getStep() return 0 end
@@ -3745,6 +3868,18 @@ function wt.CreateNumeric(t)
 		---Return the current alternative value step of the widget
 		---@return number|nil
 		function _.getAltStep() end
+
+		--| State
+
+		---Return the current enabled state of the widget
+		---@return boolean enabled True, if the widget is enabled
+		function _.isEnabled() return false end
+
+		---Enable or disable the widget based on the specified value
+		---***
+		---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
+		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
+		function _.setEnabled(state, silent) end
 
 	return _
 end
@@ -3915,6 +4050,8 @@ function wt.CreateColormanager(t)
 	---@field setListener colormanager_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
+		--| Events
+
 		---Returns the type of this object
 		---***
 		---@return typename_colormanager
@@ -3929,6 +4066,8 @@ function wt.CreateColormanager(t)
 		---@return boolean
 		---<p></p>
 		function _.isType(type) return false end
+
+		--| Events
 
 		---@class colormanager_invoke
 		local invoke = {}
@@ -3981,6 +4120,8 @@ function wt.CreateColormanager(t)
 			---@param listener ColormanagerEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
+
+		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
@@ -4037,6 +4178,8 @@ function wt.CreateColormanager(t)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke a "colored" event and call registered listeners | ***Default:*** `false`
 		function _.setColor(color, user, silent) end
+
+		--| Color wheel
 
 		---Open the the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) for this color manager
 		function _.openColorPicker() end
@@ -4122,14 +4265,14 @@ end
 
 ---Create and set up position management for a specified frame within a panel frame
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param frame AnyFrameObject Reference to the frame to create the settings for
 ---@param getData fun(): table: positionPresetData|table Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@param defaultData positionPresetData|table Reference to the table containing the default values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.getData()*.</li></ul>
 ---@param settingsData positionOptionsSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key **keepInPlace** if it didn't already exist in this table.</li></ul>
 ---@param t positionManagementCreationData Optional parameters
 ---***
----@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** nil
+---@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** `nil`
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t)
 
 	--| Parameters
@@ -4260,13 +4403,13 @@ end
 
 ---Create and set up font management for a specified text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) including access to a font family selector dropdown to pick a custom font from the Widget Tools fonts list
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param textline FontString Reference to the text object to create font options for
 ---@param getData fun(): table: fontOptionsData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@param defaultData fontOptionsData Reference to the table containing the default values
 ---@param t fontManagementCreationData Optional parameters
 ---***
----@return fontPanel? table References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table | ***Default:*** nil
+---@return fontPanel? table References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table | ***Default:*** `nil`
 function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 	--| Parameters
@@ -4340,13 +4483,13 @@ function wt.CreateSettingsmanager(t)
 
 	--| Parameters
 
-	---@class settingsmanagerCreationData : settingsPageCreationData_base, describableObject, togglableObject, settingsCategoryData, settingsPageEvents, initializableOptionsContainer, liteObject # t
+	---@class settingsmanagerCreationData : settingsmanagerCreationData_base, describableObject, togglableObject, settingsCategoryData, settingsmanagerEvents, initializableOptionsContainer, liteObject # t
 	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
 	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field listeners? settingsmanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
-		---@class settingsPageCreationData_base
+		---@class settingsmanagerCreationData_base
 		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via ***WidgetToolbox*.RegisterSettingsPage(...)**.</li></ul>
 		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
@@ -4361,7 +4504,7 @@ function wt.CreateSettingsmanager(t)
 				---@class settingsData_base
 				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
 
-		---@class settingsPageEvents
+		---@class settingsmanagerEvents
 		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
@@ -4448,6 +4591,8 @@ function wt.CreateSettingsmanager(t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class settingsmanager_invoke
 		local invoke = {}
 
@@ -4518,6 +4663,8 @@ function wt.CreateSettingsmanager(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Batched data management
+
 		---Force update all linked settings widgets in this category page
 		---***
 		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
@@ -4568,15 +4715,15 @@ end
 
 ---Create an new Settings Panel frame and add it to the Options
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
 ---@param t? settingsPageCreationData Optional parameters
+---@param settingsmanager? settingsmanager Reference to an already existing settings data manager to mutate into a settings page instead of creating a new base widget
 ---***
 ---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
-function wt.CreateSettingsPage(addon, t)
+function wt.CreateSettingsPage(t, settingsmanager)
 
 	--| Parameters
 
-	---@class settingsPageCreationData : settingsPageCreationData_base, describableObject, settingsCategoryData, settingsPageEvents, initializableOptionsContainer, liteObject # t
+	---@class settingsPageCreationData : settingsmanagerCreationData_base, describableObject, settingsCategoryData, settingsmanagerEvents, initializableOptionsContainer, liteObject # t
 	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
 	---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
 	---@field titleIcon? boolean Append **t.icon** to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if **t.register == true**
@@ -4602,7 +4749,7 @@ function wt.CreateSettingsPage(addon, t)
 
 	--| Returns
 
-	---@class settingsPage
+	---@class settingsPage : settingsmanager
 	---@field canvas? canvasFrame|Frame The settings page main canvas frame
 	---@field category? table The registered settings category page
 	---@field content? Frame The content frame to house the settings widgets or other page content
@@ -4638,19 +4785,21 @@ function wt.CreateSettingsPage(addon, t)
 		---@return string
 		function _.getResetPopupKey() return "" end
 
-		---Open the Settings window to this category page
-		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
-		function _.open() end
-
 		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
 		---***
 		---@param state boolean? ***Default:*** `true`
 		function _.setStatic(state) end
+
+		--| Utilities
+
+		---Open the Settings window to this category page
+		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
+		function _.open() end
 end
 
 ---Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
 ---@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under **parent**<ul><li>***Note:*** Already registered pages (which contain a **category** value) will be skipped and won't be included in the new category.</li></ul>
 ---@param t? settingsCategoryCreationData Optional parameters
@@ -4703,25 +4852,43 @@ end
 
 ---Create a non-GUI profile data manager widget with live database management and profile selection logic
 ---***
----@param accountData profileStorage|table Reference to the account-bound SavedVariables addon database where profile data is to be stored<ul><li>***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).</li></ul>
----@param characterData characterProfileData|table Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified<ul><li>***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.</li></ul>
----@param defaultData table A static table containing all default settings values to be cloned when creating a new profile or resetting one
+---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
+	--- - ***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).
+---@param characterData CreateProfilemanager_param2 Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified
+	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
+---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanagerCreationData Optional parameters
 ---***
----@return profilemanager? profilemanager Reference to the new profile data manager widget, utility functions and more wrapped in a table | ***Default:*** nil
+---@return profilemanager? profilemanager Reference to the new profile data manager widget, utility functions and more wrapped in a table | ***Default:*** `nil`
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--| Parameters
 
-	---@class profileStorage # accountData
-	---@field profiles profile[] List of profiles
+	---Reference to the account-bound SavedVariables addon database where profile data is to be stored
+	--- - ***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).
+	---@alias CreateProfilemanager_param1 # accountData
+	---| profileStorage
+	---| table
 
-		---@class profile
-		---@field title string Display name of the profile
-		---@field data table Custom profile data
+		---@class profileStorage
+		---@field profiles profile[] List of profiles
 
-	---@class characterProfileData # characterData
-	---@field activeProfile integer The index of the currently active profile | ***Default:*** 1
+			---@class profile
+			---@field title string Display name of the profile
+			---@field data table Custom profile data
+
+	---Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified
+	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
+	---@alias CreateProfilemanager_param2 # characterData
+	---| characterProfileData
+	---| table
+
+		---@class characterProfileData # characterData
+		---@field activeProfile integer The index of the currently active profile | ***Default:*** 1
+
+	---A static table containing all default settings values to be cloned when creating a new profile or resetting one
+	---@alias CreateProfilemanager_param3 # defaultData
+	---| table
 
 	---@class profilemanagerCreationData # t
 	---@field category? string Category name to be used for identifying this group of profile data when modified in popups and chat messages | ***Default:*** `"Addon"`
@@ -4819,6 +4986,8 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		---<p></p>
 		function _.isType(type) return false end
 
+		--| Events
+
 		---@class profilemanager_invoke
 		local invoke = {}
 
@@ -4902,6 +5071,8 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
+		--| Utilities
+
 		---Activate the specified settings profile
 		---***
 		---@param index? integer Index of the profile to set as the currently active settings profile | ***Default:*** *currently active profile index* or `1`
@@ -4982,23 +5153,31 @@ end
 
 ---Create and set up a new settings page with profile data handling and advanced backup management options
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
----@param accountData profileStorage|table Reference to the account-bound SavedVariables addon database where profile data is to be stored<ul><li>***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).</li></ul>
----@param characterData characterProfileData|table Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified<ul><li>***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.</li></ul>
----@param defaultData table A static table containing all default settings values to be cloned when creating a new profile or resetting one
----@param settingsData backupboxSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.</li></ul>
+---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
+	--- - ***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).
+---@param characterData CreateProfilemanager_param2 Reference to the character-specific SavedVariablesPerCharacter addon database where selected profiles are to be specified
+	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
+---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
+---@param settingsData CreateProfilesPage_param4 Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
+--- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPageCreationData Optional parameters
 ---@param profilemanager? profilemanager Reference to an already existing profile data manager to mutate into a profile management settings page instead of creating a new base widget
 ---***
----@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** nil
-function wt.CreateProfilesPage(addon, accountData, characterData, defaultData, settingsData, t, profilemanager)
+---@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
+function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
 
 	--| Parameters
 
-	---@class backupboxSettingsData # settingsData
-	---@field compactBackup boolean Whether to skip including additional white spaces to the backup string for more readability
+	---Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
+	--- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
+	---@alias CreateProfilesPage_param4 # settingsData
+	---| backupboxSettingsData
+	---| table
 
-	---@class profilesPageCreationData : profilemanagerCreationData, settingsPageCreationData_base, settingsPageEvents, liteObject # t
+		---@class backupboxSettingsData
+		---@field compactBackup boolean Whether to skip including additional white spaces to the backup string for more readability
+
+	---@class profilesPageCreationData : profilemanagerCreationData, settingsmanagerCreationData_base, settingsmanagerEvents, liteObject # t
 	---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** "Profiles"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field title? string Text to be shown as the title of the settings page | ***Default:*** "Data Management"
 	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** *describing profiles & backup*
@@ -5048,29 +5227,239 @@ end
 
 --[[ ADDON INFO ]]
 
-function wt.CreateAddonmanager()
-	---@alias typename_addonmanager
-	---| "Addonmanager"
+---Create a non-GUI addonmanager widget providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
+---***
+---@param addon CreateAddonmanager_param1 The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
+---@param t? addonmanagerCreationData Optional parameters
+---***
+---@return addonmanager? addonmanager Reference to the new addonmanager widget, utility functions and more wrapped in a table | ***Default:*** `nil`
+function wt.CreateAddonmanager(addon, t)
+
+	--| Parameters
+
+	---The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
+	---@alias CreateAddonmanager_param1 # addon
+	---| uiAddon
+
+	---@class addonmanagerCreationData : togglableObject
+	---@field changelog? { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
+	---@field listeners? addonmanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+
+		---@class addonmanagerEventListeners
+		---@field loaded? addonmanagerEventListener_changed[] Ordered list of functions to call when an "changed" event is invoked after the info of the managed addon has been loaded
+		---@field [string]? addonmanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
+
+		---@class addonmanagerEventListener_changed : eventHandlerIndex
+		---@field handler AddonmanagerEventHandler_changed Handler function to register for call
+
+			---@alias AddonmanagerEventHandler_changed
+			---| fun(self: AddonmanagerType, addon: string, user: boolean) Called when an "changed" event is invoked after the info of the managed addon has been loaded<hr><p>@*param* `self` AddonmanagerType ― Reference to the widget table</p><p>@*param* `addon` string ― Namespace name of the addon that was loaded by the manager</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+				---@alias AddonmanagerType
+				---| addonmanager
+				---| addonPage
+
+		---@class addonmanagerEventListener_any : eventTag, eventHandlerIndex
+		---@field handler AddonmanagerEventHandler_any Handler function to register for call
+
+			---@alias AddonmanagerEventHandler_any
+			---| fun(self: AddonmanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` AddonmanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class addonmanager
+	---@field invoke addonmanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener addonmanager_setListener Hook a handler function as a listener for a custom widget event
+	local _ = {}
+
+		---Returns the type of this object
+		---***
+		---@return typename_addonmanager
+		---<p></p>
+		function _.getType() return "Addonmanager" end
+
+			---@alias typename_addonmanager
+			---| "Addonmanager"
+
+		---Checks and returns if the type of this object is equal to the string provided
+		---@param type string|typename
+		---@return boolean
+		---<p></p>
+		function _.isType(type) return false end
+
+		--| Events
+
+		---@class addonmanager_invoke
+		local invoke = {}
+
+			---Invoke a "changed" event calling registered listeners
+			---@param addon string
+			---@param user boolean
+			function invoke.changed(addon, user) end
+
+			---Invoke a custom event calling registered listeners
+			---@param event string Custom event tag
+			---@param ... any Any number of leftover arguments passed to listeners
+			function invoke._(event, ...) end
+
+		---@class addonmanager_setListener
+		local setListener = {}
+
+			---Register a listener for a "changed" event trigger
+			---@param listener AddonmanagerEventHandler_changed Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(listener, callIndex) end
+
+			---Register a listener for a custom event trigger
+			---@param event string Custom event tag
+			---@param listener AddonmanagerEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener._(event, listener, callIndex) end
+
+		--| Metadata
+
+		---Addon namespace name of the addon managed by this widget
+		---@return string
+		function _.getAddon() return "" end
+
+		---Addon display title
+		---@return string
+		function _.getTitle() return "" end
+
+		---Latest version number text
+		---@return string? ***Default:*** `nil`
+		function _.getVersion() end
+
+		---Date of the latest release
+		---***
+		---@return string? date Formatted date text
+		---@return integer? day Day of the month
+		---@return integer? month Month number
+		---@return integer? year
+		function _.getDate() end
+
+		---Addon list category name
+		---@return string? ***Default:*** `nil`
+		function _.getCategory() end
+
+		---Addon description notes
+		---@return string? ***Default:*** `nil`
+		function _.getNotes() end
+
+		---Author name
+		---@return string? ***Default:*** `nil`
+		function _.getAuthor() end
+
+		---License description
+		---@return string? ***Default:*** `nil`
+		function _.getLicense() end
+
+		---CurseForge link
+		---@return string? ***Default:*** `nil`
+		function _.getCurseForgeLink() end
+
+		---Wago link
+		---@return string? ***Default:*** `nil`
+		function _.getWagoLink() end
+
+		---Repository link
+		---@return string? ***Default:*** `nil`
+		function _.getRepositoryLink() end
+
+		---Contact link for feedback & bug reports
+		---@return string? ***Default:*** `nil`
+		function _.getIssuesLink() end
+
+		---Sponsor names
+		---@return string? # Semicolon separated tiers of comma separated lists of sponsor names | ***Default:*** `nil`
+		function _.getSponsors() end
+
+		---Addon logo texture file path
+		---@return string? ***Default:*** `nil`
+		function _.getLogo() end
+
+		---Formatted changelog text of the latest release & the entire version history
+		---@return string? latest ***Default:*** `nil`
+		---@return string? full ***Default:*** `nil`
+		function _.getChangelog() end
+
+		--| Redefine
+
+		---Change the addon managed by this widget
+		---***
+		---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
+		---@param changelog? CreateAddonmanager_setAddon_param1 String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included
+		--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
+		--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+		--- - ***Examples:***
+		---   - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
+		---   - **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
+		---   - **Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)
+		---   - **Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)
+		---   - **Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)
+		---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
+		---***
+		---@return boolean # True if the operation was successful
+		function _.setAddon(addon, changelog, user, silent)
+
+			---| Parameters
+
+			---String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included
+			--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
+			--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+			--- - ***Examples:***
+			---   - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
+			---   - **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
+			---   - **Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)
+			---   - **Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)
+			---   - **Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)
+			---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
+			---@alias CreateAddonmanager_setAddon_param1
+			---| { [table[]] : string[] }
+			---| nil
+
+			---| Returns
+
+			return false
+		end
+
+	return _
 end
 
 --| Addon Page
 
 ---Create and set up a new settings page with about into for an addon
 ---***
----@param addon string The name of the addon's folder (the addon namespace, not its displayed title)
+---@param addon? CreateAddonPage_param1 The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param t? aboutPageCreationData Optional parameters
+---@param addonmanager CreateAddonPage_param3? Reference to an already existing addonmanager to mutate into an addon about settings page instead of creating a new base widget
 ---***
----@return settingsPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** nil
-function wt.CreateAboutPage(addon, t)
+---@return settingsPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** `nil`
+function wt.CreateAddonPage(addon, t, addonmanager)
 
 	--| Parameters
 
-	---@class aboutPageCreationData : settingsPageCreationData_base # t
+	---The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
+	---@alias CreateAddonPage_param1 # addon
+	---| uiAddon
+	---| nil
+
+	---@class aboutPageCreationData : settingsmanagerCreationData_base, addonmanagerCreationData # t
 	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "Notes")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
-	---@field changelog? { [table[]] : string[] } String arrays nested in subtables representing a version containing the raw changelog data, lines of text with formatting directives included<ul><li>***Note:*** The first line is expected to be the title containing the version number and/or the date of release.</li><li>***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).</li><li>***Examples:***<ul><li>**Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)</li><li>**Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)</li><li>**Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)</li><li>**Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)</li><li>**Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)</li><li>**Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 	---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `true`
 
+	---Reference to an already existing addonmanager to mutate into an addon about settings page instead of creating a new base widget
+	---@alias CreateAddonPage_param3 # addonmanager
+	---| addonmanager
+	---| nil
+
 	--| Returns
+
+	---@class addonPage : addonmanager
+	---@field settings settingsPage
+	local _ = {}
 
 	---@alias typename_addonPage
 	---| "AddonPage"

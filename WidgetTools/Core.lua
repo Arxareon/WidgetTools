@@ -940,7 +940,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[ Addon ]
 
 	---@type settingsPage
-	local mainPage = wt.CreateAboutPage(rs.addon, {
+	local mainPage = wt.CreateAddonPage(rs.addon, {
 		register = true,
 		name = "About",
 		changelog = ns.changelog
@@ -955,7 +955,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local debugToggle
 
 	---@type settingsPage
-	local specificationsPage = wt.CreateSettingsPage(rs.addon, {
+	local specificationsPage = wt.CreateSettingsPage({
 		register = mainPage,
 		name = "Specifications",
 		title = rs.strings.specifications.title,
@@ -1145,7 +1145,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[ Toolboxes ]
 
 	---@type settingsPage
-	local toolboxesPage = wt.CreateSettingsPage(rs.addon, {
+	local toolboxesPage = wt.CreateSettingsPage({
 		register = mainPage,
 		name = "Addons",
 		title = rs.strings.toolboxes.title,
