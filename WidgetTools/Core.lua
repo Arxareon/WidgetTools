@@ -939,12 +939,11 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[ Addon ]
 
-	---@type settingsPage
 	local mainPage = wt.CreateAddonPage(rs.addon, {
 		register = true,
 		name = "About",
 		changelog = ns.changelog
-	})
+	}).settings
 
 	--[ Specifications ]
 
@@ -1243,31 +1242,31 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						--[ List Reliant Addons ]
 
 						for i = 1, #entry.addons do
-							local addon = entry.addons[i]
+							local a = entry.addons[i]
 
-							if C_AddOns.IsAddOnLoaded(addon) then
+							if C_AddOns.IsAddOnLoaded(a) then
 								local data = {
-									title = C_AddOns.GetAddOnMetadata(addon, "Title"),
-									version = C_AddOns.GetAddOnMetadata(addon, "Version"),
-									day = C_AddOns.GetAddOnMetadata(addon, "X-Day"),
-									month = C_AddOns.GetAddOnMetadata(addon, "X-Month"),
-									year = C_AddOns.GetAddOnMetadata(addon, "X-Year"),
-									category = C_AddOns.GetAddOnMetadata(addon, "Category"),
-									notes = C_AddOns.GetAddOnMetadata(addon, "Notes"),
-									author = C_AddOns.GetAddOnMetadata(addon, "Author"),
-									license = C_AddOns.GetAddOnMetadata(addon, "X-License"),
-									curse = C_AddOns.GetAddOnMetadata(addon, "X-CurseForge"),
-									wago = C_AddOns.GetAddOnMetadata(addon, "X-Wago"),
-									repo = C_AddOns.GetAddOnMetadata(addon, "X-Repository"),
-									issues = C_AddOns.GetAddOnMetadata(addon, "X-Issues"),
-									sponsors = C_AddOns.GetAddOnMetadata(addon, "X-Sponsors"),
-									topSponsors = C_AddOns.GetAddOnMetadata(addon, "X-TopSponsors"),
-									logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture"),
+									title = C_AddOns.GetAddOnMetadata(a, "Title"),
+									version = C_AddOns.GetAddOnMetadata(a, "Version"),
+									day = C_AddOns.GetAddOnMetadata(a, "X-Day"),
+									month = C_AddOns.GetAddOnMetadata(a, "X-Month"),
+									year = C_AddOns.GetAddOnMetadata(a, "X-Year"),
+									category = C_AddOns.GetAddOnMetadata(a, "Category"),
+									notes = C_AddOns.GetAddOnMetadata(a, "Notes"),
+									author = C_AddOns.GetAddOnMetadata(a, "Author"),
+									license = C_AddOns.GetAddOnMetadata(a, "X-License"),
+									curse = C_AddOns.GetAddOnMetadata(a, "X-CurseForge"),
+									wago = C_AddOns.GetAddOnMetadata(a, "X-Wago"),
+									repo = C_AddOns.GetAddOnMetadata(a, "X-Repository"),
+									issues = C_AddOns.GetAddOnMetadata(a, "X-Issues"),
+									sponsors = C_AddOns.GetAddOnMetadata(a, "X-Sponsors"),
+									topSponsors = C_AddOns.GetAddOnMetadata(a, "X-TopSponsors"),
+									logo = C_AddOns.GetAddOnMetadata(a, "IconTexture"),
 								}
 
 								wt.CreatePanel({
 									parent = toolboxPanel,
-									name = addon,
+									name = a,
 									label = false,
 									arrange = {},
 									size = { w = width - 42, h = 84 },
@@ -1293,10 +1292,10 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 										local function toggleAddon(state)
 											if state then
-												C_AddOns.EnableAddOn(addon)
+												C_AddOns.EnableAddOn(a)
 												addonPanel:SetAlpha(1)
 											else
-												C_AddOns.DisableAddOn(addon)
+												C_AddOns.DisableAddOn(a)
 												addonPanel:SetAlpha(0.5)
 											end
 										end
@@ -1304,12 +1303,12 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										local toggle = wt.CreateCheckbox({
 											parent = addonPanel,
 											name = "Toggle",
-											title = cr(C_AddOns.GetAddOnMetadata(addon, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
+											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
 											tooltip = { lines = { { text = rs.strings.about.toggle.tooltip, }, } },
 											arrange = {},
 											size = { w = 300, },
 											font = { normal = "GameFontNormalMed1", },
-											getData = function() return C_AddOns.GetAddOnEnableState(addon) > 0 end,
+											getData = function() return C_AddOns.GetAddOnEnableState(a) > 0 end,
 											saveData = function(state) toggleAddon(state) end,
 											instantSave = false,
 											listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },

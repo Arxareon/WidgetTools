@@ -54,8 +54,6 @@ end
 function wt.CreateAction(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_action
 	local typename = "Action"
 
@@ -122,9 +120,10 @@ end
 --[[ TOGGLE ]]
 
 function wt.CreateToggle(t)
-	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
+	--[ Parameters  ]
+
+	t = type(t) == "table" and t or {}
 
 	---@type typename_toggle
 	local typename = "Toggle"
@@ -295,10 +294,11 @@ local itemsets = {
 function wt.CreateSelector(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_selector
 	local typename = "Selector"
+
+	---@type typename_toggle
+	local typenameItem = "Toggle"
 
 	--| Events
 
@@ -370,7 +370,7 @@ function wt.CreateSelector(t)
 	local function setToggle(index, silent)
 		local new = false
 
-		if wt.IsWidget(t.items[index]) == "Toggle" then
+		if wt.IsWidget(t.items[index]) == typenameItem then
 			--| Register the already defined toggle widget
 
 			new = true
@@ -508,10 +508,11 @@ end
 function wt.CreateSpecialSelector(itemset, t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_specialSelector
 	local typename = "SpecialSelector"
+
+	---@type typename_toggle
+	local typenameItem = "Toggle"
 
 	--| Events
 
@@ -654,7 +655,7 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--Register starting items
 	for i = 1, #t.items do if type(t.items[i]) == "table" then
-		if t.items[i].isType and t.items[i].isType("Toggle") then
+		if wt.IsWidget(t.items[i]) == typenameItem then
 			--| Register the already defined toggle widget
 
 			specialSelector.toggles[i] = t.items[i]
@@ -689,10 +690,11 @@ end
 function wt.CreateMultiselector(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_multiselector
 	local typename = "Multiselector"
+
+	---@type typename_toggle
+	local typenameItem = "Toggle"
 
 	--| Events
 
@@ -769,7 +771,7 @@ function wt.CreateMultiselector(t)
 
 		local new = false
 
-		if item.isType and item.isType("Toggle") then
+		if wt.IsWidget(item) == typenameItem then
 			--| Register the already defined toggle widget
 
 			new = true
@@ -946,8 +948,6 @@ end
 function wt.CreateTextbox(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_textbox
 	local typename = "Textbox"
 
@@ -1072,8 +1072,6 @@ end
 
 function wt.CreateNumeric(t)
 	t = type(t) == "table" and t or {}
-
-	--[ Properties ]
 
 	---@type typename_numeric
 	local typename = "Numeric"
@@ -1245,8 +1243,6 @@ end
 
 function wt.CreateColormanager(t)
 	t = type(t) == "table" and t or {}
-
-	--[ Properties ]
 
 	---@type typename_colormanager
 	local typename = "Colormanager"
@@ -1428,8 +1424,6 @@ end
 function wt.CreateSettingsmanager(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_settingsmanager
 	local typename = "Settingsmanager"
 
@@ -1607,7 +1601,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	--| Subcategories
 
 	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
-		if type(pages[i].isType) ~= "function" and not pages[i].isType("SettingsPage") then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
+		if wt.IsWidget(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
 
 		table.insert(category.pages, pages[i])
 
@@ -1635,10 +1629,11 @@ end
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
-	t = type(t) == "table" and t or {}
-	t.category = type(t.category) == "string" and t.category or ""
+	--[ Parameters  ]
 
-	--[ Properties ]
+	t = type(t) == "table" and t or {}
+
+	t.category = type(t.category) == "string" and t.category or ""
 
 	---@type typename_profilemanager
 	local typename = "Profilemanager"
@@ -1963,8 +1958,6 @@ function wt.CreateAddonmanager(addon, t)
 
 	t = type(t) == "table" and t or {}
 
-	--[ Properties ]
-
 	---@type typename_addonmanager
 	local typename = "Addonmanager"
 
@@ -2016,7 +2009,7 @@ function wt.CreateAddonmanager(addon, t)
 	function addonmanager.getLogo() return logo end
 	function addonmanager.getChangelog() return changelogLatest, changelog end
 
-	--| Redefine
+	--| Rebind
 
 	function addonmanager.setAddon(newAddon, newChangelog, user, silent)
 		if newAddon == addon then return true end
@@ -2053,6 +2046,11 @@ function wt.CreateAddonmanager(addon, t)
 	end
 
 	--[ Initialization ]
+
+	--Register event handlers
+	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
+		if k == "_" then addonmanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else addonmanager.setListener[k](v[i].handler, v[i].callIndex) end
+	end end end end
 
 	--Load metadata
 	addonmanager.setAddon(addon, t.changelog)

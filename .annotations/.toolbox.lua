@@ -3573,6 +3573,22 @@ function wt.CreateCopybox(t)
 	---@field frame Frame|nil
 	---@field label FontString|nil
 	---@field textbox customEditbox|textbox|nil
+	local _ = {}
+
+		---Returns the type of this object
+		---***
+		---@return typename_copybox
+		---<p></p>
+		function _.getType() return "Copybox" end
+
+			---@alias typename_copybox
+			---| "Copybox"
+
+		---Checks and returns if the type of this object is equal to the string provided
+		---@param type string|typename
+		---@return boolean
+		---<p></p>
+		function _.isType(type) return false end
 
 	return {}
 end
@@ -5383,7 +5399,7 @@ function wt.CreateAddonmanager(addon, t)
 		---@return string? full ***Default:*** `nil`
 		function _.getChangelog() end
 
-		--| Redefine
+		--| Rebind
 
 		---Change the addon managed by this widget
 		---***
@@ -5436,7 +5452,7 @@ end
 ---@param t? aboutPageCreationData Optional parameters
 ---@param addonmanager CreateAddonPage_param3? Reference to an already existing addonmanager to mutate into an addon about settings page instead of creating a new base widget
 ---***
----@return settingsPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** `nil`
+---@return addonPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** `nil`
 function wt.CreateAddonPage(addon, t, addonmanager)
 
 	--| Parameters
@@ -5459,6 +5475,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 	---@class addonPage : addonmanager
 	---@field settings settingsPage
+	---@field setAddon nil
 	local _ = {}
 
 	---@alias typename_addonPage

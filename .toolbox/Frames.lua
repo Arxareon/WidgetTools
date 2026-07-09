@@ -51,8 +51,6 @@ end
 function wt.CreatePanel(t)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Panel")
 
 	--[ Frame ]
@@ -241,8 +239,6 @@ end
 function wt.CreateButton(t, action)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_action
 	local typenameBase = "Action"
 
@@ -262,10 +258,8 @@ function wt.CreateButton(t, action)
 
 	--[ Widget ]
 
-	action = action and action.isType and action.isType(typenameBase) and action or wt.CreateAction(t)
-
 	---@type actionButton|action
-	local button = action
+	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
 
 	--[ Getters & Setters ]
 
@@ -307,8 +301,6 @@ end
 function wt.CreateCustomButton(t, action)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_action
 	local typenameBase = "Action"
 
@@ -320,10 +312,8 @@ function wt.CreateCustomButton(t, action)
 
 	--[ Widget ]
 
-	action = action and action.isType and action.isType(typenameBase) and action or wt.CreateAction(t)
-
 	---@type customButton|action
-	local button = action
+	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
 
 	--[ Getters & Setters ]
 
@@ -377,7 +367,12 @@ end
 function wt.CreateCheckbox(t, toggle)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.size = t.size or {}
+
+	t.font = t.font or {}
+	t.font.normal = t.font.normal or "GameFontNormal"
+	t.font.highlight = t.font.highlight or "GameFontHighlight"
+	t.font.disabled = t.font.disabled or "GameFontDisable"
 
 	---@type typename_toggle
 	local typenameBase = "Toggle"
@@ -385,12 +380,13 @@ function wt.CreateCheckbox(t, toggle)
 	---@type typename_checkbox
 	local typename = "Checkbox"
 
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+
 	--[ Widget ]
 
-	toggle = toggle and toggle.isType and toggle.isType(typenameBase) and toggle or wt.CreateToggle(t)
-
 	---@type checkbox|toggle
-	local checkbox = toggle
+	local checkbox = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
 
 	--[ Getters & Setters ]
 
@@ -399,16 +395,14 @@ function wt.CreateCheckbox(t, toggle)
 
 	--[ Frame ]
 
-	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Toggle")
-
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
 	checkbox.widget = CreateFrame("CheckButton", name .. typename, checkbox.frame, "SettingsCheckboxTemplate")
 
 	--| Position & dimensions
 
-	t.size = t.size or {}
 	t.size.h = t.size.h or checkbox.widget:GetHeight()
 	t.size.w = t.label == false and t.size.h * (30 / 29) or t.size.w or 190
+
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(checkbox.frame, t.position) end
@@ -433,13 +427,6 @@ function wt.CreateCheckbox(t, toggle)
 	if t.keepOnTop then checkbox.frame:SetToplevel(t.keepOnTop) end
 
 	--| Label
-
-	t.font = t.font or {}
-	t.font.normal = t.font.normal or "GameFontNormal"
-	t.font.highlight = t.font.highlight or "GameFontHighlight"
-	t.font.disabled = t.font.disabled or "GameFontDisable"
-
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Toggle"
 
 	checkbox.label = t.label ~= false and wt.CreateTitle(checkbox.frame, {
 		offset = { x = t.size.h * (30 / 29) + 6, },
@@ -665,7 +652,14 @@ end
 function wt.CreateClassicCheckbox(t, toggle)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.size = t.size or {}
+	t.size.h = t.size.h or 26
+	t.size.w = t.label == false and t.size.h or t.size.w or 180
+
+	t.font = t.font or {}
+	t.font.normal = t.font.normal or "GameFontHighlight"
+	t.font.highlight = t.font.highlight or "GameFontNormal"
+	t.font.disabled = t.font.disabled or "GameFontDisable"
 
 	---@type typename_toggle
 	local typenameBase = "Toggle"
@@ -673,12 +667,13 @@ function wt.CreateClassicCheckbox(t, toggle)
 	---@type typename_classicCheckbox
 	local typename = "ClassicCheckbox"
 
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+
 	--[ Widget ]
 
-	toggle = toggle and toggle.isType and toggle.isType(typenameBase) and toggle or wt.CreateToggle(t)
-
 	---@type customCheckbox|toggle
-	local checkbox = toggle
+	local checkbox = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
 
 	--[ Getters & Setters ]
 
@@ -687,19 +682,10 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 	--[ Frame ]
 
-	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
-
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
 	checkbox.widget = CreateFrame("CheckButton", name .. typename, checkbox.frame, "InterfaceOptionsCheckButtonTemplate")
 
 	--| Label
-
-	t.font = t.font or {}
-	t.font.normal = t.font.normal or "GameFontHighlight"
-	t.font.highlight = t.font.highlight or "GameFontNormal"
-	t.font.disabled = t.font.disabled or "GameFontDisable"
-
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
 	if t.label ~= false then
 		checkbox.label = _G[name .. "CheckboxText"]
@@ -711,10 +697,6 @@ function wt.CreateClassicCheckbox(t, toggle)
 	else _G[name .. "CheckboxText"]:Hide() end
 
 	--| Shared setup
-
-	t.size = t.size or {}
-	t.size.h = t.size.h or 26
-	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
 	setUpToggleFrame(checkbox, title, t)
 
@@ -773,7 +755,9 @@ end
 function wt.CreateRadiobutton(t, toggle)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.size = t.size or {}
+	t.size.h = t.size.h or 18
+	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
 	---@type typename_toggle
 	local typenameBase = "Toggle"
@@ -781,32 +765,27 @@ function wt.CreateRadiobutton(t, toggle)
 	---@type typename_radiobutton
 	local typename = "Radiobutton"
 
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+
+	local clearable = t.clearable
+
 	--[ Widget ]
 
-	toggle = toggle and toggle.isType and toggle.isType(typenameBase) and toggle or wt.CreateToggle(t)
-
 	---@type radiobutton|toggle
-	local radiobutton = toggle
+	local radiobutton = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
 
 	--[ Getters & Setters ]
 
 	function radiobutton.getType() return typenameBase, typename end
 	function radiobutton.isType(type) return type == typenameBase or type == typename end
 
-	--[ Properties ]
-
-	local clearable = t.clearable
-
 	--[ Frame ]
-
-	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 
 	radiobutton.frame = CreateFrame("Frame", name, t.parent)
 	radiobutton.widget = CreateFrame("CheckButton", name .. typename, radiobutton.frame, "UIRadioButtonTemplate")
 
 	--| Label
-
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
 	if t.label ~= false then
 		radiobutton.label = _G[name .. "RadioButtonText"]
@@ -818,10 +797,6 @@ function wt.CreateRadiobutton(t, toggle)
 	else _G[name .. "RadioButtonText"]:Hide() end
 
 	--| Shared setup
-
-	t.size = t.size or {}
-	t.size.h = t.size.h or 18
-	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
 	setUpToggleFrame(radiobutton, title, t)
 
@@ -960,8 +935,6 @@ end
 function wt.CreateRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_selector
 	local typenameBase = "Selector"
 
@@ -976,7 +949,8 @@ function wt.CreateRadiogroup(t, selector)
 	--[ Widget ]
 
 	local selectorType = wt.IsWidget(selector)
-	selector = (selectorType == "Selector" or selectorType == "SpecialSelector") and selector or wt.CreateSelector(t)
+
+	selector = (selectorType == typenameBase or selectorType == "SpecialSelector") and selector or wt.CreateSelector(t)
 
 	local radiogroup
 	if selectorType == typenameBase then --WATCH replace branching with a better solution to assign the right annotations
@@ -1120,7 +1094,9 @@ end
 function wt.CreateDropdownRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.width = t.width or 180
+
+	t.scrollThreshold = t.scrollThreshold or 15
 
 	---@type typename_selector
 	local typenameBase = "Selector"
@@ -1132,41 +1108,11 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	local typename = "DropdownRadiogroup"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
-	local title = t.title or name or typename
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
 	local clearable = t.clearable
 
 	--[ Widget ]
-
-	selector = wt.IsWidget(selector) == typenameBase and selector or wt.CreateSelector(t)
-
-	--[ Frame ]
-
-	local holderFrame = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
-
-	--| Position & dimensions
-
-	t.width = t.width or 180
-	local arrange = type(t.arrange) == "table" and t.arrange or {}
-
-	if not t.arrange and t.position then wt.SetPosition(holderFrame, t.position) end
-	wt.SetArrangementDirective(holderFrame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
-
-	holderFrame:SetSize(t.width + 4, 44)
-
-	--| Visibility
-
-	wt.SetVisibility(holderFrame, t.visible ~= false)
-
-	if t.frameStrata then holderFrame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then holderFrame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then holderFrame:SetToplevel(t.keepOnTop) end
-
-	--| Scroll
-
-	t.scrollThreshold = t.scrollThreshold or 15
-
-	--[ Dropdown Menu ]
 
 	---@type dropdownRadiogroup|radiogroup
 	local dropdown = wt.CreateRadiogroup({
@@ -1184,9 +1130,30 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		instantSave = t.instantSave,
 		dataManagement = t.dataManagement,
 		utilityMenu = false,
-	}, selector)
+	}, wt.IsWidget(selector) == typenameBase and selector or wt.CreateSelector(t))
 
-	dropdown.holderFrame = holderFrame
+	--[ Frame ]
+
+	dropdown.holderFrame = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
+
+	--| Position & dimensions
+
+	local arrange = type(t.arrange) == "table" and t.arrange or {}
+
+	if not t.arrange and t.position then wt.SetPosition(dropdown.holderFrame, t.position) end
+	wt.SetArrangementDirective(dropdown.holderFrame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+
+	dropdown.holderFrame:SetSize(t.width + 4, 44)
+
+	--| Visibility
+
+	wt.SetVisibility(dropdown.holderFrame, t.visible ~= false)
+
+	if t.frameStrata then dropdown.holderFrame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then dropdown.holderFrame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then dropdown.holderFrame:SetToplevel(t.keepOnTop) end
+
+	--[ Dropdown Menu ]
 
 	dropdown.menu = wt.CreatePanel({
 		parent = UIParent,
@@ -1665,8 +1632,6 @@ end
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_specialSelector
 	local typenameBase = "SpecialSelector"
 
@@ -1680,8 +1645,6 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if wt.IsWidget(selector) == typenameBase then itemset = selector.getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
 
-	--[ Frame ]
-
 	---@type specialRadiogroupCreationData|radiogroupCreationData
 	t = us.Pull(t or {}, {
 		labels = false,
@@ -1692,6 +1655,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	---@type specialRadiogroup
 	local radiogroup = wt.CreateRadiogroup(t, selector)
+
+	--[ Frame ]
 
 	--| Tooltip
 
@@ -1734,8 +1699,6 @@ end
 function wt.CreateCheckgroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_multiselector
 	local typenameBase = "Multiselector"
 
@@ -1747,10 +1710,8 @@ function wt.CreateCheckgroup(t, selector)
 
 	--[ Widget ]
 
-	selector = wt.IsWidget(selector) == typenameBase and selector or wt.CreateMultiselector(t)
-
 	---@type checkgroup|multiselector
-	local checkgroup = selector
+	local checkgroup = wt.IsWidget(selector) == typenameBase and selector or wt.CreateMultiselector(t)
 
 	--[ Getters & Setters ]
 
@@ -2076,7 +2037,9 @@ end
 function wt.CreateEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.size = t.size or {}
+	t.size.w = t.size.w or 180
+	t.size.h = t.size.h or 18
 
 	---@type typename_textbox
 	local typenameBase = "Textbox"
@@ -2089,10 +2052,8 @@ function wt.CreateEditbox(t, textbox)
 
 	--[ Widget ]
 
-	textbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
-
 	---@type singlelineEditbox|textbox
-	local editbox = textbox
+	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
 
 	--[ Getters & Setters ]
 
@@ -2105,10 +2066,6 @@ function wt.CreateEditbox(t, textbox)
 	editbox.widget = CreateFrame("EditBox", name .. "EditBox", editbox.frame, "InputBoxTemplate")
 
 	--| Dimensions
-
-	t.size = t.size or {}
-	t.size.w = t.size.w or 180
-	t.size.h = t.size.h or 18
 
 	editbox.frame:SetSize(t.size.w, t.size.h + (t.label ~= false and 18 or 0))
 	editbox.widget:SetSize(t.size.w - 6, t.size.h - 1)
@@ -2130,7 +2087,9 @@ end
 function wt.CreateCustomEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.size = t.size or {}
+	t.size.w = t.size.w or 180
+	t.size.h = t.size.h or 18
 
 	---@type typename_textbox
 	local typenameBase = "Textbox"
@@ -2143,10 +2102,8 @@ function wt.CreateCustomEditbox(t, textbox)
 
 	--[ Widget ]
 
-	textbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
-
 	---@type customEditbox|textbox
-	local editbox = textbox
+	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
 
 	--[ Getters & Setters ]
 
@@ -2159,10 +2116,6 @@ function wt.CreateCustomEditbox(t, textbox)
 	editbox.widget = CreateFrame("EditBox", name .. "EditBox", editbox.frame, BackdropTemplateMixin and "BackdropTemplate")
 
 	--| Dimensions
-
-	t.size = t.size or {}
-	t.size.w = t.size.w or 180
-	t.size.h = t.size.h or 18
 
 	editbox.frame:SetSize(t.size.w, t.size.h - (t.label ~= false and -18 or 0))
 	editbox.widget:SetSize(t.size.w, t.size.h)
@@ -2195,7 +2148,7 @@ end
 function wt.CreateMultilineEditbox(t, textbox)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.scrollSpeed = t.scrollSpeed or 0.25
 
 	---@type typename_textbox
 	local typenameBase = "Textbox"
@@ -2208,10 +2161,8 @@ function wt.CreateMultilineEditbox(t, textbox)
 
 	--[ Widget ]
 
-	textbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
-
 	---@type multilineEditbox|textbox
-	local editbox = textbox
+	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
 
 	--[ Getters & Setters ]
 
@@ -2256,8 +2207,6 @@ function wt.CreateMultilineEditbox(t, textbox)
 	}) or nil
 
 	--| Scroll speed
-
-	t.scrollSpeed = t.scrollSpeed or 0.25
 
 	editbox.scrollframe.ScrollBar.SetPanExtentPercentage = function() --WATCH: Change when Blizzard provides a better way to overriding the built-in update function
 		local height = editbox.scrollframe:GetHeight()
@@ -2355,6 +2304,21 @@ end
 
 function wt.CreateCopybox(t) --FIX lite
 	t = type(t) == "table" and t or {}
+
+	t.size = t.size or {}
+	t.size.w = t.size.w or 180
+	t.size.h = t.size.h or 18
+
+	t.font = t.font or "GameFontNormalSmall"
+	t.color = t.color or { r = 0.6, g = 0.8, b = 1, a = 1 }
+	t.colorOnMouse = t.colorOnMouse or { r = 0.8, g = 0.95, b = 1, a = 1 }
+
+	---@type typename_copybox
+	local typename = "Copybox"
+
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+
 	local text = type(t.value) == "string" and t.value or ""
 
 	--[ Widget ]
@@ -2362,17 +2326,17 @@ function wt.CreateCopybox(t) --FIX lite
 	---@type copybox
 	local copybox = {}
 
-	--[ Frame ]
+	--[ Getters & Setters ]
 
-	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Copybox")
+	function copybox.getType() return typename end
+	function copybox.isType(type) return type == typename end
+
+	--[ Frame ]
 
 	copybox.frame = CreateFrame("Frame", name, t.parent)
 
 	--| Position & dimensions
 
-	t.size = t.size or {}
-	t.size.w = t.size.w or 180
-	t.size.h = t.size.h or 18
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(copybox.frame, t.position) end
@@ -2390,8 +2354,6 @@ function wt.CreateCopybox(t) --FIX lite
 
 	--| Label
 
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Copybox"
-
 	copybox.label = t.label ~= false and wt.CreateTitle(copybox.frame, {
 		offset = { x = -1, },
 		width = t.size.w,
@@ -2400,10 +2362,6 @@ function wt.CreateCopybox(t) --FIX lite
 	}) or nil
 
 	--| Textbox
-
-	t.font = t.font or "GameFontNormalSmall"
-	t.color = t.color or { r = 0.6, g = 0.8, b = 1, a = 1 }
-	t.colorOnMouse = t.colorOnMouse or { r = 0.8, g = 0.95, b = 1, a = 1 }
 
 	copybox.textbox = wt.CreateCustomEditbox({
 		parent = copybox.frame,
@@ -2455,10 +2413,12 @@ local customPopupInputBoxFrame
 
 function wt.CreatePopupInputbox(t) --FIX lite
 	t = type(t) == "table" and t or {}
+
 	t.position = type(t.position) == "table" and t.position or {
 		anchor = "TOP",
 		offset = { y = -320 }
 	}
+
 	t.text = type(t.text) == "string" and t.text or ""
 	t.title = type(t.title) == "string" and t.title or nil
 
@@ -2579,7 +2539,7 @@ end
 function wt.CreateSlider(t, numeric)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.width = t.width or 180
 
 	---@type typename_numeric
 	local typenameBase = "Numeric"
@@ -2594,10 +2554,8 @@ function wt.CreateSlider(t, numeric)
 
 	--[ Widget ]
 
-	numeric = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
-
 	---@type numericSlider|numeric
-	local slider = numeric
+	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
 
 	--[ Getters & Setters ]
 
@@ -2611,7 +2569,6 @@ function wt.CreateSlider(t, numeric)
 
 	--| Position & dimensions
 
-	t.width = t.width or 180
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(slider.frame, t.position) end
@@ -2891,7 +2848,7 @@ end
 function wt.CreateClassicSlider(t, numeric)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.width = t.width or 160
 
 	---@type typename_numeric
 	local typenameBase = "Numeric"
@@ -2906,10 +2863,8 @@ function wt.CreateClassicSlider(t, numeric)
 
 	--[ Widget ]
 
-	numeric = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
-
 	---@type classicSlider|numeric
-	local slider = numeric
+	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
 
 	--[ Getters & Setters ]
 
@@ -2926,7 +2881,6 @@ function wt.CreateClassicSlider(t, numeric)
 
 	--| Position & dimensions
 
-	t.width = t.width or 160
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(slider.frame, t.position) end
@@ -3308,7 +3262,7 @@ end
 function wt.CreateColorpicker(t, colormanager)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.width = t.width or 120
 
 	---@type typename_colormanager
 	local typenameBase = "Colormanager"
@@ -3321,10 +3275,8 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--[ Widget ]
 
-	colormanager = wt.IsWidget(colormanager) == typenameBase and colormanager or wt.CreateColormanager(t)
-
 	---@type colorpicker|colormanager
-	local colorpicker = colormanager
+	local colorpicker = wt.IsWidget(colormanager) == typenameBase and colormanager or wt.CreateColormanager(t)
 
 	--[ Getters & Setters ]
 
@@ -3337,7 +3289,6 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--| Position & dimensions
 
-	t.width = t.width or 120
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
 	if not t.arrange and t.position then wt.SetPosition(colorpicker.frame, t.position) end
@@ -3616,8 +3567,6 @@ local positioningVisualAids = {}
 
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not us.IsFrame(frame) or type(t) ~= "table" then return end
-
-	--[ Parameters ]
 
 	---@type typename_positionmanager
 	local typenameBase = "Positionmanager"
@@ -4190,8 +4139,6 @@ local fonts, fontItems
 function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or type(textline) ~= "table" or type(textline.GetFont) ~= "function" or type(t) ~= "table" then return end
 
-	--[ Parameters ]
-
 	---@type typename_fontmanager
 	local typenameBase = "Fontmanager"
 
@@ -4199,6 +4146,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 	local typename = "FontOptions"
 
 	if type(t.name) ~= "string" then t.name = textline:GetName() end
+
 	t.dataManagement = t.dataManagement or {}
 	t.dataManagement.category = t.dataManagement.category or addon
 	t.dataManagement.key = t.dataManagement.key or "Font"
@@ -4438,7 +4386,7 @@ end
 function wt.CreateSettingsPage(t, settingsmanager)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
+	t.name = t.name and t.name:gsub("%s+", "")
 
 	---@type typename_settingsmanager
 	local typenameBase = "Settingsmanager"
@@ -4446,8 +4394,8 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	---@type typename_settingsPage
 	local typename = "SettingsPage"
 
-	t.name = t.name and t.name:gsub("%s+", "")
-	local title = type(t.title) == "string" and t.title or addonmanager.getTitle()
+	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
 	local width, height = 0, 0
 
@@ -4461,10 +4409,8 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	--[ Widget ]
 
-	settingsmanager = wt.IsWidget(settingsmanager) == typenameBase and settingsmanager or wt.CreateSettingsmanager(t)
-
 	---@type settingsPage|settingsmanager
-	local page = settingsmanager
+	local page = wt.IsWidget(settingsmanager) == typenameBase and settingsmanager or wt.CreateSettingsmanager(t)
 
 	--[ Getters & Setters ]
 
@@ -4628,11 +4574,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	--[ Initialization ]
 
 	--Register to the Settings panel
-	if t.register then
-		local parent = type(t.register) == "table" and type(t.register.isType) == "function" and t.register.isType("SettingsPage") and t.register or nil
-
-		wt.RegisterSettingsPage(page, parent, t.titleIcon)
-	end
+	if t.register then wt.RegisterSettingsPage(page, wt.IsWidget(t.register) == "SettingsPage" and t.register or nil, t.titleIcon) end
 
 	--Add content, performs tasks
 	if type(t.initialize) == "function" then
@@ -4662,37 +4604,6 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	function category.getType() return "SettingsCategory" end
 	function category.isType(type) return type == "SettingsCategory" end
 
-	--[ Utilities ]
-
-	--| Batched settings data management
-
-	function category.load(handleChanges, user)
-		for i = 1, #category.pages do category.pages[i].load(handleChanges, user) end
-
-		--Call listener
-		if t.onLoad then t.onLoad(user == true) end
-	end
-
-	function category.defaults(user, callListeners)
-		for i = 1, #category.pages do
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
-			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
-			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
-
-			--Update with default values
-			if type(dataManagement) == "table" and type(dataManagement.keys) == "table" then for j = 1, #dataManagement.keys do
-				wt.ResetSettingsData(dataManagement.category, dataManagement.keys[j])
-			end end
-
-			--Call listeners
-			if type(onDefault) == "function" then onDefault(user == true, true) end
-		end
-
-		--Call listener
-		if type(t.onDefaults) == "function" then t.onDefaults(user == true) end
-	end
-
 	--[ Category Pages ]
 
 	--| Parent
@@ -4715,7 +4626,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	--| Subcategories
 
 	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
-		if type(pages[i].isType) ~= "function" and not pages[i].isType("SettingsPage") then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
+		if wt.IsWidget(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
 
 		table.insert(category.pages, pages[i])
 
@@ -4741,9 +4652,9 @@ end
 --[[ PROFILE DATA ]]
 
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
-	t = type(t) == "table" and t or {}
+	if type(settingsData) ~= "table" then return nil end
 
-	--[ Parameters ]
+	t = type(t) == "table" and t or {}
 
 	---@type typename_profilemanager
 	local typenameBase = "Profilemanager"
@@ -4755,7 +4666,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 	profilemanager = wt.IsWidget(profilemanager) == typenameBase and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
-	if not profilemanager or type(settingsData) ~= "table" then return profilemanager end
+	if not profilemanager then return nil end
 
 	---@type profilesPage|profilemanager
 	local profilesPage = profilemanager
@@ -5184,8 +5095,6 @@ end
 function wt.CreateAddonPage(addon, t, addonmanager)
 	t = type(t) == "table" and t or {}
 
-	--[ Parameters ]
-
 	---@type typename_addonmanager
 	local typenameBase = "Addonmanager"
 
@@ -5194,27 +5103,28 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 	--[ Widget ]
 
-	addonmanager = wt.IsWidget(addonmanager) == typenameBase and addonmanager or wt.CreateAddonmanager(addon, t)
-
-	if not addonmanager then return nil end
-
 	---@type addonPage|addonmanager
-	local addonPage = addonmanager
+	local addonPage = wt.IsWidget(addonmanager) == typenameBase and addonmanager or wt.CreateAddonmanager(addon, t)
+
+	if not addonPage then return nil end
 
 	--[ Getters & Setters ]
 
 	function addonPage.getType() return typenameBase, typename end
 	function addonPage.isType(type) return type == typenameBase or type == typename end
 
+	--Make unrebindable
+	addonPage.setAddon = nil
+
 	--[ Settings Page ]
 
-	local title = addonmanager.getTitle()
+	local title = addonPage.getTitle()
 
 	addonPage.settings = wt.CreateSettingsPage({
 		register = t.register,
 		name = t.name or "About",
 		title = t.title or title,
-		description = t.description or addonmanager.getNotes(),
+		description = t.description or addonPage.getNotes(),
 		static = t.static ~= false,
 		arrangement = {},
 		initialize = function(canvas)
@@ -5238,15 +5148,15 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 					local position = { offset = { x = 16, y = -14 } }
 
-					local version = addonmanager.getVersion()
-					local date = addonmanager.getDate()
-					local category = addonmanager.getCategory()
-					local author = addonmanager.getAuthor()
-					local license = addonmanager.getLicense()
-					local curse = addonmanager.getCurseForgeLink()
-					local wago = addonmanager.getWagoLink()
-					local repo = addonmanager.getRepositoryLink()
-					local issues = addonmanager.getIssuesLink()
+					local version = addonPage.getVersion()
+					local date = addonPage.getDate()
+					local category = addonPage.getCategory()
+					local author = addonPage.getAuthor()
+					local license = addonPage.getLicense()
+					local curse = addonPage.getCurseForgeLink()
+					local wago = addonPage.getWagoLink()
+					local repo = addonPage.getRepositoryLink()
+					local issues = addonPage.getIssuesLink()
 
 					if version then
 						local versionLabel = wt.CreateText({
@@ -5440,7 +5350,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 					--[ Changelog ]
 
-					local changelog, fullChangelog = addonmanager.getChangelog()
+					local changelog, fullChangelog = addonPage.getChangelog()
 
 					if not changelog then return end
 
@@ -5532,7 +5442,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 			--[ Sponsors ]
 
-			local sponsors, topSponsors = addonmanager.getSponsors():split("; ")
+			local sponsors, topSponsors = addonPage.getSponsors():split("; ")
 
 			if sponsors then
 				local sponsorsPanel = wt.CreatePanel({
