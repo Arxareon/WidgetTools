@@ -25,16 +25,16 @@ if WidgetToolsDB.lite then
 	wt.CreatePanel = wt.CreateFrame
 	wt.CreateButton = wt.CreateAction
 	wt.CreateCustomButton = wt.CreateAction
-	wt.CreateCheckbox = wt.CreateToggle
-	wt.CreateClassicCheckbox = wt.CreateToggle
-	wt.CreateRadiobutton = wt.CreateToggle
+	wt.CreateCheckbox = wt.CreateBinary
+	wt.CreateClassicCheckbox = wt.CreateBinary
+	wt.CreateRadiobutton = wt.CreateBinary
 	wt.CreateRadiogroup = wt.CreateSelector
 	wt.CreateDropdownRadiogroup = wt.CreateSelector
 	wt.CreateSpecialRadiogroup = wt.CreateSpecialSelector
 	wt.CreateCheckgroup = wt.CreateMultiselector
-	wt.CreateEditbox = wt.CreateTextbox
-	wt.CreateCustomEditbox = wt.CreateTextbox
-	wt.CreateMultilineEditbox = wt.CreateTextbox
+	wt.CreateEditbox = wt.CreateTextual
+	wt.CreateCustomEditbox = wt.CreateTextual
+	wt.CreateMultilineEditbox = wt.CreateTextual
 	wt.CreateCopybox = function() return {} end --FIX lite
 	wt.CreateSlider = wt.CreateNumeric
 	wt.CreateClassicSlider = wt.CreateNumeric
@@ -362,9 +362,9 @@ function wt.CreateCustomButton(t, action)
 end
 
 
---[[ TOGGLE ]]
+--[[ BINARY ]]
 
-function wt.CreateCheckbox(t, toggle)
+function wt.CreateCheckbox(t, binary)
 	t = type(t) == "table" and t or {}
 
 	t.size = t.size or {}
@@ -374,8 +374,8 @@ function wt.CreateCheckbox(t, toggle)
 	t.font.highlight = t.font.highlight or "GameFontHighlight"
 	t.font.disabled = t.font.disabled or "GameFontDisable"
 
-	---@type typename_toggle
-	local typenameBase = "Toggle"
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	---@type typename_checkbox
 	local typename = "Checkbox"
@@ -385,8 +385,8 @@ function wt.CreateCheckbox(t, toggle)
 
 	--[ Widget ]
 
-	---@type checkbox|toggle
-	local checkbox = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
+	---@type checkbox|binary
+	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
 
 	--[ Getters & Setters ]
 
@@ -450,13 +450,13 @@ function wt.CreateCheckbox(t, toggle)
 
 	--| UX
 
-	---Update the widget UI based on the toggle state
+	---Update the widget UI based on the logical state
 	---@param _ any
 	---@param state boolean
-	local function updateToggleState(_, state) checkbox.widget:SetChecked(state) end
+	local function updateBinaryState(_, state) checkbox.widget:SetChecked(state) end
 
 	--Handle widget updates
-	checkbox.setListener.toggled(updateToggleState, 1)
+	checkbox.setListener.flipped(updateBinaryState, 1)
 
 	checkbox.widget:HookScript("OnClick", function(self)
 		local state = self:GetChecked()
@@ -516,10 +516,10 @@ function wt.CreateCheckbox(t, toggle)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.toggle = checkbox.getState() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = checkbox.getState() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				checkbox.setState(wt.clipboard.toggle, true)
-			end }):SetEnabled(wt.clipboard.toggle ~= nil)
+				checkbox.setState(wt.clipboard.binary, true)
+			end }):SetEnabled(wt.clipboard.binary ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
 		end
@@ -542,8 +542,8 @@ function wt.CreateCheckbox(t, toggle)
 
 	--[ Initialization ]
 
-	--Set starting toggle state
-	updateToggleState(nil, checkbox.getState())
+	--Set starting logical state
+	updateBinaryState(nil, checkbox.getState())
 
 	--Set up starting state
 	updateState(nil, checkbox.isEnabled())
@@ -551,11 +551,11 @@ function wt.CreateCheckbox(t, toggle)
 	return checkbox
 end
 
----Set the parameters of a GUI toggle frame
----@param toggle checkbox|customCheckbox|radiobutton
+---Set the parameters of a GUI binary frame
+---@param binary checkbox|customCheckbox|radiobutton
 ---@param title string
 ---@param t checkboxCreationData
-local function setUpToggleFrame(toggle, title, t)
+local function setUpToggleFrame(binary, title, t)
 
 	--[ Frame ]
 
@@ -563,60 +563,60 @@ local function setUpToggleFrame(toggle, title, t)
 
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
-	if not t.arrange and t.position then wt.SetPosition(toggle.frame, t.position) end
-	wt.SetArrangementDirective(toggle.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+	if not t.arrange and t.position then wt.SetPosition(binary.frame, t.position) end
+	wt.SetArrangementDirective(binary.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	toggle.widget:SetPoint("LEFT", (t.size.h - 16) / 2, 0)
+	binary.widget:SetPoint("LEFT", (t.size.h - 16) / 2, 0)
 
-	toggle.frame:SetSize(t.size.w, t.size.h)
-	toggle.widget:SetSize(16, 16)
+	binary.frame:SetSize(t.size.w, t.size.h)
+	binary.widget:SetSize(16, 16)
 
 	--| Visibility
 
-	wt.SetVisibility(toggle.frame, t.visible ~= false)
+	wt.SetVisibility(binary.frame, t.visible ~= false)
 
-	if t.frameStrata then toggle.frame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then toggle.frame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then toggle.frame:SetToplevel(t.keepOnTop) end
+	if t.frameStrata then binary.frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then binary.frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then binary.frame:SetToplevel(t.keepOnTop) end
 
 	--Update the frame order
-	toggle.frame:SetFrameLevel(toggle.frame:GetFrameLevel() + 1)
-	toggle.widget:SetFrameLevel(toggle.widget:GetFrameLevel() - 2)
+	binary.frame:SetFrameLevel(binary.frame:GetFrameLevel() + 1)
+	binary.widget:SetFrameLevel(binary.widget:GetFrameLevel() - 2)
 
 	--[ Events ]
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then toggle.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnClick" then toggle.widget:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
-		else toggle.widget:HookScript(key, value) end
+		if key == "attribute" then binary.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		elseif key == "OnClick" then binary.widget:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
+		else binary.widget:HookScript(key, value) end
 	end end
 
 	--| UX
 
-	---Update the widget UI based on the toggle state
+	---Update the widget UI based on the logical state
 	---@param _ any
 	---@param state boolean
-	local function updateToggleState(_, state) toggle.widget:SetChecked(state) end
+	local function updateBinaryState(_, state) binary.widget:SetChecked(state) end
 
 	--Handle widget updates
-	toggle.setListener.toggled(updateToggleState, 1)
+	binary.setListener.flipped(updateBinaryState, 1)
 
 	--| Tooltip
 
 	if type(t.tooltip) == "table" then
-		wt.AddTooltip(toggle.frame, {
+		wt.AddTooltip(binary.frame, {
 			title = t.tooltip.title or title,
 			lines = t.tooltip.lines,
 			anchor = "ANCHOR_NONE",
 			position = {
 				anchor = "BOTTOMLEFT",
-				relativeTo = toggle.widget,
+				relativeTo = binary.widget,
 				relativePoint = "TOPRIGHT",
 			},
-		}, { triggers = { toggle.widget, }, })
+		}, { triggers = { binary.widget, }, })
 
-		wt.AddWidgetTooltipLines({ toggle.frame }, t.showDefault ~= false and toggle.formatValue(toggle.getDefault()), t.utilityMenu)
+		wt.AddWidgetTooltipLines({ binary.frame }, t.showDefault ~= false and binary.formatValue(binary.getDefault()), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -624,32 +624,32 @@ local function setUpToggleFrame(toggle, title, t)
 	if t.utilityMenu ~= false then wt.CreateContextMenu({
 		triggers = {
 			{
-				frame = toggle.frame,
-				condition = toggle.isEnabled,
+				frame = binary.frame,
+				condition = binary.isEnabled,
 			},
 			{
-				frame = toggle.widget,
-				condition = toggle.isEnabled,
+				frame = binary.widget,
+				condition = binary.isEnabled,
 			},
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.toggle = toggle.getState() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = binary.getState() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				toggle.setState(wt.clipboard.toggle, true)
-			end }):SetEnabled(wt.clipboard.toggle ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() toggle.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle.resetData() end }) end
+				binary.setState(wt.clipboard.binary, true)
+			end }):SetEnabled(wt.clipboard.binary ~= nil)
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() binary.revertData() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() binary.resetData() end }) end
 		end
 	}) end
 
 	--[ Initialization ]
 
-	--Set starting toggle state
-	updateToggleState(nil, toggle.getState())
+	--Set starting logical state
+	updateBinaryState(nil, binary.getState())
 end
 
-function wt.CreateClassicCheckbox(t, toggle)
+function wt.CreateClassicCheckbox(t, binary)
 	t = type(t) == "table" and t or {}
 
 	t.size = t.size or {}
@@ -661,8 +661,8 @@ function wt.CreateClassicCheckbox(t, toggle)
 	t.font.highlight = t.font.highlight or "GameFontNormal"
 	t.font.disabled = t.font.disabled or "GameFontDisable"
 
-	---@type typename_toggle
-	local typenameBase = "Toggle"
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	---@type typename_classicCheckbox
 	local typename = "ClassicCheckbox"
@@ -672,8 +672,8 @@ function wt.CreateClassicCheckbox(t, toggle)
 
 	--[ Widget ]
 
-	---@type customCheckbox|toggle
-	local checkbox = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
+	---@type customCheckbox|binary
+	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
 
 	--[ Getters & Setters ]
 
@@ -752,15 +752,15 @@ function wt.CreateClassicCheckbox(t, toggle)
 	return checkbox
 end
 
-function wt.CreateRadiobutton(t, toggle)
+function wt.CreateRadiobutton(t, binary)
 	t = type(t) == "table" and t or {}
 
 	t.size = t.size or {}
 	t.size.h = t.size.h or 18
 	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
-	---@type typename_toggle
-	local typenameBase = "Toggle"
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	---@type typename_radiobutton
 	local typename = "Radiobutton"
@@ -772,8 +772,8 @@ function wt.CreateRadiobutton(t, toggle)
 
 	--[ Widget ]
 
-	---@type radiobutton|toggle
-	local radiobutton = wt.IsWidget(toggle) == typenameBase and toggle or wt.CreateToggle(t)
+	---@type radiobutton|binary
+	local radiobutton = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
 
 	--[ Getters & Setters ]
 
@@ -975,7 +975,7 @@ function wt.CreateRadiogroup(t, selector)
 	--| Radio button items
 
 	---Set up or create new radio button item
-	---@param item selectorToggle|selectorRadiobutton|checkbox|radiobutton|toggle
+	---@param item selectorBinary|selectorRadiobutton|checkbox|radiobutton|binary
 	---@param active boolean
 	local function setRadioButton(item, active)
 		if active and not us.IsFrame(item.frame) then
@@ -988,7 +988,7 @@ function wt.CreateRadiogroup(t, selector)
 				label = t.labels,
 				tooltip = t.items[item.index].tooltip,
 				position = {
-					relativeTo = item.index ~= 1 and radiogroup.toggles[sameRow and item.index - 1 or item.index - t.columns].frame or radiogroup.label,
+					relativeTo = item.index ~= 1 and radiogroup.binaries[sameRow and item.index - 1 or item.index - t.columns].frame or radiogroup.label,
 					relativePoint = item.index > 1 and (sameRow and "TOPRIGHT" or "BOTTOMLEFT") or (radiogroup.label and "BOTTOMLEFT" or nil),
 					offset = { x = radiogroup.label and item.index == 1 and -4 or 0, y = radiogroup.label and item.index == 1 and -2 or 0}
 				},
@@ -1022,21 +1022,21 @@ function wt.CreateRadiogroup(t, selector)
 	end
 
 	--Set up current items
-	for i = 1, #radiogroup.toggles do
-		setRadioButton(radiogroup.toggles[i], true)
+	for i = 1, #radiogroup.binaries do
+		setRadioButton(radiogroup.binaries[i], true)
 
 		--Handle item updates
-		radiogroup.toggles[i].setListener._("activated", function(self, active) setRadioButton(self, active) end)
+		radiogroup.binaries[i].setListener._("activated", function(self, active) setRadioButton(self, active) end)
 	end
 
 	--Handle item list updates
 	if radiogroup.setListener.updated and radiogroup.setListener.added then
-		radiogroup.setListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.toggles) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
-		radiogroup.setListener.added(function (_, toggle)
-			setRadioButton(toggle, true)
+		radiogroup.setListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.binaries) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
+		radiogroup.setListener.added(function (_, binary)
+			setRadioButton(binary, true)
 
 			--Handle item updates
-			toggle.setListener._("activated", function(self, active) setRadioButton(self, active) end)
+			binary.setListener._("activated", function(self, active) setRadioButton(self, active) end)
 		end)
 	end
 
@@ -1058,7 +1058,7 @@ function wt.CreateRadiogroup(t, selector)
 		end
 
 		local frames = { radiogroup.frame }
-		for i = 1, #radiogroup.toggles do table.insert(frames, radiogroup.toggles[i].frame) end
+		for i = 1, #radiogroup.binaries do table.insert(frames, radiogroup.binaries[i].frame) end
 
 		wt.AddWidgetTooltipLines(frames, defaultValue, t.utilityMenu)
 	end
@@ -1070,8 +1070,8 @@ function wt.CreateRadiogroup(t, selector)
 		condition = radiogroup.isEnabled,
 	}, }
 
-	for i = 1, #radiogroup.toggles do table.insert(openTriggers, {
-		frame = radiogroup.toggles[i].frame,
+	for i = 1, #radiogroup.binaries do table.insert(openTriggers, {
+		frame = radiogroup.binaries[i].frame,
 		condition = radiogroup.isEnabled,
 	}) end
 
@@ -1170,7 +1170,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		keepInBound = true,
 		background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 		border =  { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } },
-		size = { w = t.width, h = 12 + min(#t.items, t.scrollThreshold) * dropdown.toggles[1].frame:GetHeight() },
+		size = { w = t.width, h = 12 + min(#t.items, t.scrollThreshold) * dropdown.binaries[1].frame:GetHeight() },
 	})
 
 	dropdown.menu:SetClampedToScreen(true)
@@ -1388,7 +1388,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			action = function()
 				local selected = dropdown.getSelected()
 
-				dropdown.setSelected(selected and selected - 1 or #dropdown.toggles, true)
+				dropdown.setSelected(selected and selected - 1 or #dropdown.binaries, true)
 			end,
 			dependencies = previousDependencies
 		})
@@ -1532,7 +1532,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		dropdown.holderFrame:SetAttribute("open", state)
 		if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end
 	end)
-	dropdown.setListener.updated(function(self) self.menu:SetHeight(#self.toggles * 18 + 12) end, 1) --TODO add size & scroll update
+	dropdown.setListener.updated(function(self) self.menu:SetHeight(#self.binaries * 18 + 12) end, 1) --TODO add size & scroll update
 
 	--| Backdrop
 
@@ -1665,7 +1665,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		if showDefault then defaultValue = crc(radiogroup.getDefault(), "FFFFFFFF") end
 
 		local frames = { radiogroup.frame }
-		for i = 1, #radiogroup.toggles do table.insert(frames, radiogroup.toggles[i].frame) end
+		for i = 1, #radiogroup.binaries do table.insert(frames, radiogroup.binaries[i].frame) end
 
 		wt.AddWidgetTooltipLines(frames, defaultValue, utilityMenu)
 	end
@@ -1740,7 +1740,7 @@ function wt.CreateCheckgroup(t, selector)
 	end
 
 	---Set up or create new checkbox item
-	---@param item selectorToggle|selectorCheckbox|checkbox|radiobutton|toggle
+	---@param item selectorBinary|selectorCheckbox|checkbox|radiobutton|binary
 	---@param active boolean
 	local function setCheckbox(item, active)
 		if active and not item.frame then
@@ -1753,7 +1753,7 @@ function wt.CreateCheckgroup(t, selector)
 				label = t.labels,
 				tooltip = t.items[item.index].tooltip,
 				position = {
-					relativeTo = item.index ~= 1 and checkgroup.toggles[sameRow and item.index - 1 or item.index - t.columns].frame or checkgroup.label,
+					relativeTo = item.index ~= 1 and checkgroup.binaries[sameRow and item.index - 1 or item.index - t.columns].frame or checkgroup.label,
 					relativePoint = sameRow and "TOPRIGHT" or "BOTTOMLEFT",
 					offset = { x = checkgroup.label and item.index == 1 and -4 or 0, y = checkgroup.label and item.index == 1 and -2 or 0}
 				},
@@ -1790,20 +1790,20 @@ function wt.CreateCheckgroup(t, selector)
 	end
 
 	--Set up starting items
-	for i = 1, #checkgroup.toggles do
-		setCheckbox(checkgroup.toggles[i], true)
+	for i = 1, #checkgroup.binaries do
+		setCheckbox(checkgroup.binaries[i], true)
 
 		--Handle item updates
-		checkgroup.toggles[i].setListener._("activated", function(self, active) setCheckbox(self, active) end)
+		checkgroup.binaries[i].setListener._("activated", function(self, active) setCheckbox(self, active) end)
 	end
 
 	--Handle item list updates
-	checkgroup.setListener.updated(function() checkgroup.frame:SetHeight(math.ceil((#checkgroup.toggles) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
-	checkgroup.setListener.added(function (_, toggle)
-		setCheckbox(toggle, true)
+	checkgroup.setListener.updated(function() checkgroup.frame:SetHeight(math.ceil((#checkgroup.binaries) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+	checkgroup.setListener.added(function (_, binary)
+		setCheckbox(binary, true)
 
 		--Handle item updates
-		toggle.setListener._("activated", function(self, active) setCheckbox(self, active) end)
+		binary.setListener._("activated", function(self, active) setCheckbox(self, active) end)
 	end)
 
 	--[ Events ]
@@ -1830,7 +1830,7 @@ function wt.CreateCheckgroup(t, selector)
 		end
 
 		local frames = { checkgroup.frame }
-		for i = 1, #checkgroup.toggles do table.insert(frames, checkgroup.toggles[i].frame) end
+		for i = 1, #checkgroup.binaries do table.insert(frames, checkgroup.binaries[i].frame) end
 
 		wt.AddWidgetTooltipLines(frames, defaultValue, t.utilityMenu)
 	end
@@ -1842,8 +1842,8 @@ function wt.CreateCheckgroup(t, selector)
 		condition = checkgroup.isEnabled,
 	}, }
 
-	for i = 1, #checkgroup.toggles do table.insert(openTriggers, {
-		frame = checkgroup.toggles[i].widget,
+	for i = 1, #checkgroup.binaries do table.insert(openTriggers, {
+		frame = checkgroup.binaries[i].widget,
 		condition = checkgroup.isEnabled,
 	}) end
 
@@ -1864,9 +1864,9 @@ function wt.CreateCheckgroup(t, selector)
 end
 
 
---[[ TEXTBOX ]]
+--[[ TEXTUAL ]]
 
----Set the parameters of a GUI textbox widget frame
+---Set the parameters of a GUI textual widget
 ---@param editbox singlelineEditbox|customEditbox|multilineEditbox
 ---@param t editboxCreationData
 local function setUpEditboxFrame(editbox, t)
@@ -1978,7 +1978,7 @@ local function setUpEditboxFrame(editbox, t)
 	updateText(nil, editbox.getText())
 end
 
----Set the parameters of a single-line GUI textbox widget frame
+---Set the parameters of a single-line GUI textual widget
 ---@param editbox singlelineEditbox|customEditbox
 ---@param title string
 ---@param t editboxCreationData
@@ -2034,15 +2034,15 @@ local function setUpEditbox(editbox, title, t)
 	}) end
 end
 
-function wt.CreateEditbox(t, textbox)
+function wt.CreateEditbox(t, textual)
 	t = type(t) == "table" and t or {}
 
 	t.size = t.size or {}
 	t.size.w = t.size.w or 180
 	t.size.h = t.size.h or 18
 
-	---@type typename_textbox
-	local typenameBase = "Textbox"
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	---@type typename_editbox
 	local typename = "Editbox"
@@ -2052,8 +2052,8 @@ function wt.CreateEditbox(t, textbox)
 
 	--[ Widget ]
 
-	---@type singlelineEditbox|textbox
-	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
+	---@type singlelineEditbox|textual
+	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
 
 	--[ Getters & Setters ]
 
@@ -2084,15 +2084,15 @@ function wt.CreateEditbox(t, textbox)
 	return editbox
 end
 
-function wt.CreateCustomEditbox(t, textbox)
+function wt.CreateCustomEditbox(t, textual)
 	t = type(t) == "table" and t or {}
 
 	t.size = t.size or {}
 	t.size.w = t.size.w or 180
 	t.size.h = t.size.h or 18
 
-	---@type typename_textbox
-	local typenameBase = "Textbox"
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	---@type typename_customEditbox
 	local typename = "CustomEditbox"
@@ -2102,8 +2102,8 @@ function wt.CreateCustomEditbox(t, textbox)
 
 	--[ Widget ]
 
-	---@type customEditbox|textbox
-	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
+	---@type customEditbox|textual
+	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
 
 	--[ Getters & Setters ]
 
@@ -2145,13 +2145,13 @@ function wt.CreateCustomEditbox(t, textbox)
 	return editbox
 end
 
-function wt.CreateMultilineEditbox(t, textbox)
+function wt.CreateMultilineEditbox(t, textual)
 	t = type(t) == "table" and t or {}
 
 	t.scrollSpeed = t.scrollSpeed or 0.25
 
-	---@type typename_textbox
-	local typenameBase = "Textbox"
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	---@type typename_multilineEditbox
 	local typename = "MultilineEditbox"
@@ -2161,8 +2161,8 @@ function wt.CreateMultilineEditbox(t, textbox)
 
 	--[ Widget ]
 
-	---@type multilineEditbox|textbox
-	local editbox = wt.IsWidget(textbox) == typenameBase and textbox or wt.CreateTextbox(t)
+	---@type multilineEditbox|textual
+	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
 
 	--[ Getters & Setters ]
 
@@ -2363,7 +2363,7 @@ function wt.CreateCopybox(t) --FIX lite
 
 	--| Textbox
 
-	copybox.textbox = wt.CreateCustomEditbox({
+	copybox.textual = wt.CreateCustomEditbox({
 		parent = copybox.frame,
 		name = "Textline",
 		title = title,
@@ -2429,19 +2429,19 @@ function wt.CreatePopupInputbox(t) --FIX lite
 	if customPopupInputBoxFrame.panel then
 		wt.SetPosition(customPopupInputBoxFrame.panel, t.position)
 
-		--Update textbox
-		customPopupInputBoxFrame.textbox.setText(t.text)
+		--Update the textual data manager
+		customPopupInputBoxFrame.textual.setText(t.text)
 		if t.title then
-			if customPopupInputBoxFrame.textbox.label then customPopupInputBoxFrame.textbox.label:SetText(t.title) else
-				customPopupInputBoxFrame.textbox.label = wt.CreateTitle(customPopupInputBoxFrame.textbox.frame, {
+			if customPopupInputBoxFrame.textual.label then customPopupInputBoxFrame.textual.label:SetText(t.title) else
+				customPopupInputBoxFrame.textual.label = wt.CreateTitle(customPopupInputBoxFrame.textual.frame, {
 					offset = { x = -1, },
 					text = t.title,
 				})
 			end
 		end
 
-		--Update arrangement
-		if (t.title ~= nil) ~= (customPopupInputBoxFrame.textbox.label ~= nil) then wt.ArrangeContent(customPopupInputBoxFrame.panel) end
+		--Update the arrangement
+		if (t.title ~= nil) ~= (customPopupInputBoxFrame.textual.label ~= nil) then wt.ArrangeContent(customPopupInputBoxFrame.panel) end
 
 		customPopupInputBoxFrame.panel:Show()
 
@@ -2451,7 +2451,7 @@ function wt.CreatePopupInputbox(t) --FIX lite
 	--| Utilities
 
 	local function accept()
-		if type(customPopupInputBoxFrame.accept) == "function" then customPopupInputBoxFrame.accept(customPopupInputBoxFrame.textbox.getText()) end
+		if type(customPopupInputBoxFrame.accept) == "function" then customPopupInputBoxFrame.accept(customPopupInputBoxFrame.textual.getText()) end
 
 		customPopupInputBoxFrame.panel:Hide()
 	end
@@ -2480,8 +2480,8 @@ function wt.CreatePopupInputbox(t) --FIX lite
 
 			--[ Textbox ]
 
-			---@type customEditbox|textbox
-			customPopupInputBoxFrame.textbox = wt.CreateEditbox({
+			---@type customEditbox|textual
+			customPopupInputBoxFrame.textual = wt.CreateEditbox({
 				parent = panel,
 				name = "TextInputBox",
 				title = t.title,
@@ -4313,8 +4313,8 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 
 				--| Font paths
 
-				for i = 1, #fontPanel.widgets.path.toggles do
-					local label = fontPanel.widgets.path.toggles[i].label
+				for i = 1, #fontPanel.widgets.path.binaries do
+					local label = fontPanel.widgets.path.binaries[i].label
 
 					if label then
 						local _, size, flags = label:GetFont()
@@ -4325,12 +4325,12 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 
 				--| Colors
 
-				local labelDefault = fontPanel.widgets.path.toggles[1].label
+				local labelDefault = fontPanel.widgets.path.binaries[1].label
 
 				if labelDefault then labelDefault:SetTextColor(0.4, 1, 0.4) end
 
 				if type(WidgetToolsDB.customFonts) == "table" then for i = #fonts - #WidgetToolsDB.customFonts + 1, #fonts do
-					local label = fontPanel.widgets.path.toggles[i].label
+					local label = fontPanel.widgets.path.binaries[i].label
 
 					if label then label:SetTextColor(1, 0.4, 0.4) end
 				end end
@@ -5014,7 +5014,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 									tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
 									arrange = {},
 									events = { OnClick = function()
-										profilesPage.backup.compact.toggleState(true)
+										profilesPage.backup.compact.flipState(true)
 										refreshAll()
 									end },
 									showDefault = false,

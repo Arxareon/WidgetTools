@@ -905,7 +905,7 @@ function wt.AddDependencies(rules, setState)
 		if t then
 			f.setListener.loaded(function(_, success) if success then setter() end end)
 
-			if t == "Toggle" then f.setListener.toggled(setter)
+			if t == "Toggle" then f.setListener.flipped(setter)
 			elseif t == "Selector" or t == "Multiselector" or t == "SpecialSelector" then f.setListener.selected(setter)
 			elseif t == "Textbox" or t == "Numeric" then f.setListener.changed(setter) end
 		elseif us.IsFrame(f) then

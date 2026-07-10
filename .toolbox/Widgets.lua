@@ -117,16 +117,16 @@ function wt.CreateAction(t)
 end
 
 
---[[ TOGGLE ]]
+--[[ BINARY ]]
 
-function wt.CreateToggle(t)
+function wt.CreateBinary(t)
 
 	--[ Parameters  ]
 
 	t = type(t) == "table" and t or {}
 
-	---@type typename_toggle
-	local typename = "Toggle"
+	---@type typename_binary
+	local typename = "Binary"
 
 	--| Events
 
@@ -146,81 +146,81 @@ function wt.CreateToggle(t)
 
 	--[ Widget ]
 
-	---@type toggle
-	local toggle = { invoke = {}, setListener = {}, }
+	---@type binary
+	local binary = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
 
-	function toggle.getType() return typename end
-	function toggle.isType(type) return type == typename end
+	function binary.getType() return typename end
+	function binary.isType(type) return type == typename end
 
 	--| Events
 
-	function toggle.invoke.enabled() callListeners(toggle, listeners, "enabled", enabled) end
-	function toggle.invoke.loaded(success) callListeners(toggle, listeners, "loaded", success) end
-	function toggle.invoke.saved(success) callListeners(toggle, listeners, "saved", success) end
-	function toggle.invoke.toggled(user) callListeners(toggle, listeners, "toggled", value, user) end
-	function toggle.invoke._(event, ...) callListeners(toggle, listeners, event, ...) end
+	function binary.invoke.enabled() callListeners(binary, listeners, "enabled", enabled) end
+	function binary.invoke.loaded(success) callListeners(binary, listeners, "loaded", success) end
+	function binary.invoke.saved(success) callListeners(binary, listeners, "saved", success) end
+	function binary.invoke.flipped(user) callListeners(binary, listeners, "flipped", value, user) end
+	function binary.invoke._(event, ...) callListeners(binary, listeners, event, ...) end
 
-	function toggle.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	function toggle.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	function toggle.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
-	function toggle.setListener.toggled(listener, callIndex) addListener(listeners, "toggled", listener, callIndex) end
-	function toggle.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+	function binary.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function binary.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function binary.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function binary.setListener.flipped(listener, callIndex) addListener(listeners, "flipped", listener, callIndex) end
+	function binary.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Data management
 
-	function toggle.loadData(handleChanges, silent)
+	function binary.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
 		if type(t.getData) == "function" then
-			toggle.setState(t.getData(), handleChanges, silent)
+			binary.setState(t.getData(), handleChanges, silent)
 
-			if not silent then toggle.invoke.loaded(true) end
+			if not silent then binary.invoke.loaded(true) end
 		else
 			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 
-			if not silent then toggle.invoke.loaded(false) end
+			if not silent then binary.invoke.loaded(false) end
 		end
 	end
 
-	function toggle.saveData(state, silent)
+	function binary.saveData(state, silent)
 		if type(t.saveData) == "function" then
 			if state == nil then state = value end
 
 			t.saveData(state == true)
 
-			if not silent then toggle.invoke.saved(true) end
-		elseif not silent then toggle.invoke.saved(false) end
+			if not silent then binary.invoke.saved(true) end
+		elseif not silent then binary.invoke.saved(false) end
 	end
 
-	function toggle.getData() return type(t.getData) == "function" and t.getData() or nil end
-	function toggle.setData(state, handleChanges, silent)
-		toggle.saveData(state, silent)
-		toggle.loadData(handleChanges, silent)
+	function binary.getData() return type(t.getData) == "function" and t.getData() or nil end
+	function binary.setData(state, handleChanges, silent)
+		binary.saveData(state, silent)
+		binary.loadData(handleChanges, silent)
 	end
 
-	function toggle.getDefault() return default end
-	function toggle.setDefault(state) default = state == true end
-	function toggle.resetData(handleChanges, silent) toggle.setData(default, handleChanges, silent) end
+	function binary.getDefault() return default end
+	function binary.setDefault(state) default = state == true end
+	function binary.resetData(handleChanges, silent) binary.setData(default, handleChanges, silent) end
 
-	function toggle.snapshotData(stored) if stored == true then snapshot = toggle.getData() else snapshot = value end end
-	function toggle.revertData(handleChanges, silent) toggle.setData(snapshot, handleChanges, silent) end
+	function binary.snapshotData(stored) if stored == true then snapshot = binary.getData() else snapshot = value end end
+	function binary.revertData(handleChanges, silent) binary.setData(snapshot, handleChanges, silent) end
 
-	function toggle.getState() return value end
-	function toggle.setState(state, user, silent)
+	function binary.getState() return value end
+	function binary.setState(state, user, silent)
 		value = state == true
 
-		if not silent then toggle.invoke.toggled(user == true) end
+		if not silent then binary.invoke.flipped(user == true) end
 
-		if user and t.instantSave ~= false then toggle.saveData(nil, silent) end
+		if user and t.instantSave ~= false then binary.saveData(nil, silent) end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
-	function toggle.toggleState(user, silent) toggle.setState(not value, user, silent) end
+	function binary.flipState(user, silent) binary.setState(not value, user, silent) end
 
-	function toggle.formatValue(state)
+	function binary.formatValue(state)
 		if type(state) ~= "boolean" then state = value end
 
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
@@ -228,30 +228,30 @@ function wt.CreateToggle(t)
 
 	--| State
 
-	function toggle.isEnabled() return enabled end
-	function toggle.setEnabled(state, silent)
+	function binary.isEnabled() return enabled end
+	function binary.setEnabled(state, silent)
 		enabled = state ~= false
 
-		if not silent then toggle.invoke.enabled() end
+		if not silent then binary.invoke.enabled() end
 	end
 
 	--[ Initialization ]
 
 	--Register event handlers
 	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then toggle.setListener._(v[i].event, v[i].handler, v[i].callIndex) else toggle.setListener[k](v[i].handler, v[i].callIndex) end
+		if k == "_" then binary.setListener._(v[i].event, v[i].handler, v[i].callIndex) else binary.setListener[k](v[i].handler, v[i].callIndex) end
 	end end end end
 
 	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(toggle, t.dataManagement) end
+	if t.dataManagement then wt.AddSettingsDataManagementEntry(binary, t.dataManagement) end
 
 	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, toggle.setEnabled) end
+	if t.dependencies then wt.AddDependencies(t.dependencies, binary.setEnabled) end
 
 	--Set starting value
-	toggle.setState(value, false, true)
+	binary.setState(value, false, true)
 
-	return toggle
+	return binary
 end
 
 
@@ -297,8 +297,8 @@ function wt.CreateSelector(t)
 	---@type typename_selector
 	local typename = "Selector"
 
-	---@type typename_toggle
-	local typenameItem = "Toggle"
+	---@type typename_binary
+	local typenameItem = "Binary"
 
 	--| Events
 
@@ -309,7 +309,7 @@ function wt.CreateSelector(t)
 
 	--| Toggle items
 
-	---@type (toggle|selectorToggle)[]
+	---@type (binary|selectorBinary)[]
 	local inactive = {}
 
 	--| Data
@@ -336,7 +336,7 @@ function wt.CreateSelector(t)
 	--[ Widget ]
 
 	---@type selector
-	local selector = { invoke = {}, setListener = {}, toggles = {} }
+	local selector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
 
@@ -350,7 +350,7 @@ function wt.CreateSelector(t)
 	function selector.invoke.saved(success) callListeners(selector, listeners, "saved", success) end
 	function selector.invoke.selected(user) callListeners(selector, listeners, "selected", value, user) end
 	function selector.invoke.updated() callListeners(selector, listeners, "updated") end
-	function selector.invoke.added(toggle) callListeners(selector, listeners, "added", toggle) end
+	function selector.invoke.added(binary) callListeners(selector, listeners, "added", binary) end
 	function selector.invoke._(event, ...) callListeners(selector, listeners, event, ...) end
 
 	function selector.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
@@ -363,7 +363,7 @@ function wt.CreateSelector(t)
 
 	--| Toggle items
 
-	---Register, update or set up a new toggle widget item
+	---Register, update or set up a new binary widget item
 	---***
 	---@param index integer
 	---@param silent? boolean ***Default:*** `false`
@@ -371,49 +371,49 @@ function wt.CreateSelector(t)
 		local new = false
 
 		if wt.IsWidget(t.items[index]) == typenameItem then
-			--| Register the already defined toggle widget
+			--| Register the already defined binary widget
 
 			new = true
-			selector.toggles[index] = t.items[index]
-		elseif index > #selector.toggles then
+			selector.binaries[index] = t.items[index]
+		elseif index > #selector.binaries then
 			if #inactive > 0 then
-				--| Reenable an inactive toggle widget
+				--| Reenable an inactive binary widget
 
-				selector.toggles[index] = inactive[#inactive]
+				selector.binaries[index] = inactive[#inactive]
 				table.remove(inactive, #inactive)
 			else
-				--| Create a new toggle widget
+				--| Create a new binary widget
 
 				new = true
-				selector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
-					if state and user and type(t.items[selector.toggles[index].index].onSelect) == "function" then t.items[selector.toggles[index].index].onSelect() end
+				selector.binaries[index] = wt.CreateBinary({ listeners = { flipped = { { handler = function (_, state, user)
+					if state and user and type(t.items[selector.binaries[index].index].onSelect) == "function" then t.items[selector.binaries[index].index].onSelect() end
 				end, }, }, },  })
 			end
 		end
 
-		selector.toggles[index].index = index
+		selector.binaries[index].index = index
 
-		if new and not silent then selector.invoke.added(selector.toggles[index]) end
+		if new and not silent then selector.invoke.added(selector.binaries[index]) end
 	end
 
 	function selector.updateItems(newItems, silent)
 		t.items = newItems
 
-		--Update the toggle widgets
+		--Update the binary widgets
 		for i = 1, #newItems do
 			setToggle(i, silent)
 
-			if not silent then selector.toggles[i].invoke._("activated", true) end
+			if not silent then selector.binaries[i].invoke._("activated", true) end
 		end
 
-		--Deactivate extra toggle widgets
-		while #newItems < #selector.toggles do
-			selector.toggles[#selector.toggles].setState(false)
+		--Deactivate extra binary widgets
+		while #newItems < #selector.binaries do
+			selector.binaries[#selector.binaries].setState(false)
 
-			if not silent then selector.toggles[#selector.toggles].invoke._("activated", false) end
+			if not silent then selector.binaries[#selector.binaries].invoke._("activated", false) end
 
-			table.insert(inactive, selector.toggles[#selector.toggles])
-			table.remove(selector.toggles, #selector.toggles)
+			table.insert(inactive, selector.binaries[#selector.binaries])
+			table.remove(selector.binaries, #selector.binaries)
 		end
 
 		if not silent then selector.invoke.updated() end
@@ -462,7 +462,7 @@ function wt.CreateSelector(t)
 	function selector.setSelected(index, user, silent)
 		value = verify(index)
 
-		for i = 1, #selector.toggles do selector.toggles[i].setState(i == value, user, silent) end
+		for i = 1, #selector.binaries do selector.binaries[i].setState(i == value, user, silent) end
 
 		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
 
@@ -477,8 +477,8 @@ function wt.CreateSelector(t)
 	function selector.setEnabled(state, silent)
 		enabled = state ~= false
 
-		--Update toggle items
-		for i = 1, #selector.toggles do selector.toggles[i].setEnabled(state, silent) end
+		--Update binary widget items
+		for i = 1, #selector.binaries do selector.binaries[i].setEnabled(state, silent) end
 
 		if not silent then selector.invoke.enabled() end
 	end
@@ -511,8 +511,8 @@ function wt.CreateSpecialSelector(itemset, t)
 	---@type typename_specialSelector
 	local typename = "SpecialSelector"
 
-	---@type typename_toggle
-	local typenameItem = "Toggle"
+	---@type typename_binary
+	local typenameItem = "Binary"
 
 	--| Events
 
@@ -531,7 +531,7 @@ function wt.CreateSpecialSelector(itemset, t)
 		t.items[i].tooltip = { lines = { { text = "(" .. itemsets[itemset][i].value .. ")", }, } }
 	end
 
-	---@type (toggle|selectorToggle)[]
+	---@type (binary|selectorBinary)[]
 	local inactive = {}
 
 	--| Data
@@ -561,7 +561,7 @@ function wt.CreateSpecialSelector(itemset, t)
 	--[ Widget ]
 
 	---@type specialSelector
-	local specialSelector = { invoke = {}, setListener = {}, toggles = {} }
+	local specialSelector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
 
@@ -625,7 +625,7 @@ function wt.CreateSpecialSelector(itemset, t)
 	function specialSelector.setSelected(selected, user, silent)
 		value = verify(selected)
 
-		for i = 1, #specialSelector.toggles do specialSelector.toggles[i].setState(i == value, user, silent) end
+		for i = 1, #specialSelector.binaries do specialSelector.binaries[i].setState(i == value, user, silent) end
 
 		if user and t.instantSave ~= false then specialSelector.saveData(nil, silent) end
 
@@ -640,8 +640,8 @@ function wt.CreateSpecialSelector(itemset, t)
 	function specialSelector.setEnabled(state, silent)
 		enabled = state ~= false
 
-		--Update toggle items
-		for i = 1, #specialSelector.toggles do specialSelector.toggles[i].setEnabled(state, silent) end
+		--Update binary widget items
+		for i = 1, #specialSelector.binaries do specialSelector.binaries[i].setEnabled(state, silent) end
 
 		if not silent then specialSelector.invoke.enabled() end
 	end
@@ -656,23 +656,23 @@ function wt.CreateSpecialSelector(itemset, t)
 	--Register starting items
 	for i = 1, #t.items do if type(t.items[i]) == "table" then
 		if wt.IsWidget(t.items[i]) == typenameItem then
-			--| Register the already defined toggle widget
+			--| Register the already defined binary widget
 
-			specialSelector.toggles[i] = t.items[i]
+			specialSelector.binaries[i] = t.items[i]
 		elseif #inactive > 0 then
-			--| Reenable an inactive toggle widget
+			--| Reenable an inactive binary widget
 
-			specialSelector.toggles[i] = inactive[#inactive]
+			specialSelector.binaries[i] = inactive[#inactive]
 			table.remove(inactive, #inactive)
 		else
-			--| Create a new toggle widget
+			--| Create a new binary widget
 
-			specialSelector.toggles[i] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
-				if type(t.items[specialSelector.toggles[i].index].onSelect) == "function" and user and state then t.items[specialSelector.toggles[i].index].onSelect() end
+			specialSelector.binaries[i] = wt.CreateBinary({ listeners = { flipped = { { handler = function (_, state, user)
+				if type(t.items[specialSelector.binaries[i].index].onSelect) == "function" and user and state then t.items[specialSelector.binaries[i].index].onSelect() end
 			end, }, }, }, })
 		end
 
-		specialSelector.toggles[i].index = i
+		specialSelector.binaries[i].index = i
 	end end
 
 	--Register to settings data management
@@ -693,8 +693,8 @@ function wt.CreateMultiselector(t)
 	---@type typename_multiselector
 	local typename = "Multiselector"
 
-	---@type typename_toggle
-	local typenameItem = "Toggle"
+	---@type typename_binary
+	local typenameItem = "Binary"
 
 	--| Events
 
@@ -708,7 +708,7 @@ function wt.CreateMultiselector(t)
 	t.limits.min = t.limits.min or 1
 	t.limits.max = t.limits.max or #t.items
 
-	---@type (toggle|selectorToggle)[]
+	---@type (binary|selectorBinary)[]
 	local inactive = {}
 
 	--| Data
@@ -737,7 +737,7 @@ function wt.CreateMultiselector(t)
 	--[ Widget ]
 
 	---@type multiselector
-	local multiselector = { invoke = {}, setListener = {}, toggles = {} }
+	local multiselector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
 
@@ -751,7 +751,7 @@ function wt.CreateMultiselector(t)
 	function multiselector.invoke.saved(success) callListeners(multiselector, listeners, "saved", success) end
 	function multiselector.invoke.selected(user) callListeners(multiselector, listeners, "selected", value, user) end
 	function multiselector.invoke.updated() callListeners(multiselector, listeners, "updated") end
-	function multiselector.invoke.added(toggle) callListeners(multiselector, listeners, "added", toggle) end
+	function multiselector.invoke.added(binary) callListeners(multiselector, listeners, "added", binary) end
 	function multiselector.invoke.limited(count) callListeners(multiselector, listeners, "limited", count <= t.limits.min, count < t.limits.min) end
 	function multiselector.invoke._(event, ...) callListeners(multiselector, listeners, event, ...) end
 
@@ -772,47 +772,47 @@ function wt.CreateMultiselector(t)
 		local new = false
 
 		if wt.IsWidget(item) == typenameItem then
-			--| Register the already defined toggle widget
+			--| Register the already defined binary widget
 
 			new = true
-			multiselector.toggles[index] = item
+			multiselector.binaries[index] = item
 		elseif #inactive > 0 then
-			--| Reenable an inactive toggle widget
+			--| Reenable an inactive binary widget
 
-			multiselector.toggles[index] = inactive[#inactive]
+			multiselector.binaries[index] = inactive[#inactive]
 			table.remove(inactive, #inactive)
 		else
-			--| Create a new toggle widget
+			--| Create a new binary widget
 
 			new = true
-			multiselector.toggles[index] = wt.CreateToggle({ listeners = { toggled = { { handler = function (_, state, user)
-				if type(t.items[multiselector.toggles[index].index].onSelect) == "function" and user and state then t.items[multiselector.toggles[index].index].onSelect() end
+			multiselector.binaries[index] = wt.CreateBinary({ listeners = { flipped = { { handler = function (_, state, user)
+				if type(t.items[multiselector.binaries[index].index].onSelect) == "function" and user and state then t.items[multiselector.binaries[index].index].onSelect() end
 			end, }, }, }, })
 		end
 
-		multiselector.toggles[index].index = index
+		multiselector.binaries[index].index = index
 
-		if new and not silent then multiselector.invoke.added(multiselector.toggles[index]) end
+		if new and not silent then multiselector.invoke.added(multiselector.binaries[index]) end
 	end
 
 	function multiselector.updateItems(newItems, silent)
 		t.items = newItems
 
-		--Update the toggle widgets
+		--Update the binary widgets
 		for i = 1, #newItems do
 			setToggle(newItems[i], i, silent)
 
-			if not silent then multiselector.toggles[i].invoke._("activated", true) end
+			if not silent then multiselector.binaries[i].invoke._("activated", true) end
 		end
 
-		--Deactivate extra toggle widgets
-		while #newItems < #multiselector.toggles do
-			multiselector.toggles[#multiselector.toggles].setState(nil, nil, silent)
+		--Deactivate extra binary widgets
+		while #newItems < #multiselector.binaries do
+			multiselector.binaries[#multiselector.binaries].setState(nil, nil, silent)
 
-			if not silent then multiselector.toggles[#multiselector.toggles].invoke._("activated", false) end
+			if not silent then multiselector.binaries[#multiselector.binaries].invoke._("activated", false) end
 
-			table.insert(inactive, multiselector.toggles[#multiselector.toggles])
-			table.remove(multiselector.toggles, #multiselector.toggles)
+			table.insert(inactive, multiselector.binaries[#multiselector.binaries])
+			table.remove(multiselector.binaries, #multiselector.binaries)
 		end
 
 		if not silent then multiselector.invoke.updated() end
@@ -865,7 +865,7 @@ function wt.CreateMultiselector(t)
 	function multiselector.setSelections(selections, user, silent)
 		value = verify(selections)
 
-		for i = 1, #multiselector.toggles do multiselector.toggles[i].setState(value and value[i], user, silent) end
+		for i = 1, #multiselector.binaries do multiselector.binaries[i].setState(value and value[i], user, silent) end
 
 		if user and t.instantSave ~= false then multiselector.saveData(nil, silent) end
 
@@ -885,11 +885,11 @@ function wt.CreateMultiselector(t)
 	end
 
 	function multiselector.setSelected(index, selected, user, silent)
-		if not multiselector.toggles[index] then return end
+		if not multiselector.binaries[index] then return end
 
 		value[index] = selected == true
 
-		multiselector.toggles[index].setState(selected, user, silent)
+		multiselector.binaries[index].setState(selected, user, silent)
 
 		if user and t.instantSave ~= false then multiselector.saveData(nil, silent) end
 
@@ -914,8 +914,8 @@ function wt.CreateMultiselector(t)
 	function multiselector.setEnabled(state, silent)
 		enabled = state ~= false
 
-		--Update toggle items
-		for i = 1, #multiselector.toggles do multiselector.toggles[i].setEnabled(state, silent) end
+		--Update binary widget items
+		for i = 1, #multiselector.binaries do multiselector.binaries[i].setEnabled(state, silent) end
 
 		if not silent then multiselector.invoke.enabled() end
 	end
@@ -943,13 +943,13 @@ function wt.CreateMultiselector(t)
 end
 
 
---[[ TEXTBOX ]]
+--[[ TEXTUAL ]]
 
-function wt.CreateTextbox(t)
+function wt.CreateTextual(t)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_textbox
-	local typename = "Textbox"
+	---@type typename_textual
+	local typename = "Textual"
 
 	--| Events
 
@@ -969,102 +969,102 @@ function wt.CreateTextbox(t)
 
 	--[ Widget ]
 
-	---@type textbox
-	local textbox = { invoke = {}, setListener = {}, }
+	---@type textual
+	local textual = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
 
-	function textbox.getType() return typename end
-	function textbox.isType(type) return type == typename end
+	function textual.getType() return typename end
+	function textual.isType(type) return type == typename end
 
 	--| Events
 
-	function textbox.invoke.enabled() callListeners(textbox, listeners, "enabled", enabled) end
-	function textbox.invoke.loaded(success) callListeners(textbox, listeners, "loaded", success) end
-	function textbox.invoke.saved(success) callListeners(textbox, listeners, "saved", success) end
-	function textbox.invoke.changed(user) callListeners(textbox, listeners, "changed", value, user) end
-	function textbox.invoke._(event, ...) callListeners(textbox, listeners, event, ...) end
+	function textual.invoke.enabled() callListeners(textual, listeners, "enabled", enabled) end
+	function textual.invoke.loaded(success) callListeners(textual, listeners, "loaded", success) end
+	function textual.invoke.saved(success) callListeners(textual, listeners, "saved", success) end
+	function textual.invoke.changed(user) callListeners(textual, listeners, "changed", value, user) end
+	function textual.invoke._(event, ...) callListeners(textual, listeners, event, ...) end
 
-	function textbox.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	function textbox.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	function textbox.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
-	function textbox.setListener.changed(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end
-	function textbox.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+	function textual.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function textual.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function textual.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function textual.setListener.changed(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end
+	function textual.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Data management
 
-	function textbox.loadData(handleChanges, silent)
+	function textual.loadData(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
 		if type(t.getData) == "function" then
-			textbox.setText(t.getData(), handleChanges, silent)
+			textual.setText(t.getData(), handleChanges, silent)
 
-			if not silent then textbox.invoke.loaded(true) end
+			if not silent then textual.invoke.loaded(true) end
 		else
 			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 
-			if not silent then textbox.invoke.loaded(false) end
+			if not silent then textual.invoke.loaded(false) end
 		end
 	end
 
-	function textbox.saveData(text, silent)
+	function textual.saveData(text, silent)
 		if type(t.saveData) == "function" then
 			t.saveData(type(text) == "string" and text or value)
 
-			if not silent then textbox.invoke.saved(true) end
-		elseif not silent then textbox.invoke.saved(false) end
+			if not silent then textual.invoke.saved(true) end
+		elseif not silent then textual.invoke.saved(false) end
 	end
 
-	function textbox.getData() return type(t.getData) == "function" and t.getData() or nil end
-	function textbox.setData(text, handleChanges, silent)
-		textbox.saveData(text, silent)
-		textbox.loadData(handleChanges, silent)
+	function textual.getData() return type(t.getData) == "function" and t.getData() or nil end
+	function textual.setData(text, handleChanges, silent)
+		textual.saveData(text, silent)
+		textual.loadData(handleChanges, silent)
 	end
 
-	function textbox.getDefault() return default end
-	function textbox.setDefault(text) default = type(text) == "string" and text or "" end
-	function textbox.resetData(handleChanges, silent) textbox.setData(default, handleChanges, silent) end
+	function textual.getDefault() return default end
+	function textual.setDefault(text) default = type(text) == "string" and text or "" end
+	function textual.resetData(handleChanges, silent) textual.setData(default, handleChanges, silent) end
 
-	function textbox.snapshotData(stored) snapshot = stored and textbox.getData() or value end
-	function textbox.revertData(handleChanges, silent) textbox.setData(snapshot, handleChanges, silent) end
+	function textual.snapshotData(stored) snapshot = stored and textual.getData() or value end
+	function textual.revertData(handleChanges, silent) textual.setData(snapshot, handleChanges, silent) end
 
-	function textbox.getText() return value end
-	function textbox.setText(text, user, silent)
+	function textual.getText() return value end
+	function textual.setText(text, user, silent)
 		value = type(text) == "string" and text or ""
 
-		if not silent then textbox.invoke.changed(user == true) end
+		if not silent then textual.invoke.changed(user == true) end
 
-		if user and t.instantSave ~= false then textbox.saveData(nil, silent) end
+		if user and t.instantSave ~= false then textual.saveData(nil, silent) end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
 	--| State
 
-	function textbox.isEnabled() return enabled end
-	function textbox.setEnabled(state, silent)
+	function textual.isEnabled() return enabled end
+	function textual.setEnabled(state, silent)
 		enabled = state ~= false
 
-		if not silent then textbox.invoke.enabled() end
+		if not silent then textual.invoke.enabled() end
 	end
 
 	--[ Initialization ]
 
 	--Register event handlers
 	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then textbox.setListener._(v[i].event, v[i].handler, v[i].callIndex) else textbox.setListener[k](v[i].handler, v[i].callIndex) end
+		if k == "_" then textual.setListener._(v[i].event, v[i].handler, v[i].callIndex) else textual.setListener[k](v[i].handler, v[i].callIndex) end
 	end end end end
 
 	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(textbox, t.dataManagement) end
+	if t.dataManagement then wt.AddSettingsDataManagementEntry(textual, t.dataManagement) end
 
 	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, textbox.setEnabled) end
+	if t.dependencies then wt.AddDependencies(t.dependencies, textual.setEnabled) end
 
 	--Set starting value
-	textbox.setText(t.color and cr(value, t.color) or value, false, true)
+	textual.setText(t.color and cr(value, t.color) or value, false, true)
 
-	return textbox
+	return textual
 end
 
 

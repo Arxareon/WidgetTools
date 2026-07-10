@@ -1009,7 +1009,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 								if loadedLite ~= WidgetToolsDB.lite then wt.CreateReloadNotice() end end,
 							}, },
-							toggled = { { handler = function(_, state, user)
+							flipped = { { handler = function(_, state, user)
 								if not user then return end
 
 								if state then StaticPopup_Show(enableLitePopup) else StaticPopup_Show(disableLitePopup) end
@@ -1060,7 +1060,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						saveData = function(state) WidgetToolsDB.debugging = state end,
 						listeners = {
 							saved = { { handler = function() if loadedDebugging ~= WidgetToolsDB.debugging then wt.CreateReloadNotice() end end, }, },
-							toggled = { { handler = function (self, state, user)
+							flipped = { { handler = function (self, state, user)
 								if not user then return end
 
 								chatCommands.print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
