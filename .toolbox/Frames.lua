@@ -131,7 +131,7 @@ function wt.CreatePanel(t)
 end
 
 
---[[ BUTTON ]]
+--[[ ACTION ]]
 
 ---Set the parameters of a GUI button widget frame
 ---@param button actionButton|customButton
@@ -552,7 +552,7 @@ function wt.CreateCheckbox(t, binary)
 end
 
 ---Set the parameters of a GUI binary frame
----@param binary checkbox|customCheckbox|radiobutton
+---@param binary checkbox|classicCheckbox|radiobutton
 ---@param title string
 ---@param t checkboxCreationData
 local function setUpToggleFrame(binary, title, t)
@@ -672,7 +672,7 @@ function wt.CreateClassicCheckbox(t, binary)
 
 	--[ Widget ]
 
-	---@type customCheckbox|binary
+	---@type classicCheckbox|binary
 	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
 
 	--[ Getters & Setters ]
@@ -3571,7 +3571,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	---@type typename_positionmanager
 	local typenameBase = "Positionmanager"
 
-	---@type typename_positionOptions
+	---@type typename_positionPanel
 	local typename = "PositionOptions"
 
 	if type(t.name) ~= "string" then t.name = frame:GetName() end
@@ -4142,7 +4142,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 	---@type typename_fontmanager
 	local typenameBase = "Fontmanager"
 
-	---@type typename_fontOptions
+	---@type typename_fontPanel
 	local typename = "FontOptions"
 
 	if type(t.name) ~= "string" then t.name = textline:GetName() end

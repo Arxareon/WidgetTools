@@ -36,7 +36,7 @@ local function addListener(listeners, event, listener, callIndex)
 end
 
 ---Call registered listeners for `event`
----@param widget AnyWidgetType
+---@param widget table
 ---@param listeners table<string, function[]>
 ---@param event string
 ---@param ... any
@@ -49,13 +49,21 @@ local function callListeners(widget, listeners, event, ...)
 end
 
 
---[[ ACTION ]]
+--[[ CONSTRUCTORS ]]
 
-function wt.CreateAction(t)
+function wt.CreateWidget(t)
+
+	--[ Parameters  ]
+
 	t = type(t) == "table" and t or {}
 
-	---@type typename_action
-	local typename = "Action"
+	--| Type
+
+	---@type typename_widget
+	local typename = "Widget"
+
+	---@type table<typename_widget, true>
+	local types = {}
 
 	--| Events
 
@@ -68,65 +76,224 @@ function wt.CreateAction(t)
 
 	--[ Widget ]
 
-	---@type action
-	local action = { invoke = {}, setListener = {}, }
+	---@type widget
+	local widget = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
 
-	function action.getType() return typename end
-	function action.isType(type) return type == typename end
+	--| Type
+
+	function widget.getTypes() us.Clone(types) end
+	function widget.isType(s) return types[s] end
+	function widget.addType(s) types[s] = true end
 
 	--| Events
 
-	function action.invoke.enabled() callListeners(action, listeners, "enabled", enabled) end
-	function action.invoke.triggered(user) callListeners(action, listeners, "triggered", user) end
-	function action.invoke._(event, ...) callListeners(action, listeners, event, ...) end
+	function widget.invoke.enabled() callListeners(widget, listeners, "enabled", enabled) end
+	function widget.invoke._(event, ...) callListeners(widget, listeners, event, ...) end
 
-	function action.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	function action.setListener.triggered(listener, callIndex) addListener(listeners, "triggered", listener, callIndex) end
-	function action.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
+	function widget.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
+	function widget.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| State
 
-	function action.isEnabled() return enabled end
-	function action.setEnabled(state, silent)
+	function widget.isEnabled() return enabled end
+	function widget.setEnabled(state, silent)
 		enabled = state ~= false
 
-		if not silent then action.invoke.enabled() end
-	end
-
-	--| Action
-
-	function action.trigger(user, silent)
-		if enabled and t.action then t.action(action, user) end
-
-		if not silent then action.invoke.triggered(user) end
+		if not silent then widget.invoke.enabled() end
 	end
 
 	--[ Initialization ]
 
+	--Add type
+	widget.addType(typename)
+
 	--Register event handlers
 	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then action.setListener._(v[i].event, v[i].handler, v[i].callIndex) else action.setListener[k](v[i].handler, v[i].callIndex) end
+		if k == "_" then widget.setListener._(v[i].event, v[i].handler, v[i].callIndex) else widget.setListener[k](v[i].handler, v[i].callIndex) end
 	end end end end
 
 	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, action.setEnabled) end
+	if t.dependencies then wt.AddDependencies(t.dependencies, widget.setEnabled) end
 
-	return action
+	return widget
 end
 
+--| Action
 
---[[ BINARY ]]
-
-function wt.CreateBinary(t)
+function wt.CreateAction(t, widget)
 
 	--[ Parameters  ]
 
 	t = type(t) == "table" and t or {}
 
+	local callAction = nil
+
+	--| Type
+
+	---@type typename_action
+	local typename = "Action"
+
+	---@type typename_widget
+	local typenameBase = "Widget"
+
+	--| Events
+
+	---@type table<string, function[]>
+	local listeners = {}
+
+	--[ Widget ]
+
+	---@type action|widget
+	local action = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
+
+	--[ Getters & Setters ]
+
+	function action.trigger(user, silent)
+		if action.isEnabled() and callAction then callAction(action, user) end
+
+		if not silent then action.invoke.triggered(user) end
+	end
+
+	function action.setAction(call) if type(call) == "function" then callAction = call end end
+
+	--| Events
+
+	function action.invoke.triggered(user) callListeners(action, listeners, "triggered", user) end
+
+	function action.setListener.triggered(listener, callIndex) addListener(listeners, "triggered", listener, callIndex) end
+
+	--[ Initialization ]
+
+	--Add type
+	action.addType(typename)
+
+	--Set action
+	action.setAction(t.action)
+
+	return action
+end
+
+--[ Data Managers ]
+
+function wt.CreateDatamanager(t, widget)
+
+	--[ Parameters  ]
+
+	t = type(t) == "table" and t or {}
+
+	--| Type
+
+	---@type typename_datamanager
+	local typename = "Datamanager"
+
+	---@type typename_widget
+	local typenameBase = "Widget"
+
+	--| Events
+
+	---@type table<string, function[]>
+	local listeners = {}
+
+	--| Data
+
+	local default = t.default
+	local value = t.value
+	local snapshot = value
+
+	--[ Widget ]
+
+	---@type datamanager|widget
+	local datamanager = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
+
+	--[ Getters & Setters ]
+
+	function datamanager.verify(v) if type(v) == "nil" then return value else return v end end
+	function datamanager.format(v) return us.ToString(v) end
+
+	function datamanager.getValue() return value end
+	function datamanager.setValue(v, user, silent)
+		value = datamanager.verify(v)
+
+		if not silent then datamanager.invoke.changed(user == true) end
+
+		if user and t.instantSave ~= false then datamanager.saveData(nil, silent) end
+
+		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
+	end
+
+	function datamanager.loadData(handleChanges, silent)
+		handleChanges = handleChanges ~= false
+
+		if type(t.getData) == "function" then
+			datamanager.setValue(t.getData(), handleChanges, silent)
+
+			if not silent then datamanager.invoke.loaded(true) end
+		else
+			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
+
+			if not silent then datamanager.invoke.loaded(false) end
+		end
+	end
+
+	function datamanager.saveData(data, silent)
+		if type(t.saveData) == "function" then
+			t.saveData(datamanager.verify(data))
+
+			if not silent then datamanager.invoke.saved(true) end
+		elseif not silent then datamanager.invoke.saved(false) end
+	end
+
+	function datamanager.getData() return type(t.getData) == "function" and t.getData() or nil end
+	function datamanager.setData(data, handleChanges, silent)
+		datamanager.saveData(data, silent)
+		datamanager.loadData(handleChanges, silent)
+	end
+
+	function datamanager.getDefault() return default end
+	function datamanager.setDefault(v) default = v end
+	function datamanager.resetData(handleChanges, silent) datamanager.setData(default, handleChanges, silent) end
+
+	function datamanager.snapshotData(stored) if stored == true then snapshot = datamanager.getData() else snapshot = value end end
+	function datamanager.revertData(handleChanges, silent) datamanager.setData(snapshot, handleChanges, silent) end
+
+	--| Events
+
+	function datamanager.invoke.loaded(success) callListeners(datamanager, listeners, "loaded", success) end
+	function datamanager.invoke.saved(success) callListeners(datamanager, listeners, "saved", success) end
+	function datamanager.invoke.changed(user) callListeners(datamanager, listeners, "changed", value, user) end
+
+	function datamanager.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
+	function datamanager.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
+	function datamanager.setListener.changed(listener, callIndex) addListener(listeners, "changed", listener, callIndex) end
+
+	--[ Initialization ]
+
+	--Add type
+	datamanager.addType(typename)
+
+	--Register to settings data management
+	if t.dataManagement then wt.AddSettingsDataManagementEntry(datamanager, t.dataManagement) end
+
+	return datamanager
+end
+
+--| Binary
+
+function wt.CreateBinary(t, datamanager)
+
+	--[ Parameters  ]
+
+	t = type(t) == "table" and t or {}
+
+	--| Type
+
 	---@type typename_binary
 	local typename = "Binary"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	--| Events
 
@@ -140,33 +307,18 @@ function wt.CreateBinary(t)
 	if type(value) ~= "boolean" then if type(t.getData) == "function" then value = t.getData() else value = default end end
 	local snapshot = value
 
-	--| State
-
-	local enabled = t.disabled ~= true
-
 	--[ Widget ]
 
-	---@type binary
-	local binary = { invoke = {}, setListener = {}, }
+	---@type binary|datamanager
+	local binary = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 
 	--[ Getters & Setters ]
 
-	function binary.getType() return typename end
-	function binary.isType(type) return type == typename end
-
 	--| Events
 
-	function binary.invoke.enabled() callListeners(binary, listeners, "enabled", enabled) end
-	function binary.invoke.loaded(success) callListeners(binary, listeners, "loaded", success) end
-	function binary.invoke.saved(success) callListeners(binary, listeners, "saved", success) end
 	function binary.invoke.flipped(user) callListeners(binary, listeners, "flipped", value, user) end
-	function binary.invoke._(event, ...) callListeners(binary, listeners, event, ...) end
 
-	function binary.setListener.enabled(listener, callIndex) addListener(listeners, "enabled", listener, callIndex) end
-	function binary.setListener.loaded(listener, callIndex) addListener(listeners, "loaded", listener, callIndex) end
-	function binary.setListener.saved(listener, callIndex) addListener(listeners, "saved", listener, callIndex) end
 	function binary.setListener.flipped(listener, callIndex) addListener(listeners, "flipped", listener, callIndex) end
-	function binary.setListener._(event, listener, callIndex) addListener(listeners, event, listener, callIndex) end
 
 	--| Data management
 
@@ -226,27 +378,10 @@ function wt.CreateBinary(t)
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
-	--| State
-
-	function binary.isEnabled() return enabled end
-	function binary.setEnabled(state, silent)
-		enabled = state ~= false
-
-		if not silent then binary.invoke.enabled() end
-	end
-
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then binary.setListener._(v[i].event, v[i].handler, v[i].callIndex) else binary.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(binary, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, binary.setEnabled) end
+	--Add type
+	binary.addType(typename)
 
 	--Set starting value
 	binary.setState(value, false, true)
@@ -254,8 +389,7 @@ function wt.CreateBinary(t)
 	return binary
 end
 
-
---[[ SELECTOR ]]
+--| Selector
 
 local itemsets = {
 	anchor = {
@@ -339,9 +473,6 @@ function wt.CreateSelector(t)
 	local selector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
-
-	function selector.getType() return typename end
-	function selector.isType(type) return type == typename end
 
 	--| Events
 
@@ -485,19 +616,11 @@ function wt.CreateSelector(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then selector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else selector.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
+	--Add type
+	selector.addType(typename)
 
 	--Register starting items
 	for i = 1, #t.items do setToggle(i) end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(selector, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, selector.setEnabled) end
 
 	--Set starting value
 	selector.setSelected(value, false, true)
@@ -564,9 +687,6 @@ function wt.CreateSpecialSelector(itemset, t)
 	local specialSelector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
-
-	function specialSelector.getType() return typename end
-	function specialSelector.isType(type) return type == typename end
 
 	function specialSelector.getItemset() return itemset end
 
@@ -648,10 +768,8 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then specialSelector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else specialSelector.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
+	--Add type
+	specialSelector.addType(typename)
 
 	--Register starting items
 	for i = 1, #t.items do if type(t.items[i]) == "table" then
@@ -674,12 +792,6 @@ function wt.CreateSpecialSelector(itemset, t)
 
 		specialSelector.binaries[i].index = i
 	end end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(specialSelector, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, specialSelector.setEnabled) end
 
 	--Set starting value
 	specialSelector.setSelected(value, false, true)
@@ -740,9 +852,6 @@ function wt.CreateMultiselector(t)
 	local multiselector = { invoke = {}, setListener = {}, binaries = {} }
 
 	--[ Getters & Setters ]
-
-	function multiselector.getType() return typename end
-	function multiselector.isType(type) return type == typename end
 
 	--| Events
 
@@ -922,19 +1031,11 @@ function wt.CreateMultiselector(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then multiselector.setListener._(v[i].event, v[i].handler, v[i].callIndex) else multiselector.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
+	--Add type
+	multiselector.addType(typename)
 
 	--Register starting items
 	for i = 1, #t.items do setToggle(t.items[i], i) end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(multiselector, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, multiselector.setEnabled) end
 
 	--Set starting value
 	multiselector.setSelections(value, false, true)
@@ -942,8 +1043,7 @@ function wt.CreateMultiselector(t)
 	return multiselector
 end
 
-
---[[ TEXTUAL ]]
+--| Textual
 
 function wt.CreateTextual(t)
 	t = type(t) == "table" and t or {}
@@ -973,9 +1073,6 @@ function wt.CreateTextual(t)
 	local textual = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
-
-	function textual.getType() return typename end
-	function textual.isType(type) return type == typename end
 
 	--| Events
 
@@ -1050,16 +1147,8 @@ function wt.CreateTextual(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then textual.setListener._(v[i].event, v[i].handler, v[i].callIndex) else textual.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(textual, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, textual.setEnabled) end
+	--Add type
+	textual.addType(typename)
 
 	--Set starting value
 	textual.setText(t.color and cr(value, t.color) or value, false, true)
@@ -1067,8 +1156,7 @@ function wt.CreateTextual(t)
 	return textual
 end
 
-
---[[ NUMERIC ]]
+--| Numeric
 
 function wt.CreateNumeric(t)
 	t = type(t) == "table" and t or {}
@@ -1116,9 +1204,6 @@ function wt.CreateNumeric(t)
 	local numeric = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
-
-	function numeric.getType() return typename end
-	function numeric.isType(type) return type == typename end
 
 	--| Events
 
@@ -1221,16 +1306,8 @@ function wt.CreateNumeric(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then numeric.setListener._(v[i].event, v[i].handler, v[i].callIndex) else numeric.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(numeric, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, numeric.setEnabled) end
+	--Add type
+	numeric.addType(typename)
 
 	--Set starting value
 	numeric.setNumber(value, false, true)
@@ -1238,8 +1315,7 @@ function wt.CreateNumeric(t)
 	return numeric
 end
 
-
---[[ COLOR DATA ]]
+--| Color
 
 function wt.CreateColormanager(t)
 	t = type(t) == "table" and t or {}
@@ -1271,9 +1347,6 @@ function wt.CreateColormanager(t)
 	local colormanager = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
-
-	function colormanager.getType() return typename end
-	function colormanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -1391,16 +1464,8 @@ function wt.CreateColormanager(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then colormanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else colormanager.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
-
-	--Register to settings data management
-	if t.dataManagement then wt.AddSettingsDataManagementEntry(colormanager, t.dataManagement) end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, colormanager.setEnabled) end
+	--Add type
+	colormanager.addType(typename)
 
 	--Set starting value
 	colormanager.setColor(value, false, true)
@@ -1408,18 +1473,15 @@ function wt.CreateColormanager(t)
 	return colormanager
 end
 
-
---[[ POSITION DATA ]]
-
+--| Position
 
 
 
---[[ FONT DATA ]]
+--| Font
 
 
 
-
---[[ SETTINGS DATA ]]
+--| Settings
 
 function wt.CreateSettingsmanager(t)
 	t = type(t) == "table" and t or {}
@@ -1452,9 +1514,6 @@ function wt.CreateSettingsmanager(t)
 	local settingsmanager = { invoke = {}, setListener = {}, }
 
 	--[ Getters & Setters ]
-
-	function settingsmanager.getType() return typename end
-	function settingsmanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -1524,13 +1583,8 @@ function wt.CreateSettingsmanager(t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then settingsmanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else settingsmanager.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
-
-	--Assign dependencies
-	if t.dependencies then wt.AddDependencies(t.dependencies, settingsmanager.setEnabled) end
+	--Add type
+	settingsmanager.addType(typename)
 
 	return settingsmanager
 end
@@ -1561,9 +1615,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 	function category.defaults(user, callListeners)
 		for i = 1, #category.pages do
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
-			---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
 
 			--Update with default values
@@ -1605,7 +1657,6 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 		table.insert(category.pages, pages[i])
 
-		---@diagnostic disable-next-line: undefined-field --REMOVE when replaced
 		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
@@ -1623,8 +1674,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	return category
 end
 
-
---[[ PROFILE DATA ]]
+--| Profile
 
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
@@ -1672,9 +1722,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	}
 
 	--[ Getters & Setters ]
-
-	function profilemanager.getType() return typename end
-	function profilemanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -1937,10 +1984,8 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then profilemanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else profilemanager.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
+	--Add type
+	profilemanager.addType(typename)
 
 	--Load starting data
 	profilemanager.load(nil, nil, false, true)
@@ -1948,8 +1993,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	return profilemanager
 end
 
-
---[[ ADDON INFO ]]
+--| Addon
 
 function wt.CreateAddonmanager(addon, t)
 	local addon_type = type(addon)
@@ -1979,9 +2023,6 @@ function wt.CreateAddonmanager(addon, t)
 	}
 
 	--[ Getters & Setters ]
-
-	function addonmanager.getType() return typename end
-	function addonmanager.isType(type) return type == typename end
 
 	--| Events
 
@@ -2047,10 +2088,8 @@ function wt.CreateAddonmanager(addon, t)
 
 	--[ Initialization ]
 
-	--Register event handlers
-	if type(t.listeners) == "table" then for k, v in pairs(t.listeners) do if type(v) == "table" then for i = 1, #v do
-		if k == "_" then addonmanager.setListener._(v[i].event, v[i].handler, v[i].callIndex) else addonmanager.setListener[k](v[i].handler, v[i].callIndex) end
-	end end end end
+	--Add type
+	addonmanager.addType(typename)
 
 	--Load metadata
 	addonmanager.setAddon(addon, t.changelog)

@@ -287,8 +287,9 @@ end
 
 --[[ WIDGET MANAGEMENT ]]
 
-function wt.IsWidget(t)
-	return type(t) == "table" and t.isType and t.getType and t.getType() or false
+function wt.IsWidget(o, typename)
+	if type(o) ~= "table" or type(o.isType) ~= "function" then return false end
+	if typename then return o.isType(typename) else return true end
 end
 
 
@@ -900,20 +901,17 @@ function wt.AddDependencies(rules, setState)
 
 	for i = 1, #rules do
 		local f = rules[i].frame
-		local t = wt.IsWidget(f)
 
-		if t then
+		if wt.IsWidget(f) then
 			f.setListener.loaded(function(_, success) if success then setter() end end)
 
-			if t == "Toggle" then f.setListener.flipped(setter)
-			elseif t == "Selector" or t == "Multiselector" or t == "SpecialSelector" then f.setListener.selected(setter)
-			elseif t == "Textbox" or t == "Numeric" then f.setListener.changed(setter) end
+			if f.isType("Toggle") then f.setListener.flipped(setter)
+			elseif f.isType("Selector") or f.isType("Multiselector") or f.isType("SpecialSelector") then f.setListener.selected(setter)
+			elseif f.isType("Textbox") or f.isType("Numeric") then f.setListener.changed(setter) end
 		elseif us.IsFrame(f) then
-			t = f:GetObjectType()
-
-			if t == "CheckButton" then f:HookScript("OnClick", setter)
-			elseif t == "EditBox" then f:HookScript("OnTextChanged", setter)
-			elseif t == "Slider" then f:HookScript("OnValueChanged", setter) end
+			if f:IsObjectType("CheckButton") then f:HookScript("OnClick", setter)
+			elseif f:IsObjectType("EditBox") then f:HookScript("OnTextChanged", setter)
+			elseif f:IsObjectType("Slider") then f:HookScript("OnValueChanged", setter) end
 		end
 	end
 
@@ -929,9 +927,10 @@ function wt.CheckDependencies(rules)
 	for i = 1, #rules do
 		local f = rules[i].frame
 		local e = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
-		local t = wt.IsWidget(f)
 
-		if t then
+		if wt.IsWidget(f) then
+			local t = f.getType()
+
 			if t == "Toggle" then if e then state = e(f.getState()) else state = f.getState() end
 			elseif e then
 				if t == "Selector" then state = e(f.getSelected())
@@ -941,12 +940,12 @@ function wt.CheckDependencies(rules)
 				elseif t == "Numeric" then state = e(f.getNumber()) end
 			end
 		elseif us.IsFrame(f) then
-			t = f:GetObjectType()
+			local ot = f:GetObjectType()
 
-			if t == "CheckButton" then if e then state = e(f:GetChecked()) else state = f:GetChecked() end
+			if ot == "CheckButton" then if e then state = e(f:GetChecked()) else state = f:GetChecked() end
 			elseif e then
-				if t == "EditBox" then state = e(f:GetText())
-				elseif t == "Slider" then state = e(f:GetValue()) end
+				if ot == "EditBox" then state = e(f:GetText())
+				elseif ot == "Slider" then state = e(f:GetValue()) end
 			end
 		end
 

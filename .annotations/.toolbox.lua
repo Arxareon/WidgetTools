@@ -5,7 +5,7 @@
 
 --[[ TOOLBOX ]]
 
----Read-only reference to the Widget Toolbox table
+---Widget Toolbox table
 ---@class toolbox : widgetToolbox
 ---@field addon string Toolbox sub-addon namespace name
 ---@field title string Toolbox sub-addon display title
@@ -324,55 +324,62 @@ end
 
 --[[ WIDGET MANAGEMENT ]]
 
----Check if a variable is a recognizable WidgetTools custom table
----@param t any
+---Check if an object is a recognizable widget table and is optionally of a specific type
+---@param o IsWidget_param1 Reference to the object to check
+---@param typename? IsWidget_param2 Custom typename to not only check if `o` is a WidgetTools widget table or if it is also of the specific type | ***Default:*** *don't check type*
 ---***
----@return boolean|typename # Return the type name of the object if recognized, false if not
+---@return boolean # Return the true if the object is a widget (and optionally also of `typename`)
 ---<p></p>
-function wt.IsWidget(t)
+function wt.IsWidget(o, typename)
 
-	--| Returns
+	--| Parameters
 
-	---@alias typename
-	---| baseTypename
-	---| mutatedTypename
+	---Reference to the object to check
+	---@alias IsWidget_param1 # o
+	---| any
 
-		---@alias baseTypename
+	---Custom typename to not only check if `o` is a WidgetTools widget table or if it is also of the specific type | ***Default:*** *don't check type*
+	---@alias IsWidget_param2 # typename
+	---| typename
+	---| string
+	---| nil
+
+		---@alias typename
+		---| typename_widget
 		---| typename_action
-		---| typename_binary
-		---| typename_selector
-		---| typename_specialSelector
-		---| typename_multiselector
-		---| typename_textual
-		---| typename_numeric
-		---| typename_colormanager
-		---| typename_positionmanager
-		---| typename_fontmanager
-		---| typename_settingsmanager
-		---| typename_profilemanager
-		---| typename_addonmanager
-		---| typename_settingsCategory
-
-		---@alias mutatedTypename
 		---| typename_button
 		---| typename_customButton
+		---| typename_binary
 		---| typename_radiobutton
 		---| typename_checkbox
 		---| typename_classicCheckbox
+		---| typename_selector
 		---| typename_radiogroup
 		---| typename_dropdownRadiogroup
+		---| typename_specialSelector
 		---| typename_specialRadiogroup
+		---| typename_multiselector
 		---| typename_checkgroup
+		---| typename_textual
 		---| typename_editbox
+		---| typename_customEditbox
 		---| typename_multilineEditbox
+		---| typename_numeric
 		---| typename_slider
 		---| typename_classicSlider
+		---| typename_colormanager
 		---| typename_colorpicker
-		---| typename_positionOptions
-		---| typename_fontOptions
+		---| typename_positionmanager
+		---| typename_positionPanel
+		---| typename_fontmanager
+		---| typename_fontPanel
+		---| typename_settingsmanager
 		---| typename_settingsPage
+		---| typename_profilemanager
 		---| typename_profilesPage
+		---| typename_addonmanager
 		---| typename_addonPage
+		---| typename_settingsCategory
 
 	return false
 end
@@ -1205,14 +1212,39 @@ end
 
 --[[ SETTINGS ]]
 
----Settings data management rule registry
+---Settings datamanagement rule registry
 ---@class settingsRegistry
 ---@field rules table<string, settingsRule[]> Collection of rules describing where to save/load settings data to/from, and what change handlers to call in the process linked to each specific settings category under an addon
 ---@field changeHandlers table<string, function> List of pairs of addon-specific unique keys and change handler scripts
 
 	---@class settingsRule
-	---@field widget AnyWidgetType|AnyGUIWidgetType Reference to the widget to be saved & loaded data to/from with defined **loadData** and **saveData** functions
-	---@field onChange? string[] List of keys referencing functions to be called after the value of **widget** was changed by the user or via settings data management
+	---@field widget DataWidgetType Reference to the widget to be saved & loaded data to/from with defined **loadData** and **saveData** functions
+	---@field onChange? string[] List of keys referencing functions to be called after the value of **widget** was changed by the user or via settings datamanagement
+
+		---@alias DataWidgetType
+		---| datamanager
+		---| binary
+		---| checkbox
+		---| radiobutton
+		---| selector
+		---| radiogroup
+		---| dropdownRadiogroup
+		---| specialSelector
+		---| specialRadiogroup
+		---| multiselector
+		---| checkgroup
+		---| textual
+		---| singlelineEditbox
+		---| customEditbox
+		---| multilineEditbox
+		---| numeric
+		---| numericSlider
+		---| colormanager
+		---| colorpicker
+		---| positionmanager
+		---| positionPanel
+		---| fontmanager
+		---| fontPanel
 
 ---Register the settings page to the Settings window if it wasn't already
 --- - ***Note:*** No settings page will be registered if **WidgetToolsDB.lite** is true.
@@ -1223,81 +1255,53 @@ function wt.RegisterSettingsPage(page, parent, icon) end
 
 --[ Data Management ]
 
----Register a settings data management entry for a settings widget to the settings data management registry for batched data handling
+---Register a settings datamanagement entry for a settings widget to the settings datamanagement registry for batched data handling
 ---***
----@param widget AnyWidgetType|AnyGUIWidgetType Reference to the widget to be saved & loaded data to/from with defined **widget.loadData()** & **widget.saveData()** functions
+---@param widget DataWidgetType Reference to the widget to be saved & loaded data to/from with defined **widget.loadData()** & **widget.saveData()** functions
 ---@param t settingsData Optional parameters
 ---***
----@return integer|nil index The index for the new entry for **widget** where it ended up in the settings data management registry | ***Default:*** `nil`
-function wt.AddSettingsDataManagementEntry(widget, t)
+---@return integer|nil index The index for the new entry for **widget** where it ended up in the settings datamanagement registry | ***Default:*** `nil`
+function wt.AddSettingsDataManagementEntry(widget, t) end
 
-	--| Parameters
-
-		---@alias AnyWidgetType # widget
-		---| action
-		---| binary
-		---| selector
-		---| specialSelector
-		---| multiselector
-		---| textual
-		---| numeric
-		---| colormanager
-		---| profilemanager
-
-		---@alias AnyGUIWidgetType # widget
-		---| checkbox
-		---| radiobutton
-		---| radiogroup
-		---| dropdownRadiogroup
-		---| specialRadiogroup
-		---| checkgroup
-		---| customEditbox
-		---| customEditbox
-		---| multilineEditbox
-		---| numericSlider
-		---| colorpicker
-
-end
-
----Load all data from storage to the widgets specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].loadData(...)** for each
+---Load all data from storage to the widgets specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].loadData(...)** for each
 ---***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 ---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** false
 function wt.LoadSettingsData(category, key, handleChanges) end
 
----Save all data from the widgets to storage specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].saveData(...)** for each
+---Save all data from the widgets to storage specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].saveData(...)** for each
 ---***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.SaveSettingsData(category, key) end
 
----Call all **onChange** handlers registered in the settings data management registry in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---Call all **onChange** handlers registered in the settings datamanagement registry in the specified **category** under the specified **key**
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.ApplySettingsData(category, key) end
 
----Set a data snapshot for each widget specified in the settings data management registry in the specified **category** under the specified **key** calling **[*widget*].revertData()** for each
+---Set a data snapshot for each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** calling **[*widget*].revertData()** for each
 ---***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.SnapshotSettingsData(category, key) end
 
----Set & load the stored data managed by each widget specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].revertData()** for each
+---Set & load the stored data managed by each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].revertData()** for each
 ---***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.RevertSettingsData(category, key) end
 
----Set & load the default data managed by each widget specified in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].resetData()** for each
+---Set & load the default data managed by each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].resetData()** for each
 ---***
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.ResetSettingsData(category, key) end
 
----Handle changes for widgets in the settings data management registry in the specified **category** under the specified **key** by calling **[*widget*].onChange()** for each
+---Handle changes for widgets in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].onChange()** for each
 ---@param index integer Filter the call of change handlers to only include the list under the specified index not each list in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
 ---@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
 function wt.HandleWidgetChanges(index, category, key) end
 
@@ -1537,20 +1541,19 @@ function wt.CreateMenuButton(menu, t)
 end
 
 
---[[ ACTION ]]
+--[[ WIDGET ]]
 
----Create a non-GUI action widget base
+---Create a non-GUI base widget
 ---***
----@param t? actionCreationData Optional parameters
+---@param t? widgetCreationData Optional parameters
 ---***
----@return action action Reference to the new action widget, utility functions and more wrapped in a table
-function wt.CreateAction(t)
+---@return widget widget Reference to the new widget, utility functions and more wrapped in a table
+function wt.CreateWidget(t)
 
 	--| Parameters
 
-	---@class actionCreationData : togglableObject # t
-	---@field action? fun(self: action, user?: boolean) Function to call when the button is triggered (clicked by the user or triggered programmatically)<ul><li>***Note:*** This function will be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" script event happens, there's no need to register it again under **t.events.OnClick**.</li></ul><hr><p>@*param* `self` action — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
-	---@field listeners? actionEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@class widgetCreationData : togglableObject # t
+	---@field listeners? widgetEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class togglableObject
 		---@field disabled? boolean If true, set the state of this widget to be disabled during initialization | ***Default:*** `false`<ul><li>***Note:*** Dependency rule evaluations may re-enable the widget after initialization.</li></ul>
@@ -1560,95 +1563,85 @@ function wt.CreateAction(t)
 			---@field frame AnyFrameObject|binary|selector|multiselector|specialSelector|textual|numeric Tie the state of the widget to the evaluation of the current value of the frame specified here
 			---@field evaluate? fun(value?: any): evaluation: boolean Call this function to evaluate the current value of the specified frame, enabling the dependant widget when true, or disabling it when false is returned | ***Default:*** *no evaluation, only for checkboxes*<ul><li>***Note:*** **evaluate** must be defined if the [FrameType](https://warcraft.wiki.gg/wiki/API_CreateFrame#Frame_types) if **frame** is not "CheckButton".</li><li>***Overloads:***</li><ul><li>function(`value`: boolean) -> `evaluation`: boolean — If **frame** is recognized as a checkbox</li><li>function(`value`: string) -> `evaluation`: boolean — If **frame** is recognized as an editbox</li><li>function(`value`: number) -> `evaluation`: boolean — If **frame** is recognized as a slider</li><li>function(`value`: integer) -> `evaluation`: boolean — If **frame** is recognized as a dropdown or selector</li><li>function(`value`: boolean[]) -> `evaluation`: boolean — If **frame** is recognized as multiselector</li><li>function(`value`: AnchorPoint|JustifyH|JustifyV|FrameStrata) -> `evaluation`: boolean — If **frame** is recognized as a special selector</li><li>function(`value`: nil) -> `evaluation`: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*</li></ul></ul>
 
-		---@class actionEventListeners
-		---@field enabled? actionEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **action.setEnabled(...)** was called
-		---@field trigger? actionEventListener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after **action.trigger(...)** was called
-		---@field _? actionEventListener_any[] Ordered list of functions to call when a custom event is invoked
+		---@class widgetEventListeners
+		---@field enabled? widgetEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `widget.setEnabled(...)` was called
+		---@field _? widgetEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
-			---@class actionEventListener_enabled : eventHandlerIndex
-			---@field handler ActionEventHandler_enabled Handler function to register for call
+			---@class widgetEventListener_enabled : eventHandlerIndex
+			---@field handler WidgetEventHandler_enabled Handler function to register for call
 
 				---@class eventHandlerIndex
 				---@field callIndex? integer Set when to call **handler** in the execution order | ***Default:*** *placed at the end of the current list*
 
-				---@alias ActionEventHandler_enabled
-				---| fun(self: ActionType, state: boolean) Called when an "enabled" event is invoked after **action.setEnabled(...)** was called<hr><p>@*param* `self` ActionType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+				---@alias WidgetEventHandler_enabled
+				---| fun(self: WidgetType, state: boolean) Called when an "enabled" event is invoked after `widget.setEnabled(...)` was called<hr><p>@*param* `self` WidgetType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-					---@alias ActionType
-					---| action
-					---| actionButton
-					---| customButton
+					---@alias WidgetType
+					---| widget
 
-			---@class actionEventListener_triggered : eventHandlerIndex
-			---@field handler ActionEventHandler_triggered Handler function to register for call
-
-				---@alias ActionEventHandler_triggered
-				---| fun(self: ActionType) Called when a "triggered" event is invoked after **action.trigger(...)** was called<hr><p>@*param* `self` ActionType ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class actionEventListener_any : eventTag, eventHandlerIndex
-			---@field handler ActionEventHandler_any Handler function to register for call
+			---@class widgetEventListener_any : eventTag, eventHandlerIndex
+			---@field handler WidgetEventHandler_any Handler function to register for call
 
 				---@class eventTag
 				---@field event string Custom event tag
 
-				---@alias ActionEventHandler_any
-			---| fun(self: ActionType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ActionType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias WidgetEventHandler_any
+			---| fun(self: WidgetType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` WidgetType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class action
-	---@field invoke action_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
-	---@field setListener action_setListener Hook a handler function as a listener for a custom widget event
+	---@class widget
+	---@field invoke widget_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener widget_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_widget
+			---| "Widget"
+
+		---Checks and returns if the type of this widget matches the string provided
 		---***
-		---@return typename_action
-		---<p></p>
-		function _.getType() return "Action" end
-
-			---@alias typename_action
-			---| "Action"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
+		---@param s typename|string
 		---@return boolean
 		---<p></p>
-		function _.isType(type) return false end
+		function _.isType(s) return false end
+
+		---Assign an additional type to this widget
+		--- - ***Note:*** Be careful when adding types the widget does not implement to prevent potential expectation misalignment issues.
+		---***
+		---@param s typename|string
+		---<p></p>
+		function _.addType(s) end
 
 		--| Events
 
-		---@class action_invoke
+		---@class widget_invoke
 		local invoke = {}
 
 			--Invoke an "enabled" event calling registered listeners
 			function invoke.enabled() end
-
-			---Invoke a "triggered" event calling registered listeners
-			---@param user boolean
-			function invoke.triggered(user) end
 
 			---Invoke a custom event calling registered listeners
 			---@param event string Custom event tag
 			---@param ... any Any number of leftover arguments passed to listeners
 			function invoke._(event, ...) end
 
-		---@class action_setListener
+		---@class widget_setListener
 		local setListener = {}
 
 			---Register a listener for a "enabled" event trigger
-			---@param listener ActionEventHandler_enabled Handler function to set
+			---@param listener WidgetEventHandler_enabled Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(listener, callIndex) end
 
-			---Register a listener for a "triggered" event trigger
-			---@param listener ActionEventHandler_triggered Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.triggered(listener, callIndex) end
-
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener ActionEventHandler_any Handler function to set
+			---@param listener WidgetEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -1664,12 +1657,266 @@ function wt.CreateAction(t)
 		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
 		function _.setEnabled(state, silent) end
 
-		--| Action
+	return _
+end
 
-		---Trigger the action registered for the button (if it is enabled)
+---Create a non-GUI base widget with generic datamanagement logic
+---***
+---@param t? datamanagerCreationData Optional parameters
+---@param widget? widget Reference to an already existing base widget to mutate into a datamanager instead of creating a new one
+---***
+---@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a table
+function wt.CreateDatamanager(t, widget)
+
+	--| Parameters
+
+	---@class datamanagerCreationData : widgetCreationData, settingsWidget # t
+	---@field listeners? datamanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** `false`</p>
+	---@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
+	---@field value? any The starting state of the widget to set during initialization | ***Default:*** **t.getData()** or **t.default** if invalid
+	---@field default? any Default value of the widget | ***Default:*** `nil`
+
+		---@class settingsWidget
+		---@field dataManagement? settingsData If set, register this widget to settings datamanagement for batched data saving & loading and handling data changes
+		---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`<ul><li>***Note:*** Any unsaved data will be saved when ***WidgetToolbox*.SaveOptionsData(...)** is executed.</li></ul>
+
+			---@class settingsData
+			---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(register as a global rule)*
+			---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+			---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *placed at the end of the current list*
+			---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings datamanagement<ul><li>**[*key*]**? string|integer ― A unique string appended to **category** to point to a newly defined function to be added to settings datamanagement or just the index of the next function name | ***Default:*** *next assigned index*</li><li>**[*value*]** function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings datamanagement. Functions registered under duplicate keys are overwritten.</li></ul></ul>
+
+		---@class datamanagerEventListeners : widgetEventListeners
+		---@field loaded? datamanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? datamanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? datamanagerEventListener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager.setvalue(...)` was called
+
+			---@class datamanagerEventListener_loaded : eventHandlerIndex
+			---@field handler DatamanagerEventHandler_loaded Handler function to register for call
+
+				---@alias DatamanagerEventHandler_loaded
+				---| fun(self: DatamanagerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` DatamanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+
+			---@class datamanagerEventListener_saved : eventHandlerIndex
+			---@field handler DatamanagerEventHandler_saved Handler function to register for call
+
+				---@alias DatamanagerEventHandler_saved
+				---| fun(self: DatamanagerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` DatamanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+
+					---@alias DatamanagerType
+					---| datamanager
+
+			---@class datamanagerEventListener_changed : eventHandlerIndex
+			---@field handler DatamanagerEventHandler_changed Handler function to register for call
+
+				---@alias DatamanagerEventHandler_changed
+				---| fun(self: DatamanagerType, state: boolean, user: boolean) Called when a "changed" event is invoked after `datamanager.setvalue(...)` was called<hr><p>@*param* `self` DatamanagerType ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+	--| Returns
+
+	---@class datamanager : widget
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener datamanager_setListener Hook a handler function as a listener for a custom widget event
+	local _ = {}
+
+		---Validate a value to be accepted by the widget
+		---@param value? any
+		---***
+		---@return any? ***Default:*** *current value*
+		function _.verify(value) end
+
+		---Turn a value into a formatted string
+		---***
+		---@param value? any ***Default:*** *current value*
+		---@return string
+		function _.format(value) return "" end
+
+		---Returns the current value of the widget
+		---@return any
+		function _.getValue() end
+
+		---Verify and set the value of the widget
+		---***
+		---@param value? any
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
+		function _.setValue(value, user, silent) end
+
+		---Read the data from storage then verify and load it to the widget
+		---***
+		---@param handleChanges? any If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _.loadData(handleChanges, silent) end
+
+		---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
+		---***
+		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
+		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
+		function _.saveData(data, silent) end
+
+		---Get the currently stored data via **t.getData()**
+		---@return any
+		function _.getData() end
+
+		---Verify and save the provided data to storage via **t.saveData(...)** then load it to the widget via **t.loadData()**
+		---***
+		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
+		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.setData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return any
+		function _.getDefault() end
+
+		---Set the default value
+		---@param value? boolean ***Default:*** *current default value*
+		function _.setDefault(value) end
+
+		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
+		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.resetData(handleChanges, silent) end
+
+		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **datamanager.revertData()**
+		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
+		function _.snapshotData(stored) end
+
+		---Set and load the stored data managed by the widget to the last saved data snapshot set via **datamanager.snapshotData()**
+		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.revertData(handleChanges, silent) end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, }
+		function _.getType() return {} end
+
+			---@alias typename_datamanager
+			---| "Datamanager"
+
+		--| Events
+
+		---@class datamanager_invoke : widget_invoke
+		local invoke = {}
+
+			---Invoke a "loaded" event calling registered listeners
+			---@param success boolean
+			function invoke.loaded(success) end
+
+			---Invoke a "saved" event calling registered listeners
+			---@param success boolean
+			function invoke.saved(success) end
+
+			---Invoke a "changed" event calling registered listeners
+			---@param user boolean
+			function invoke.changed(user) end
+
+		---@class datamanager_setListener : widget_setListener
+		local setListener = {}
+
+			---Register a listener for a "loaded" event trigger
+			---@param listener DatamanagerEventHandler_loaded Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.loaded(listener, callIndex) end
+
+			---Register a listener for a "saved" event trigger
+			---@param listener DatamanagerEventHandler_saved Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(listener, callIndex) end
+
+			---Register a listener for a "changed" event trigger
+			---@param listener DatamanagerEventHandler_changed Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(listener, callIndex) end
+
+	return _
+end
+
+
+--[[ ACTION ]]
+
+---Create a non-GUI action widget base
+---***
+---@param t? actionCreationData Optional parameters
+---@param widget? widget Reference to an already existing base widget to mutate into an action instead of creating a new one
+---***
+---@return action action Reference to the new action widget, utility functions and more wrapped in a table
+function wt.CreateAction(t, widget)
+
+	--| Parameters
+
+	---@class actionCreationData : widgetCreationData # t
+	---@field action? fun(self: action, user?: boolean) Function to call when the action is triggered<p>@*param* `self` action — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
+	---@field listeners? actionEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+
+		---@class actionEventListeners : widgetEventListeners
+		---@field trigger? actionEventListener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after **action.trigger(...)** was called
+
+			---@class actionEventListener_triggered : eventHandlerIndex
+			---@field handler ActionEventHandler_triggered Handler function to register for call
+
+				---@alias ActionEventHandler_triggered
+				---| fun(self: ActionType) Called when a "triggered" event is invoked after **action.trigger(...)** was called<hr><p>@*param* `self` ActionType ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+					---@alias ActionType
+					---| action
+					---| actionButton
+					---| customButton
+
+	--| Returns
+
+	---@class action : widget
+	---@field invoke action_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener action_setListener Hook a handler function as a listener for a custom widget event
+	local _ = {}
+
+		---Trigger the action registered for the action (if it is enabled)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke a "trigger" event and call registered listeners | ***Default:*** `false`
 		function _.trigger(user, silent) end
+
+		---Set the function to call on trigger
+		---@param call action_setAction_param1
+		function _.setAction(call)
+
+			--| Parameters
+
+			---Function to call when the action is triggered
+			---***
+			---<p>@<i>param</i> <code>self</code> action — Reference to the widget table</p>
+			---<p>@<i>param</i> <code>user</code>? boolean — Marking whether the call is due to a user interaction or not | <b><i>Default:</i></b> <code>false</code></p>
+			---@alias action_setAction_param1 # call
+			---| fun(self: action, user?: boolean)
+		end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_action]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_action
+			---| "Action"
+
+		--| Events
+
+		---@class action_invoke : widget_invoke
+		local invoke = {}
+
+			---Invoke a "triggered" event calling registered listeners
+			---@param user boolean
+			function invoke.triggered(user) end
+
+		---@class action_setListener : widget_setListener
+		local setListener = {}
+
+			---Register a listener for a "triggered" event trigger
+			---@param listener ActionEventHandler_triggered Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.triggered(listener, callIndex) end
 
 	return _
 end
@@ -1679,7 +1926,7 @@ end
 ---Create a Blizzard button GUI frame with enhanced widget functionality
 ---***
 ---@param t? actionButtonCreationData Optional parameters
----@param action? action Reference to an already existing action manager to mutate into a button instead of creating a new base widget
+---@param action? action Reference to an already existing action to mutate into a button instead of creating a new base widget
 ---***
 ---@return actionButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a table
 function wt.CreateButton(t, action)
@@ -1710,21 +1957,12 @@ function wt.CreateButton(t, action)
 	---@field widget Button
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_action
-		---@return typename_button
-		---<p></p>
-		function _.getType() return "Action", "Button" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_button
 			---| "Button"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -1732,7 +1970,7 @@ end
 ---Create a Blizzard button GUI frame with customizable backdrop and enhanced widget functionality
 ---***
 ---@param t? customButtonCreationData Optional parameters
----@param action? action Reference to an already existing action button to mutate into a custom button instead of creating a new base widget
+---@param action? action Reference to an already existing action to mutate into a custom button instead of creating a new base widget
 ---***
 ---@return customButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button) (inheriting [BackdropTemplate](https://warcraft.wiki.gg/wiki/BackdropTemplate)), utility functions and more wrapped in a table
 function wt.CreateCustomButton(t, action)
@@ -1758,21 +1996,12 @@ function wt.CreateCustomButton(t, action)
 	---@field widget Button|BackdropTemplate
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_action
-		---@return typename_customButton
-		---<p></p>
-		function _.getType() return "Action", "CustomButton" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_action]: true, [typename_customButton]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_customButton
 			---| "CustomButton"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -1780,157 +2009,71 @@ end
 
 --[[ BINARY ]]
 
----Create a non-GUI binary widget base with boolean data management logic
+---Create a non-GUI binary base widget with boolean datamanagement logic
 ---***
 ---@param t? binaryCreationData Optional parameters
+---@param datamanager? datamanager Reference to an already existing datamanager to mutate into binary instead of creating a new base widget
 ---***
 ---@return binary binary Reference to the new binary widget, utility functions and more wrapped in a table
-function wt.CreateBinary(t)
+function wt.CreateBinary(t, datamanager)
 
 	--| Parameters
 
-	---@class binaryCreationData : togglableObject, settingsWidget # t
+	---@class binaryCreationData : datamanagerCreationData # t
 	---@field listeners? binaryEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** `false`</p>
 	---@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
 	---@field value? boolean The starting state of the widget to set during initialization | ***Default:*** **t.getData()** or **t.default** if invalid
 	---@field default? boolean Default value of the widget | ***Default:*** `false`
 
-		---@class settingsWidget
-		---@field dataManagement? settingsData If set, register this widget to settings data management for batched data saving & loading and handling data changes
-		---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`<ul><li>***Note:*** Any unsaved data will be saved when ***WidgetToolbox*.SaveOptionsData(...)** is executed.</li></ul>
+		---@class binaryEventListeners : datamanagerEventListeners
+		---@field flipped? binaryEventListener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after **binary.setState(...)** was called
 
-			---@class settingsData
-			---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** "WidgetTools" *(register as a global rule)*
-			---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
-			---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *placed at the end of the current list*
-			---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings data management<ul><li>**[*key*]**? string|integer ― A unique string appended to **category** to point to a newly defined function to be added to settings data management or just the index of the next function name | ***Default:*** *next assigned index*</li><li>**[*value*]** function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings data management. Functions registered under duplicate keys are overwritten.</li></ul></ul>
+			---@class binaryEventListener_flipped : eventHandlerIndex
+			---@field handler BinaryEventHandler_flipped Handler function to register for call
 
-		---@class binaryEventListeners
-		---@field enabled? binaryEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **binary.setEnabled(...)** was called
-		---@field loaded? binaryEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? binaryEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field flipped? binaryEventListener_flipped[] Ordered list of functions to call when an "flipped" event is invoked after **binary.setState(...)** was called
-		---@field [string]? binaryEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class binaryEventListener_enabled : eventHandlerIndex
-			---@field handler BinaryEventHandler_enabled Handler function to register for call
-
-				---@alias BinaryEventHandler_enabled
-				---| fun(self: BinaryType, state: boolean) Called when an "enabled" event is invoked after **binary.setEnabled(...)** was called<hr><p>@*param* `self` BinaryType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+				---@alias BinaryEventHandler_flipped
+				---| fun(self: BinaryType, state: boolean, user: boolean) Called when a "flipped" event is invoked after **binary.setState(...)** was called<hr><p>@*param* `self` BinaryType ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 					---@alias BinaryType
 					---| binary
 					---| checkbox
 					---| radiobutton
 
-			---@class binaryEventListener_loaded : eventHandlerIndex
-			---@field handler ToggleEventHandler_loaded Handler function to register for call
-
-				---@alias ToggleEventHandler_loaded
-				---| fun(self: BinaryType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` BinaryType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
-
-			---@class binaryEventListener_saved : eventHandlerIndex
-			---@field handler BinaryEventHandler_saved Handler function to register for call
-
-				---@alias BinaryEventHandler_saved
-				---| fun(self: BinaryType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` BinaryType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
-
-			---@class binaryEventListener_flipped : eventHandlerIndex
-			---@field handler BinaryEventHandler_flipped Handler function to register for call
-
-				---@alias BinaryEventHandler_flipped
-				---| fun(self: BinaryType, state: boolean, user: boolean) Called when an "flipped" event is invoked after **binary.setState(...)** was called<hr><p>@*param* `self` BinaryType ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class binaryEventListener_any : eventTag, eventHandlerIndex
-			---@field handler BinaryEventHandler_any Handler function to register for call
-
-				---@alias BinaryEventHandler_any
-				---| fun(self: BinaryType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` BinaryType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
-
 	--| Returns
 
-	---@class binary
+	---@class binary : datamanager
 	---@field invoke binary_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener binary_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_binary
-		---<p></p>
-		function _.getType() return "Binary" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_binary
 			---| "Binary"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class binary_invoke
+		---@class binary_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
 
 			---Invoke a "flipped" event calling registered listeners
 			---@param user boolean
 			function invoke.flipped(user) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
-		---@class binary_setListener
+		---@class binary_setListener : datamanager_setListener
 		local setListener = {}
-
-			---Register a listener for a "enabled" event trigger
-			---@param listener BinaryEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
-			---Register a listener for a "loaded" event trigger
-			---@param listener ToggleEventHandler_loaded Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.loaded(listener, callIndex) end
-
-			---Register a listener for a "saved" event trigger
-			---@param listener BinaryEventHandler_saved Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "flipped" event trigger
 			---@param listener BinaryEventHandler_flipped Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.flipped(listener, callIndex) end
 
-			---Register a listener for a custom event trigger
-			---@param event string Custom event tag
-			---@param listener BinaryEventHandler_any Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, listener, callIndex) end
-
 		--| Data management
-
-		---Read the data from storage then verify and load it to the widget
-		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.loadData(handleChanges, silent) end
 
 		---Verify and save the provided data or the current value of the widget to storage via **t.saveData(...)**
 		---***
@@ -1950,17 +2093,12 @@ function wt.CreateBinary(t)
 		function _.setData(state, handleChanges, silent) end
 
 		---Get the currently set default value
-		---@return boolean default
+		---@return boolean
 		function _.getDefault() return false end
 
 		---Set the default value
 		---@param state? boolean ***Default:*** `false`
 		function _.setDefault(state) end
-
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.resetData(handleChanges, silent) end
 
 		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via **binary.revertData()**
 		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
@@ -1990,21 +2128,9 @@ function wt.CreateBinary(t)
 
 		---Utility to turn a logical state value into formatted string
 		---***
-		---@param state? boolean ***Default:*** *(current value)*
+		---@param state? boolean ***Default:*** *current value*
 		---@return string
 		function _.formatValue(state) return "" end
-
-		--| State
-
-		---Return the current enabled state of the widget
-		---@return boolean enabled True, if the widget is enabled
-		function _.isEnabled() return false end
-
-		---Enable or disable the widget based on the specified value
-		---***
-		---@param state? boolean Enable the input if true, disable if not | ***Default:*** `true`
-		---@param silent? boolean If false, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
-		function _.setEnabled(state, silent) end
 
 	return _
 end
@@ -2014,7 +2140,7 @@ end
 ---Create a Blizzard checkbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? checkboxCreationData Optional parameters
----@param binary? binary Reference to an already existing binary data manager to mutate into a checkbox instead of creating a new base widget
+---@param binary? binary Reference to an already existing binary datamanager to mutate into a checkbox instead of creating a new base widget
 ---***
 ---@return checkbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateCheckbox(t, binary)
@@ -2052,21 +2178,12 @@ function wt.CreateCheckbox(t, binary)
 		---@class SettingsCheckbox : CheckButton
 		---@field HoverBackground Frame
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_binary
-		---@return typename_checkbox
-		---<p></p>
-		function _.getType() return "Binary", "Checkbox" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_checkbox
 			---| "Checkbox"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -2074,34 +2191,25 @@ end
 ---Create a classic Blizzard checkbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? checkboxCreationData Optional parameters
----@param binary? binary Reference to an already existing binary data manager to mutate into a checkbox instead of creating a new base widget
+---@param binary? binary Reference to an already existing binary datamanager to mutate into a checkbox instead of creating a new base widget
 ---***
 ---@return checkbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateClassicCheckbox(t, binary)
 
 	--| Returns
 
-	---@class customCheckbox : binary
+	---@class classicCheckbox : binary
 	---@field frame Frame Click target
 	---@field widget CheckButton|BackdropTemplate Checkbox
 	---@field label FontString|nil
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_binary
-		---@return typename_classicCheckbox
-		---<p></p>
-		function _.getType() return "Binary", "ClassicCheckbox" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_classicCheckbox
 			---| "ClassicCheckbox"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -2111,7 +2219,7 @@ end
 ---Create a Blizzard radio button GUI frame with enhanced widget functionality
 ---***
 ---@param t? radiobuttonCreationData Optional parameters
----@param binary? binary Reference to an already existing binary data manager to mutate into a radio button instead of creating a new base widget
+---@param binary? binary Reference to an already existing binary datamanager to mutate into a radio button instead of creating a new base widget
 ---***
 ---@return radiobutton|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateRadiobutton(t, binary)
@@ -2139,21 +2247,12 @@ function wt.CreateRadiobutton(t, binary)
 	---@field label FontString|nil
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_binary
-		---@return typename_radiobutton
-		---<p></p>
-		function _.getType() return "Binary", "Radiobutton" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_radiobutton]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_radiobutton
 			---| "Radiobutton"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -2161,7 +2260,7 @@ end
 
 --[[ SELECTOR ]]
 
----Create a non-GUI selector widget base (managing a set of binary widgets) with integer (selection index) data management logic
+---Create a non-GUI selector base widget (managing a set of binary widgets) with integer (selection index) datamanagement logic
 ---***
 ---@param t? selectorCreationData Optional parameters
 ---***
@@ -2171,7 +2270,7 @@ function wt.CreateSelector(t)
 	--| Parameters
 
 	---@class selectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
-	---@field items? (selectorItem|selectorBinary|binary)[] Table containing subtables with data used to create item widgets, or already existing binary data managers
+	---@field items? (selectorItem|selectorBinary|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
 	---@field listeners? selectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(selected?: integer) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selected`? integer</p>
@@ -2263,7 +2362,7 @@ function wt.CreateSelector(t)
 		---***
 		---@return typename_selector
 		---<p></p>
-		function _.getType() return "Selector" end
+		function _.getTypes() return "Selector" end
 
 			---@alias typename_selector
 			---| "Selector"
@@ -2431,7 +2530,7 @@ function wt.CreateSelector(t)
 	return _
 end
 
----Create a non-GUI special selector widget base (managing a set of binary widgets) with data management logic specific to the specified **itemset**
+---Create a non-GUI special selector base widget (managing a set of binary widgets) with datamanagement logic specific to the specified **itemset**
 ---***
 ---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelectorCreationData Optional parameters
@@ -2517,7 +2616,7 @@ function wt.CreateSpecialSelector(itemset, t)
 		---***
 		---@return typename_specialSelector
 		---<p></p>
-		function _.getType() return "SpecialSelector" end
+		function _.getTypes() return "SpecialSelector" end
 
 			---@alias typename_specialSelector
 			---| "SpecialSelector"
@@ -2678,7 +2777,7 @@ function wt.CreateSpecialSelector(itemset, t)
 	return _
 end
 
----Create a non-GUI multiselector widget base (managing a set of binary widgets) with boolean mask data management logic
+---Create a non-GUI multiselector base widget (managing a set of binary widgets) with boolean mask datamanagement logic
 ---***
 ---@param t? multiselectorCreationData Optional parameters
 ---***
@@ -2688,7 +2787,7 @@ function wt.CreateMultiselector(t)
 	--| Parameters
 
 	---@class multiselectorCreationData : togglableObject, settingsWidget # t
-	---@field items? (selectorItem|binary)[] Table containing subtables with data used to create item widgets, or already existing binary data managers
+	---@field items? (selectorItem|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
 	---@field limits? limitValues Parameters to specify the limits of the number of selectable items
 	---@field listeners? multiselectorEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selections: boolean[] Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selections` boolean[] | ***Default:*** *no selected items: `false[]`*</p>
@@ -2774,7 +2873,7 @@ function wt.CreateMultiselector(t)
 		---***
 		---@return typename_multiselector
 		---<p></p>
-		function _.getType() return "Multiselector" end
+		function _.getTypes() return "Multiselector" end
 
 			---@alias typename_multiselector
 			---| "Multiselector"
@@ -3006,7 +3105,7 @@ function wt.CreateRadiogroup(t, selector)
 		---@return typename_selector
 		---@return typename_radiogroup
 		---<p></p>
-		function _.getType() return "Selector", "Radiogroup" end
+		function _.getTypes() return "Selector", "Radiogroup" end
 
 			---@alias typename_radiogroup
 			---| "Radiogroup"
@@ -3059,7 +3158,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		---@return typename_radiogroup
 		---@return typename_dropdownRadiogroup
 		---<p></p>
-		function _.getType() return "Selector", "Radiogroup", "DropdownRadiogroup" end
+		function _.getTypes() return "Selector", "Radiogroup", "DropdownRadiogroup" end
 
 			---@alias typename_dropdownRadiogroup
 			---| "DropdownRadiogroup"
@@ -3116,7 +3215,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		---@return typename_specialSelector
 		---@return typename_specialRadiogroup
 		---<p></p>
-		function _.getType() return "SpecialSelector", "SpecialRadiogroup" end
+		function _.getTypes() return "SpecialSelector", "SpecialRadiogroup" end
 
 			---@alias typename_specialRadiogroup
 			---| "SpecialRadiogroup"
@@ -3161,7 +3260,7 @@ function wt.CreateCheckgroup(t, selector)
 		---@return typename_multiselector
 		---@return typename_checkgroup
 		---<p></p>
-		function _.getType() return "Multiselector", "Checkgroup" end
+		function _.getTypes() return "Multiselector", "Checkgroup" end
 
 			---@alias typename_checkgroup
 			---| "Checkgroup"
@@ -3178,11 +3277,11 @@ end
 
 --[[ TEXTUAL ]]
 
----Create a non-GUI textual widget base with string data management logic
+---Create a non-GUI textual base widget with string datamanagement logic
 ---***
 ---@param t? textualCreationData Optional parameters
 ---***
----@return textual textual Reference to the new textual data manager, utility functions and more wrapped in a table
+---@return textual textual Reference to the new textual datamanager, utility functions and more wrapped in a table
 function wt.CreateTextual(t)
 
 	--| Parameters
@@ -3249,7 +3348,7 @@ function wt.CreateTextual(t)
 		---***
 		---@return typename_textual
 		---<p></p>
-		function _.getType() return "Textual" end
+		function _.getTypes() return "Textual" end
 
 			---@alias typename_textual
 			---| "Textual"
@@ -3392,7 +3491,7 @@ end
 ---Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? editboxCreationData Optional parameters
----@param textual? textual Reference to an already existing textual data manager to mutate into an editbox instead of creating a new base widget
+---@param textual? textual Reference to an already existing textual datamanager to mutate into an editbox instead of creating a new base widget
 ---***
 ---@return customEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateEditbox(t, textual)
@@ -3439,7 +3538,7 @@ function wt.CreateEditbox(t, textual)
 		---@return typename_textual
 		---@return typename_editbox
 		---<p></p>
-		function _.getType() return "Textual", "Editbox" end
+		function _.getTypes() return "Textual", "Editbox" end
 
 			---@alias typename_editbox
 			---| "Editbox"
@@ -3456,7 +3555,7 @@ end
 ---Create a single-line Blizzard editbox frame with custom GUI and enhanced widget functionality
 ---***
 ---@param t? customEditboxCreationData Optional parameters
----@param textual? textual Reference to an already existing textual data manager to mutate into a customizable editbox instead of creating a new base widget
+---@param textual? textual Reference to an already existing textual datamanager to mutate into a customizable editbox instead of creating a new base widget
 ---***
 ---@return customEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateCustomEditbox(t, textual)
@@ -3478,7 +3577,7 @@ function wt.CreateCustomEditbox(t, textual)
 		---@return typename_textual
 		---@return typename_customEditbox
 		---<p></p>
-		function _.getType() return "Textual", "CustomEditbox" end
+		function _.getTypes() return "Textual", "CustomEditbox" end
 
 			---@alias typename_customEditbox
 			---| "CustomEditbox"
@@ -3495,7 +3594,7 @@ end
 ---Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? multilineEditboxCreationData Optional parameters
----@param textual? textual Reference to an already existing textual data manager to mutate into a multiline editbox instead of creating a new base widget
+---@param textual? textual Reference to an already existing textual datamanager to mutate into a multiline editbox instead of creating a new base widget
 ---***
 ---@return multilineEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateMultilineEditbox(t, textual)
@@ -3533,7 +3632,7 @@ function wt.CreateMultilineEditbox(t, textual)
 		---@return typename_textual
 		---@return typename_multilineEditbox
 		---<p></p>
-		function _.getType() return "Textual", "MultilineEditbox" end
+		function _.getTypes() return "Textual", "MultilineEditbox" end
 
 			---@alias typename_multilineEditbox
 			---| "MultilineEditbox"
@@ -3579,7 +3678,7 @@ function wt.CreateCopybox(t)
 		---***
 		---@return typename_copybox
 		---<p></p>
-		function _.getType() return "Copybox" end
+		function _.getTypes() return "Copybox" end
 
 			---@alias typename_copybox
 			---| "Copybox"
@@ -3615,7 +3714,7 @@ end
 
 --[[ NUMERIC ]]
 
----Create a non-GUI numeric widget base with number data management logic
+---Create a non-GUI numeric base widget with number datamanagement logic
 ---***
 ---@param t? numericCreationData Optional parameters
 ---***
@@ -3703,7 +3802,7 @@ function wt.CreateNumeric(t)
 		---***
 		---@return typename_numeric
 		---<p></p>
-		function _.getType() return "Numeric" end
+		function _.getTypes() return "Numeric" end
 
 			---@alias typename_numeric
 			---| "Numeric"
@@ -3939,7 +4038,7 @@ function wt.CreateSlider(t, numeric)
 		---@return typename_numeric
 		---@return typename_slider
 		---<p></p>
-		function _.getType() return "Numeric", "Slider" end
+		function _.getTypes() return "Numeric", "Slider" end
 
 			---@alias typename_slider
 			---| "Slider"
@@ -3984,7 +4083,7 @@ function wt.CreateClassicSlider(t, numeric)
 		---@return typename_numeric
 		---@return typename_classicSlider
 		---<p></p>
-		function _.getType() return "Numeric", "ClassicSlider" end
+		function _.getTypes() return "Numeric", "ClassicSlider" end
 
 			---@alias typename_classicSlider
 			---| "ClassicSlider"
@@ -4001,7 +4100,7 @@ end
 
 --[[ COLOR DATA ]]
 
----Create a non-GUI colormanager widget base with color data management logic
+---Create a non-GUI colormanager base widget with color datamanagement logic
 ---***
 ---@param t? colormanagerCreationData Optional parameters
 ---***
@@ -4072,7 +4171,7 @@ function wt.CreateColormanager(t)
 		---***
 		---@return typename_colormanager
 		---<p></p>
-		function _.getType() return "Colormanager" end
+		function _.getTypes() return "Colormanager" end
 
 			---@alias typename_colormanager
 			---| "Colormanager"
@@ -4224,7 +4323,7 @@ end
 ---Create a color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---***
 ---@param t? colorpickerCreationData Optional parameters
----@param colormanager? colormanager Reference to an already existing color data manager to mutate into a colorpicker instead of creating a new base widget
+---@param colormanager? colormanager Reference to an already existing color datamanager to mutate into a colorpicker instead of creating a new base widget
 ---***
 ---@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a table
 function wt.CreateColorpicker(t, colormanager)
@@ -4255,7 +4354,7 @@ function wt.CreateColorpicker(t, colormanager)
 		---@return typename_colormanager
 		---@return typename_colorpicker
 		---<p></p>
-		function _.getType() return "Colormanager", "Colorpicker" end
+		function _.getTypes() return "Colormanager", "Colorpicker" end
 
 			---@alias typename_colorpicker
 			---| "Colorpicker"
@@ -4275,6 +4374,8 @@ end
 function wt.CreatePositionmanager()
 	---@alias typename_positionmanager
 	---| "Positionmanager"
+
+	---@class positionmanager
 end
 
 --| Options Panel
@@ -4309,12 +4410,12 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	---@class positionManagementCreationData : settingsWidgetPanel_frame
 	---@field presets? presetItemList Reference to the table containing **frame** position presets to be managed by settings widgets added when set
 	---@field setMovable? movabilityData_position When specified, set **frame** as movable, dynamically updating the position settings widgets when it's moved by the user
-	---@field dataManagement? settingsData_position Register the widgets to settings data management to be linked with the specified key under the specified category
-	---@field onChangePosition? function Function to call after the value of **panel.widgets.position.anchor**, **panel.widgets.position.relativeTo**, **panel.widgets.position.relativePoint**, **panel.widgets.position.offset.x** or **panel.widgets.position.offset.y** was changed by the user or via settings data management before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **frame**
-	---@field onChangeKeepInBounds? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeStrata? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeLevel? function Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeKeepOnTop? function Function to call after the value of **panel.widgets.layer.keepOnTop** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
+	---@field dataManagement? settingsData_position Register the widgets to settings datamanagement to be linked with the specified key under the specified category
+	---@field onChangePosition? function Function to call after the value of **panel.widgets.position.anchor**, **panel.widgets.position.relativeTo**, **panel.widgets.position.relativePoint**, **panel.widgets.position.offset.x** or **panel.widgets.position.offset.y** was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **frame**
+	---@field onChangeKeepInBounds? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
+	---@field onChangeStrata? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
+	---@field onChangeLevel? function Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
+	---@field onChangeKeepOnTop? function Function to call after the value of **panel.widgets.layer.keepOnTop** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
 
 		---@class settingsWidgetPanel_frame : settingsWidgetPanel_base
 		---@field name? string Refer to **frame** by this display name in the tooltips and descriptions of settings widgets | ***Default:*** **frame:GetName()**
@@ -4378,11 +4479,11 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		---Returns the type of this object
 		---***
-		---@return typename_positionOptions
+		---@return typename_positionPanel
 		---<p></p>
-		function _.getType() return "PositionOptions" end
+		function _.getTypes() return "PositionOptions" end
 
-			---@alias typename_positionOptions
+			---@alias typename_positionPanel
 			---| "PositionOptions"
 
 		---Checks and returns if the type of this object is equal to the string provided
@@ -4413,6 +4514,8 @@ end
 function wt.CreateFontmanager()
 	---@alias typename_fontmanager
 	---| "Fontmanager"
+
+	---@class fontmanager
 end
 
 --| Options Panel
@@ -4441,18 +4544,18 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 	---@class fontManagementCreationData : settingsWidgetPanel_text # t
 	---@field colors? table<string, textColorInfo> Use this list of specifications to dictate what colors appear and how: their order and displayed name | ***Default:*** *none*<ul><li>***Note:*** If set, the default color of key "base" will be added if it's missing.</ul></li>
-	---@field dataManagement? settingsData_font Register the widgets to settings data management to be linked with the specified key under the specified category
-	---@field onChangeFont? function Function to call after the value of **panel.widgets.path** or **panel.widgets.size** was changed by the user or via settings data management before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **text**
-	---@field onChangeSize? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
-	---@field onChangeAlignment? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
-	---@field onChangeColor? fun(color: string) Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings data management before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
+	---@field dataManagement? settingsData_font Register the widgets to settings datamanagement to be linked with the specified key under the specified category
+	---@field onChangeFont? function Function to call after the value of **panel.widgets.path** or **panel.widgets.size** was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **text**
+	---@field onChangeSize? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
+	---@field onChangeAlignment? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
+	---@field onChangeColor? fun(color: string) Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
 
 		---@class settingsWidgetPanel_text : settingsWidgetPanel_base
 		---@field name? string Refer to **text** by this display name in the tooltips and descriptions of settings widgets | ***Default:*** **text:GetName()**
 
 		---@class textColorInfo
 		---@field index? integer Ordering index of the color | ***Default:*** *unspecified*
-		---@field name? string Display name to set their widget and tooltip titles paired to their data management keys | ***Default:*** *data management key in Title case*
+		---@field name? string Display name to set their widget and tooltip titles paired to their datamanagement keys | ***Default:*** *datamanagement key in Title case*
 		---@field wrap? boolean If true, wrap the list of colors at this color (starting this one in a new row) | ***Default:*** **index** == 1
 
 		---@class settingsData_font : settingsData_base
@@ -4473,11 +4576,11 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 		---Returns the type of this object
 		---***
-		---@return typename_fontOptions
+		---@return typename_fontPanel
 		---<p></p>
-		function _.getType() return "FontOptions" end
+		function _.getTypes() return "FontOptions" end
 
-			---@alias typename_fontOptions
+			---@alias typename_fontPanel
 			---| "FontOptions"
 
 		---Checks and returns if the type of this object is equal to the string provided
@@ -4490,19 +4593,19 @@ end
 
 --[[ SETTINGS DATA ]]
 
----Create a non-GUI settings data manager widget
+---Create a non-GUI settings datamanager widget
 ---***
 ---@param t settingsmanagerCreationData Optional parameters
 ---***
----@return settingsmanager settingsmanager Reference to the new settings data manager widget, utility functions and more wrapped in a table
+---@return settingsmanager settingsmanager Reference to the new settings datamanager widget, utility functions and more wrapped in a table
 function wt.CreateSettingsmanager(t)
 
 	--| Parameters
 
 	---@class settingsmanagerCreationData : settingsmanagerCreationData_base, describableObject, togglableObject, settingsCategoryData, settingsmanagerEvents, initializableOptionsContainer, liteObject # t
 	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
-	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field listeners? settingsmanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class settingsmanagerCreationData_base
@@ -4512,13 +4615,13 @@ function wt.CreateSettingsmanager(t)
 		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
 
 		---@class settingsCategoryData
-		---@field dataManagement? settingsData_collection If set, register this settings page to settings data management for batched data saving & loading and handling data changes of all linked widgets
+		---@field dataManagement? settingsData_collection If set, register this settings page to settings datamanagement for batched data saving & loading and handling data changes of all linked widgets
 
 			---@class settingsData_collection : settingsData_base
 			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
 
 				---@class settingsData_base
-				---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** **addon**
+				---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** **addon**
 
 		---@class settingsmanagerEvents
 		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
@@ -4528,7 +4631,7 @@ function wt.CreateSettingsmanager(t)
 		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)** or not (or example when "All Settings" have been clicked)</p>
 
 		---@class initializableOptionsContainer : initializableContainer
-		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings data management rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings datamanagement rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 		---@class settingsmanagerEventListeners
 		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **settingsmanager.setEnabled(...)** was called
@@ -4596,7 +4699,7 @@ function wt.CreateSettingsmanager(t)
 		---***
 		---@return typename_settingsmanager
 		---<p></p>
-		function _.getType() return "Settingsmanager" end
+		function _.getTypes() return "Settingsmanager" end
 
 			---@alias typename_settingsmanager
 			---| "Settingsmanager"
@@ -4679,7 +4782,7 @@ function wt.CreateSettingsmanager(t)
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
-		--| Batched data management
+		--| Batched datamanagement
 
 		---Force update all linked settings widgets in this category page
 		---***
@@ -4732,7 +4835,7 @@ end
 ---Create an new Settings Panel frame and add it to the Options
 ---***
 ---@param t? settingsPageCreationData Optional parameters
----@param settingsmanager? settingsmanager Reference to an already existing settings data manager to mutate into a settings page instead of creating a new base widget
+---@param settingsmanager? settingsmanager Reference to an already existing settings datamanager to mutate into a settings page instead of creating a new base widget
 ---***
 ---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(t, settingsmanager)
@@ -4744,8 +4847,8 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
 	---@field titleIcon? boolean Append **t.icon** to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if **t.register == true**
 	---@field scroll? settingsPageScrollData If set, make the canvas frame scrollable by creating a [ScrollFrame](https://warcraft.wiki.gg/wiki/UIOBJECT_ScrollFrame) as its child
-	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings data management under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings data management under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys**, committing their data to storage via ***WidgetToolbox*.SaveOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys** from storage via ***WidgetToolbox*.LoadOptionsData(...)** | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 
 		---@class settingsPageScrollData : scrollSpeedData
@@ -4786,7 +4889,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		---@return typename_settingsmanager
 		---@return typename_settingsPage
 		---<p></p>
-		function _.getType() return "Settingsmanager", "SettingsPage" end
+		function _.getTypes() return "Settingsmanager", "SettingsPage" end
 
 			---@alias typename_settingsPage
 			---| "SettingsPage"
@@ -4813,7 +4916,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		function _.open() end
 end
 
----Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
+---Create an new Settings category with a parent page, its child pages, and set up shared settings datamanagement for them
 ---***
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
@@ -4839,7 +4942,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		---***
 		---@return typename_settingsCategory
 		---<p></p>
-		function _.getType() return "SettingsCategory" end
+		function _.getTypes() return "SettingsCategory" end
 
 			---@alias typename_settingsCategory
 			---| "SettingsCategory"
@@ -4866,7 +4969,7 @@ end
 
 --[[ PROFILE DATA ]]
 
----Create a non-GUI profile data manager widget with live database management and profile selection logic
+---Create a non-GUI profile datamanager widget with live database management and profile selection logic
 ---***
 ---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
 	--- - ***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).
@@ -4875,7 +4978,7 @@ end
 ---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanagerCreationData Optional parameters
 ---***
----@return profilemanager? profilemanager Reference to the new profile data manager widget, utility functions and more wrapped in a table | ***Default:*** `nil`
+---@return profilemanager? profilemanager Reference to the new profile datamanager widget, utility functions and more wrapped in a table | ***Default:*** `nil`
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--| Parameters
@@ -4991,7 +5094,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		---***
 		---@return typename_profilemanager
 		---<p></p>
-		function _.getType() return "Profilemanager" end
+		function _.getTypes() return "Profilemanager" end
 
 			---@alias typename_profilemanager
 			---| "Profilemanager"
@@ -5177,7 +5280,7 @@ end
 ---@param settingsData CreateProfilesPage_param4 Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
 --- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPageCreationData Optional parameters
----@param profilemanager? profilemanager Reference to an already existing profile data manager to mutate into a profile management settings page instead of creating a new base widget
+---@param profilemanager? profilemanager Reference to an already existing profile datamanager to mutate into a profile management settings page instead of creating a new base widget
 ---***
 ---@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
@@ -5228,7 +5331,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		---@return typename_profilemanager
 		---@return typename_profilesPage
 		---<p></p>
-		function _.getType() return "Profilemanager", "ProfilesPage" end
+		function _.getTypes() return "Profilemanager", "ProfilesPage" end
 
 			---@alias typename_profilesPage
 			---| "ProfilesPage"
@@ -5292,7 +5395,7 @@ function wt.CreateAddonmanager(addon, t)
 		---***
 		---@return typename_addonmanager
 		---<p></p>
-		function _.getType() return "Addonmanager" end
+		function _.getTypes() return "Addonmanager" end
 
 			---@alias typename_addonmanager
 			---| "Addonmanager"

@@ -127,10 +127,10 @@ end
 --| Frame
 
 ---Check if a variable is a frame (or a backdrop object)
----@param t Frame|any
+---@param o Frame|any
 ---***
 ---@return boolean|string # If `t` is recognized as a [`FrameScriptObject`](https://warcraft.wiki.gg/wiki/UIOBJECT_FrameScriptObject), return `true`, or, return the frame name if named or the debug name if unnamed but recognized as a UI [Object](https://warcraft.wiki.gg/wiki/UIOBJECT_Object) with a parent, otherwise, return false
-function utilities.IsFrame(t) return false end
+function utilities.IsFrame(o) return false end
 
 ---Find a frame or region by its name (or a subregion if a key is included in the input string) and get a reference to it if it exists
 ---***
@@ -319,10 +319,10 @@ end
 
 --[ Table Management ]
 
----Protect a table by creating a deep proxy surrogate reference through which value access will be read-only via a protective metatable ruleset
---- - ***Note:*** The protection will "infect" any and all subtables when they are indexed through a proxy, meaning the read-only protection will be extended at any depth, including new subtables added to the original table structure of `t` after it was protected.
+---Protect a table by creating a deep proxy surrogate reference through which value access will be readonly via a protective metatable ruleset
+--- - ***Note:*** The protection will "infect" any and all subtables when they are indexed through a proxy, meaning the readonly protection will be extended at any depth, including new subtables added to the original table structure of `t` after it was protected.
 --- - ***Note:*** Tables for which `getmetatable(t)` returns "public" or "protected", will not be wrapped behind a new proxy.
----   - ***Example:*** Use `setmetatable(t, { __metatable = "public" })` to whitelist any table from getting read-only protection.
+---   - ***Example:*** Use `setmetatable(t, { __metatable = "public" })` to whitelist any table from getting readonly protection.
 ---***
 ---@param t Protect_param Reference to the table to create the proxy for
 ---***
@@ -804,23 +804,24 @@ local toolboxes = {}
 	---@field changelog? string[][] 
 
 ---@class widgetToolboxEntry
----@field toolbox widgetToolbox|table Read-only proxy reference to the registered toolbox table
+---@field toolbox widgetToolbox|table Registered toolbox table
 ---@field addons string[] List of addons registered for using this toolbox (represented by their namespace names)
 
 --| Registration
 
----Get a read-only reference to the toolbox of the specified version from the registry, register an already assembled one as a new entry, or start initializing a new toolbox table, linked to the specified addon for use
---- - ***Note:*** If a toolbox of `version` already exists in the registry, get a read-only reference to it and register `addon` for use, `callback` will not be called.
---- - ***Note:*** If no existing toolbox entry was found, and `toolbox` is not provided or it's not a valid table, start the initialization of a new toolbox in the a readable table accessible via `WidgetTools.toolboxes.initialization[version]`, and call `callback` when `toolboxAddon` finished loading, returning a read-only reference to the newly initialized toolbox bundled from this initialization table which itself will be cleared.
+---Get an already registered toolbox table of the specified version, registering an addon for its use, or, register an already assembled toolbox table or start the initialization of a new one
+--- - ***Note:*** If a toolbox of `version` already exists in the registry, get a reference to it and register `addon` for use, `callback` will not be called.
+--- - ***Note:*** If no existing toolbox entry was found, and `toolbox` is not provided or it's not a valid table, start the initialization of a new toolbox (in an always writeable table accessible via `WidgetTools.toolboxes.initialization[version]`), and call `callback` when `toolboxAddon` finished loading, returning a (raw direct or readonly) reference to the newly initialized toolbox bundled from this initialization table which itself will be cleared.
 ---***
 ---@param userAddon Register_param1 Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
 ---@param version Register_param2 Version key the `toolbox` should be registered under (always converted to string)
----@param callback? Register_param3 Function to be called after a new toolbox initialization has finished when `toolboxAddon` loaded, returning a read-only reference to the new toolbox table
+---@param callback? Register_param3 Function to be called after a new toolbox initialization has finished when `toolboxAddon` loaded, returning a readonly reference to the new toolbox table
 ---@param toolboxAddon? Register_param4 Namespace name of the **LoadOnDemand** toolbox initializer addon to load to start initializing a new toolbox | ***Default:*** `"WidgetToolbox_" .. version`
 ---@param toolbox? Register_param5 Reference to an existing toolbox table to register as a new entry
+---@param readonly? Register_param6 If true, protect `toolbox` by making it entirely readonly via `WidgetTools.utilities.Protect(...)` | ***Default:*** false
 ---***
----@return widgetToolbox|table|boolean? toolbox Read-only reference to the registered toolbox table, or `false` if the toolbox construction addon named `"WidgetToolbox_" .. version` could not be loaded while attempting the initialization of a new toolbox | ***Default:*** *nil*
-function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox)
+---@return widgetToolbox|table|boolean? toolbox Registered toolbox table, or `false` if the toolbox construction addon named `"WidgetToolbox_" .. version` could not be loaded while attempting the initialization of a new toolbox | ***Default:*** *nil*
+function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox, readonly)
 
 	--| Parameters
 
@@ -833,7 +834,7 @@ function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox)
 	---| string
 	---| number
 
-	---Function to be called after a new toolbox initialization has finished when `addon` loaded, returning a read-only reference to the new toolbox table
+	---Function to be called after a new toolbox initialization has finished when `addon` loaded, returning a readonly reference to the new toolbox table
 	---@alias Register_param3 # callback
 	---| nil
 	---| fun(toolbox: widgetToolbox|table?)
@@ -847,12 +848,17 @@ function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox)
 	---@alias Register_param5 # toolbox
 	---| table
 	---| nil
+
+	---If true, protect `toolbox` by making it entirely readonly via `WidgetTools.utilities.Protect(...)` | ***Default:*** false
+	---@alias Register_param6 # readonly
+	---| boolean
+	---| nil
 end
 
 
 --[[ GLOBAL TOOLS ]]
 
----Global read-only Widget Tools table
+---Global readonly Widget Tools table
 ---@class widgetTools
 ---@field resources widgetToolsResources
 ---@field utilities widgetToolsUtilities

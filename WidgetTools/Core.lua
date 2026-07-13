@@ -226,10 +226,10 @@ end
 
 --| Frame
 
-function us.IsFrame(t)
-	if type(t) ~= "table" then return false end
+function us.IsFrame(o)
+	if type(o) ~= "table" then return false end
 
-	return t.GetObjectType and t.IsObjectType and (t.GetName and t:GetName() or t.GetParent and t:GetParent() and t.GetDebugName and t:GetDebugName() or true) or false
+	return o.GetObjectType and o.IsObjectType and (o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or true) or false
 end
 
 function us.ToFrame(s)
@@ -406,7 +406,7 @@ function us.Protect(t)
 				return subproxy
 			end,
 			__newindex = function(_, k, v)
-				ds.Log(function() return "Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v), "Read-only protection" end)
+				ds.Log(function() return "Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v), "Readonly protection" end)
 			end,
 			__metatable = "protected",
 		})
@@ -821,13 +821,13 @@ end) end
 ---@type widgetToolsToolboxes
 local ts = { initialization = {} }
 
----Read-only list of toolboxes registered under unique version keys with the list of addons registered for using each
+---Readonly list of toolboxes registered under unique version keys with the list of addons registered for using each
 ---@type table<string, widgetToolboxEntry>
 local protectedToolboxRegistry = {}
 
 --| Registration
 
-function ts.Register(userAddon, version, callback, toolboxAddon, toolbox)
+function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readonly)
 	if type(userAddon) ~= "string" or not C_AddOns.IsAddOnLoaded(userAddon) or not version then return end
 
 	version = tostring(version)
@@ -850,7 +850,10 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox)
 
 	--Protect and add the toolbox to the registry and register addon for use
 	if type(toolbox) == "table" then
-		protectedToolboxRegistry[version] = { toolbox = us.Protect(toolbox), addons = { userAddon } }
+		protectedToolboxRegistry[version] = {
+			toolbox = readonly and us.Protect(toolbox) or toolbox,
+			addons = { userAddon }
+		}
 
 		ds.Log(function() return
 			"Added Toolbox version " .. us.ToString(version) .. " to the registry and registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
@@ -867,7 +870,10 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox)
 	if type(toolboxAddon) ~= "string" then toolboxAddon = "WidgetToolbox_" .. version end
 
 	if not C_AddOns.DoesAddOnExist(toolboxAddon) then
-		ds.Log(function() return "Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.", "Widget Toolbox registration" end)
+		ds.Log(function() return
+			"Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.",
+			"Widget Toolbox registration"
+		end)
 
 		return false
 	end
@@ -879,7 +885,10 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox)
 
 		eventFrame:UnregisterEvent("ADDON_LOADED")
 
-		protectedToolboxRegistry[version] = { toolbox = us.Protect(us.Clone(ts.initialization[version])), addons = { userAddon } }
+		protectedToolboxRegistry[version] = {
+			toolbox = readonly and us.Protect(us.Clone(ts.initialization[version])) or us.Clone(ts.initialization[version]),
+			addons = { userAddon }
+		}
 		ts.initialization[version] = nil
 
 		ds.Log(function() return
@@ -898,7 +907,10 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox)
 		"New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
 		"Widget Toolbox registration"
 	end)
-	ds.Log(function() return "Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.", "Widget Toolbox registration" end)
+	ds.Log(function() return
+		"Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.",
+		"Widget Toolbox registration"
+	end)
 
 	C_AddOns.LoadAddOn(toolboxAddon)
 end
