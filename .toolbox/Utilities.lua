@@ -929,7 +929,7 @@ function wt.CheckDependencies(rules)
 		local e = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
 
 		if wt.IsWidget(f) then
-			local t = f.getType()
+			local t = f.getTypes()
 
 			if t == "Toggle" then if e then state = e(f.getState()) else state = f.getState() end
 			elseif e then

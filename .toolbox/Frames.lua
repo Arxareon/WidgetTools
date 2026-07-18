@@ -261,11 +261,6 @@ function wt.CreateButton(t, action)
 	---@type actionButton|action
 	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
 
-	--[ Getters & Setters ]
-
-	function button.getType() return typenameBase, typename end
-	function button.isType(type) return type == typenameBase or type == typename end
-
 	--[ Frame ]
 
 	button.widget = CreateFrame("Button", name, t.parent, "UIPanelButtonTemplate")
@@ -314,11 +309,6 @@ function wt.CreateCustomButton(t, action)
 
 	---@type customButton|action
 	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
-
-	--[ Getters & Setters ]
-
-	function button.getType() return typenameBase, typename end
-	function button.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -387,11 +377,6 @@ function wt.CreateCheckbox(t, binary)
 
 	---@type checkbox|binary
 	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
-
-	--[ Getters & Setters ]
-
-	function checkbox.getType() return typenameBase, typename end
-	function checkbox.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -675,11 +660,6 @@ function wt.CreateClassicCheckbox(t, binary)
 	---@type classicCheckbox|binary
 	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
 
-	--[ Getters & Setters ]
-
-	function checkbox.getType() return typenameBase, typename end
-	function checkbox.isType(type) return type == typenameBase or type == typename end
-
 	--[ Frame ]
 
 	checkbox.frame = CreateFrame("Frame", name, t.parent)
@@ -774,11 +754,6 @@ function wt.CreateRadiobutton(t, binary)
 
 	---@type radiobutton|binary
 	local radiobutton = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
-
-	--[ Getters & Setters ]
-
-	function radiobutton.getType() return typenameBase, typename end
-	function radiobutton.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -960,11 +935,6 @@ function wt.CreateRadiogroup(t, selector)
 		---@type specialRadiogroup
 		radiogroup = selector
 	end
-
-	--[ Getters & Setters ]
-
-	function radiogroup.getType() return typenameBase, typename end
-	function radiogroup.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -1474,9 +1444,6 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ Getters & Setters ]
 
-	function dropdown.getType() return typenameBase, typenameMutatedBase, typename end
-	function dropdown.isType(type) return type == typenameBase or type == typenameMutatedBase or type == typename end
-
 	function dropdown.setText(text, silent)
 		local index = dropdown.getSelected()
 		local item = t.items[index] or {}
@@ -1688,11 +1655,6 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		end
 	}) end
 
-	--[ Getters & Setters ]
-
-	function radiogroup.getType() return typenameBase, typename end
-	function radiogroup.isType(type) return type == typenameBase or type == typename end
-
 	return radiogroup
 end
 
@@ -1712,11 +1674,6 @@ function wt.CreateCheckgroup(t, selector)
 
 	---@type checkgroup|multiselector
 	local checkgroup = wt.IsWidget(selector) == typenameBase and selector or wt.CreateMultiselector(t)
-
-	--[ Getters & Setters ]
-
-	function checkgroup.getType() return typenameBase, typename end
-	function checkgroup.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -1867,7 +1824,7 @@ end
 --[[ TEXTUAL ]]
 
 ---Set the parameters of a GUI textual widget
----@param editbox singlelineEditbox|customEditbox|multilineEditbox
+---@param editbox textualEditbox|customEditbox|multilineEditbox
 ---@param t editboxCreationData
 local function setUpEditboxFrame(editbox, t)
 
@@ -1979,7 +1936,7 @@ local function setUpEditboxFrame(editbox, t)
 end
 
 ---Set the parameters of a single-line GUI textual widget
----@param editbox singlelineEditbox|customEditbox
+---@param editbox textualEditbox|customEditbox
 ---@param title string
 ---@param t editboxCreationData
 local function setUpEditbox(editbox, title, t)
@@ -2052,13 +2009,8 @@ function wt.CreateEditbox(t, textual)
 
 	--[ Widget ]
 
-	---@type singlelineEditbox|textual
+	---@type textualEditbox|textual
 	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
-
-	--[ Getters & Setters ]
-
-	function editbox.getType() return typenameBase, typename end
-	function editbox.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -2104,11 +2056,6 @@ function wt.CreateCustomEditbox(t, textual)
 
 	---@type customEditbox|textual
 	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
-
-	--[ Getters & Setters ]
-
-	function editbox.getType() return typenameBase, typename end
-	function editbox.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -2163,11 +2110,6 @@ function wt.CreateMultilineEditbox(t, textual)
 
 	---@type multilineEditbox|textual
 	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
-
-	--[ Getters & Setters ]
-
-	function editbox.getType() return typenameBase, typename end
-	function editbox.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -2325,11 +2267,6 @@ function wt.CreateCopybox(t) --FIX lite
 
 	---@type copybox
 	local copybox = {}
-
-	--[ Getters & Setters ]
-
-	function copybox.getType() return typename end
-	function copybox.isType(type) return type == typename end
 
 	--[ Frame ]
 
@@ -2556,11 +2493,6 @@ function wt.CreateSlider(t, numeric)
 
 	---@type numericSlider|numeric
 	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
-
-	--[ Getters & Setters ]
-
-	function slider.getType() return typenameBase, typename end
-	function slider.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -2865,11 +2797,6 @@ function wt.CreateClassicSlider(t, numeric)
 
 	---@type classicSlider|numeric
 	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
-
-	--[ Getters & Setters ]
-
-	function slider.getType() return typenameBase, typename end
-	function slider.isType(type) return type == typenameBase or type == typename end
 
 	--[ Frame ]
 
@@ -3278,11 +3205,6 @@ function wt.CreateColorpicker(t, colormanager)
 	---@type colorpicker|colormanager
 	local colorpicker = wt.IsWidget(colormanager) == typenameBase and colormanager or wt.CreateColormanager(t)
 
-	--[ Getters & Setters ]
-
-	function colorpicker.getType() return typenameBase, typename end
-	function colorpicker.isType(type) return type == typenameBase or type == typename end
-
 	--[ Frame ]
 
 	colorpicker.frame = CreateFrame("Frame", name, t.parent)
@@ -3584,11 +3506,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	---@type positionPanel
 	---@diagnostic disable-next-line: missing-fields --NOTE: Added later --REMOVE after the logical core is separated
 	local panel = { widgets = {}, }
-
-	--[ Getters & Setters ]
-
-	function panel.getType() return typename end
-	function panel.isType(type) return type == typename end
 
 	--[ Visual Aids ]
 
@@ -4157,11 +4074,6 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 	---@diagnostic disable-next-line: missing-fields --NOTE: Added later --REMOVE after the logical core is separated
 	local fontPanel = {}
 
-	--[ Getters & Setters ]
-
-	function fontPanel.getType() return typename end
-	function fontPanel.isType(type) return type == typename end
-
 	--[ Options Panel ]
 
 	fontPanel.frame = wt.CreatePanel({
@@ -4414,9 +4326,6 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	--[ Getters & Setters ]
 
-	function page.getType() return typenameBase, typename end
-	function page.isType(type) return type == typenameBase or type == typename end
-
 	function page.setStatic(state)
 		state = state == false
 
@@ -4599,11 +4508,6 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	---@type settingsCategory
 	local category = { pages = {} }
 
-	--[ Getters & Setters ]
-
-	function category.getType() return "SettingsCategory" end
-	function category.isType(type) return type == "SettingsCategory" end
-
 	--[ Category Pages ]
 
 	--| Parent
@@ -4670,11 +4574,6 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 	---@type profilesPage|profilemanager
 	local profilesPage = profilemanager
-
-	--[ Getters & Setters ]
-
-	function profilesPage.getType() return typenameBase, typename end
-	function profilesPage.isType(type) return type == typenameBase or type == typename end
 
 	--[ Settings Page ]
 
@@ -5109,9 +5008,6 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 	if not addonPage then return nil end
 
 	--[ Getters & Setters ]
-
-	function addonPage.getType() return typenameBase, typename end
-	function addonPage.isType(type) return type == typenameBase or type == typename end
 
 	--Make unrebindable
 	addonPage.setAddon = nil

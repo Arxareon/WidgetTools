@@ -1234,7 +1234,7 @@ end
 		---| multiselector
 		---| checkgroup
 		---| textual
-		---| singlelineEditbox
+		---| textualEditbox
 		---| customEditbox
 		---| multilineEditbox
 		---| numeric
@@ -1568,25 +1568,22 @@ function wt.CreateWidget(t)
 		---@field _? widgetEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class widgetEventListener_enabled : eventHandlerIndex
-			---@field handler WidgetEventHandler_enabled Handler function to register for call
+			---@field handler widgetEventHandler_enabled Handler function to register for call
 
 				---@class eventHandlerIndex
 				---@field callIndex? integer Set when to call **handler** in the execution order | ***Default:*** *placed at the end of the current list*
 
-				---@alias WidgetEventHandler_enabled
-				---| fun(self: WidgetType, state: boolean) Called when an "enabled" event is invoked after `widget.setEnabled(...)` was called<hr><p>@*param* `self` WidgetType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias WidgetType
-					---| widget
+				---@alias widgetEventHandler_enabled
+				---| fun(self: widget, state: boolean) Called when an "enabled" event is invoked after `widget.setEnabled(...)` was called<hr><p>@*param* `self` widget ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class widgetEventListener_any : eventTag, eventHandlerIndex
-			---@field handler WidgetEventHandler_any Handler function to register for call
+			---@field handler widgetEventHandler_any Handler function to register for call
 
 				---@class eventTag
 				---@field event string Custom event tag
 
-				---@alias WidgetEventHandler_any
-			---| fun(self: WidgetType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` WidgetType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias widgetEventHandler_any
+			---| fun(self: widget, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` widget ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -1635,13 +1632,13 @@ function wt.CreateWidget(t)
 		local setListener = {}
 
 			---Register a listener for a "enabled" event trigger
-			---@param listener WidgetEventHandler_enabled Handler function to set
+			---@param listener widgetEventHandler_enabled Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(listener, callIndex) end
 
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener WidgetEventHandler_any Handler function to set
+			---@param listener widgetEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -1690,28 +1687,39 @@ function wt.CreateDatamanager(t, widget)
 		---@class datamanagerEventListeners : widgetEventListeners
 		---@field loaded? datamanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? datamanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? datamanagerEventListener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager.setvalue(...)` was called
+		---@field changed? datamanagerEventListener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager.setValue(...)` was called
+		---@field enabled? datamanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called
+		---@field _? datamanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class datamanagerEventListener_loaded : eventHandlerIndex
-			---@field handler DatamanagerEventHandler_loaded Handler function to register for call
+			---@field handler datamanagerEventHandler_loaded Handler function to register for call
 
-				---@alias DatamanagerEventHandler_loaded
-				---| fun(self: DatamanagerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` DatamanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias datamanagerEventHandler_loaded
+				---| fun(self: datamanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class datamanagerEventListener_saved : eventHandlerIndex
-			---@field handler DatamanagerEventHandler_saved Handler function to register for call
+			---@field handler datamanagerEventHandler_saved Handler function to register for call
 
-				---@alias DatamanagerEventHandler_saved
-				---| fun(self: DatamanagerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` DatamanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
-
-					---@alias DatamanagerType
-					---| datamanager
+				---@alias datamanagerEventHandler_saved
+				---| fun(self: datamanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class datamanagerEventListener_changed : eventHandlerIndex
-			---@field handler DatamanagerEventHandler_changed Handler function to register for call
+			---@field handler datamanagerEventHandler_changed Handler function to register for call
 
-				---@alias DatamanagerEventHandler_changed
-				---| fun(self: DatamanagerType, state: boolean, user: boolean) Called when a "changed" event is invoked after `datamanager.setvalue(...)` was called<hr><p>@*param* `self` DatamanagerType ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias datamanagerEventHandler_changed
+				---| fun(self: datamanager, state: boolean, user: boolean) Called when a "changed" event is invoked after `datamanager.setValue(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class datamanagerEventListener_enabled : eventHandlerIndex
+			---@field handler datamanagerEventHandler_enabled Handler function to register for call
+
+				---@alias datamanagerEventHandler_enabled
+				---| fun(self: datamanager, state: boolean) Called when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+			---@class datamanagerEventListener_any : eventTag, eventHandlerIndex
+			---@field handler datamanagerEventHandler_any Handler function to register for call
+
+				---@alias datamanagerEventHandler_any
+			---| fun(self: datamanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -1792,7 +1800,7 @@ function wt.CreateDatamanager(t, widget)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, }
-		function _.getType() return {} end
+		function _.getTypes() return {} end
 
 			---@alias typename_datamanager
 			---| "Datamanager"
@@ -1814,23 +1822,34 @@ function wt.CreateDatamanager(t, widget)
 			---@param user boolean
 			function invoke.changed(user) end
 
-		---@class datamanager_setListener : widget_setListener
+		---@class datamanager_setListener
 		local setListener = {}
 
 			---Register a listener for a "loaded" event trigger
-			---@param listener DatamanagerEventHandler_loaded Handler function to set
+			---@param listener datamanagerEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener DatamanagerEventHandler_saved Handler function to set
+			---@param listener datamanagerEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "changed" event trigger
-			---@param listener DatamanagerEventHandler_changed Handler function to set
+			---@param listener datamanagerEventHandler_changed Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.changed(listener, callIndex) end
+
+			---Register a listener for a "enabled" event trigger
+			---@param listener datamanagerEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
+			---Register a listener for a custom event trigger
+			---@param event string Custom event tag
+			---@param listener datamanagerEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener._(event, listener, callIndex) end
 
 	return _
 end
@@ -1854,17 +1873,26 @@ function wt.CreateAction(t, widget)
 
 		---@class actionEventListeners : widgetEventListeners
 		---@field trigger? actionEventListener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after **action.trigger(...)** was called
+		---@field enabled? actionEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **action.setEnabled(...)** was called
+		---@field _? actionEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class actionEventListener_triggered : eventHandlerIndex
-			---@field handler ActionEventHandler_triggered Handler function to register for call
+			---@field handler actionEventHandler_triggered Handler function to register for call
 
-				---@alias ActionEventHandler_triggered
-				---| fun(self: ActionType) Called when a "triggered" event is invoked after **action.trigger(...)** was called<hr><p>@*param* `self` ActionType ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias actionEventHandler_triggered
+			---| fun(self: action) Called when a "triggered" event is invoked after **action.trigger(...)** was called<hr><p>@*param* `self` action ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
-					---@alias ActionType
-					---| action
-					---| actionButton
-					---| customButton
+			---@class actionEventListener_enabled : eventHandlerIndex
+			---@field handler actionEventHandler_enabled Handler function to register for call
+
+				---@alias actionEventHandler_enabled
+			---| fun(self: action, state: boolean) Called when an "enabled" event is invoked after **action.setEnabled(...)** was called<hr><p>@*param* `self` action ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+			---@class actionEventListener_any : eventTag, eventHandlerIndex
+			---@field handler actionEventHandler_any Handler function to register for call
+
+				---@alias actionEventHandler_any
+			---| fun(self: action, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` action ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -1914,9 +1942,20 @@ function wt.CreateAction(t, widget)
 		local setListener = {}
 
 			---Register a listener for a "triggered" event trigger
-			---@param listener ActionEventHandler_triggered Handler function to set
+			---@param listener actionEventHandler_triggered Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.triggered(listener, callIndex) end
+
+			---Register a listener for a "enabled" event trigger
+			---@param listener actionEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
+			---Register a listener for a custom event trigger
+			---@param event string Custom event tag
+			---@param listener actionEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener._(event, listener, callIndex) end
 
 	return _
 end
@@ -1957,6 +1996,8 @@ function wt.CreateButton(t, action)
 	---@field widget Button
 	local _ = {}
 
+		--| Type
+
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
 		function _.getTypes() return {} end
@@ -1996,8 +2037,10 @@ function wt.CreateCustomButton(t, action)
 	---@field widget Button|BackdropTemplate
 	local _ = {}
 
+		--| Type
+
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_action]: true, [typename_customButton]: true, }
+		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
 		function _.getTypes() return {} end
 
 			---@alias typename_customButton
@@ -2028,17 +2071,26 @@ function wt.CreateBinary(t, datamanager)
 
 		---@class binaryEventListeners : datamanagerEventListeners
 		---@field flipped? binaryEventListener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after **binary.setState(...)** was called
+		---@field enabled? binaryEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `binary.setEnabled(...)` was called
+		---@field _? binaryEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class binaryEventListener_flipped : eventHandlerIndex
-			---@field handler BinaryEventHandler_flipped Handler function to register for call
+			---@field handler binaryEventHandler_flipped Handler function to register for call
 
-				---@alias BinaryEventHandler_flipped
-				---| fun(self: BinaryType, state: boolean, user: boolean) Called when a "flipped" event is invoked after **binary.setState(...)** was called<hr><p>@*param* `self` BinaryType ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias binaryEventHandler_flipped
+				---| fun(self: binary, state: boolean, user: boolean) Called when a "flipped" event is invoked after **binary.setState(...)** was called<hr><p>@*param* `self` binary ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
-					---@alias BinaryType
-					---| binary
-					---| checkbox
-					---| radiobutton
+			---@class binaryEventListener_enabled : eventHandlerIndex
+			---@field handler binaryEventHandler_enabled Handler function to register for call
+
+				---@alias binaryEventHandler_enabled
+			---| fun(self: binary, state: boolean) Called when an "enabled" event is invoked after **binary.setEnabled(...)** was called<hr><p>@*param* `self` binary ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+			---@class binaryEventListener_any : eventTag, eventHandlerIndex
+			---@field handler binaryEventHandler_any Handler function to register for call
+
+				---@alias binaryEventHandler_any
+			---| fun(self: binary, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` binary ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -2069,9 +2121,20 @@ function wt.CreateBinary(t, datamanager)
 		local setListener = {}
 
 			---Register a listener for a "flipped" event trigger
-			---@param listener BinaryEventHandler_flipped Handler function to set
+			---@param listener binaryEventHandler_flipped Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.flipped(listener, callIndex) end
+
+			---Register a listener for a "enabled" event trigger
+			---@param listener binaryEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+			
+			---Register a listener for a custom event trigger
+			---@param event string Custom event tag
+			---@param listener binaryEventHandler_any Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener._(event, listener, callIndex) end
 
 		--| Data management
 
@@ -2178,6 +2241,8 @@ function wt.CreateCheckbox(t, binary)
 		---@class SettingsCheckbox : CheckButton
 		---@field HoverBackground Frame
 
+		--| Type
+
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
 		function _.getTypes() return {} end
@@ -2203,6 +2268,8 @@ function wt.CreateClassicCheckbox(t, binary)
 	---@field widget CheckButton|BackdropTemplate Checkbox
 	---@field label FontString|nil
 	local _ = {}
+
+		--| Type
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
@@ -2247,8 +2314,10 @@ function wt.CreateRadiobutton(t, binary)
 	---@field label FontString|nil
 	local _ = {}
 
+		--| Type
+
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_radiobutton]: true, }
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_radiobutton]: true, }
 		function _.getTypes() return {} end
 
 			---@alias typename_radiobutton
@@ -2295,99 +2364,77 @@ function wt.CreateSelector(t)
 		---@field index integer The index of this binary item inside a selector widget
 
 		---@class selectorEventListeners
-		---@field enabled? selectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **selector.setEnabled(...)** was called
 		---@field loaded? selectorEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? selectorEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field selected? selectorEventListener_selected[] Ordered list of functions to call when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
 		---@field updated? selectorEventListener_updated[] Ordered list of functions to call when an "updated" event is invoked after **selector.updatedItems(...)** was called
 		---@field added? selectorEventListener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via **selector.updatedItems(...)**
-		---@field [string]? selectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class selectorEventListener_enabled : eventHandlerIndex
-			---@field handler SelectorEventHandler_enabled Handler function to register for call
-
-				---@alias SelectorEventHandler_enabled
-				---| fun(self: SelectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias SelectorType
-					---| selector
-					---| radiogroup
-					---| dropdownRadiogroup
+		---@field enabled? selectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **selector.setEnabled(...)** was called
+		---@field _? selectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class selectorEventListener_loaded : eventHandlerIndex
-			---@field handler SelectorEventHandler_loaded Handler function to register for call
+			---@field handler selectorEventHandler_loaded Handler function to register for call
 
-				---@alias SelectorEventHandler_loaded
-				---| fun(self: SelectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias selectorEventHandler_loaded
+				---| fun(self: selector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class selectorEventListener_saved : eventHandlerIndex
-			---@field handler SelectorEventHandler_saved Handler function to register for call
+			---@field handler selectorEventHandler_saved Handler function to register for call
 
-				---@alias SelectorEventHandler_saved
-				---| fun(self: SelectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias selectorEventHandler_saved
+				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class selectorEventListener_selected : eventHandlerIndex
-			---@field handler SelectorEventHandler_selected Handler function to register for call
+			---@field handler selectorEventHandler_selected Handler function to register for call
 
-				---@alias SelectorEventHandler_selected
-				---| fun(self: SelectorType, selected?: integer, user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias selectorEventHandler_selected
+				---| fun(self: selector, selected?: integer, user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class selectorEventListener_updated : eventHandlerIndex
-			---@field handler SelectorEventHandler_updated Handler function to register for call
+			---@field handler selectorEventHandler_updated Handler function to register for call
 
-				---@alias SelectorEventHandler_updated
-				---| fun(self: SelectorType) Called when an "updated" event is invoked after **selector.updatedItems(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p>
+				---@alias selectorEventHandler_updated
+				---| fun(self: selector) Called when an "updated" event is invoked after **selector.updatedItems(...)** was called<hr><p>@*param* `self` selector ― Reference to the selector widget</p>
 
 			---@class selectorEventListener_added : eventHandlerIndex
-			---@field handler SelectorEventHandler_updated Handler function to register for call
+			---@field handler selectorEventHandler_updated Handler function to register for call
 
-				---@alias SelectorEventHandler_added
-				---| fun(self: SelectorType, binary: binary|selectorBinary) Called when a new binary item is added to the selector via **selector.updatedItems(...)**<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+				---@alias selectorEventHandler_added
+				---| fun(self: selector, binary: binary|selectorBinary) Called when a new binary item is added to the selector via **selector.updatedItems(...)**<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+
+			---@class selectorEventListener_enabled : eventHandlerIndex
+			---@field handler selectorEventHandler_enabled Handler function to register for call
+
+				---@alias selectorEventHandler_enabled
+				---| fun(self: selector, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class selectorEventListener_any : eventTag, eventHandlerIndex
-			---@field handler SelectorEventHandler_any Handler function to register for call
+			---@field handler selectorEventHandler_any Handler function to register for call
 
-				---@alias SelectorEventHandler_any
-				---| fun(self: SelectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SelectorType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias selectorEventHandler_any
+				---| fun(self: selector, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` selector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class selector
+	---@class selector : datamanager
 	---@field binaries (binary|selectorBinary)[]
 	---@field invoke selector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener selector_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_selector
-		---<p></p>
-		function _.getTypes() return "Selector" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_selector
 			---| "Selector"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class selector_invoke
+		---@class selector_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
 
 			---Invoke a "selected" event calling registered listeners
 			---@param user boolean
@@ -2400,47 +2447,42 @@ function wt.CreateSelector(t)
 			---@param binary binary|selectorBinary
 			function invoke.added(binary) end
 
-			--Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class selector_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener SelectorEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener SelectorEventHandler_loaded Handler function to set
+			---@param listener selectorEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener SelectorEventHandler_saved Handler function to set
+			---@param listener selectorEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "selected" event trigger
-			---@param listener SelectorEventHandler_selected Handler function to set
+			---@param listener selectorEventHandler_selected Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.selected(listener, callIndex) end
 
 			---Register a listener for a "updated" event trigger
-			---@param listener SelectorEventHandler_updated Handler function to set
+			---@param listener selectorEventHandler_updated Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.updated(listener, callIndex) end
 
 			---Register a listener for a "added" event trigger
-			---@param listener SelectorEventHandler_added Handler function to set
+			---@param listener selectorEventHandler_added Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.added(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener selectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener SelectorEventHandler_any Handler function to set
+			---@param listener selectorEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -2564,124 +2606,98 @@ function wt.CreateSpecialSelector(itemset, t)
 		---| FrameStrata
 
 		---@class specialSelectorEventListeners
-		---@field enabled? specialSelectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **selector.setEnabled(...)** was called
 		---@field loaded? specialSelectorEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? specialSelectorEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? specialSelectorEventListener_selected[] Ordered list of functions to call when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
-		---@field [string]? specialSelectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class specialSelectorEventListener_enabled : eventHandlerIndex
-			---@field handler SpecialSelectorEventHandler_enabled Handler function to register for call
-
-				---@alias SpecialSelectorEventHandler_enabled
-				---| fun(self: SpecialSelectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias SpecialSelectorType
-					---| selector
-					---| specialSelector
+		---@field selected? specialSelectorEventListener_selected[] Ordered list of functions to call when an "selected" event is invoked after **specialSelector.setSelected(...)** was called or an option was clicked or cleared
+		---@field enabled? specialSelectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **specialSelector.setEnabled(...)** was called
+		---@field _? specialSelectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class specialSelectorEventListener_loaded : eventHandlerIndex
-			---@field handler SpecialSelectorEventHandler_loaded Handler function to register for call
+			---@field handler specialSelectorEventHandler_loaded Handler function to register for call
 
-				---@alias SpecialSelectorEventHandler_loaded
-				---| fun(self: SpecialSelectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias specialSelectorEventHandler_loaded
+				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class specialSelectorEventListener_saved : eventHandlerIndex
-			---@field handler SpecialSelectorEventHandler_saved Handler function to register for call
+			---@field handler specialSelectorEventHandler_saved Handler function to register for call
 
-				---@alias SpecialSelectorEventHandler_saved
-				---| fun(self: SpecialSelectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias specialSelectorEventHandler_saved
+				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class specialSelectorEventListener_selected : eventHandlerIndex
-			---@field handler SpecialSelectorEventHandler_selected Handler function to register for call
+			---@field handler specialSelectorEventHandler_selected Handler function to register for call
 
-				---@alias SpecialSelectorEventHandler_selected
-				---| fun(self: SpecialSelectorType, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` SelectorType ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias specialSelectorEventHandler_selected
+				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "selected" event is invoked after **specialSelector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class specialSelectorEventListener_enabled : eventHandlerIndex
+			---@field handler specialSelectorEventHandler_enabled Handler function to register for call
+
+				---@alias specialSelectorEventHandler_enabled
+				---| fun(self: specialSelector, state: boolean) Called when an "enabled" event is invoked after **specialSelector.setEnabled(...)** was called<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class specialSelectorEventListener_any : eventTag, eventHandlerIndex
-			---@field handler SpecialSelectorEventHandler_any Handler function to register for call
+			---@field handler specialSelectorEventHandler_any Handler function to register for call
 
-				---@alias SpecialSelectorEventHandler_any
-				---| fun(self: SpecialSelectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SpecialSelectorType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias specialSelectorEventHandler_any
+				---| fun(self: specialSelector, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` specialSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class specialSelector
+	---@class specialSelector : datamanager
 	---@field binaries (binary|selectorBinary)[]
 	---@field invoke specialSelector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener specialSelector_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_specialSelector
-		---<p></p>
-		function _.getTypes() return "SpecialSelector" end
-
-			---@alias typename_specialSelector
-			---| "SpecialSelector"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		---Return the itemset type specified for this special selector on creation
 		---@return SpecialSelectorItemset itemset
 		function _.getItemset() return "anchor" end
 
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_specialSelector
+			---| "SpecialSelector"
+
 		--| Events
 
-		---@class specialSelector_invoke
+		---@class specialSelector_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
 
 			---Invoke a "selected" event calling registered listeners
 			---@param user boolean
 			function invoke.selected(user) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class specialSelector_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener SpecialSelectorEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener SpecialSelectorEventHandler_loaded Handler function to set
+			---@param listener specialSelectorEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener SpecialSelectorEventHandler_saved Handler function to set
+			---@param listener specialSelectorEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "selected" event trigger
-			---@param listener SpecialSelectorEventHandler_selected Handler function to set
+			---@param listener specialSelectorEventHandler_selected Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.selected(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener specialSelectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener SpecialSelectorEventHandler_any Handler function to set
+			---@param listener specialSelectorEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -2800,105 +2816,84 @@ function wt.CreateMultiselector(t)
 		---@field max? integer The maximal number of items that can be selected at once | ***Default:*** #**t.items** *(all items)*
 
 		---@class multiselectorEventListeners
-		---@field enabled? multiselectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **selector.setEnabled(...)** was called
 		---@field loaded? multiselectorEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? multiselectorEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? multiselectorEventListener_selected[] Ordered list of functions to call when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared
-		---@field updated? multiselectorEventListener_updated[] Ordered list of functions to call when an "updated" event is invoked after **selector.updatedItems(...)** was called
-		---@field added? multiselectorEventListener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via **selector.updatedItems(...)**
+		---@field selected? multiselectorEventListener_selected[] Ordered list of functions to call when an "selected" event is invoked after **multiselector.setSelected(...)** was called or an option was clicked or cleared
+		---@field updated? multiselectorEventListener_updated[] Ordered list of functions to call when an "updated" event is invoked after **multiselector.updatedItems(...)** was called
+		---@field added? multiselectorEventListener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via **multiselector.updatedItems(...)**
 		---@field min? multiselectorEventListener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
-		---@field [string]? multiselectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class multiselectorEventListener_enabled : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_enabled Handler function to register for call
-
-				---@alias MultiselectorEventHandler_enabled
-				---| fun(self: MultiselectorType, state: boolean) Called when an "enabled" event is invoked after **selector.setEnabled(...)** was called<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias MultiselectorType
-					---| multiselector
-					---| checkgroup
+		---@field enabled? multiselectorEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **multiselector.setEnabled(...)** was called
+		---@field _? multiselectorEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class multiselectorEventListener_loaded : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_loaded Handler function to register for call
+			---@field handler multiselectorEventHandler_loaded Handler function to register for call
 
-				---@alias MultiselectorEventHandler_loaded
-				---| fun(self: MultiselectorType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias multiselectorEventHandler_loaded
+				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class multiselectorEventListener_saved : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_saved Handler function to register for call
+			---@field handler multiselectorEventHandler_saved Handler function to register for call
 
-				---@alias MultiselectorEventHandler_saved
-				---| fun(self: MultiselectorType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias multiselectorEventHandler_saved
+				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class multiselectorEventListener_selected : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_selected Handler function to register for call
+			---@field handler multiselectorEventHandler_selected Handler function to register for call
 
-				---@alias MultiselectorEventHandler_selected
-				---| fun(self: MultiselectorType, selections: boolean[], user: boolean) Called when an "selected" event is invoked after **selector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias multiselectorEventHandler_selected
+				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "selected" event is invoked after **multiselector.setSelected(...)** was called or an option was clicked or cleared<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class multiselectorEventListener_updated : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_updated Handler function to register for call
+			---@field handler multiselectorEventHandler_updated Handler function to register for call
 
-				---@alias MultiselectorEventHandler_updated
-				---| fun(self: MultiselectorType) Called when an "updated" event is invoked after **selector.updatedItems(...)** was called<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p>
+				---@alias multiselectorEventHandler_updated
+				---| fun(self: multiselector) Called when an "updated" event is invoked after **multiselector.updatedItems(...)** was called<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p>
 
 			---@class multiselectorEventListener_added : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_added Handler function to register for call
+			---@field handler multiselectorEventHandler_added Handler function to register for call
 
-				---@alias MultiselectorEventHandler_added
-				---| fun(self: MultiselectorType, binary: binary|selectorBinary) Called when a new binary item is added to the selector via **selector.updatedItems(...)**<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+				---@alias multiselectorEventHandler_added
+				---| fun(self: multiselector, binary: binary|selectorBinary) Called when a new binary item is added to the selector via **multiselector.updatedItems(...)**<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
 
 			---@class multiselectorEventListener_limited : eventHandlerIndex
-			---@field handler MultiselectorEventHandler_limited Handler function to register for call
+			---@field handler multiselectorEventHandler_limited Handler function to register for call
 
-				---@alias MultiselectorEventHandler_limited
-				---| fun(self: MultiselectorType, min: boolean, max: boolean, passed: boolean) Called when a "limited" event is invoked after a limit update occurs<hr><p>@*param* `self` MultiselectorType ― Reference to the selector widget</p><p>@*param* `min` boolean ― True, if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― True, if the number of selected items is equal to higher than the specified upper limit</p><p>@*param* `passed` boolean ― True, if the number of selected items is below or over the specified lower or upper limit</p>
+				---@alias multiselectorEventHandler_limited
+				---| fun(self: multiselector, min: boolean, max: boolean, passed: boolean) Called when a "limited" event is invoked after a limit update occurs<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `min` boolean ― True, if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― True, if the number of selected items is equal to higher than the specified upper limit</p><p>@*param* `passed` boolean ― True, if the number of selected items is below or over the specified lower or upper limit</p>
+
+			---@class multiselectorEventListener_enabled : eventHandlerIndex
+			---@field handler multiselectorEventHandler_enabled Handler function to register for call
+
+				---@alias multiselectorEventHandler_enabled
+				---| fun(self: multiselector, state: boolean) Called when an "enabled" event is invoked after **multiselector.setEnabled(...)** was called<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class multiselectorEventListener_any : eventTag, eventHandlerIndex
-	---@field handler MultiselectorEventHandler_any Handler function to register for call
+	---@field handler multiselectorEventHandler_any Handler function to register for call
 
-				---@alias MultiselectorEventHandler_any
-				---| fun(self: MultiselectorType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` MultiselectorType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias multiselectorEventHandler_any
+				---| fun(self: multiselector, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` multiselector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class multiselector
+	---@class multiselector : datamanager
 	---@field binaries (binary|selectorBinary)[]
 	---@field invoke multiselector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener multiselector_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_multiselector
-		---<p></p>
-		function _.getTypes() return "Multiselector" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_multiselector
 			---| "Multiselector"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class multiselector_invoke
+		---@class multiselector_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
 
 			---Invoke a "selected" event calling registered listeners
 			---@param user boolean
@@ -2915,52 +2910,47 @@ function wt.CreateMultiselector(t)
 			---@param count integer
 			function invoke.limited(count) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class multiselector_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener MultiselectorEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener MultiselectorEventHandler_loaded Handler function to set
+			---@param listener multiselectorEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener MultiselectorEventHandler_saved Handler function to set
+			---@param listener multiselectorEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "selected" event trigger
-			---@param listener MultiselectorEventHandler_selected Handler function to set
+			---@param listener multiselectorEventHandler_selected Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.selected(listener, callIndex) end
 
 			---Register a listener for a "updated" event trigger
-			---@param listener MultiselectorEventHandler_updated Handler function to set
+			---@param listener multiselectorEventHandler_updated Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.updated(listener, callIndex) end
 
 			---Register a listener for a "added" event trigger
-			---@param listener SelectorEventHandler_added Handler function to set
+			---@param listener selectorEventHandler_added Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.added(listener, callIndex) end
 
 			---Register a listener for a "limited" event trigger
-			---@param listener MultiselectorEventHandler_limited Handler function to set
+			---@param listener multiselectorEventHandler_limited Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.limited(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener multiselectorEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener SelectorEventHandler_any Handler function to set
+			---@param listener selectorEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -3100,21 +3090,14 @@ function wt.CreateRadiogroup(t, selector)
 
 		---@class selectorRadiobutton : selectorBinary, radiobutton
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_selector
-		---@return typename_radiogroup
-		---<p></p>
-		function _.getTypes() return "Selector", "Radiogroup" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_radiogroup
 			---| "Radiogroup"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3152,23 +3135,6 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	---@field next customButton
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_selector
-		---@return typename_radiogroup
-		---@return typename_dropdownRadiogroup
-		---<p></p>
-		function _.getTypes() return "Selector", "Radiogroup", "DropdownRadiogroup" end
-
-			---@alias typename_dropdownRadiogroup
-			---| "DropdownRadiogroup"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		---Set the text displayed on the label of the toggle button
 		---***
 		---@param text? string ***Default:*** **t.items[*index*].title** *(the title of the currently selected item)* or "…" *(if there is no selection)*
@@ -3178,6 +3144,15 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		---Toggle the dropdown menu
 		---@param state? boolean ***Default:*** not **selector.list:IsVisible()**
 		function _.toggleMenu(state) end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_dropdownRadiogroup
+			---| "DropdownRadiogroup"
 
 	return _
 end
@@ -3210,21 +3185,14 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	---@field binaries? selectorRadiobutton[] The list of radio button widgets linked together in this selector
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_specialSelector
-		---@return typename_specialRadiogroup
-		---<p></p>
-		function _.getTypes() return "SpecialSelector", "SpecialRadiogroup" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, [typename_specialRadiogroup]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_specialRadiogroup
 			---| "SpecialRadiogroup"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3255,21 +3223,14 @@ function wt.CreateCheckgroup(t, selector)
 
 		---@class selectorCheckbox : selectorBinary, checkbox
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_multiselector
-		---@return typename_checkgroup
-		---<p></p>
-		function _.getTypes() return "Multiselector", "Checkgroup" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_checkgroup
 			---| "Checkgroup"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3295,121 +3256,88 @@ function wt.CreateTextual(t)
 	---@field default? string Default value of the widget | ***Default:*** "" *(empty string)*
 
 		---@class textualEventListeners
-		---@field enabled? textualEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **textual.setEnabled(...)** was called
 		---@field loaded? textualEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? textualEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? textualEventListener_changed[] Ordered list of functions to call when a "changed" event is invoked after **textual.setText(...)** was called
-		---@field [string]? textualEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class textualEventListener_enabled : eventHandlerIndex
-			---@field handler TextualEventHandler_enabled Handler function to register for call
-
-				---@alias TextualEventHandler_enabled
-				---| fun(self: TextualType, state: boolean) Called when an "enabled" event is invoked after **textual.setEnabled(...)** was called<hr><p>@*param* `self` TextualType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias TextualType
-					---| textual
-					---| customEditbox
-					---| customEditbox
-					---| multilineEditbox
+		---@field enabled? textualEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **textual.setEnabled(...)** was called
+		---@field _? textualEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class textualEventListener_loaded : eventHandlerIndex
-			---@field handler TextualEventHandler_loaded Handler function to register for call
+			---@field handler textualEventHandler_loaded Handler function to register for call
 
-				---@alias TextualEventHandler_loaded
-				---| fun(self: TextualType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` TextualType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias textualEventHandler_loaded
+				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class textualEventListener_saved : eventHandlerIndex
-			---@field handler TextualEventHandler_saved Handler function to register for call
+			---@field handler textualEventHandler_saved Handler function to register for call
 
-				---@alias TextualEventHandler_saved
-				---| fun(self: TextualType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` TextualType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias textualEventHandler_saved
+				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class textualEventListener_changed : eventHandlerIndex
-			---@field handler TextualEventHandler_changed Handler function to register for call
+			---@field handler textualEventHandler_changed Handler function to register for call
 
-				---@alias TextualEventHandler_changed
-				---| fun(self: TextualType, text: string, user: boolean) Called when an "changed" event is invoked after **textual.setText(...)** was called<hr><p>@*param* `self` TextualType ― Reference to the binary widget</p><p>@*param* `text` string ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias textualEventHandler_changed
+				---| fun(self: textual, text: string, user: boolean) Called when an "changed" event is invoked after **textual.setText(...)** was called<hr><p>@*param* `self` textual ― Reference to the binary widget</p><p>@*param* `text` string ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class textualEventListener_enabled : eventHandlerIndex
+			---@field handler textualEventHandler_enabled Handler function to register for call
+
+				---@alias textualEventHandler_enabled
+				---| fun(self: textual, state: boolean) Called when an "enabled" event is invoked after **textual.setEnabled(...)** was called<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class textualEventListener_any : eventTag, eventHandlerIndex
-			---@field handler TextualEventHandler_any Handler function to register for call
+			---@field handler textualEventHandler_any Handler function to register for call
 
-				---@alias TextualEventHandler_any
-				---| fun(self: TextualType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` TextualType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias textualEventHandler_any
+				---| fun(self: textual, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class textual
+	---@class textual : datamanager
 	---@field invoke textual_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener textual_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_textual
-		---<p></p>
-		function _.getTypes() return "Textual" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_textual
 			---| "Textual"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class textual_invoke
-		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
-
-			---Invoke a "changed" event calling registered listeners
-			---@param user boolean
-			function invoke.changed(user) end
-
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
+		---@class textual_invoke : datamanager_invoke
 
 		---@class textual_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener TextualEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener TextualEventHandler_loaded Handler function to set
+			---@param listener textualEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener TextualEventHandler_saved Handler function to set
+			---@param listener textualEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "changed" event trigger
-			---@param listener TextualEventHandler_changed Handler function to set
+			---@param listener textualEventHandler_changed Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.changed(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener textualEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener TextualEventHandler_any Handler function to set
+			---@param listener textualEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -3527,27 +3455,20 @@ function wt.CreateEditbox(t, textual)
 
 	--| Returns
 
-	---@class singlelineEditbox : textual
+	---@class textualEditbox : textual
 	---@field frame Frame
 	---@field widget EditBox
 	---@field label FontString|nil
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_textual
-		---@return typename_editbox
-		---<p></p>
-		function _.getTypes() return "Textual", "Editbox" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_editbox]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_editbox
 			---| "Editbox"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3572,21 +3493,14 @@ function wt.CreateCustomEditbox(t, textual)
 	---@field label FontString|nil
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_textual
-		---@return typename_customEditbox
-		---<p></p>
-		function _.getTypes() return "Textual", "CustomEditbox" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_customEditbox]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_customEditbox
 			---| "CustomEditbox"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3627,21 +3541,14 @@ function wt.CreateMultilineEditbox(t, textual)
 			---@field panExtentPercentage number
 			---@field SetPanExtentPercentage fun(panExtentPercentage: number)
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_textual
-		---@return typename_multilineEditbox
-		---<p></p>
-		function _.getTypes() return "Textual", "MultilineEditbox" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_multilineEditbox]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_multilineEditbox
 			---| "MultilineEditbox"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -3674,20 +3581,14 @@ function wt.CreateCopybox(t)
 	---@field textual customEditbox|textual|nil
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_copybox
-		---<p></p>
-		function _.getTypes() return "Copybox" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_copybox]: true,}
+		function _.getTypes() return {} end
 
 			---@alias typename_copybox
 			---| "Copybox"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return {}
 end
@@ -3737,101 +3638,76 @@ function wt.CreateNumeric(t)
 	---@field default? number Default value of the widget | ***Default:*** **t.min**
 
 		---@class numericEventListeners
-		---@field enabled? numericEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **numeric.setEnabled(...)** was called
 		---@field loaded? numericEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? numericEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? numericEventListener_changed[] Ordered list of functions to call when a "changed" event is invoked after **numeric.setNumber(...)** was called
 		---@field min? numericEventListener_min[] Ordered list of functions to call when a "min" event is invoked after **numeric.setMin(...)** was called
 		---@field max? numericEventListener_max[] Ordered list of functions to call when a "max" event is invoked after **numeric.setMax(...)** was called
-		---@field [string]? numericEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class numericEventListener_enabled : eventHandlerIndex
-			---@field handler NumericEventHandler_enabled Handler function to register for call
-
-				---@alias NumericEventHandler_enabled
-				---| fun(self: NumericType, state: boolean) Called when an "enabled" event is invoked after **numeric.setEnabled(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias NumericType
-				---| numeric
-				---| numericSlider
+		---@field enabled? numericEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **numeric.setEnabled(...)** was called
+		---@field _? numericEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class numericEventListener_loaded : eventHandlerIndex
-			---@field handler NumericEventHandler_loaded Handler function to register for call
+			---@field handler numericEventHandler_loaded Handler function to register for call
 
-				---@alias NumericEventHandler_loaded
-				---| fun(self: NumericType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` NumericType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias numericEventHandler_loaded
+				---| fun(self: numeric, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class numericEventListener_saved : eventHandlerIndex
-			---@field handler NumericEventHandler_saved Handler function to register for call
+			---@field handler numericEventHandler_saved Handler function to register for call
 
-				---@alias NumericEventHandler_saved
-				---| fun(self: NumericType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` NumericType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias numericEventHandler_saved
+				---| fun(self: numeric, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class numericEventListener_changed : eventHandlerIndex
-			---@field handler NumericEventHandler_changed Handler function to register for call
+			---@field handler numericEventHandler_changed Handler function to register for call
 
-				---@alias NumericEventHandler_changed
-				---| fun(self: NumericType, number: number, user: boolean) Called when an "changed" event is invoked after **numeric.setNumber(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias numericEventHandler_changed
+				---| fun(self: numeric, number: number, user: boolean) Called when an "changed" event is invoked after **numeric.setNumber(...)** was called<hr><p>@*param* `self` numeric ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class numericEventListener_min : eventHandlerIndex
-			---@field handler NumericEventHandler_min Handler function to register for call
+			---@field handler numericEventHandler_min Handler function to register for call
 
-				---@alias NumericEventHandler_min
-				---| fun(self: NumericType, limitMin: number) Called when an "min" event is invoked after **numeric.setMin(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the binary widget</p><p>@*param* `limitMin` number ― The current lower limit of the number value of the widget</p>
+				---@alias numericEventHandler_min
+				---| fun(self: numeric, limitMin: number) Called when an "min" event is invoked after **numeric.setMin(...)** was called<hr><p>@*param* `self` numeric ― Reference to the binary widget</p><p>@*param* `limitMin` number ― The current lower limit of the number value of the widget</p>
 
 			---@class numericEventListener_max : eventHandlerIndex
-			---@field handler NumericEventHandler_max Handler function to register for call
+			---@field handler numericEventHandler_max Handler function to register for call
 
-				---@alias NumericEventHandler_max
-				---| fun(self: NumericType, limitMax: number) Called when an "max" event is invoked after **numeric.setMax(...)** was called<hr><p>@*param* `self` NumericType ― Reference to the binary widget</p><p>@*param* `limitMax` number ― The current upper limit of the number value of the widget</p>
+				---@alias numericEventHandler_max
+				---| fun(self: numeric, limitMax: number) Called when an "max" event is invoked after **numeric.setMax(...)** was called<hr><p>@*param* `self` numeric ― Reference to the binary widget</p><p>@*param* `limitMax` number ― The current upper limit of the number value of the widget</p>
+
+			---@class numericEventListener_enabled : eventHandlerIndex
+			---@field handler numericEventHandler_enabled Handler function to register for call
+
+				---@alias numericEventHandler_enabled
+				---| fun(self: numeric, state: boolean) Called when an "enabled" event is invoked after **numeric.setEnabled(...)** was called<hr><p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class numericEventListener_any : eventTag, eventHandlerIndex
-			---@field handler NumericEventHandler_any Handler function to register for call
+			---@field handler numericEventHandler_any Handler function to register for call
 
-				---@alias NumericEventHandler_any
-				---| fun(self: NumericType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` NumericType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias numericEventHandler_any
+				---| fun(self: numeric, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class numeric
+	---@class numeric : datamanager
 	---@field invoke numeric_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener numeric_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_numeric
-		---<p></p>
-		function _.getTypes() return "Numeric" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_numeric
 			---| "Numeric"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class numeric_invoke
+		---@class numeric_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
-
-			---Invoke a "changed" event calling registered listeners
-			---@param user boolean
-			function invoke.changed(user) end
 
 			--Invoke a "min" event calling registered listeners
 			function invoke.min() end
@@ -3839,47 +3715,42 @@ function wt.CreateNumeric(t)
 			--Invoke a "max" event calling registered listeners
 			function invoke.max() end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class numeric_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener NumericEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener NumericEventHandler_loaded Handler function to set
+			---@param listener numericEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener NumericEventHandler_saved Handler function to set
+			---@param listener numericEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "changed" event trigger
-			---@param listener NumericEventHandler_changed Handler function to set
+			---@param listener numericEventHandler_changed Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.changed(listener, callIndex) end
 
 			---Register a listener for a "min" event trigger
-			---@param listener NumericEventHandler_min Handler function to set
+			---@param listener numericEventHandler_min Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.min(listener, callIndex) end
 
 			---Register a listener for a "max" event trigger
-			---@param listener NumericEventHandler_max Handler function to set
+			---@param listener numericEventHandler_max Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.max(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener numericEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener NumericEventHandler_any Handler function to set
+			---@param listener numericEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -4033,21 +3904,14 @@ function wt.CreateSlider(t, numeric)
 		---@field MinText FontString Min value text
 		---@field MaxText FontString Max value text
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_numeric
-		---@return typename_slider
-		---<p></p>
-		function _.getTypes() return "Numeric", "Slider" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_slider]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_slider
 			---| "Slider"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -4078,21 +3942,14 @@ function wt.CreateClassicSlider(t, numeric)
 	---@field increaseButton customButton|action
 	local _ = {}
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_numeric
-		---@return typename_classicSlider
-		---<p></p>
-		function _.getTypes() return "Numeric", "ClassicSlider" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_classicSlider]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_classicSlider
 			---| "ClassicSlider"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -4118,121 +3975,93 @@ function wt.CreateColormanager(t)
 	---@field default? color Default value of the widget | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 
 		---@class colormanagerEventListeners
-		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called
 		---@field loaded? colormanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colormanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field colored? colormanagerEventListener_applied[] Ordered list of functions to call when a "colored" event is invoked after **colormanager.setColor(...)** was called
-		---@field [string]? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
+		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called
+		---@field _? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class colormanagerEventListener_enabled : eventHandlerIndex
-			---@field handler ColormanagerEventHandler_enabled Handler function to register for call
+			---@field handler colormanagerEventHandler_enabled Handler function to register for call
 
-				---@alias ColormanagerEventHandler_enabled
-				---| fun(self: ColormanagerType, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias ColormanagerType
-					---| colormanager
-					---| colorpicker
+				---@alias colormanagerEventHandler_enabled
+				---| fun(self: colormanager, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class colormanagerEventListener_loaded : eventHandlerIndex
-			---@field handler ColormanagerEventHandler_loaded Handler function to register for call
+			---@field handler colormanagerEventHandler_loaded Handler function to register for call
 
-				---@alias ColormanagerEventHandler_loaded
-				---| fun(self: ColormanagerType, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
+				---@alias colormanagerEventHandler_loaded
+				---| fun(self: colormanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by **t.getData()** and it was loaded to the widget</p>
 
 			---@class colormanagerEventListener_saved : eventHandlerIndex
-			---@field handler ColormanagerEventHandler_saved Handler function to register for call
+			---@field handler colormanagerEventHandler_saved Handler function to register for call
 
-				---@alias ColormanagerEventHandler_saved
-				---| fun(self: ColormanagerType, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
+				---@alias colormanagerEventHandler_saved
+				---| fun(self: colormanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via **t.saveData(...)**</p>
 
 			---@class colormanagerEventListener_applied : eventHandlerIndex
-			---@field handler ColormanagerEventHandler_colored Handler function to register for call
+			---@field handler colormanagerEventHandler_colored Handler function to register for call
 
-				---@alias ColormanagerEventHandler_colored
-				---| fun(self: ColormanagerType, color: color, user: boolean) Called when an "colored" event is invoked after **colormanager.setColor(...)** was called<hr><p>@*param* `self` ColormanagerType ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias colormanagerEventHandler_colored
+				---| fun(self: colormanager, color: color, user: boolean) Called when an "colored" event is invoked after **colormanager.setColor(...)** was called<hr><p>@*param* `self` colormanager ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colormanagerEventListener_any : eventTag, eventHandlerIndex
-			---@field handler ColormanagerEventHandler_any Handler function to register for call
+			---@field handler colormanagerEventHandler_any Handler function to register for call
 
-				---@alias ColormanagerEventHandler_any
-				---| fun(self: ColormanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ColormanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias colormanagerEventHandler_any
+				---| fun(self: colormanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class colormanager
+	---@class colormanager : datamanager
 	---@field invoke colormanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener colormanager_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		--| Events
+		--| Type
 
-		---Returns the type of this object
-		---***
-		---@return typename_colormanager
-		---<p></p>
-		function _.getTypes() return "Colormanager" end
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_colormanager
 			---| "Colormanager"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class colormanager_invoke
+		---@class colormanager_invoke : datamanager_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
 
 			---Invoke a "colored" event calling registered listeners
 			---@param user boolean
 			function invoke.colored(user) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class colormanager_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener ColormanagerEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener ColormanagerEventHandler_loaded Handler function to set
+			---@param listener colormanagerEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener ColormanagerEventHandler_saved Handler function to set
+			---@param listener colormanagerEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "colored" event trigger
-			---@param listener ColormanagerEventHandler_colored Handler function to set
+			---@param listener colormanagerEventHandler_colored Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.colored(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener colormanagerEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener ColormanagerEventHandler_any Handler function to set
+			---@param listener colormanagerEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -4349,21 +4178,14 @@ function wt.CreateColorpicker(t, colormanager)
 		---@field gradient Texture
 		---@field checker Texture
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_colormanager
-		---@return typename_colorpicker
-		---<p></p>
-		function _.getTypes() return "Colormanager", "Colorpicker" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, [typename_colorpicker]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_colorpicker
 			---| "Colorpicker"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 
 	return _
 end
@@ -4375,7 +4197,7 @@ function wt.CreatePositionmanager()
 	---@alias typename_positionmanager
 	---| "Positionmanager"
 
-	---@class positionmanager
+	---@class positionmanager : widget
 end
 
 --| Options Panel
@@ -4448,7 +4270,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 	--| Returns
 
-	---@class positionPanel
+	---@class positionPanel : positionmanager
 	---@field frame panel
 	---@field widgets positionPanelWidgets
 	---@field presets? positionPresetItemData[]
@@ -4477,21 +4299,6 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 			---@field keepOnTop binary|checkbox|nil
 			---@field level numeric|numericSlider|nil
 
-		---Returns the type of this object
-		---***
-		---@return typename_positionPanel
-		---<p></p>
-		function _.getTypes() return "PositionOptions" end
-
-			---@alias typename_positionPanel
-			---| "PositionOptions"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		---Apply a specific preset
 		--- - ***Note:*** If the addon database position table doesn't contain relative frame and point key, value pairs, the position will be converted to absolute position after being applied.
 		---***
@@ -4506,6 +4313,16 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		--Reset the custom preset to its default state
 		function _.resetCustomPreset() end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_positionmanager]: true, [typename_positionPanel]: true,  }
+		function _.getTypes() return {} end
+
+			---@alias typename_positionPanel
+			---| "PositionOptions"
+
 end
 
 
@@ -4515,7 +4332,7 @@ function wt.CreateFontmanager()
 	---@alias typename_fontmanager
 	---| "Fontmanager"
 
-	---@class fontmanager
+	---@class fontmanager : widget
 end
 
 --| Options Panel
@@ -4563,7 +4380,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
 	--| Returns
 
-	---@class fontPanel
+	---@class fontPanel : fontmanager
 	---@field widgets fontPanelWidgets
 	---@field frame Frame|panel
 	local _ = {}
@@ -4574,20 +4391,14 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		---@field alignment specialSelector|specialRadiogroup
 		---@field colors (colormanager|colorpicker)[]|nil
 
-		---Returns the type of this object
-		---***
-		---@return typename_fontPanel
-		---<p></p>
-		function _.getTypes() return "FontOptions" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_fontmanager]: true, [typename_fontPanel]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_fontPanel
 			---| "FontOptions"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 end
 
 
@@ -4634,89 +4445,76 @@ function wt.CreateSettingsmanager(t)
 		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings datamanagement rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 		---@class settingsmanagerEventListeners
-		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **settingsmanager.setEnabled(...)** was called
 		---@field loaded? colormanagerEventListener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after **settingsmanager.load(...)** was called
 		---@field saved? colormanagerEventListener_saved[] Ordered list of functions to call when an "saved" event is invoked after **settingsmanager.save(...)** was called
 		---@field applied? colormanagerEventListener_applied[] Ordered list of functions to call when a "applied" event is invoked after **settingsmanager.apply(...)** was called
 		---@field reverted? settingsmanagerEventListener_reverted[] Ordered list of functions to call when a "reverted" event is invoked after **settingsmanager.revert(...)** was called
 		---@field reset? settingsmanagerEventListener_reset[] Ordered list of functions to call when a "reset" event is invoked after **settingsmanager.reset(...)** was called
-		---@field [string]? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class settingsmanagerEventListener_enabled : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_enabled Handler function to register for call
-
-				---@alias SettingsmanagerEventHandler_enabled
-				---| fun(self: SettingsmanagerType, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-					---@alias SettingsmanagerType
-					---| settingsmanager
-					---| settingsPage
+		---@field enabled? colormanagerEventListener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after **settingsmanager.setEnabled(...)** was called
+		---@field _? colormanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class settingsmanagerEventListener_loaded : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_loaded Handler function to register for call
+			---@field handler settingsmanagerEventHandler_loaded Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_loaded
-				---| fun(self: SettingsmanagerType, user: boolean) Called when an "loaded" event is invoked after **settingsmanager.load(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias settingsmanagerEventHandler_loaded
+				---| fun(self: settingsmanager, user: boolean) Called when an "loaded" event is invoked after **settingsmanager.load(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsmanagerEventListener_saved : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_saved Handler function to register for call
+			---@field handler settingsmanagerEventHandler_saved Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_saved
-				---| fun(self: SettingsmanagerType, user: boolean) Called when an "saved" event is invoked after **settingsmanager.save(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias settingsmanagerEventHandler_saved
+				---| fun(self: settingsmanager, user: boolean) Called when an "saved" event is invoked after **settingsmanager.save(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsmanagerEventListener_applied : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_applied Handler function to register for call
+			---@field handler settingsmanagerEventHandler_applied Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_applied
-				---| fun(self: SettingsmanagerType, user: boolean) Called when an "applied" event is invoked after **settingsmanager.apply(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias settingsmanagerEventHandler_applied
+				---| fun(self: settingsmanager, user: boolean) Called when an "applied" event is invoked after **settingsmanager.apply(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsmanagerEventListener_reverted : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_reverted Handler function to register for call
+			---@field handler settingsmanagerEventHandler_reverted Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_reverted
-				---| fun(self: SettingsmanagerType, user: boolean) Called when an "revert" event is invoked after **settingsmanager.revert(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><<p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias settingsmanagerEventHandler_reverted
+				---| fun(self: settingsmanager, user: boolean) Called when an "revert" event is invoked after **settingsmanager.revert(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the settingsmanager widget</p><<p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsmanagerEventListener_reset : eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_reset Handler function to register for call
+			---@field handler settingsmanagerEventHandler_reset Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_reset
-				---| fun(self: SettingsmanagerType, user: boolean) Called when an "reset" event is invoked after **settingsmanager.reset(...)** was called<hr><p>@*param* `self` SettingsmanagerType ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias settingsmanagerEventHandler_reset
+				---| fun(self: settingsmanager, user: boolean) Called when an "reset" event is invoked after **settingsmanager.reset(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the settingsmanager widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class settingsmanagerEventListener_enabled : eventHandlerIndex
+			---@field handler settingsmanagerEventHandler_enabled Handler function to register for call
+
+				---@alias settingsmanagerEventHandler_enabled
+				---| fun(self: settingsmanager, state: boolean) Called when an "enabled" event is invoked after **colormanager.setEnabled(...)** was called<hr><p>@*param* `self` settingsmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
 			---@class settingsmanagerEventListener_any : eventTag, eventHandlerIndex
-			---@field handler SettingsmanagerEventHandler_any Handler function to register for call
+			---@field handler settingsmanagerEventHandler_any Handler function to register for call
 
-				---@alias SettingsmanagerEventHandler_any
-				---| fun(self: SettingsmanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` SettingsmanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>	
+				---@alias settingsmanagerEventHandler_any
+				---| fun(self: settingsmanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` settingsmanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>	
 
 	--| Returns
 
-	---@class settingsmanager
+	---@class settingsmanager : widget
 	---@field invoke settingsmanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener settingsmanager_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_settingsmanager
-		---<p></p>
-		function _.getTypes() return "Settingsmanager" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_settingsmanager]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_settingsmanager
 			---| "Settingsmanager"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class settingsmanager_invoke
+		---@class settingsmanager_invoke : widget_invoke
 		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
 
 			---Invoke a "loaded" event calling registered listeners
 			---@param user boolean
@@ -4738,47 +4536,42 @@ function wt.CreateSettingsmanager(t)
 			---@param user boolean
 			function invoke.reset(user) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
 		---@class settingsmanager_setListener
 		local setListener = {}
 
-			---Register a listener for a "enabled" event trigger
-			---@param listener SettingsmanagerEventHandler_enabled Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(listener, callIndex) end
-
 			---Register a listener for a "loaded" event trigger
-			---@param listener SettingsmanagerEventHandler_loaded Handler function to set
+			---@param listener settingsmanagerEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for a "saved" event trigger
-			---@param listener SettingsmanagerEventHandler_saved Handler function to set
+			---@param listener settingsmanagerEventHandler_saved Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(listener, callIndex) end
 
 			---Register a listener for a "applied" event trigger
-			---@param listener SettingsmanagerEventHandler_applied Handler function to set
+			---@param listener settingsmanagerEventHandler_applied Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.applied(listener, callIndex) end
 
 			---Register a listener for a "reverted" event trigger
-			---@param listener SettingsmanagerEventHandler_reverted Handler function to set
+			---@param listener settingsmanagerEventHandler_reverted Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.reverted(listener, callIndex) end
 
 			---Register a listener for a "reset" event trigger
-			---@param listener SettingsmanagerEventHandler_reset Handler function to set
+			---@param listener settingsmanagerEventHandler_reset Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.reset(listener, callIndex) end
 
+			---Register a listener for a "enabled" event trigger
+			---@param listener settingsmanagerEventHandler_enabled Handler function to set
+			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(listener, callIndex) end
+
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener SettingsmanagerEventHandler_any Handler function to set
+			---@param listener settingsmanagerEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -4884,22 +4677,6 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		---@field OnRefresh function
 		---@field OnDefault function
 
-		---Returns the type of this object
-		---***
-		---@return typename_settingsmanager
-		---@return typename_settingsPage
-		---<p></p>
-		function _.getTypes() return "Settingsmanager", "SettingsPage" end
-
-			---@alias typename_settingsPage
-			---| "SettingsPage"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 		---@return string
 		function _.getResetPopupKey() return "" end
@@ -4908,6 +4685,15 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		---***
 		---@param state boolean? ***Default:*** `true`
 		function _.setStatic(state) end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_settingsPage
+			---| "SettingsPage"
 
 		--| Utilities
 
@@ -4938,21 +4724,6 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 	---@field pages settingsPage[]
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_settingsCategory
-		---<p></p>
-		function _.getTypes() return "SettingsCategory" end
-
-			---@alias typename_settingsCategory
-			---| "SettingsCategory"
-
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		---Force update the settings widgets for all pages in this category
 		---***
 		---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
@@ -4964,6 +4735,15 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** `true`
 		function _.defaults(user, callListeners) end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_settingsCategory]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_settingsCategory
+			---| "SettingsCategory"
 end
 
 
@@ -5032,57 +4812,53 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		---@field renamed? profilemanagerEventListener_renamed[] Ordered list of functions to call when a "renamed" event is invoked after a data profile has been renamed
 		---@field deleted? profilemanagerEventListener_deleted[] Ordered list of functions to call when a "deleted" event is invoked after a data profile has been removed from the database
 		---@field reset? profilemanagerEventListener_reset[] Ordered list of functions to call when a "reset" event is invoked after a data profile has been reset to defaults
-		---@field [string]? profilemanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
+		---@field _? profilemanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class profilemanagerEventListener_loaded : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_loaded Handler function to register for call
+			---@field handler profilemanagerEventHandler_loaded Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_loaded
-				---| fun(self: ProfilemanagerType, user: boolean) Called when an "loaded" event is invoked after the data profile list has been loaded and verified<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-					---@alias ProfilemanagerType
-					---| profilemanager
-					---| profilesPage
+				---@alias profilemanagerEventHandler_loaded
+				---| fun(self: profilemanager, user: boolean) Called when an "loaded" event is invoked after the data profile list has been loaded and verified<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_activated : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_activated Handler function to register for call
+			---@field handler profilemanagerEventHandler_activated Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_activated
-				---| fun(self: ProfilemanagerType, index: integer, title: string, success: boolean, user: boolean) Called when an "activated" event is invoked after a profile has been activated<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `index` integer — The index of the active profile</p><p>@*param* `title` string — The title of the active profile</p><p>@*param* `success` boolean ― True if the active profile was changed successfully</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias profilemanagerEventHandler_activated
+				---| fun(self: profilemanager, index: integer, title: string, success: boolean, user: boolean) Called when an "activated" event is invoked after a profile has been activated<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `index` integer — The index of the active profile</p><p>@*param* `title` string — The title of the active profile</p><p>@*param* `success` boolean ― True if the active profile was changed successfully</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_created : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_created Handler function to register for call
+			---@field handler profilemanagerEventHandler_created Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_created
-				---| fun(self: ProfilemanagerType, index: integer, title: string, user: boolean) Called when an "created" event is invoked after a new data profile has been initialized<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `index` integer — The index of the new profile</p><p>@*param* `title` string — The title of the new profile</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias profilemanagerEventHandler_created
+				---| fun(self: profilemanager, index: integer, title: string, user: boolean) Called when an "created" event is invoked after a new data profile has been initialized<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `index` integer — The index of the new profile</p><p>@*param* `title` string — The title of the new profile</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_renamed : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_renamed Handler function to register for call
+			---@field handler profilemanagerEventHandler_renamed Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_renamed
-				---| fun(self: ProfilemanagerType, success: boolean, index: any, title?: string, user: boolean) Called when an "renamed" event is invoked after a data profile has been renamed<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile was renamed successfully</p><p>@*param* `index` any — The index of the profile attempted to be renamed</p><p>@*param* `title`? string — The new title of the profile attempted to be renamed</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias profilemanagerEventHandler_renamed
+				---| fun(self: profilemanager, success: boolean, index: any, title?: string, user: boolean) Called when an "renamed" event is invoked after a data profile has been renamed<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile was renamed successfully</p><p>@*param* `index` any — The index of the profile attempted to be renamed</p><p>@*param* `title`? string — The new title of the profile attempted to be renamed</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_deleted : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_deleted Handler function to register for call
+			---@field handler profilemanagerEventHandler_deleted Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_deleted
-				---| fun(self: ProfilemanagerType, success: boolean, index: any, title?: string, user: boolean) Called when an "deleted" event is invoked after a data profile has been removed from the database<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile was deleted successfully</p><p>@*param* `index` any — The original index of the profile attempted to be deleted</p><p>@*param* `title`? string — The title of the  profile attempted to be deleted</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias profilemanagerEventHandler_deleted
+				---| fun(self: profilemanager, success: boolean, index: any, title?: string, user: boolean) Called when an "deleted" event is invoked after a data profile has been removed from the database<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile was deleted successfully</p><p>@*param* `index` any — The original index of the profile attempted to be deleted</p><p>@*param* `title`? string — The title of the  profile attempted to be deleted</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_reset : eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_reset Handler function to register for call
+			---@field handler profilemanagerEventHandler_reset Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_reset
-				---| fun(self: ProfilemanagerType, success: boolean, index: any, title?: string, user: boolean) Called when an "reset" event is invoked after a data profile has been reset to defaults<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile data was reset successfully</p><p>@*param* `index` any — The index of the profile attempted to be reset</p><p>@*param* `title`? string — The title of the profile attempted to be reset</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias profilemanagerEventHandler_reset
+				---| fun(self: profilemanager, success: boolean, index: any, title?: string, user: boolean) Called when an "reset" event is invoked after a data profile has been reset to defaults<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if the profile data was reset successfully</p><p>@*param* `index` any — The index of the profile attempted to be reset</p><p>@*param* `title`? string — The title of the profile attempted to be reset</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanagerEventListener_any : eventTag, eventHandlerIndex
-			---@field handler ProfilemanagerEventHandler_any Handler function to register for call
+			---@field handler profilemanagerEventHandler_any Handler function to register for call
 
-				---@alias ProfilemanagerEventHandler_any
-				---| fun(self: ProfilemanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` ProfilemanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias profilemanagerEventHandler_any
+				---| fun(self: profilemanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class profilemanager
+	---@class profilemanager : widget
 	---@field data table Reference to live data table of the currently active profile
 	---@field firstLoad boolean True, if the `accountData.profiles` table did not exist yet
 	---@field newCharacter boolean True, if the `characterData.activeProfile` integer did not exist yet
@@ -5090,24 +4866,18 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	---@field setListener profilemanager_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_profilemanager
-		---<p></p>
-		function _.getTypes() return "Profilemanager" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_profilemanager]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_profilemanager
 			---| "Profilemanager"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class profilemanager_invoke
+		---@class profilemanager_invoke : widget_invoke
 		local invoke = {}
 
 			---Invoke a "loaded" event calling registered listeners
@@ -5146,49 +4916,38 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 			---@param title? string
 			function invoke.reset(success, user, index, title) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
-		---@class profilemanager_setListener
+		---@class profilemanager_setListener : widget_setListener
 		local setListener = {}
 
 			---Register a listener for a "loaded" event trigger
-			---@param listener ProfilemanagerEventHandler_loaded Handler function to set
+			---@param listener profilemanagerEventHandler_loaded Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.loaded(listener, callIndex) end
 
 			---Register a listener for an "activated" event trigger
-			---@param listener ProfilemanagerEventHandler_activated Handler function to set
+			---@param listener profilemanagerEventHandler_activated Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.activated(listener, callIndex) end
 
 			---Register a listener for a "created" event trigger
-			---@param listener ProfilemanagerEventHandler_created Handler function to set
+			---@param listener profilemanagerEventHandler_created Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.created(listener, callIndex) end
 
 			---Register a listener for a "renamed" event trigger
-			---@param listener ProfilemanagerEventHandler_renamed Handler function to set
+			---@param listener profilemanagerEventHandler_renamed Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.renamed(listener, callIndex) end
 
 			---Register a listener for a "deleted" event trigger
-			---@param listener ProfilemanagerEventHandler_deleted Handler function to set
+			---@param listener profilemanagerEventHandler_deleted Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.deleted(listener, callIndex) end
 
 			---Register a listener for a "reset" event trigger
-			---@param listener ProfilemanagerEventHandler_reset Handler function to set
+			---@param listener profilemanagerEventHandler_reset Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.reset(listener, callIndex) end
-
-			---Register a listener for a custom event trigger
-			---@param event string Custom event tag
-			---@param listener ProfilemanagerEventHandler_any Handler function to set
-			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, listener, callIndex) end
 
 		--| Utilities
 
@@ -5326,21 +5085,14 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		---@field load action|actionButton
 		---@field reset action|actionButton
 
-		---Returns all object types of this mutated widget
-		---***
-		---@return typename_profilemanager
-		---@return typename_profilesPage
-		---<p></p>
-		function _.getTypes() return "Profilemanager", "ProfilesPage" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_profilemanager]: true, [typename_profilesPage]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_profilesPage
 			---| "ProfilesPage"
-
-		---Checks and returns if the a type of this mutated widget matches the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
 end
 
 
@@ -5365,50 +5117,40 @@ function wt.CreateAddonmanager(addon, t)
 	---@field listeners? addonmanagerEventListeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class addonmanagerEventListeners
-		---@field loaded? addonmanagerEventListener_changed[] Ordered list of functions to call when an "changed" event is invoked after the info of the managed addon has been loaded
-		---@field [string]? addonmanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
+		---@field changed? addonmanagerEventListener_changed[] Ordered list of functions to call when an "changed" event is invoked after the info of the managed addon has been loaded
+		---@field _? addonmanagerEventListener_any[] Ordered list of functions to call when a custom event is invoked
 
 		---@class addonmanagerEventListener_changed : eventHandlerIndex
-		---@field handler AddonmanagerEventHandler_changed Handler function to register for call
+		---@field handler addonmanagerEventHandler_changed Handler function to register for call
 
-			---@alias AddonmanagerEventHandler_changed
-			---| fun(self: AddonmanagerType, addon: string, user: boolean) Called when an "changed" event is invoked after the info of the managed addon has been loaded<hr><p>@*param* `self` AddonmanagerType ― Reference to the widget table</p><p>@*param* `addon` string ― Namespace name of the addon that was loaded by the manager</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-				---@alias AddonmanagerType
-				---| addonmanager
-				---| addonPage
+			---@alias addonmanagerEventHandler_changed
+			---| fun(self: addonmanager, addon: string, user: boolean) Called when an "changed" event is invoked after the info of the managed addon has been loaded<hr><p>@*param* `self` addonmanager ― Reference to the widget table</p><p>@*param* `addon` string ― Namespace name of the addon that was loaded by the manager</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 		---@class addonmanagerEventListener_any : eventTag, eventHandlerIndex
-		---@field handler AddonmanagerEventHandler_any Handler function to register for call
+		---@field handler addonmanagerEventHandler_any Handler function to register for call
 
-			---@alias AddonmanagerEventHandler_any
-			---| fun(self: AddonmanagerType, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` AddonmanagerType ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+			---@alias addonmanagerEventHandler_any
+			---| fun(self: addonmanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` addonmanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class addonmanager
+	---@class addonmanager : widget
 	---@field invoke addonmanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener addonmanager_setListener Hook a handler function as a listener for a custom widget event
 	local _ = {}
 
-		---Returns the type of this object
-		---***
-		---@return typename_addonmanager
-		---<p></p>
-		function _.getTypes() return "Addonmanager" end
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_addonmanager]: true, }
+		function _.getTypes() return {} end
 
 			---@alias typename_addonmanager
 			---| "Addonmanager"
 
-		---Checks and returns if the type of this object is equal to the string provided
-		---@param type string|typename
-		---@return boolean
-		---<p></p>
-		function _.isType(type) return false end
-
 		--| Events
 
-		---@class addonmanager_invoke
+		---@class addonmanager_invoke : widget_invoke
 		local invoke = {}
 
 			---Invoke a "changed" event calling registered listeners
@@ -5416,22 +5158,17 @@ function wt.CreateAddonmanager(addon, t)
 			---@param user boolean
 			function invoke.changed(addon, user) end
 
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
-
-		---@class addonmanager_setListener
+		---@class addonmanager_setListener : widget_setListener
 		local setListener = {}
 
 			---Register a listener for a "changed" event trigger
-			---@param listener AddonmanagerEventHandler_changed Handler function to set
+			---@param listener addonmanagerEventHandler_changed Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.changed(listener, callIndex) end
 
 			---Register a listener for a custom event trigger
 			---@param event string Custom event tag
-			---@param listener AddonmanagerEventHandler_any Handler function to set
+			---@param listener addonmanagerEventHandler_any Handler function to set
 			---@param callIndex? integer Set when to call **listener** in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener._(event, listener, callIndex) end
 
@@ -5581,6 +5318,12 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 	---@field setAddon nil
 	local _ = {}
 
-	---@alias typename_addonPage
-	---| "AddonPage"
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_addonmanager]: true, [typename_addonPage]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_addonPage
+			---| "AddonPage"
 end

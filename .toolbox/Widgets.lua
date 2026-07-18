@@ -84,7 +84,7 @@ function wt.CreateWidget(t)
 	--| Type
 
 	function widget.getTypes() us.Clone(types) end
-	function widget.isType(s) return types[s] end
+	function widget.isType(s) return types[s] or false end
 	function widget.addType(s) types[s] = true end
 
 	--| Events
@@ -1599,7 +1599,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 	--[ Getters & Setters ]
 
-	function category.getType() return "SettingsCategory" end
+	function category.getTypes() return "SettingsCategory" end
 	function category.isType(type) return type == "SettingsCategory" end
 
 	--[ Utilities ]
