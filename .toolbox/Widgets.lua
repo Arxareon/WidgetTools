@@ -425,11 +425,14 @@ local itemsets = {
 	}
 }
 
-function wt.CreateSelector(t)
+function wt.CreateSelector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_selector
 	local typename = "Selector"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	---@type typename_binary
 	local typenameItem = "Binary"
@@ -469,8 +472,10 @@ function wt.CreateSelector(t)
 
 	--[ Widget ]
 
-	---@type selector
-	local selector = { invoke = {}, setListener = {}, binaries = {} }
+	---@type selector|datamanager
+	local selector = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+
+	selector.binaries = {}
 
 	--[ Getters & Setters ]
 
@@ -628,11 +633,14 @@ function wt.CreateSelector(t)
 	return selector
 end
 
-function wt.CreateSpecialSelector(itemset, t)
+function wt.CreateSpecialSelector(itemset, t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_specialSelector
 	local typename = "SpecialSelector"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	---@type typename_binary
 	local typenameItem = "Binary"
@@ -683,8 +691,10 @@ function wt.CreateSpecialSelector(itemset, t)
 
 	--[ Widget ]
 
-	---@type specialSelector
-	local specialSelector = { invoke = {}, setListener = {}, binaries = {} }
+	---@type specialSelector|datamanager
+	local specialSelector = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+
+	specialSelector.binaries = {}
 
 	--[ Getters & Setters ]
 
@@ -799,11 +809,14 @@ function wt.CreateSpecialSelector(itemset, t)
 	return specialSelector
 end
 
-function wt.CreateMultiselector(t)
+function wt.CreateMultiselector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_multiselector
 	local typename = "Multiselector"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	---@type typename_binary
 	local typenameItem = "Binary"
@@ -848,8 +861,10 @@ function wt.CreateMultiselector(t)
 
 	--[ Widget ]
 
-	---@type multiselector
-	local multiselector = { invoke = {}, setListener = {}, binaries = {} }
+	---@type multiselector|datamanager
+	local multiselector = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+
+	multiselector.binaries = {}
 
 	--[ Getters & Setters ]
 
@@ -1045,11 +1060,14 @@ end
 
 --| Textual
 
-function wt.CreateTextual(t)
+function wt.CreateTextual(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_textual
 	local typename = "Textual"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	--| Events
 
@@ -1069,8 +1087,8 @@ function wt.CreateTextual(t)
 
 	--[ Widget ]
 
-	---@type textual
-	local textual = { invoke = {}, setListener = {}, }
+	---@type textual|datamanager
+	local textual = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 
 	--[ Getters & Setters ]
 
@@ -1158,11 +1176,14 @@ end
 
 --| Numeric
 
-function wt.CreateNumeric(t)
+function wt.CreateNumeric(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_numeric
 	local typename = "Numeric"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	--| Events
 
@@ -1200,8 +1221,8 @@ function wt.CreateNumeric(t)
 
 	--[ Widget ]
 
-	---@type numeric
-	local numeric = { invoke = {}, setListener = {}, }
+	---@type numeric|datamanager
+	local numeric = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 
 	--[ Getters & Setters ]
 
@@ -1315,13 +1336,16 @@ function wt.CreateNumeric(t)
 	return numeric
 end
 
---| Color
+--| Color data
 
-function wt.CreateColormanager(t)
+function wt.CreateColormanager(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_colormanager
 	local typename = "Colormanager"
+
+	---@type typename_datamanager
+	local typenameBase = "Datamanager"
 
 	local active = false
 
@@ -1343,8 +1367,8 @@ function wt.CreateColormanager(t)
 
 	--[ Widget ]
 
-	---@type colormanager
-	local colormanager = { invoke = {}, setListener = {}, }
+	---@type colormanager|datamanager
+	local colormanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 
 	--[ Getters & Setters ]
 
@@ -1473,21 +1497,24 @@ function wt.CreateColormanager(t)
 	return colormanager
 end
 
---| Position
+--| Position data
 
 
 
---| Font
+--| Font data
 
 
 
 --| Settings
 
-function wt.CreateSettingsmanager(t)
+function wt.CreateSettingsmanager(t, widget)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_settingsmanager
 	local typename = "Settingsmanager"
+
+	---@type typename_widget
+	local typenameBase = "Widget"
 
 	--| Events
 
@@ -1510,8 +1537,8 @@ function wt.CreateSettingsmanager(t)
 
 	--[ Widget ]
 
-	---@type settingsmanager
-	local settingsmanager = { invoke = {}, setListener = {}, }
+	---@type settingsmanager|widget
+	local settingsmanager = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
 
 	--[ Getters & Setters ]
 
@@ -1589,7 +1616,7 @@ function wt.CreateSettingsmanager(t)
 	return settingsmanager
 end
 
-function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
+function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
 
 	t = type(t) == "table" and t or {}
@@ -1674,9 +1701,9 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	return category
 end
 
---| Profile
+--| Profiles
 
-function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
+function wt.CreateProfilemanager(accountData, characterData, defaultData, t, widget)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
 	--[ Parameters  ]
@@ -1687,6 +1714,9 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	---@type typename_profilemanager
 	local typename = "Profilemanager"
+
+	---@type typename_widget
+	local typenameBase = "Widget"
 
 	--| Events
 
@@ -1712,14 +1742,12 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--[ Widget ]
 
-	---@type profilemanager
-	local profilemanager = {
-		data = {},
-		firstLoad = type(accountData.profiles) ~= "table",
-		newCharacter = type(characterData.activeProfile) ~= "number",
-		invoke = {},
-		setListener = {},
-	}
+	---@type profilemanager|widget
+	local profilemanager = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
+
+	profilemanager.data = {}
+	profilemanager.firstLoad = type(accountData.profiles) ~= "table"
+	profilemanager.newCharacter = type(characterData.activeProfile) ~= "number"
 
 	--[ Getters & Setters ]
 
@@ -1993,17 +2021,16 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	return profilemanager
 end
 
---| Addon
+--| Addon info
 
-function wt.CreateAddonmanager(addon, t)
-	local addon_type = type(addon)
-
-	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) then return nil end
-
+function wt.CreateAddonmanager(t, widget)
 	t = type(t) == "table" and t or {}
 
 	---@type typename_addonmanager
 	local typename = "Addonmanager"
+
+	---@type typename_widget
+	local typenameBase = "Widget"
 
 	--| Events
 
@@ -2012,15 +2039,13 @@ function wt.CreateAddonmanager(addon, t)
 
 	--| Metadata
 
-	local title, version, date, day, month, year, category, notes, author, license, curse, wago, repo, issues, sponsors, logo, changelogLatest, changelog
+	local addon, title = "", ""
+	local version, date, day, month, year, category, notes, author, license, curse, wago, repo, issues, sponsors, logo, changelogLatest, changelog
 
 	--[ Widget ]
 
-	---@type addonmanager
-	local addonmanager = {
-		invoke = {},
-		setListener = {},
-	}
+	---@type addonmanager|widget
+	local addonmanager = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
 
 	--[ Getters & Setters ]
 
@@ -2055,11 +2080,11 @@ function wt.CreateAddonmanager(addon, t)
 	function addonmanager.setAddon(newAddon, newChangelog, user, silent)
 		if newAddon == addon then return true end
 
-		local a_type = type(newAddon)
+		local addon_type = type(newAddon)
 
-		if (a_type ~= "string" or a_type ~= "number") or not C_AddOns.IsAddOnLoaded(newAddon) then return false end
+		if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(newAddon) then return false end
 
-		addon = a_type ~= "string" and C_AddOns.GetAddOnName(newAddon) or newAddon
+		addon = addon_type ~= "string" and C_AddOns.GetAddOnName(newAddon) or newAddon
 		title = C_AddOns.GetAddOnTitle(addon)
 		version = C_AddOns.GetAddOnMetadata(addon, "Version")
 		day = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Day"))
@@ -2092,7 +2117,7 @@ function wt.CreateAddonmanager(addon, t)
 	addonmanager.addType(typename)
 
 	--Load metadata
-	addonmanager.setAddon(addon, t.changelog)
+	addonmanager.setAddon(t.addon, t.changelog)
 
 	return addonmanager
 end

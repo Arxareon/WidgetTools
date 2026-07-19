@@ -239,11 +239,11 @@ end
 function wt.CreateButton(t, action)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_action
-	local typenameBase = "Action"
-
 	---@type typename_button
 	local typename = "Button"
+
+	---@type typename_action
+	local typenameBase = "Action"
 
 	local name = (t.append ~= false and t.parent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -259,7 +259,7 @@ function wt.CreateButton(t, action)
 	--[ Widget ]
 
 	---@type actionButton|action
-	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
+	local button = wt.IsWidget(action, typenameBase) and action or wt.CreateAction(t)
 
 	--[ Frame ]
 
@@ -290,17 +290,22 @@ function wt.CreateButton(t, action)
 
 	setUpButtonFrame(button, t, name, title, t.font.highlight ~= nil)
 
+	--[ Initialization ]
+
+	--Add type
+	button.addType(typename)
+
 	return button
 end
 
 function wt.CreateCustomButton(t, action)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_action
-	local typenameBase = "Action"
-
 	---@type typename_customButton
 	local typename = "CustomButton"
+
+	---@type typename_action
+	local typenameBase = "Action"
 
 	local name = (t.append ~= false and t.parent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -308,7 +313,7 @@ function wt.CreateCustomButton(t, action)
 	--[ Widget ]
 
 	---@type customButton|action
-	local button = wt.IsWidget(action) == typenameBase and action or wt.CreateAction(t)
+	local button = wt.IsWidget(action, typenameBase) and action or wt.CreateAction(t)
 
 	--[ Frame ]
 
@@ -348,6 +353,11 @@ function wt.CreateCustomButton(t, action)
 
 	wt.SetBackdrop(button.widget, t.backdrop, t.backdropUpdates)
 
+	--[ Initialization ]
+
+	--Add type
+	button.addType(typename)
+
 	return button
 end
 
@@ -364,11 +374,11 @@ function wt.CreateCheckbox(t, binary)
 	t.font.highlight = t.font.highlight or "GameFontHighlight"
 	t.font.disabled = t.font.disabled or "GameFontDisable"
 
-	---@type typename_binary
-	local typenameBase = "Binary"
-
 	---@type typename_checkbox
 	local typename = "Checkbox"
+
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -376,7 +386,7 @@ function wt.CreateCheckbox(t, binary)
 	--[ Widget ]
 
 	---@type checkbox|binary
-	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
+	local checkbox = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
 
 	--[ Frame ]
 
@@ -527,6 +537,9 @@ function wt.CreateCheckbox(t, binary)
 
 	--[ Initialization ]
 
+	--Add type
+	checkbox.addType(typename)
+
 	--Set starting logical state
 	updateBinaryState(nil, checkbox.getState())
 
@@ -646,11 +659,11 @@ function wt.CreateClassicCheckbox(t, binary)
 	t.font.highlight = t.font.highlight or "GameFontNormal"
 	t.font.disabled = t.font.disabled or "GameFontDisable"
 
-	---@type typename_binary
-	local typenameBase = "Binary"
-
 	---@type typename_classicCheckbox
 	local typename = "ClassicCheckbox"
+
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -658,7 +671,7 @@ function wt.CreateClassicCheckbox(t, binary)
 	--[ Widget ]
 
 	---@type classicCheckbox|binary
-	local checkbox = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
+	local checkbox = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
 
 	--[ Frame ]
 
@@ -726,6 +739,9 @@ function wt.CreateClassicCheckbox(t, binary)
 
 	--[ Initialization ]
 
+	--Add type
+	checkbox.addType(typename)
+
 	--Set up starting state
 	updateState(nil, checkbox.isEnabled())
 
@@ -739,11 +755,11 @@ function wt.CreateRadiobutton(t, binary)
 	t.size.h = t.size.h or 18
 	t.size.w = t.label == false and t.size.h or t.size.w or 180
 
-	---@type typename_binary
-	local typenameBase = "Binary"
-
 	---@type typename_radiobutton
 	local typename = "Radiobutton"
+
+	---@type typename_binary
+	local typenameBase = "Binary"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -753,7 +769,7 @@ function wt.CreateRadiobutton(t, binary)
 	--[ Widget ]
 
 	---@type radiobutton|binary
-	local radiobutton = wt.IsWidget(binary) == typenameBase and binary or wt.CreateBinary(t)
+	local radiobutton = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
 
 	--[ Frame ]
 
@@ -824,6 +840,9 @@ function wt.CreateRadiobutton(t, binary)
 	radiobutton.setListener.enabled(updateState, 1)
 
 	--[ Initialization ]
+
+	--Add type
+	radiobutton.addType(typename)
 
 	--Set up starting state
 	updateState(nil, radiobutton.isEnabled())
@@ -910,11 +929,11 @@ end
 function wt.CreateRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_selector
-	local typenameBase = "Selector"
-
 	---@type typename_radiogroup
 	local typename = "Radiogroup"
+
+	---@type typename_selector
+	local typenameBase = "Selector"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -1058,6 +1077,11 @@ function wt.CreateRadiogroup(t, selector)
 		end
 	}) end
 
+	--[ Initialization ]
+
+	--Add type
+	radiogroup.addType(typename)
+
 	return radiogroup
 end
 
@@ -1068,14 +1092,14 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	t.scrollThreshold = t.scrollThreshold or 15
 
+	---@type typename_dropdownRadiogroup
+	local typename = "DropdownRadiogroup"
+
 	---@type typename_selector
 	local typenameBase = "Selector"
 
 	---@type typename_radiogroup
 	local typenameMutatedBase = "Radiogroup"
-
-	---@type typename_dropdownRadiogroup
-	local typename = "DropdownRadiogroup"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -1100,7 +1124,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		instantSave = t.instantSave,
 		dataManagement = t.dataManagement,
 		utilityMenu = false,
-	}, wt.IsWidget(selector) == typenameBase and selector or wt.CreateSelector(t))
+	}, wt.IsWidget(selector, typenameBase) and selector or wt.CreateSelector(t))
 
 	--[ Frame ]
 
@@ -1587,6 +1611,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ Initialization ]
 
+	--Add type
+	dropdown.addType(typename)
+
 	--Set up starting state
 	updateState(nil, dropdown.isEnabled())
 
@@ -1599,18 +1626,18 @@ end
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_specialSelector
-	local typenameBase = "SpecialSelector"
-
 	---@type typename_specialRadiogroup
 	local typename = "SpecialRadiogroup"
+
+	---@type typename_specialSelector
+	local typenameBase = "SpecialSelector"
 
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
 
 	--[ Widget ]
 
-	if wt.IsWidget(selector) == typenameBase then itemset = selector.getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
+	if wt.IsWidget(selector, typenameBase) then itemset = selector.getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
 
 	---@type specialRadiogroupCreationData|radiogroupCreationData
 	t = us.Pull(t or {}, {
@@ -1620,8 +1647,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		utilityMenu = false,
 	})
 
-	---@type specialRadiogroup
-	local radiogroup = wt.CreateRadiogroup(t, selector)
+	---@type specialRadiogroup|radiogroup
+	local specialRadiogroup = wt.CreateRadiogroup(t, selector)
 
 	--[ Frame ]
 
@@ -1629,10 +1656,10 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if type(t.tooltip) == "table" then
 		local defaultValue
-		if showDefault then defaultValue = crc(radiogroup.getDefault(), "FFFFFFFF") end
+		if showDefault then defaultValue = crc(specialRadiogroup.getDefault(), "FFFFFFFF") end
 
-		local frames = { radiogroup.frame }
-		for i = 1, #radiogroup.binaries do table.insert(frames, radiogroup.binaries[i].frame) end
+		local frames = { specialRadiogroup.frame }
+		for i = 1, #specialRadiogroup.binaries do table.insert(frames, specialRadiogroup.binaries[i].frame) end
 
 		wt.AddWidgetTooltipLines(frames, defaultValue, utilityMenu)
 	end
@@ -1641,31 +1668,36 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if utilityMenu then wt.CreateContextMenu({
 		triggers = { {
-			frame = radiogroup.frame,
-			condition = radiogroup.isEnabled,
+			frame = specialRadiogroup.frame,
+			condition = specialRadiogroup.isEnabled,
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Selector" })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard[radiogroup.getItemset()] = { value = radiogroup.getSelected() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard[specialRadiogroup.getItemset()] = { value = specialRadiogroup.getSelected() } end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				radiogroup.setSelected(wt.clipboard[radiogroup.getItemset()].value, true)
-			end }):SetEnabled(wt.clipboard[radiogroup.getItemset()] ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revertData() end })
-			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
+				specialRadiogroup.setSelected(wt.clipboard[specialRadiogroup.getItemset()].value, true)
+			end }):SetEnabled(wt.clipboard[specialRadiogroup.getItemset()] ~= nil)
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup.revertData() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup.resetData() end }) end
 		end
 	}) end
 
-	return radiogroup
+	--[ Initialization ]
+
+	--Add type
+	specialRadiogroup.addType(typename)
+
+	return specialRadiogroup
 end
 
 function wt.CreateCheckgroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_multiselector
-	local typenameBase = "Multiselector"
-
 	---@type typename_checkgroup
 	local typename = "Checkgroup"
+
+	---@type typename_multiselector
+	local typenameBase = "Multiselector"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -1673,7 +1705,7 @@ function wt.CreateCheckgroup(t, selector)
 	--[ Widget ]
 
 	---@type checkgroup|multiselector
-	local checkgroup = wt.IsWidget(selector) == typenameBase and selector or wt.CreateMultiselector(t)
+	local checkgroup = wt.IsWidget(selector, typenameBase) and selector or wt.CreateMultiselector(t)
 
 	--[ Frame ]
 
@@ -1816,6 +1848,11 @@ function wt.CreateCheckgroup(t, selector)
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
 		end
 	}) end
+
+	--[ Initialization ]
+
+	--Add type
+	checkgroup.addType(typename)
 
 	return checkgroup
 end
@@ -1998,11 +2035,11 @@ function wt.CreateEditbox(t, textual)
 	t.size.w = t.size.w or 180
 	t.size.h = t.size.h or 18
 
-	---@type typename_textual
-	local typenameBase = "Textual"
-
 	---@type typename_editbox
 	local typename = "Editbox"
+
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -2010,7 +2047,7 @@ function wt.CreateEditbox(t, textual)
 	--[ Widget ]
 
 	---@type textualEditbox|textual
-	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
+	local editbox = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	--[ Frame ]
 
@@ -2033,6 +2070,11 @@ function wt.CreateEditbox(t, textual)
 
 	setUpEditbox(editbox, title, t)
 
+	--[ Initialization ]
+
+	--Add type
+	editbox.addType(typename)
+
 	return editbox
 end
 
@@ -2043,11 +2085,11 @@ function wt.CreateCustomEditbox(t, textual)
 	t.size.w = t.size.w or 180
 	t.size.h = t.size.h or 18
 
-	---@type typename_textual
-	local typenameBase = "Textual"
-
 	---@type typename_customEditbox
 	local typename = "CustomEditbox"
+
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -2055,7 +2097,7 @@ function wt.CreateCustomEditbox(t, textual)
 	--[ Widget ]
 
 	---@type customEditbox|textual
-	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
+	local editbox = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	--[ Frame ]
 
@@ -2089,6 +2131,11 @@ function wt.CreateCustomEditbox(t, textual)
 	editbox.widget:HookScript("OnEditFocusGained", function(self) self:HighlightText() end)
 	editbox.widget:HookScript("OnEditFocusLost", function(self) self:ClearHighlightText() end)
 
+	--[ Initialization ]
+
+	--Add type
+	editbox.addType(typename)
+
 	return editbox
 end
 
@@ -2097,11 +2144,11 @@ function wt.CreateMultilineEditbox(t, textual)
 
 	t.scrollSpeed = t.scrollSpeed or 0.25
 
-	---@type typename_textual
-	local typenameBase = "Textual"
-
 	---@type typename_multilineEditbox
 	local typename = "MultilineEditbox"
+
+	---@type typename_textual
+	local typenameBase = "Textual"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -2109,7 +2156,7 @@ function wt.CreateMultilineEditbox(t, textual)
 	--[ Widget ]
 
 	---@type multilineEditbox|textual
-	local editbox = wt.IsWidget(textual) == typenameBase and textual or wt.CreateTextual(t)
+	local editbox = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	--[ Frame ]
 
@@ -2240,6 +2287,11 @@ function wt.CreateMultilineEditbox(t, textual)
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
 		end
 	}) end
+
+	--[ Initialization ]
+
+	--Add type
+	editbox.addType(typename)
 
 	return editbox
 end
@@ -2478,11 +2530,11 @@ function wt.CreateSlider(t, numeric)
 
 	t.width = t.width or 180
 
-	---@type typename_numeric
-	local typenameBase = "Numeric"
-
 	---@type typename_slider
 	local typename = "Slider"
+
+	---@type typename_numeric
+	local typenameBase = "Numeric"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -2492,7 +2544,7 @@ function wt.CreateSlider(t, numeric)
 	--[ Widget ]
 
 	---@type numericSlider|numeric
-	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
+	local slider = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
 	--[ Frame ]
 
@@ -2765,6 +2817,9 @@ function wt.CreateSlider(t, numeric)
 
 	--[ Initialization ]
 
+	--Add type
+	slider.addType(typename)
+
 	--Set up starting state
 	updateState(nil, slider.isEnabled())
 
@@ -2782,11 +2837,11 @@ function wt.CreateClassicSlider(t, numeric)
 
 	t.width = t.width or 160
 
-	---@type typename_numeric
-	local typenameBase = "Numeric"
-
 	---@type typename_classicSlider
 	local typename = "ClassicSlider"
+
+	---@type typename_numeric
+	local typenameBase = "Numeric"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -2796,54 +2851,54 @@ function wt.CreateClassicSlider(t, numeric)
 	--[ Widget ]
 
 	---@type classicSlider|numeric
-	local slider = wt.IsWidget(numeric) == typenameBase and numeric or wt.CreateNumeric(t)
+	local classicSlider = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
 	--[ Frame ]
 
-	slider.frame = CreateFrame("Frame", name, t.parent)
-	slider.widget = CreateFrame("Slider", name .. "Frame", slider.frame, "OptionsSliderTemplate")
+	classicSlider.frame = CreateFrame("Frame", name, t.parent)
+	classicSlider.widget = CreateFrame("Slider", name .. "Frame", classicSlider.frame, "OptionsSliderTemplate")
 
-	slider.min = _G[name .. "FrameLow"]
-	slider.max = _G[name .. "FrameHigh"]
+	classicSlider.min = _G[name .. "FrameLow"]
+	classicSlider.max = _G[name .. "FrameHigh"]
 
 	--| Position & dimensions
 
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
-	if not t.arrange and t.position then wt.SetPosition(slider.frame, t.position) end
-	wt.SetArrangementDirective(slider.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+	if not t.arrange and t.position then wt.SetPosition(classicSlider.frame, t.position) end
+	wt.SetArrangementDirective(classicSlider.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	slider.widget:SetPoint("TOP", 0, -15)
-	slider.min:SetPoint("TOPLEFT", slider.widget, "BOTTOMLEFT")
-	slider.max:SetPoint("TOPRIGHT", slider.widget, "BOTTOMRIGHT")
+	classicSlider.widget:SetPoint("TOP", 0, -15)
+	classicSlider.min:SetPoint("TOPLEFT", classicSlider.widget, "BOTTOMLEFT")
+	classicSlider.max:SetPoint("TOPRIGHT", classicSlider.widget, "BOTTOMRIGHT")
 
-	slider.frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
-	slider.widget:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
+	classicSlider.frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
+	classicSlider.widget:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
 
 	--| Visibility
 
-	wt.SetVisibility(slider.frame, t.visible ~= false)
+	wt.SetVisibility(classicSlider.frame, t.visible ~= false)
 
-	if t.frameStrata then slider.frame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then slider.frame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then slider.frame:SetToplevel(t.keepOnTop) end
+	if t.frameStrata then classicSlider.frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then classicSlider.frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then classicSlider.frame:SetToplevel(t.keepOnTop) end
 
 	--| Label
 
 	if t.label ~= false then
-		slider.label = _G[name .. "FrameText"]
+		classicSlider.label = _G[name .. "FrameText"]
 
-		slider.label:SetPoint("TOP", slider.frame, "TOP", 0, 2)
-		slider.label:SetFontObject("GameFontNormal")
+		classicSlider.label:SetPoint("TOP", classicSlider.frame, "TOP", 0, 2)
+		classicSlider.label:SetFontObject("GameFontNormal")
 
-		slider.label:SetText(title)
+		classicSlider.label:SetText(title)
 	else _G[name .. "FrameText"]:Hide() end
 
 	--| Value step
 
 	if t.hardStep ~= false then
-		slider.widget:SetValueStep(slider.getStep())
-		slider.widget:SetObeyStepOnDrag(true)
+		classicSlider.widget:SetValueStep(classicSlider.getStep())
+		classicSlider.widget:SetObeyStepOnDrag(true)
 	end
 
 	--| Valuebox
@@ -2854,7 +2909,7 @@ function wt.CreateClassicSlider(t, numeric)
 		local decimals = type(t.fractional) == "number" and floor(t.fractional + 0.5) or max(
 			(tostring(minValue):match("%.(%d+)") or ""):len(),
 			(tostring(maxValue):match("%.(%d+)") or ""):len(),
-			(tostring(slider.getStep()):match("%.(%d+)") or ""):len()
+			(tostring(classicSlider.getStep()):match("%.(%d+)") or ""):len()
 		)
 		local decimalPattern = ""
 		for _ = 1, decimals do decimalPattern = decimalPattern .. "[%d]?" end
@@ -2863,8 +2918,8 @@ function wt.CreateClassicSlider(t, numeric)
 
 		--| Frame setup
 
-		slider.valuebox = wt.CreateCustomEditbox({
-			parent = slider.frame,
+		classicSlider.valuebox = wt.CreateCustomEditbox({
+			parent = classicSlider.frame,
 			name = "Valuebox",
 			label = false,
 			tooltip = {
@@ -2873,7 +2928,7 @@ function wt.CreateClassicSlider(t, numeric)
 			},
 			position = {
 				anchor = "TOP",
-				relativeTo = slider.widget,
+				relativeTo = classicSlider.widget,
 				relativePoint = "BOTTOM",
 			},
 			size = { w = 64, },
@@ -2882,7 +2937,7 @@ function wt.CreateClassicSlider(t, numeric)
 				disabled = "GameFontDisableSmall",
 			},
 			justify = { h = "CENTER", },
-			charLimit = max(tostring(math.floor(slider.getStep())):len(), tostring(math.floor(minValue)):len(), tostring(math.floor(maxValue)):len()) + (decimals > 0 and decimals + 1 or 0),
+			charLimit = max(tostring(math.floor(classicSlider.getStep())):len(), tostring(math.floor(minValue)):len(), tostring(math.floor(maxValue)):len()) + (decimals > 0 and decimals + 1 or 0),
 			backdrop = {
 				background = {
 					texture = {
@@ -2902,10 +2957,10 @@ function wt.CreateClassicSlider(t, numeric)
 			}, }, },
 			events = {
 				OnChar = function(frame, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(frame) slider.setNumber(frame:GetNumber(), true) end,
-				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(frame) classicSlider.setNumber(frame:GetNumber(), true) end,
+				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(classicSlider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
-			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
+			value = tostring(classicSlider.getNumber()):gsub(matchPattern, replacePattern),
 			showDefault = false,
 			utilityMenu = false,
 		})
@@ -2913,7 +2968,7 @@ function wt.CreateClassicSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		classicSlider.setListener.changed(function(_, number) classicSlider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--| Side buttons
@@ -2922,20 +2977,20 @@ function wt.CreateClassicSlider(t, numeric)
 
 		--| Decrease
 
-		slider.decreaseButton = wt.CreateCustomButton({
-			parent = slider.frame,
+		classicSlider.decreaseButton = wt.CreateCustomButton({
+			parent = classicSlider.frame,
 			name = "SelectPrevious",
 			title = "-",
 			tooltip = {
 				title = wt.strings.slider.decrease.label,
 				lines = {
-					{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-					slider.getAltStep() and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+					{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", classicSlider.getStep()), },
+					classicSlider.getAltStep() and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", classicSlider.getAltStep()), } or nil,
 				}
 			},
 			position = {
 				anchor = "LEFT",
-				relativeTo = slider.widget,
+				relativeTo = classicSlider.widget,
 				relativePoint = "LEFT",
 				offset = { x = -21, }
 			},
@@ -2992,26 +3047,26 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider.decrease(IsAltKeyDown(), true) end,
-			dependencies = { { frame = slider.widget, evaluate = function(value) return value > slider.getMin() end }, }
+			action = function() classicSlider.decrease(IsAltKeyDown(), true) end,
+			dependencies = { { frame = classicSlider.widget, evaluate = function(value) return value > classicSlider.getMin() end }, }
 		})
 
 		--| Increase
 
-		slider.increaseButton = wt.CreateCustomButton({
-			parent = slider.frame,
+		classicSlider.increaseButton = wt.CreateCustomButton({
+			parent = classicSlider.frame,
 			name = "SelectNext",
 			title = "+",
 			tooltip = {
 				title = wt.strings.slider.increase.label,
 				lines = {
-					{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-					slider.getAltStep() and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+					{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", classicSlider.getStep()), },
+					classicSlider.getAltStep() and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", classicSlider.getAltStep()), } or nil,
 				}
 			},
 			position = {
 				anchor = "RIGHT",
-				relativeTo = slider.widget,
+				relativeTo = classicSlider.widget,
 				relativePoint = "RIGHT",
 				offset = { x = 21, }
 			},
@@ -3068,8 +3123,8 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider.increase(IsAltKeyDown(), true) end,
-			dependencies = { { frame = slider.widget, evaluate = function(value) return value < slider.getMax() end }, }
+			action = function() classicSlider.increase(IsAltKeyDown(), true) end,
+			dependencies = { { frame = classicSlider.widget, evaluate = function(value) return value < classicSlider.getMax() end }, }
 		})
 	end
 
@@ -3077,8 +3132,8 @@ function wt.CreateClassicSlider(t, numeric)
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then slider.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else slider.widget:HookScript(key, value) end
+		if key == "attribute" then classicSlider.widget:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else classicSlider.widget:HookScript(key, value) end
 	end end
 
 	--| UX
@@ -3090,28 +3145,28 @@ function wt.CreateClassicSlider(t, numeric)
 	---@param _ any
 	---@param number number
 	---@param user? boolean ***Default:*** `false`
-	local function updateNumber(_, number, user) if not scriptEvent then slider.widget:SetValue(number, user) else scriptEvent = false end end
+	local function updateNumber(_, number, user) if not scriptEvent then classicSlider.widget:SetValue(number, user) else scriptEvent = false end end
 
 	---Update the min/max limits of the slider
 	---@param limitMin? number
 	---@param limitMax? number
 	local function updateLimits(limitMin, limitMax)
-		if limitMin then slider.min:SetText(tostring(limitMin)) else limitMin = slider.getMin() end
-		if limitMax then slider.max:SetText(tostring(limitMax)) else limitMax = slider.getMax() end
+		if limitMin then classicSlider.min:SetText(tostring(limitMin)) else limitMin = classicSlider.getMin() end
+		if limitMax then classicSlider.max:SetText(tostring(limitMax)) else limitMax = classicSlider.getMax() end
 
-		slider.widget:SetMinMaxValues(limitMin, limitMax)
+		classicSlider.widget:SetMinMaxValues(limitMin, limitMax)
 	end
 
 	--Handle widget updates
-	slider.setListener.changed(updateNumber, 1)
-	slider.setListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
-	slider.setListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
+	classicSlider.setListener.changed(updateNumber, 1)
+	classicSlider.setListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
+	classicSlider.setListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
 
 	--Link value changes
-	slider.widget:HookScript("OnValueChanged", function(_, number, user)
+	classicSlider.widget:HookScript("OnValueChanged", function(_, number, user)
 		scriptEvent = true
 
-		slider.setNumber(number, user)
+		classicSlider.setNumber(number, user)
 
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 	end)
@@ -3119,33 +3174,33 @@ function wt.CreateClassicSlider(t, numeric)
 	--| Tooltip
 
 	if type(t.tooltip) == "table" then
-		wt.AddTooltip(slider.widget, {
+		wt.AddTooltip(classicSlider.widget, {
 			title = t.tooltip.title or title,
 			lines = t.tooltip.lines,
 			anchor = "ANCHOR_RIGHT",
-		}, { triggers = { slider.frame } })
+		}, { triggers = { classicSlider.frame } })
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(tostring(slider.getDefault()), "FFDDDD55") end
+		if t.showDefault ~= false then defaultValue = crc(tostring(classicSlider.getDefault()), "FFDDDD55") end
 
-		wt.AddWidgetTooltipLines({ slider.widget }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ classicSlider.widget }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
 
 	if t.utilityMenu ~= false then wt.CreateContextMenu({
 		triggers = { {
-			frame = slider.frame,
-			condition = slider.isEnabled,
+			frame = classicSlider.frame,
+			condition = classicSlider.isEnabled,
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = slider.getNumber() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = classicSlider.getNumber() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				slider.setNumber(wt.clipboard.numeric, true)
+				classicSlider.setNumber(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() classicSlider.revertData() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() classicSlider.resetData() end }) end
 		end
 	}) end
 
@@ -3155,32 +3210,35 @@ function wt.CreateClassicSlider(t, numeric)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		slider.widget:SetEnabled(state)
+		classicSlider.widget:SetEnabled(state)
 
-		if slider.label then slider.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
+		if classicSlider.label then classicSlider.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
-		if t.valuebox ~= false then slider.valuebox.setEnabled(state) end
+		if t.valuebox ~= false then classicSlider.valuebox.setEnabled(state) end
 
 		if t.sideButtons ~= false then
-			slider.decreaseButton.setEnabled(state and wt.CheckDependencies({ { frame = slider.widget, evaluate = function(value) return value > slider.getMin() end }, }))
-			slider.increaseButton.setEnabled(state and wt.CheckDependencies({ { frame = slider.widget, evaluate = function(value) return value < slider.getMax() end }, }))
+			classicSlider.decreaseButton.setEnabled(state and wt.CheckDependencies({ { frame = classicSlider.widget, evaluate = function(value) return value > classicSlider.getMin() end }, }))
+			classicSlider.increaseButton.setEnabled(state and wt.CheckDependencies({ { frame = classicSlider.widget, evaluate = function(value) return value < classicSlider.getMax() end }, }))
 		end
 	end
 
-	slider.setListener.enabled(updateState, 1)
+	classicSlider.setListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
+	--Add type
+	classicSlider.addType(typename)
+
 	--Set up starting state
-	updateState(nil, slider.isEnabled())
+	updateState(nil, classicSlider.isEnabled())
 
 	--Set up the limits
 	updateLimits(minValue, maxValue)
 
 	--Set up slider value
-	updateNumber(nil, slider.getNumber(), false)
+	updateNumber(nil, classicSlider.getNumber(), false)
 
-	return slider
+	return classicSlider
 end
 
 
@@ -3191,11 +3249,11 @@ function wt.CreateColorpicker(t, colormanager)
 
 	t.width = t.width or 120
 
-	---@type typename_colormanager
-	local typenameBase = "Colormanager"
-
 	---@type typename_colorpicker
 	local typename = "Colorpicker"
+
+	---@type typename_colormanager
+	local typenameBase = "Colormanager"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -3203,7 +3261,7 @@ function wt.CreateColorpicker(t, colormanager)
 	--[ Widget ]
 
 	---@type colorpicker|colormanager
-	local colorpicker = wt.IsWidget(colormanager) == typenameBase and colormanager or wt.CreateColormanager(t)
+	local colorpicker = wt.IsWidget(colormanager, typenameBase) and colormanager or wt.CreateColormanager(t)
 
 	--[ Frame ]
 
@@ -3473,6 +3531,9 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--[ Initialization ]
 
+	--Add type
+	colorpicker.addType(typename)
+
 	--Set up starting state
 	updateState(nil, colorpicker.isEnabled())
 
@@ -3490,11 +3551,11 @@ local positioningVisualAids = {}
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not us.IsFrame(frame) or type(t) ~= "table" then return end
 
-	---@type typename_positionmanager
-	local typenameBase = "Positionmanager"
-
 	---@type typename_positionPanel
 	local typename = "PositionOptions"
+
+	---@type typename_positionmanager
+	local typenameBase = "Positionmanager"
 
 	if type(t.name) ~= "string" then t.name = frame:GetName() end
 	t.dataManagement = t.dataManagement or {}
@@ -4056,11 +4117,11 @@ local fonts, fontItems
 function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or type(textline) ~= "table" or type(textline.GetFont) ~= "function" or type(t) ~= "table" then return end
 
-	---@type typename_fontmanager
-	local typenameBase = "Fontmanager"
-
 	---@type typename_fontPanel
 	local typename = "FontOptions"
+
+	---@type typename_fontmanager
+	local typenameBase = "Fontmanager"
 
 	if type(t.name) ~= "string" then t.name = textline:GetName() end
 
@@ -4293,18 +4354,18 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 end
 
 
---[[ SETTINGS DATA ]]
+--[[ SETTINGS ]]
 
 function wt.CreateSettingsPage(t, settingsmanager)
 	t = type(t) == "table" and t or {}
 
 	t.name = t.name and t.name:gsub("%s+", "")
 
-	---@type typename_settingsmanager
-	local typenameBase = "Settingsmanager"
-
 	---@type typename_settingsPage
 	local typename = "SettingsPage"
+
+	---@type typename_settingsmanager
+	local typenameBase = "Settingsmanager"
 
 	local name = (t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
@@ -4322,7 +4383,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	--[ Widget ]
 
 	---@type settingsPage|settingsmanager
-	local page = wt.IsWidget(settingsmanager) == typenameBase and settingsmanager or wt.CreateSettingsmanager(t)
+	local page = wt.IsWidget(settingsmanager, typenameBase) and settingsmanager or wt.CreateSettingsmanager(t)
 
 	--[ Getters & Setters ]
 
@@ -4482,6 +4543,9 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	--[ Initialization ]
 
+	--Add type
+	page.addType(typename)
+
 	--Register to the Settings panel
 	if t.register then wt.RegisterSettingsPage(page, wt.IsWidget(t.register) == "SettingsPage" and t.register or nil, t.titleIcon) end
 
@@ -4553,22 +4617,22 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 end
 
 
---[[ PROFILE DATA ]]
+--[[ PROFILES ]]
 
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
 	if type(settingsData) ~= "table" then return nil end
 
 	t = type(t) == "table" and t or {}
 
-	---@type typename_profilemanager
-	local typenameBase = "Profilemanager"
-
 	---@type typename_profilesPage
 	local typename = "ProfilesPage"
 
+	---@type typename_profilemanager
+	local typenameBase = "Profilemanager"
+
 	--[ Widget ]
 
-	profilemanager = wt.IsWidget(profilemanager) == typenameBase and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
+	profilemanager = wt.IsWidget(profilemanager, typenameBase) and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	if not profilemanager then return nil end
 
@@ -4985,25 +5049,30 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		end end,
 	})
 
+	--[ Initialization ]
+
+	--Add type
+	profilesPage.addType(typename)
+
 	return profilesPage
 end
 
 
 --[[ ADDON INFO ]]
 
-function wt.CreateAddonPage(addon, t, addonmanager)
+function wt.CreateAddonPage(t, addonmanager)
 	t = type(t) == "table" and t or {}
-
-	---@type typename_addonmanager
-	local typenameBase = "Addonmanager"
 
 	---@type typename_addonPage
 	local typename = "AddonPage"
 
+	---@type typename_addonmanager
+	local typenameBase = "Addonmanager"
+
 	--[ Widget ]
 
 	---@type addonPage|addonmanager
-	local addonPage = wt.IsWidget(addonmanager) == typenameBase and addonmanager or wt.CreateAddonmanager(addon, t)
+	local addonPage = wt.IsWidget(addonmanager, typenameBase) and addonmanager or wt.CreateAddonmanager(t)
 
 	if not addonPage then return nil end
 
@@ -5038,7 +5107,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 					flip = true,
 					resize = false
 				},
-				initialize = function(panel)
+				initialize = function(panel, _, _, name)
 
 					--[ Information ]
 
@@ -5252,7 +5321,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 
 					local changelogTextbox = wt.CreateMultilineEditbox({
 						parent = panel,
-						name = "Changelog",
+						name = "ChangelogBox",
 						title = wt.strings.about.changelog.label,
 						tooltip = { lines = { { text = wt.strings.about.changelog.tooltip:gsub("#VERSION", crc(version or "?", "FFFFFFFF")), }, } },
 						arrange = {},
@@ -5286,7 +5355,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 						},
 						action = function() if fullChangelogFrame then fullChangelogFrame:Show() else fullChangelogFrame = wt.CreatePanel({
 							parent = canvas:GetParent(),
-							name = addon .. "Changelog",
+							name = name .. "FullChangelog",
 							append = false,
 							title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 							position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
@@ -5302,7 +5371,7 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 							initialize = function(windowPanel)
 								wt.CreateMultilineEditbox({
 									parent = windowPanel,
-									name = "FullChangelog",
+									name = "Box",
 									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 									label = false,
 									tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
@@ -5386,6 +5455,11 @@ function wt.CreateAddonPage(addon, t, addonmanager)
 			end
 		end,
 	})
+
+	--[ Initialization ]
+
+	--Add type
+	addonPage.addType(typename)
 
 	return addonPage
 end

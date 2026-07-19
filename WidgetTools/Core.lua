@@ -951,9 +951,10 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[ Addon ]
 
-	local mainPage = wt.CreateAddonPage(rs.addon, {
+	local mainPage = wt.CreateAddonPage({
 		register = true,
 		name = "About",
+		addon = rs.addon,
 		changelog = ns.changelog
 	}).settings
 
@@ -1202,7 +1203,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 								size = { w = 120, },
 								action = function() if changelogFrame then changelogFrame:Show() else changelogFrame = wt.CreatePanel({
 									parent = canvas:GetParent():GetParent(),
-									name = name .. "Changelog",
+									name = name .. "FullChangelog",
 									append = false,
 									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
@@ -1218,7 +1219,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									initialize = function(windowPanel)
 										wt.CreateMultilineEditbox({
 											parent = windowPanel,
-											name = "FullChangelog",
+											name = "Box",
 											title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 											label = false,
 											tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
