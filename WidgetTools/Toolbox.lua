@@ -1,20 +1,12 @@
---| Dependency
-
 if not C_AddOns.IsAddOnLoaded("WidgetTools") then return end
 
---| Namespace
-
 local addon, ns = ...
-
---| Metadata
-
 local version = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-ToolboxVersion")
 local nsKey = C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")
 
 if not version then return end
 
-
---[[ REGISTRATION ]]
+--| Registration 
 
 local insert = nsKey and function(toolbox)
 	ns[nsKey] = toolbox

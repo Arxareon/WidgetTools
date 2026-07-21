@@ -1,9 +1,4 @@
---| Namespace
-
----@class namespace
-local ns = select(2, ...)
-
---| Shortcuts
+local ns = select(2, ...) ---@class namespace
 
 --Create a simplified C_ColorUtil surrogate for Classic compatibility
 if not C_ColorUtil then
@@ -818,12 +813,10 @@ end) end
 
 --[[ TOOLBOX REGISTRY ]]
 
----@type widgetToolsToolboxes
-local ts = { initialization = {} }
+local ts = { initialization = {} } ---@type widgetToolsToolboxes
 
----Readonly list of toolboxes registered under unique version keys with the list of addons registered for using each
----@type table<string, widgetToolboxEntry>
-local protectedToolboxRegistry = {}
+--Readonly list of toolboxes registered under unique version keys with the list of addons registered for using each
+local protectedToolboxRegistry = {} ---@type table<string, widgetToolboxEntry>
 
 --| Registration
 
@@ -918,10 +911,7 @@ end
 
 --[[ GLOBAL TOOLS ]]
 
-local widgetToolsWrapper = { resources = rs, utilities = us, debugging = ds, toolboxes = ts }
-
----@type widgetTools
-WidgetTools = us.Protect(widgetToolsWrapper)
+WidgetTools = us.Protect({ resources = rs, utilities = us, debugging = ds, toolboxes = ts }) ---@type widgetTools
 
 
 --[[ INITIALIZATION ]]
@@ -933,8 +923,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--| Toolbox
 
-	---@type toolbox
-	local wt = ns[C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-AddToNamespace")]
+	local wt = ns[C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-AddToNamespace")] ---@type toolbox
 
 	if not wt then
 		ds.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
@@ -944,7 +933,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--| Locals
 
-	local chatCommands
+	local chatCommands ---@type chatCommandManager
 
 
 	--[[ SETTINGS ]]
@@ -960,13 +949,9 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[ Specifications ]
 
-	---@type checkbox
-	local liteToggle
+	local liteToggle ---@type checkbox
+	local debugToggle ---@type checkbox
 
-	---@type checkbox
-	local debugToggle
-
-	---@type settingsPage
 	local specificationsPage = wt.CreateSettingsPage({
 		register = mainPage,
 		name = "Specifications",
@@ -989,7 +974,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						text = rs.strings.lite.enable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.enable.accept,
 						onAccept = function()
-							liteToggle.setState(true)
+							liteToggle.setValue(true)
 							liteToggle.saveData(nil, silentSave)
 
 							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
@@ -999,7 +984,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						text = rs.strings.lite.disable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.disable.accept,
 						onAccept = function()
-							liteToggle.setState(false)
+							liteToggle.setValue(false)
 							liteToggle.saveData(nil, silentSave)
 
 							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
@@ -1022,12 +1007,12 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 								if loadedLite ~= WidgetToolsDB.lite then wt.CreateReloadNotice() end end,
 							}, },
-							flipped = { { handler = function(_, state, user)
+							changed = { { handler = function(_, state, user)
 								if not user then return end
 
 								if state then StaticPopup_Show(enableLitePopup) else StaticPopup_Show(disableLitePopup) end
 
-								liteToggle.setState(not state, false) --Wait for popup response
+								liteToggle.setValue(not state, false) --Wait for popup response
 							end }, },
 						},
 						events = { OnClick = function() silentSave = true end, },
@@ -1073,7 +1058,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						saveData = function(state) WidgetToolsDB.debugging = state end,
 						listeners = {
 							saved = { { handler = function() if loadedDebugging ~= WidgetToolsDB.debugging then wt.CreateReloadNotice() end end, }, },
-							flipped = { { handler = function (self, state, user)
+							changed = { { handler = function (self, state, user)
 								if not user then return end
 
 								chatCommands.print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
@@ -1152,11 +1137,10 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				end,
 			})
 		end,
-	})
+	}) ---@cast specificationsPage -nil
 
 	--[ Toolboxes ]
 
-	---@type settingsPage
 	local toolboxesPage = wt.CreateSettingsPage({
 		register = mainPage,
 		name = "Addons",
@@ -1324,7 +1308,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											getData = function() return C_AddOns.GetAddOnEnableState(a) > 0 end,
 											saveData = function(state) toggleAddon(state) end,
 											instantSave = false,
-											listeners = { saved = { { handler = function(self) if not self.getState() then wt.CreateReloadNotice() end end, }, }, },
+											listeners = { saved = { { handler = function(self) if not self.getValue() then wt.CreateReloadNotice() end end, }, }, },
 											events = { OnClick = function(_, state) toggleAddon(state) end, },
 											showDefault = false,
 											utilityMenu = false,
@@ -1486,12 +1470,11 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				})
 			end
 		end,
-	})
+	}) ---@cast toolboxesPage -nil
 
 
 	--[[ CHAT CONTROL ]]
 
-	---@type chatCommandManager
 	chatCommands = wt.RegisterChatCommands(rs.addon, { rs.chat.keyword }, {
 		commands = {
 			{
@@ -1502,13 +1485,13 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			{
 				command = rs.chat.commands.lite,
 				description = rs.strings.chat.lite.description,
-				handler = function() liteToggle.setState(not WidgetToolsDB.lite, true) end,
+				handler = function() liteToggle.setValue(not WidgetToolsDB.lite, true) end,
 			},
 			{
 				command = rs.chat.commands.debug,
 				description = rs.strings.chat.debug.description,
 				handler = function()
-					debugToggle.setState(not WidgetToolsDB.debugging, true)
+					debugToggle.setValue(not WidgetToolsDB.debugging, true)
 
 					wt.CreateReloadNotice()
 				end,
@@ -1520,13 +1503,13 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			command = { r = 1, g = 1, b = 1, },
 			description = rs.colors.grey[1]
 		},
-	})
+	}) ---@cast chatCommands -nil
 
 
 	--[[ ADDON COMPARTMENT ]]
 
 	wt.SetUpAddonCompartment(rs.addon, {
-		onClick = function() if WidgetToolsDB.lite then liteToggle.setState(false, true) else wt.CreateContextMenu({
+		onClick = function() if WidgetToolsDB.lite then liteToggle.setValue(false, true) else wt.CreateContextMenu({
 			initialize = function(menu)
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {

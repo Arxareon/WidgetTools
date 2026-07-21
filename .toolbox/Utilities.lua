@@ -1,23 +1,13 @@
---| Toolbox
-
----@type toolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
---| Shortcuts
+local rs = WidgetTools.resources
+local us = WidgetTools.utilities
+local ds = WidgetTools.debugging
 
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
-
----@type widgetToolsResources
-local rs = WidgetTools.resources
-
----@type widgetToolsUtilities
-local us = WidgetTools.utilities
-
----@type widgetToolsDebugging
-local ds = WidgetTools.debugging
 
 
 --[[ RESOURCES ]]
@@ -251,7 +241,7 @@ function wt.CustomHyperlink(addon, linkType, content, text)
 end
 
 --Hyperlink handler script registry
-local hyperlinkHandlers = {}
+local hyperlinkHandlers = {} ---@type table<string, fun(...)[]>
 
 function wt.SetHyperlinkHandler(addon, linkType, handler)
 	if type(addon) ~= "string" or type(handler) ~= "function" then return end
@@ -439,7 +429,7 @@ end
 --[ Position ]
 
 --Used for a transitional step to avoid anchor family connections during safe frame positioning
-local positioningAid
+local positioningAid ---@type Frame|nil
 
 function wt.SetPosition(frame, position, unlink, userPlaced)
 	if not us.IsFrame(frame) or not frame.SetPoint then return end
@@ -537,17 +527,14 @@ end
 
 --| Arrangement
 
----List of container content element positioning arrangement ordering directives
----@type table<AnyFrameObject, integer>
-local arrangementOrdering = {}
+--List of container content element positioning arrangement ordering directives
+local arrangementOrdering = {} ---@type table<AnyFrameObject, integer>
 
----List of container content element positioning arrangement wrapping directives
----@type table<AnyFrameObject, boolean>
-local arrangementWrapping = {}
+--List of container content element positioning arrangement wrapping directives
+local arrangementWrapping = {} ---@type table<AnyFrameObject, boolean>
 
----List of child frame references to skip when arranging the children of their parents
----@type table<AnyFrameObject[], boolean>
-local arrangementSkipping = {}
+--List of child frame references to skip when arranging the children of their parents
+local arrangementSkipping = {} ---@type table<AnyFrameObject[], boolean>
 
 function wt.SetArrangementDirective(frame, index, wrap, skip)
 	if not us.IsFrame(frame) or not frame:GetParent() then return end
@@ -894,6 +881,12 @@ end
 
 --[ Dependencies ]
 
+local dataObjectScriptType = {
+	CheckButton = "OnClick",
+	EditBox = "OnTextChanged",
+	Slider = "OnValueChanged",
+}
+
 function wt.AddDependencies(rules, setState)
 	if type(rules) ~= "table" or type(setState) ~= "function" then return end
 
@@ -902,16 +895,13 @@ function wt.AddDependencies(rules, setState)
 	for i = 1, #rules do
 		local f = rules[i].frame
 
-		if wt.IsWidget(f) then
+		if wt.IsWidget(f, "Datamanager") then
 			f.setListener.loaded(function(_, success) if success then setter() end end)
-
-			if f.isType("Toggle") then f.setListener.flipped(setter)
-			elseif f.isType("Selector") or f.isType("Multiselector") or f.isType("SpecialSelector") then f.setListener.selected(setter)
-			elseif f.isType("Textbox") or f.isType("Numeric") then f.setListener.changed(setter) end
+			f.setListener.changed(setter)
 		elseif us.IsFrame(f) then
-			if f:IsObjectType("CheckButton") then f:HookScript("OnClick", setter)
-			elseif f:IsObjectType("EditBox") then f:HookScript("OnTextChanged", setter)
-			elseif f:IsObjectType("Slider") then f:HookScript("OnValueChanged", setter) end
+			local scriptType = dataObjectScriptType[f:GetObjectType()]
+
+			if scriptType then f:HookScript(scriptType, setter) end
 		end
 	end
 
@@ -931,7 +921,7 @@ function wt.CheckDependencies(rules)
 		if wt.IsWidget(f) then
 			local t = f.getTypes()
 
-			if t == "Toggle" then if e then state = e(f.getState()) else state = f.getState() end
+			if t == "Toggle" then if e then state = e(f.getValue()) else state = f.getValue() end
 			elseif e then
 				if t == "Selector" then state = e(f.getSelected())
 				elseif t == "SpecialSelector" then state = e(f.getSelected())
@@ -1244,11 +1234,10 @@ end
 --[ Management ]
 
 --Default reusable tooltip frame
-local defaultTooltip
+local defaultTooltip ---@type GameTooltip|nil
 
----Tooltip data registry
----@type AnyTooltipData[]
-local tooltipData = {}
+--Tooltip data registry
+local tooltipData = {} ---@type AnyTooltipData[]
 
 function wt.AddTooltip(frame, t, toggle, duplicate)
 	if not us.IsFrame(frame) then return nil end
@@ -1461,7 +1450,7 @@ end
 
 --[ Reload Notice ]
 
-local reloadFrame
+local reloadFrame ---@type Frame|panel|nil
 
 function wt.CreateReloadNotice(t) --FIX lite
 	t = type(t) == "table" and t or {}
@@ -1934,8 +1923,7 @@ end
 
 --[ Data Management ]
 
----@type settingsRegistry
-local settingsData = { rules = {}, changeHandlers = {} }
+local settingsData = { rules = {}, changeHandlers = {} } ---@type settingsRegistry
 
 function wt.AddSettingsDataManagementEntry(widget, t)
 	if not wt.IsWidget(widget) or type(t) ~= "table" then return nil end

@@ -1,6 +1,6 @@
 --NOTE: Annotations are for development purposes only, providing live documentation via Lua Language Server. This file does not need to be loaded by the game client.
 
----@meta toolbox
+----@meta toolbox
 
 
 --[[ TOOLBOX ]]
@@ -34,16 +34,18 @@ local wt = {}
 
 	---Widget data clipboard
 	---@class toolboxClipboard
-	---@field binary boolean|nil Binary value
+	---@field binary boolean|nil Logical value
+	---@field numeric number|nil Number value
+	---@field textual string|nil Text value
 	---@field selection wrappedInteger|nil Selector index
 	---@field selections wrappedBooleanArray|nil Multiselector data
 	---@field anchor wrappedAnchor|nil Frame Anchor Point
 	---@field justifyH wrappedJustifyH|nil Horizontal text alignment value
 	---@field justifyV wrappedJustifyV|nil Vertical text alignment value
 	---@field strata wrappedStrata|nil Frame Strata value
-	---@field text string|nil Text value
-	---@field numeric number|nil Number value
 	---@field color color|nil RGB(A) color value
+	---@field position positionData|nil Position data
+	---@field font fontData|nil Font data
 
 
 --[[ TABLE MANAGEMENT ]]
@@ -53,7 +55,7 @@ local wt = {}
 ---@param targetTable table Reference to the table to get into alignment with the sample
 ---@param tableToSample table Reference to the table to sample keys & data from
 ---***
----@return table|any targetTable Reference to **targetTable** (it was already overwritten during the operation, no need for setting it again)
+---@return table|any targetTable Reference to `targetTable` (it was already overwritten during the operation, no need for setting it again)
 function wt.HarmonizeData(targetTable, tableToSample) end
 
 
@@ -63,11 +65,11 @@ function wt.HarmonizeData(targetTable, tableToSample) end
 
 ---Return a position table used by WidgetTools assembled from the provided values which are returned by [Region:GetPoint(...)](https://warcraft.wiki.gg/wiki/API_Region_GetPoint)
 ---***
----@param anchor? FramePoint Base anchor point | ***Default:*** "TOPLEFT"
+---@param anchor? FramePoint Base anchor point | ***Default:*** `"TOPLEFT"`
 ---@param relativeTo? Frame Relative to this Frame or Region
 ---@param relativePoint? FramePoint Relative anchor point
----@param offsetX? number | ***Default:*** 0
----@param offsetY? number | ***Default:*** 0
+---@param offsetX? number | ***Default:*** `0`
+---@param offsetY? number | ***Default:*** `0`
 ---***
 ---@return positionData # Table containing the position values as used by WidgetTools
 ---<p></p>
@@ -77,11 +79,11 @@ function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY) re
 ---***
 ---@param t? positionData Table containing parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with
 ---***
----@return FramePoint anchor ***Default:*** "TOPLEFT"
----@return AnyFrameObject|nil relativeTo ***Default:*** "nil" *(anchor relative to screen dimensions)*<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li></ul>
+---@return FramePoint anchor ***Default:*** `"TOPLEFT"`
+---@return AnyFrameObject|nil relativeTo ***Default:*** `"nil"` *(anchor relative to screen dimensions)*<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li></ul>
 ---@return FramePoint? relativePoint
----@return number|nil offsetX ***Default:*** 0
----@return number|nil offsetY ***Default:*** 0
+---@return number|nil offsetX ***Default:*** `0`
+---@return number|nil offsetY ***Default:*** `0`
 ---<hr><p></p>
 function wt.UnpackPosition(t) return "TOPLEFT" end
 
@@ -106,12 +108,12 @@ function wt.IsColor(t)
 		---@class colorData : rgbData, alpha_opaqueDefault
 
 			---@class rgbData
-			---@field r number Red | ***Range:*** (0, 1)
-			---@field g number Green | ***Range:*** (0, 1)
-			---@field b number Blue | ***Range:*** (0, 1)
+			---@field r number Red | ***Range:*** (`0`, `1`)
+			---@field g number Green | ***Range:*** (`0`, `1`)
+			---@field b number Blue | ***Range:*** (`0`, `1`)
 
 			---@class alpha_opaqueDefault
-			---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 1
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `1`
 end
 
 ---Check & silently repair a color data table
@@ -120,9 +122,9 @@ end
 function wt.VerifyColor(color)
 
 	---@class rgbData_optional
-	---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** 1
-	---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** 1
-	---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** 1
+	---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+	---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+	---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
 
 	return false
 end
@@ -131,10 +133,10 @@ end
 
 ---Return a table constructed from color values
 ---***
----@param red? number Red | ***Range:*** (0, 1) | ***Default:*** 1
----@param green? number Green | ***Range:*** (0, 1) | ***Default:*** 1
----@param blue? number Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@param alpha? number Opacity | ***Range:*** (0, 1) | ***Default:*** 1
+---@param red? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@param green? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@param blue? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@param alpha? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `1`
 ---***
 ---@return color # Table containing the color values
 function wt.PackColor(red, green, blue, alpha) return {} end
@@ -142,19 +144,19 @@ function wt.PackColor(red, green, blue, alpha) return {} end
 ---Extract, verify and return the color values found in a table
 ---***
 ---@param color? color Table containing the color values | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
----@param alpha? boolean Specify whether to return the full RGBA set or just the RGB values | ***Default:*** true
+---@param alpha? boolean Specify whether to return the full RGBA set or just the RGB values | ***Default:*** `true`
 ---***
----@return number r Red | ***Range:*** (0, 1) | ***Default:*** 1
----@return number g Green | ***Range:*** (0, 1) | ***Default:*** 1
----@return number b Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@return number? a Opacity | ***Range:*** (0, 1)
+---@return number r Red | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number g Green | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number b Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number? a Opacity | ***Range:*** (`0`, `1`)
 function wt.UnpackColor(color, alpha) return 1, 1, 1 end
 
 ---Convert RGB(A) color values in Range: (0, 1) to HEX color code
 ---***
 ---@param color? color The RGB(A) color data with all channels in Range: (0, 1) | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
----@param alphaFirst? boolean Put the alpha value first: ARGB output instead of RGBA | ***Default:*** false
----@param hashtag? boolean Whether to add a "#" to the beginning of the color description | ***Default:*** true
+---@param alphaFirst? boolean Put the alpha value first: ARGB output instead of RGBA | ***Default:*** `false`
+---@param hashtag? boolean Whether to add a "#" to the beginning of the color description | ***Default:*** `true`
 ---***
 ---@return string hex Color code in HEX format<ul><li>***Examples:***<ul><li>**RGB:** "#2266BB"</li><li>**RGBA:** "#2266BBAA"</li></ul></li></ul>
 function wt.ColorToHex(color, alphaFirst, hashtag) return "" end
@@ -163,18 +165,18 @@ function wt.ColorToHex(color, alphaFirst, hashtag) return "" end
 ---***
 ---@param hex string String in HEX color code format<ul><li>***Examples:***<ul><li>**RGB:** "#2266BB" (where the "#" is optional)</li><li>**RGBA:** "#2266BBAA" (where the "#" is optional)</li></ul></li></ul>
 ---***
----@return number r Red | ***Range:*** (0, 1) | ***Default:*** 1
----@return number g Green  | ***Range:*** (0, 1) | ***Default:*** 1
----@return number b Blue | ***Range:*** (0, 1) | ***Default:*** 1
----@return number? a Alpha | ***Range:*** (0, 1)
+---@return number r Red | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number g Green  | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number b Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+---@return number? a Alpha | ***Range:*** (`0`, `1`)
 function wt.HexToColor(hex) return 1, 1, 1 end
 
 ---Brighten or darken the RGB values of a color by an exponent
 ---***
 ---@param color color Table containing the color values
----@param exponent? number ***Default:*** 0.55<ul><li>***Note:*** Values greater than 1 darken, smaller than 1 brighten the color.</li></ul>
+---@param exponent? number ***Default:*** `0.55`<ul><li>***Note:*** Values greater than 1 darken, smaller than 1 brighten the color.</li></ul>
 ---***
----@return any color Reference to **color** (it was already updated during the operation, no need for setting it again)
+---@return any color Reference to `color` (it was already updated during the operation, no need for setting it again)
 function wt.AdjustGamma(color, exponent) end
 
 ---Turn a color data table into a Blizzard color manager object
@@ -196,12 +198,12 @@ function wt.CreateColor(color) return {} end
 --- - ***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.
 --- - ***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.
 ---@param width? Texture_param2 ***Default:*** *width of the texture file*
----@param height? Texture_param3 ***Default:*** **width**
----@param offsetX? Texture_param4-5 ***Default:*** 0
----@param offsetY? Texture_param4-5 ***Default:*** 0
+---@param height? Texture_param3 ***Default:*** `width`
+---@param offsetX? Texture_param4-5 ***Default:*** `0`
+---@param offsetY? Texture_param4-5 ***Default:*** `0`
 ---@param t? table Optional parameters
 ---***
----@return string # ***Default:*** ""
+---@return string # ***Default:*** `""`
 function wt.Texture(path, width, height, offsetX, offsetY, t)
 
 	--| Parameters
@@ -218,12 +220,12 @@ function wt.Texture(path, width, height, offsetX, offsetY, t)
 	---| number
 	---| nil
 
-	---***Default:*** **width**
+	---***Default:*** `width`
 	---@alias Texture_param3 # height
 	---| number
 	---| nil
 
-	---***Default:*** 0
+	---***Default:*** `0`
 	---@alias Texture_param4-5 # offsetX
 	---| number
 	---| nil
@@ -242,10 +244,10 @@ function wt.Clear(s) return "" end
 ---Format a clickable hyperlink text via escape sequences
 ---***
 ---@param linkType Hyperlink_param1 [Type of the hyperlink](https://warcraft.wiki.gg/wiki/Hyperlinks#Types) determining how it's being handled and what payload it carries
----@param content? string A colon-separated chain of parameters determined by **type** (Example: "content1:content2:content3") | ***Default:*** ""
+---@param content? string A colon-separated chain of parameters determined by `linkType` (Example: "content1:content2:content3") | ***Default:*** `""`
 ---@param text string Clickable text to be displayed as the hyperlink
 ---***
----@return string # ***Default:*** ""
+---@return string # ***Default:*** `""`
 ---<p></p>
 function wt.Hyperlink(linkType, content, text)
 
@@ -257,7 +259,7 @@ function wt.Hyperlink(linkType, content, text)
 	---| "addon"
 	---| "mawpower"
 
-	---A colon-separated chain of parameters determined by **type** (Example: "content1:content2:content3") | ***Default:*** ""
+	---A colon-separated chain of parameters determined by `linkType` (Example: "content1:content2:content3") | ***Default:*** `""`
 	---@alias Hyperlink_param2 # content
 	---| string
 	---| nil
@@ -272,11 +274,11 @@ end
 ---Format a custom clickable addon hyperlink text via escape sequences
 ---***
 ---@param addon CustomHyperlink_param1 The name of the addon's folder (the addon namespace, not its displayed title)
----@param linkType? CustomHyperlink_param2 A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via <code><i>WidgetToolbox</i>.SetHyperlinkHandler(...)</code> | ***Default:*** "-"
----@param content? CustomHyperlink_param3 A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
+---@param linkType? CustomHyperlink_param2 A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via <code><i>WidgetToolbox</i>.SetHyperlinkHandler(...)</code> | ***Default:*** `"-"`
+---@param content? CustomHyperlink_param3 A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** `""`
 ---@param text Hyperlink_param3 Clickable text to be displayed as the hyperlink
 ---***
----@return string # ***Default:*** ""
+---@return string # ***Default:*** `""`
 function wt.CustomHyperlink(addon, linkType, content, text)
 
 	--| Parameters
@@ -285,12 +287,12 @@ function wt.CustomHyperlink(addon, linkType, content, text)
 	---@alias CustomHyperlink_param1 # addon
 	---| string
 
-	---A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via <code><i>WidgetToolbox</i>.SetHyperlinkHandler(...)</code> | ***Default:*** "-"
+	---A unique key signifying the type of the hyperlink specific to the addon (if the addon handles multiple different custom types of hyperlinks) in order to be able to set unique hyperlink click handlers via <code><i>WidgetToolbox</i>.SetHyperlinkHandler(...)</code> | ***Default:*** `"-"`
 	---@alias CustomHyperlink_param2 # linkType
 	---| string
 	---| nil
 
-	---A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** ""
+	---A colon-separated chain of data strings carried by the hyperlink to be provided to the handler function (Example: "content1:content2:content3") | ***Default:*** `""`
 	---@alias CustomHyperlink_param3 # content
 	---| string
 	---| nil
@@ -301,7 +303,7 @@ end
 ---Register a function to handle custom hyperlink clicks
 ---***
 ---@param addon SetHyperlinkHandler_param1 The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index<ul><li>***Note:*** Duplicate addon key that already had rules registered under will be overwritten.</li></ul>
----@param linkType? SetHyperlinkHandler_param2 Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
+---@param linkType? SetHyperlinkHandler_param2 Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** `"-"`
 ---@param handler SetHyperlinkHandler_param3 Function to be called with the list of content data strings carried by the hyperlink returned one by one when clicking on a hyperlink text created via <code><i>WidgetToolbox</i>.CustomHyperlink(...)</code>
 function wt.SetHyperlinkHandler(addon, linkType, handler)
 
@@ -311,7 +313,7 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 	---@alias SetHyperlinkHandler_param1 # addon
 	---| string
 
-	---Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** "-"
+	---Unique custom hyperlink type key used to identify the specific handler function | ***Default:*** `"-"`
 	---@alias SetHyperlinkHandler_param2 # linkType
 	---| string
 	---| nil
@@ -402,28 +404,28 @@ function wt.CreateFrame(t)
 	---@class frameCreationData : positionableScreenObject, arrangeableObject, visibleObject_base, initializableContainer # t
 	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the name of the new frame | ***Default:*** `nil` *(anonymous frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field append? boolean When setting the name, append **t.name** to the name of **t.parent** instead | ***Default:*** `true` if **t.name** ~= nil and **t.parent** ~= nil and **t.parent** ~= UIParent
+	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= UIParent
 	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
+	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the `t.onEvent` table.</li></ul>
 	---@field onEvent? table<WowEvent, fun(self: Frame, ...: any)> Table of key, value pairs that holds global event tags & their corresponding event handlers to be registered for the frame<ul><li>***Note:*** You may want to include [Frame:UnregisterEvent(...)](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent the handler function to be executed again.</li><li>***Example:*** "[ADDON_LOADED](https://warcraft.wiki.gg/wiki/ADDON_LOADED)" is fired repeatedly after each addon. To call the handler only after one specified addon is loaded, you may check the parameter the handler is called with. It's a good idea to unregister the event to prevent repeated calling for every other addon after the specified one has been loaded already.<pre>```function(self, addon)```<br>&#9;```if addon ~= "AddonNameSpace" then return end --Replace "AddonNameSpace" with the namespace of the specific addon to watch```<br>&#9;```self:UnregisterEvent("ADDON_LOADED")```<br>&#9;```--Do something```<br>```end```</pre></li></ul>
 
 		---@class positionableScreenObject : positionableObject
 		---@field keepInBounds? boolean Whether to keep the frame within screen bounds whenever it's moved | ***Default:*** `false`
 
 			---@class positionableObject
-			---@field position? positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** "TOPLEFT"
+			---@field position? positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** `"TOPLEFT"`
 
 				---@class positionData : positionData_base
 				---@field offset? offsetData
 
 					---@class positionData_base
-					---@field anchor? FramePoint ***Default:*** "TOPLEFT"
-					---@field relativeTo? AnyFrameObject|string Frame reference or name, or "nil" to anchor relative to screen dimensions | ***Default:*** "nil"<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li><li>***Note:*** Default to "nil" when an invalid frame name is provided.</li></ul>
-					---@field relativePoint? FramePoint ***Default:*** **anchor**
+					---@field anchor? FramePoint ***Default:*** `"TOPLEFT"`
+					---@field relativeTo? AnyFrameObject|string Frame reference or name, or "nil" to anchor relative to screen dimensions | ***Default:*** `"nil"`<ul><li>***Note:*** When omitting the value by providing nil, instead of the string "nil", anchoring will use the parent region (if possible, otherwise the default behavior of anchoring relative to the screen dimensions will be used).</li><li>***Note:*** Default to "nil" when an invalid frame name is provided.</li></ul>
+					---@field relativePoint? FramePoint ***Default:*** `anchor`
 
 					---@class offsetData
-					---@field x? number Horizontal offset value | ***Default:*** 0
-					---@field y? number Vertical offset value | ***Default:*** 0
+					---@field x? number Horizontal offset value | ***Default:*** `0`
+					---@field y? number Vertical offset value | ***Default:*** `0`
 
 		---@class arrangeableObject
 		---@field arrange? arrangementDirective When set, automatically position the frame in a columns within rows arrangement in its parent container via <code><i>WidgetToolbox</i>.ArrangeContent(t.parent, ...)</code>
@@ -440,7 +442,7 @@ function wt.CreateFrame(t)
 
 		---@class initializableContainer
 		---@field arrangement? arrangementRules If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
-		---@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+		---@field initialize? fun(container?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if `WidgetToolsDB.lite` is true)</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 			---@class arrangementRules
 			---@field margins? spacingData Inset the content inside the container frame by the specified amount on each side
@@ -455,8 +457,8 @@ function wt.CreateFrame(t)
 				---@field b? number Space to leave at the bottom | ***Default:*** 12
 
 		---@class sizeData_zeroDefault
-		---@field w? number Width | ***Default:*** 0
-		---@field h? number Height | ***Default:*** 0
+		---@field w? number Width | ***Default:*** `0`
+		---@field h? number Height | ***Default:*** `0`
 
 	return {}
 end
@@ -479,20 +481,20 @@ function wt.CreateScrollframe(t)
 	--| Parameters
 
 	---@class scrollframeCreationData : childObject, positionableObject, initializableContainer, scrollSpeedData # t
-	---@field name? string Unique string used to append to the name of **t.parent** when setting the names of the name of the scroll parent and its scrollable child frame | ***Default:*** "Scroller" *(for the scrollable child frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame names.</li></ul>
-	---@field size? sizeData_parentDefault|sizeData ***Default:*** **t.parent** and *size of the parent frame* or *no size*
+	---@field name? string Unique string used to append to the name of `t.parent` when setting the names of the name of the scroll parent and its scrollable child frame | ***Default:*** `"Scroller"` *(for the scrollable child frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame names.</li></ul>
+	---@field size? sizeData_parentDefault|sizeData ***Default:*** `t.parent` and *size of the parent frame* or *no size*
 	---@field scrollSize? sizeData_scroll|sizeData ***Default:*** *size of the parent frame*
 
 		---@class scrollSpeedData
-		---@field scrollSpeed? number Percentage of one page of content to scroll at a time | ***Range:*** (0, 1) | ***Default:*** 0.25
+		---@field scrollSpeed? number Percentage of one page of content to scroll at a time | ***Range:*** (`0`, `1`) | ***Default:*** `0.25`
 
 		---@class sizeData_parentDefault
 		---@field w? number Width | ***Default:*** *width of the parent frame*
 		---@field h? number Height | ***Default:*** *height of the parent frame*
 
 		---@class sizeData_scroll
-		---@field w? number Horizontal size of the scrollable child frame | ***Default:*** **t.size.width** - 16
-		---@field h? number Vertical size of the scrollable child frame | ***Default:*** 0 *(no height)*
+		---@field w? number Horizontal size of the scrollable child frame | ***Default:*** `t.size.width - 16`
+		---@field h? number Vertical size of the scrollable child frame | ***Default:*** `0` *(no height)*
 
 	return {}, {}
 end
@@ -502,9 +504,9 @@ end
 ---Set the position and anchoring of a frame when it is unknown which parameters will be nil
 ---***
 ---@param frame AnyFrameObject Reference to the frame to be moved
----@param position? positionData Table of parameters to call **frame**:[SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** "TOPLEFT"
----@param unlink? boolean If true, unlink the position of **frame** from **position.relativeTo** (preventing anchor family connections) by moving a positioning aid frame to **position** first, convert its position to absolute, breaking relative links (making it relative to screen points instead), then move **frame** to the position of the aid | ***Default:*** false
----@param userPlaced? boolean Remember the position if **frame**:[IsMovable()](https://warcraft.wiki.gg/wiki/API_Frame_IsMovable) | ***Default:*** true
+---@param position? positionData Table of parameters to call `frame`:[SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** `"TOPLEFT"`
+---@param unlink? boolean If true, unlink the position of `frame` from `position.relativeTo` (preventing anchor family connections) by moving a positioning aid frame to `position` first, convert its position to absolute, breaking relative links (making it relative to screen points instead), then move `frame` to the position of the aid | ***Default:*** `false`
+---@param userPlaced? boolean Remember the position if `frame`:[IsMovable()](https://warcraft.wiki.gg/wiki/API_Frame_IsMovable) | ***Default:*** `true`
 function wt.SetPosition(frame, position, unlink, userPlaced) end
 
 ---Set the anchor of a frame while keeping its positioning by updating its relative offsets
@@ -520,23 +522,23 @@ function wt.SetAnchor(frame, anchor) end
 ---Convert the position of a frame positioned relative to another to absolute position (making it relative to screen points, the UIParent instead)
 ---***
 ---@param frame AnyFrameObject Reference to the frame the position of which to be converted to absolute position
----@param keepAnchor? boolean If true, restore the original anchor of **frame** (as its closest anchor to the nearest screen point will be chosen after conversion) | ***Default:*** true
+---@param keepAnchor? boolean If true, restore the original anchor of `frame` (as its closest anchor to the nearest screen point will be chosen after conversion) | ***Default:*** `true`
 function wt.ConvertToAbsolutePosition(frame, keepAnchor) end
 
 --| Arrangement
 
 ---Set the arrangement ordering description of a child frame by which to automatically position it in a columns within rows arrangement in its parent container via <code><i>WidgetToolbox</i>.ArrangeContent(...)</code>
 ---@param frame AnyFrameObject Reference to the child frame to set the arrangement ordering description for
----@param index integer|nil If set, use this ordering index for **frame** by which to schedule placing it during arrangement (instead of relying on its child index), or if nil, delete the ordering directive set for **frame**
----@param wrap boolean|nil If true, place **frame** into a new row within its container instead of adding it to the current row being filled, or if nil, delete the wrapping directive set for **frame**<ul><li>***Note:*** If the item would not fit in the row with other items in there, it will automatically be placed in a new row.</li></ul>
----@param skip boolean|nil If true, ignore all other directives and don't include **frame** in the arrangement when positioning the children of the parent frame, or if nil, delete the skipping directive set for **frame**
+---@param index integer|nil If set, use this ordering index for `frame` by which to schedule placing it during arrangement (instead of relying on its child index), or if nil, delete the ordering directive set for `frame`
+---@param wrap boolean|nil If true, place `frame` into a new row within its container instead of adding it to the current row being filled, or if nil, delete the wrapping directive set for `frame`<ul><li>***Note:*** If the item would not fit in the row with other items in there, it will automatically be placed in a new row.</li></ul>
+---@param skip boolean|nil If true, ignore all other directives and don't include `frame` in the arrangement when positioning the children of the parent frame, or if nil, delete the skipping directive set for `frame`
 function wt.SetArrangementDirective(frame, index, wrap, skip) end
 
 ---Arrange the child frames of a container frame into stacked rows based on the parameters provided
 --- - ***Note:*** The frames will be arranged into columns based on the the number of child frames assigned to a given row, anchored to "TOPLEFT", "TOP" and "TOPRIGHT" in order (by default) up to 3 frames. Columns in rows with more frames will be attempted to be spaced out evenly between the frames placed at the main 3 anchors.
 ---***
 ---@param container Frame Reference to the parent container frame the child frames of which are to be arranged based on their arrangement descriptions
----@param t? arrangementRules Arrange the child frames of **container** based on the specifications provided in this table
+---@param t? arrangementRules Arrange the child frames of `container` based on the specifications provided in this table
 function wt.ArrangeContent(container, t) end
 
 --| Movability
@@ -544,23 +546,23 @@ function wt.ArrangeContent(container, t) end
 ---Set the movability of a frame based in the specified values
 ---***
 ---@param frame AnyFrameObject Reference to the frame to make movable/unmovable
----@param movable? boolean Whether to make the frame movable or unmovable | ***Default:*** false
----@param t? movabilityData When specified, set **frame** as movable, dynamically updating the position settings widgets when it's moved by the user
+---@param movable? boolean Whether to make the frame movable or unmovable | ***Default:*** `false`
+---@param t? movabilityData When specified, set `frame` as movable, dynamically updating the position settings widgets when it's moved by the user
 function wt.SetMovability(frame, movable, t)
 
 	--| Parameters
 
 	---@class movabilityData # t
-	---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **t.frame** (if **t.frame** has the "OnUpdate" script defined) | ***Default:*** `nil` *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
-	---@field triggers? Frame[] List of frames that should handle inputs to initiate or stop the movement when interacted with | ***Default:*** **t.frame**
+	---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move `t.frame` (if `t.frame` has the "OnUpdate" script defined) | ***Default:*** `nil` *(no modifier)*<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+	---@field triggers? Frame[] List of frames that should handle inputs to initiate or stop the movement when interacted with | ***Default:*** `t.frame`
 	---@field events? movementEvents Table containing functions to call when certain movement events occur
-	---@field cursor? boolean If true, change the cursor to a movement cross when mousing over **t.frame** and **t.modifier** is pressed down if set | ***Default:*** **t.modifier** ~= nil
+	---@field cursor? boolean If true, change the cursor to a movement cross when mousing over `t.frame` and `t.modifier` is pressed down if set | ***Default:*** `t.modifier ~= nil`
 
 		---@class movementEvents
-		---@field onStart? function Function to call when **frame** starts moving
-		---@field onMove? function Function to call every with frame update while **frame** is moving (if **frame** has the "OnUpdate" script defined)
-		---@field onStop? function Function to call when the movement of **frame** is stopped and the it was moved successfully
-		---@field onCancel? function Function to call when the movement of **frame** is cancelled (because the modifier key was released early as an example)
+		---@field onStart? function Function to call when `frame` starts moving
+		---@field onMove? function Function to call every with frame update while `frame` is moving (if `frame` has the "OnUpdate" script defined)
+		---@field onStop? function Function to call when the movement of `frame` is stopped and the it was moved successfully
+		---@field onCancel? function Function to call when the movement of `frame` is cancelled (because the modifier key was released early as an example)
 end
 
 --[ Visibility ]
@@ -568,16 +570,16 @@ end
 ---Set the visibility of a frame based on the value provided
 ---***
 ---@param frame AnyFrameObject Reference to the frame to hide or show
----@param visible? boolean If false, hide the frame, show it if true | ***Default:*** false
+---@param visible? boolean If false, hide the frame, show it if true | ***Default:*** `false`
 function wt.SetVisibility(frame, visible) end
 
 --[ Backdrop ]
 
 ---Set the backdrop of a frame with BackdropTemplate with the specified parameters safely
 ---***
----@param frame backdropFrame|BackdropTemplate|AnyFrameObject Reference to the frame to set the backdrop of<ul><li>***Note:*** The template of **frame** must have been set as: `BackdropTemplateMixin and "BackdropTemplate"`.</li></ul>
+---@param frame backdropFrame|BackdropTemplate|AnyFrameObject Reference to the frame to set the backdrop of<ul><li>***Note:*** The template of `frame` must have been set as: `BackdropTemplateMixin and "BackdropTemplate"`.</li></ul>
 ---@param backdrop? backdropData Parameters to set the custom backdrop with | ***Default:*** `nil` *(remove the backdrop)*
----@param updates? backdropUpdateRule[] Table of backdrop update rules, modifying the specified parameters on trigger<ul><li>***Note:*** All update rules are additive, calling <code><i>WidgetToolbox</i>.SetBackdrop(...)` multiple times with **updates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> either!</li></ul>
+---@param updates? backdropUpdateRule[] Table of backdrop update rules, modifying the specified parameters on trigger<ul><li>***Note:*** All update rules are additive, calling <code><i>WidgetToolbox</i>.SetBackdrop(...)` multiple times with `updates` specified *will not* override previously set update rules. The base `backdrop` values used for these old rules *will not* change by setting a new backdrop via <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> either!</li></ul>
 function wt.SetBackdrop(frame, backdrop, updates)
 
 	--| Parameters
@@ -598,8 +600,8 @@ function wt.SetBackdrop(frame, backdrop, updates)
 		---@field color? color Apply the specified color to the border texture
 
 	---@class backdropUpdateRule # updates
-	---@field triggers? AnyFrameObject[] References to the frames to add the listener script to | ***Default:*** { **frame** }
-	---@field rules table<AnyScriptType, string|fun(frame: AnyFrameObject, self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base **backdrop** unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and true for **fill** in order to restore the base **backdrop** after evaluation.</li><li>***Note:*** Return an empty table `{}` for **backdropUpdate** and false or nil for **fill** to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `frame` AnyFrameObject ― Reference to backdrop frame</p><p>@*param* `self` AnyFrameObject ― Reference to the specific trigger frame</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** `nil` *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in **backdropUpdates** with the values provided in **backdrop** at matching keys, if false, fill them with their corresponding values from the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
+	---@field triggers? AnyFrameObject[] References to the frames to add the listener script to | ***Default:*** `{ frame }`
+	---@field rules table<AnyScriptType, string|fun(frame: AnyFrameObject, self: AnyFrameObject, ...: any): backdropUpdate: backdropUpdateData|nil, fill: boolean|nil> List of events and update actions returning backdrop values to update the backdrop with, or, if they are set but not valid functions to call, restore the base `backdrop` unconditionally on event trigger<ul><li>***Note:*** Return an empty table `{}` for `backdropUpdate` and true for `fill` in order to restore the base `backdrop` after evaluation.</li><li>***Note:*** Return an empty table `{}` for `backdropUpdate` and `false` or `nil` for `fill` to do nothing (keep the current backdrop).</li></ul><hr><p>@*param* `frame` AnyFrameObject ― Reference to backdrop frame</p><p>@*param* `self` AnyFrameObject ― Reference to the specific trigger frame</p><p>@*param* `...` any ― Any leftover arguments will be passed from the handler script to <code>updates[<i>key</i>].rule</code></p><hr><p>@*return* `backdropUpdate`? backdropUpdateData|nil ― Parameters to update the backdrop with | ***Default:*** `nil` *(remove the backdrop)*</p><p>@*return* `fill`? boolean|nil ― If true, fill the specified defaults for the unset values in `backdropUpdate` with the values provided in `backdrop` at matching keys, if `false`, fill them with their corresponding values from the currently set values of `frame`.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure), `frame`:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) and `frame`:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods) | ***Default:*** `false`</p>
 
 		---@alias AnyScriptType
 		---| "OnLoad"
@@ -679,12 +681,12 @@ function wt.SetBackdrop(frame, backdrop, updates)
 		---| "OnRequestNewSize"
 
 		---@class backdropUpdateData
-		---@field background? backdropUpdateBackgroundData Table containing the parameters used for the background | ***Default:*** **backdrop.background** if **fill** == true *(if it's false, keep the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure) and **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
-		---@field border? backdropUpdateBorderData Table containing the parameters used for the border | ***Default:*** **backdrop** if **fill** == true *(if it's false, keep the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure) and **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
+		---@field background? backdropUpdateBackgroundData Table containing the parameters used for the background | ***Default:*** `backdrop.background` if `fill == true` *(if it's false, keep the currently set values of `frame`.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure) and `frame`:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
+		---@field border? backdropUpdateBorderData Table containing the parameters used for the border | ***Default:*** `backdrop` if `fill == true` *(if it's `false`, keep the currently set values of `frame`.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure) and `frame`:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
 
 			---@class backdropUpdateBackgroundData
-			---@field texture? backdropBackgroundTextureData Parameters used for setting the background texture | ***Default:*** **backdrop.background.texture** if **fill** == true *(if it's false, keep the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure))*
-			---@field color? color Apply the specified color to the background texture | ***Default:*** **backdrop.background.color** if **fill** == true *(if it's false, keep the currently set values of **frame**:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
+			---@field texture? backdropBackgroundTextureData Parameters used for setting the background texture | ***Default:*** `backdrop.background.texture` if `fill == true` *(if it's false, keep the currently set values of `frame`.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure))*
+			---@field color? color Apply the specified color to the background texture | ***Default:*** `backdrop.background.color` if `fill == true` *(if it's false, keep the currently set values of `frame`:[GetBackdropColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
 
 				---@class backdropBackgroundTextureData : pathData_ChatFrameDefault
 				---@field size number Size of a single background tile square
@@ -692,17 +694,17 @@ function wt.SetBackdrop(frame, backdrop, updates)
 				---@field insets? insetData Offset the position of the background texture from the edges of the frame inward
 
 					---@class insetData
-					---@field l? number Left side | ***Default:*** 0
-					---@field r? number Right side | ***Default:*** 0
-					---@field t? number Top | ***Default:*** 0
-					---@field b? number Bottom | ***Default:*** 0
+					---@field l? number Left side | ***Default:*** `0`
+					---@field r? number Right side | ***Default:*** `0`
+					---@field t? number Top | ***Default:*** `0`
+					---@field b? number Bottom | ***Default:*** `0`
 
 			---@class backdropUpdateBorderData
-			---@field texture? backdropBorderTextureData Parameters used for setting the border texture | ***Default:*** **backdrop.border.texture** if **fill** == true *(if it's false, keep the currently set values of **frame**.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure))*
-			---@field color? color Apply the specified color to the border texture | ***Default:*** **backdrop.border.color** if **fill** == true *(if it's false, keep the currently set values of **frame**:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
+			---@field texture? backdropBorderTextureData Parameters used for setting the border texture | ***Default:*** `backdrop.border.texture` if `fill == true` *(if it's false, keep the currently set values of `frame`.[backdropInfo](https://warcraft.wiki.gg/wiki/BackdropTemplate#Table_structure))*
+			---@field color? color Apply the specified color to the border texture | ***Default:*** `backdrop.border.color` if `fill == true` *(if it's false, keep the currently set values of `frame`:[GetBackdropBorderColor()](https://warcraft.wiki.gg/wiki/BackdropTemplate#Methods))*
 
 				---@class backdropBorderTextureData
-				---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/Tooltips/UI-Tooltip-Border"<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
+				---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `"Interface/Tooltips/UI-Tooltip-Border"`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
 				---@field width number Width of the backdrop edge
 end
 
@@ -730,19 +732,19 @@ function wt.CheckDependencies(rules) end
 ---@param name string A unique identifier name to set for the hew font object to be accessed by and referred to later<ul><li>***Note:*** If a font object with that name already exists, it will *not* be overwritten and its reference key will be returned.</li><li>***Example:*** Access the reference to the font object created via the globals table: `local customFont = _G["CustomFontName"]`.</li></ul>
 ---@param t? fontCreationData Optional parameters
 ---***
----@return string name, Font font ***Default*** *(on invalid input)****:*** "GameFontNormal", **GameFontNormal**
+---@return string name, Font font ***Default*** `"GameFontNormal"`, `GameFontNormal`
 function wt.CreateFont(name, t)
 
 	--| Parameters
 
 	---@class fontCreationData
 	---@field template? FontObject An existing [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to copy as a baseline
-	---@field font? fontData Table containing font properties used for [FontInstance:SetFont(...)](https://warcraft.wiki.gg/wiki/API_FontInstance_SetFont) (overriding **t.template**)
-	---@field color? colorData_whiteDefault|color Apply the specified color to the font (overriding **t.template**)
-	---@field spacing? number Set the character spacing of the text using this font (overriding **t.template**)
-	---@field shadow? { offset: offsetData, color: colorData_blackDefault|color } Set a text shadow with the following parameters (overriding **t.template**)
-	---@field justify? justifyData_centered Set the justification of the text using font (overriding **t.template**)
-	---@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding **t.template**)
+	---@field font? fontData Table containing font properties used for [FontInstance:SetFont(...)](https://warcraft.wiki.gg/wiki/API_FontInstance_SetFont) (overriding `t.template`)
+	---@field color? colorData_whiteDefault|color Apply the specified color to the font (overriding `t.template`)
+	---@field spacing? number Set the character spacing of the text using this font (overriding `t.template`)
+	---@field shadow? { offset: offsetData, color: colorData_blackDefault|color } Set a text shadow with the following parameters (overriding `t.template`)
+	---@field justify? justifyData_centered Set the justification of the text using font (overriding `t.template`)
+	---@field wrap? boolean Whether or not to allow the text lines using this font to wrap (overriding `t.template`)
 
 		---@class fontData
 		---@field path string Path to the font file relative to the WoW client directory<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Fonts/Font.ttf), otherwise use `\\`.</li><li>***Note:*** **File format:** Font files must be in TTF or OTF format.</li></ul>
@@ -750,17 +752,17 @@ function wt.CreateFont(name, t)
 		---@field style TBFFlags Comma separated string of font styling flags
 
 		---@class colorData_whiteDefault : colorData
-		---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** 1
-		---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** 1
-		---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** 1
+		---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0`
+		---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+		---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
 
 		---@class colorData_blackDefault : colorData
-		---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** 1
-		---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** 1
-		---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** 1
+		---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+		---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `1`
+		---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `1`
 
 		---@class justifyData_centered : justifyData_left
-		---@field h? JustifyHorizontal Horizontal text alignment| ***Default:*** "CENTER"
+		---@field h? JustifyHorizontal Horizontal text alignment| ***Default:*** `"CENTER"`
 
 	return "", {}
 end
@@ -777,15 +779,15 @@ function wt.CreateText(t)
 
 	---@class textCreationData : positionableObject # t
 	---@field parent? AnyFrameObject Reference to parent frame to create and assign the text to | ***Default:*** UIParent
-	---@field name? string String appended to the name of **t.parent** used to set the name of the new [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "Text"
+	---@field name? string String appended to the name of `t.parent` used to set the name of the new [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** `"Text"`
 	---@field width? number
 	---@field height? number
 	---@field layer? DrawLayer
 	---@field text? string Text to be shown
-	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used | ***Default:*** "GameFontNormal"<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
-	---@field color? color Apply the specified color to the text (overriding **t.font**)
-	---@field justify? justifyData Set the justification of the text (overriding **t.font**)
-	---@field wrap? boolean Whether or not to allow the text lines to wrap (overriding **t.font**) | ***Default:*** `true`
+	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used | ***Default:*** `"GameFontNormal"`<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
+	---@field color? color Apply the specified color to the text (overriding `t.font`)
+	---@field justify? justifyData Set the justification of the text (overriding `t.font`)
+	---@field wrap? boolean Whether or not to allow the text lines to wrap (overriding `t.font`) | ***Default:*** `true`
 
 		---@class justifyData
 		---@field h? JustifyHorizontal Horizontal text alignment
@@ -805,13 +807,13 @@ function wt.CreateTitle(frame, t)
 	--| Parameters
 
 	---@class titleCreationData # t
-	---@field anchor? FramePoint ***Default:*** "TOPLEFT"
+	---@field anchor? FramePoint ***Default:*** `"TOPLEFT"`
 	---@field offset? offsetData The offset from the anchor point relative to the specified frame
 	---@field width? number ***Default:*** *width of the text*
 	---@field text? string Text to be shown as the main title of the frame
-	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlight"
-	---@field color? color Apply the specified color to the title (overriding **t.font**)
-	---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
+	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** `"GameFontHighlight"`
+	---@field color? color Apply the specified color to the title (overriding `t.font`)
+	---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding `t.font`) | ***Default:*** `"LEFT"`
 end
 
 ---Add a description to a titled frame
@@ -825,20 +827,20 @@ function wt.CreateDescription(title, t)
 	--| Parameters
 
 	---@class descriptionCreationData # t
-	---@field offset? offsetData The offset from the default position (right side of the separator to the right of **t.title**)
-	---@field width? number ***Default:*** *width of the parent frame of **t.title** - width of **t.title** (& separator, offsets)*
-	---@field widthOffset? number Increase the calculated with by this amount | ***Default:*** 0
-	---@field spacer? number Space to leave between **t.title** & the separator and the separator & the description | ***Default:*** 5
+	---@field offset? offsetData The offset from the default position (right side of the separator to the right of `t.title`)
+	---@field width? number ***Default:*** *width of the parent frame of `t.title` - width of `t.title` (& separator, offsets)*
+	---@field widthOffset? number Increase the calculated with by this amount | ***Default:*** `0`
+	---@field spacer? number Space to leave between `t.title` & the separator and the separator & the description | ***Default:*** 5
 	---@field text? string Text to be shown as the description of the frame
-	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontHighlightSmall2"
-	---@field color? descriptionColorData|color Apply the specified color to the description (overriding **t.font**)
-	---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding **t.font**) | ***Default:*** "LEFT"
+	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** `"GameFontHighlightSmall2"`
+	---@field color? descriptionColorData|color Apply the specified color to the description (overriding `t.font`)
+	---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding `t.font`) | ***Default:*** `"LEFT"`
 
 		---@class descriptionColorData
-		---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** HIGHLIGHT_FONT_COLOR.r
-		---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** HIGHLIGHT_FONT_COLOR.g
-		---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** HIGHLIGHT_FONT_COLOR.b
-		---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 0.55
+		---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.r
+		---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.g
+		---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.b
+		---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.55
 end
 
 
@@ -856,22 +858,22 @@ function wt.CreateTexture(frame, t, updates)
 	--| Parameters
 
 	---@class textureCreationData : positionableObject, pathData_ChatFrameDefault # t
-	---@field name? string String appended to the name of **t.parent** used to set the name of the new texture | ***Default:*** "Texture"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData ***Default:*** *size of* **parent**
-	---@field atlas? string Name of the texture atlas to use instead of creating a texture based on **t.path**<ul><li>***Note:*** Settings this will override whatever **t.path** is set to.</li></ul>
+	---@field name? string String appended to the name of `t.parent` used to set the name of the new texture | ***Default:*** `"Texture"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field size? sizeData ***Default:*** *size of* `parent`
+	---@field atlas? string Name of the texture atlas to use instead of creating a texture based on `t.path`<ul><li>***Note:*** Settings this will override whatever `t.path` is set to.</li></ul>
 	---@field layer? DrawLayer
-	---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (-8, 7)
+	---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (`-8`, `7`)
 	---@field tile? tileData Set the tiling behaviour of the texture | ***Default:*** *no tiling*
 	---@field wrap? wrapData Set the warp mode for each axis
-	---@field filterMode? FilterMode | ***Default:*** "LINEAR"
+	---@field filterMode? FilterMode | ***Default:*** `"LINEAR"`
 	---@field flip? axisData Mirror the texture on the horizontal and/or vertical axis
 	---@field color? color Apply the specified color to the texture
 	---@field edges? edgeCoordinates Edge coordinate offsets
-	---@field vertices? vertexCoordinates Vertex coordinate offsets<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, **t.edges** will be used first ignoring **t.vertices**.</li></ul>
+	---@field vertices? vertexCoordinates Vertex coordinate offsets<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, `t.edges` will be used first ignoring `t.vertices`.</li></ul>
 	---@field events? table<ScriptType, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the texture object and the functions to assign as event handlers called when they trigger
 
 		---@class pathData_ChatFrameDefault
-		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** "Interface/ChatFrame/ChatFrameBackground"<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
+		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `"Interface/ChatFrame/ChatFrameBackground"`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
 
 		---@class sizeData
 		---@field w number Width
@@ -882,18 +884,18 @@ function wt.CreateTexture(frame, t, updates)
 		---@field v? boolean Vertical | ***Default:*** `false`
 
 		---@class wrapData
-		---@field h? WrapMode|boolean Horizontal | ***Value:*** true = "REPEAT" | ***Default:*** "CLAMP"
-		---@field v? WrapMode|boolean Vertical | ***Value:*** true = "REPEAT" | ***Default:*** "CLAMP"
+		---@field h? WrapMode|boolean Horizontal | ***Value:*** true = "REPEAT" |***Default:*** `"CLAMP"`
+		---@field v? WrapMode|boolean Vertical | ***Value:*** true = "REPEAT" |***Default:*** `"CLAMP"`
 
 		---@class axisData
 		---@field h? boolean Horizontal x axis | ***Default:*** `false`
 		---@field v? boolean Vertical y axis | ***Default:*** `false`
 
 		---@class edgeCoordinates
-		---@field l number Left | ***Reference Range:*** (0, 1) | ***Default:*** 0
-		---@field r number Right | ***Reference Range:*** (0, 1) | ***Default:*** 1
-		---@field t number Top | ***Value:*** *using canvas coordinates (inverted y axis)* | | ***Reference Range:*** (0, 1) | ***Default:*** 0
-		---@field b number Bottom | ***Value:*** *using canvas coordinates (inverted y axis)* | | ***Reference Range:*** (0, 1) | ***Default:*** 1
+		---@field l number Left | ***Reference Range:*** (0, 1) | ***Default:*** `0`
+		---@field r number Right | ***Reference Range:*** (0, 1) | ***Default:*** `1`
+		---@field t number Top | ***Value:*** *using canvas coordinates (inverted y axis)* | | ***Reference Range:*** (0, 1) | ***Default:*** `0`
+		---@field b number Bottom | ***Value:*** *using canvas coordinates (inverted y axis)* | | ***Reference Range:*** (0, 1) | ***Default:*** `1`
 
 		---@class vertexCoordinates
 		---@field topLeft vertexCoordinates_topLeft
@@ -902,42 +904,42 @@ function wt.CreateTexture(frame, t, updates)
 		---@field bottomRight vertexCoordinates_bottomRight
 
 				---@class vertexCoordinates_topLeft
-				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** 0
-				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** 0
+				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** `0`
+				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** `0`
 
 				---@class vertexCoordinates_topRight
-				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** 1
-				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** 0
+				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** `1`
+				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** `0`
 
 				---@class vertexCoordinates_bottomLeft
-				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** 0
-				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** 1
+				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** `0`
+				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** `1`
 
 				---@class vertexCoordinates_bottomRight
-				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** 1
-				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** 1
+				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** `1`
+				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** `1`
 
 		---@class attributeEventData
 		---@field name string
 		---@field handler fun(...: any)
 
 	---@class textureUpdateRule # updates
-	---@field frame? AnyFrameObject Reference to the frame to add the listener script to | ***Default:*** **t.parent**
-	---@field rule? fun(self: Frame, ...: any): data: textureUpdateData|nil Evaluate the event and specify the texture updates to set, or, if nil, restore the base values unconditionally on event trigger<hr><p>@*param* `self` AnyFrameObject — Reference to **updates[*key*].frame**</p><p>@*param* `...` any — Any leftover arguments will be passed from the handler script to **updates[*key*].rule**</p><hr><p>@*return* `data` textureUpdateData|nil — Parameters to update the texture with | ***Default:*** **t**</p>
+	---@field frame? AnyFrameObject Reference to the frame to add the listener script to | ***Default:*** `t.parent`
+	---@field rule? fun(self: Frame, ...: any): data: textureUpdateData|nil Evaluate the event and specify the texture updates to set, or, if nil, restore the base values unconditionally on event trigger<hr><p>@*param* `self` AnyFrameObject — Reference to <code>updates[<i>key</i>].frame</code></p><p>@*param* `...` any — Any leftover arguments will be passed from the handler script to <code>updates[<i>key</i>].rule</code></p><hr><p>@*return* `data` textureUpdateData|nil — Parameters to update the texture with | ***Default:*** `t`<p>
 
 		---@class textureUpdateData
-		---@field position? positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** **t.position**
-		---@field size? sizeData | ***Default:*** **t.size**
-		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** **t.path**<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
-		---@field layer? DrawLayer | ***Default:*** **t.layer**
-		---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (-8, 7) | ***Default:*** **t.level**
-		---@field tile? tileData Set the tiling behaviour of the texture | ***Default:*** **t.tile**
-		---@field wrap? wrapData Set the warp mode for each axis | ***Default:*** **t.wrap**
-		---@field filterMode? FilterMode | ***Default:*** **t.filterMode**
-		---@field flip? axisData Mirror the texture on the horizontal and/or vertical axis | ***Default:*** **t.flip**
-		---@field color? color Apply the specified color to the texture | ***Default:*** **t.color**
-		---@field edges? edgeCoordinates Edge coordinate offsets ***Default:*** **t.edges**
-		---@field vertices? vertexCoordinates Vertex coordinate offsets ***Default:*** **t.vertices**<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, **t.edges** will be used first ignoring **t.vertices**.</li></ul>
+		---@field position? positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** `t.position`
+		---@field size? sizeData | ***Default:*** `t.size`
+		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `t.path`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
+		---@field layer? DrawLayer | ***Default:*** `t.layer`
+		---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (`-8`, `7`) | ***Default:*** `t.level`
+		---@field tile? tileData Set the tiling behaviour of the texture | ***Default:*** `t.tile`
+		---@field wrap? wrapData Set the warp mode for each axis | ***Default:*** `t.wrap`
+		---@field filterMode? FilterMode | ***Default:*** `t.filterMode`
+		---@field flip? axisData Mirror the texture on the horizontal and/or vertical axis | ***Default:*** `t.flip`
+		---@field color? color Apply the specified color to the texture | ***Default:*** `t.color`
+		---@field edges? edgeCoordinates Edge coordinate offsets ***Default:*** `t.edges`
+		---@field vertices? vertexCoordinates Vertex coordinate offsets ***Default:*** `t.vertices`<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, `t.edges` will be used first ignoring `t.vertices`.</li></ul>
 end
 
 ---Create a [Line](https://warcraft.wiki.gg/wiki/UIOBJECT_Line) [TextureBase](https://warcraft.wiki.gg/wiki/UIOBJECT_TextureBase) object
@@ -951,12 +953,12 @@ function wt.CreateLine(frame, t)
 	--| Parameters
 
 	---@class lineCreationData # t
-	---@field name? string String appended to the name of **t.parent** used to set the name of the new line | ***Default:*** "Line"
-	---@field startPosition? pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with | ***Default:*** "TOPLEFT"
-	---@field endPosition? pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with | ***Default:*** "TOPLEFT"
+	---@field name? string String appended to the name of `t.parent` used to set the name of the new line | ***Default:*** `"Line"`
+	---@field startPosition? pointData Parameters to call [Line:SetStartPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetStartPoint) with | ***Default:*** `"TOPLEFT"`
+	---@field endPosition? pointData Parameters to call [Line:SetEndPoint(...)](https://warcraft.wiki.gg/wiki/API_Line_SetEndPoint) with | ***Default:*** `"TOPLEFT"`
 	---@field thickness? number ***Default:*** 4
 	---@field layer? DrawLayer 
-	---@field level? integer Sublevel to set within the draw layer specified with **t.layer** | ***Range:*** (-8, 7)
+	---@field level? integer Sublevel to set within the draw layer specified with `t.layer` | ***Range:*** (`-8`, `7`)
 	---@field color? color Apply the specified color to the line
 
 		---@class pointData
@@ -986,73 +988,73 @@ function wt.CreateTooltip(name) return {} end
 
 ---Register tooltip data and set up a GameTooltip for a frame to be toggled on hover
 ---***
----@param frame AnyFrameObject Owner frame the tooltip to be registered for<ul><li>***Note:*** If tooltip data for **owner** has already been added to the registry, it will be fully overwritten with **t**.</li><ul><li>***Note:*** Duplicate triggers may still be added if **duplicate** is set to true.</li></ul></li></ul>
+---@param frame AnyFrameObject Owner frame the tooltip to be registered for<ul><li>***Note:*** If tooltip data for `owner` has already been added to the registry, it will be fully overwritten with `t`.</li><ul><li>***Note:*** Duplicate triggers may still be added if `duplicate` is set to true.</li></ul></li></ul>
 ---@param t? tooltipData The tooltip parameters are to be provided in this table
 ---@param toggle? tooltipToggleData Additional toggle rule parameters are to be provided in this table
----@param duplicate? boolean If true, execute even if tooltip data has already been registered for **owner**, potentially adding duplicate toggle triggers, or, automatically call <code><i>WidgetToolbox</i>.UpdateTooltipData(...)</code> instead to avoid this | ***Default:*** false
+---@param duplicate? boolean If true, execute even if tooltip data has already been registered for `owner`, potentially adding duplicate toggle triggers, or, automatically call <code><i>WidgetToolbox</i>.UpdateTooltipData(...)</code> instead to avoid this | ***Default:*** `false`
 ---***
----@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** `nil`
+---@return tooltipData|nil # Reference to the tooltip data table registered for `owner` to display the tooltip info by | ***Default:*** `nil`
 function wt.AddTooltip(frame, t, toggle, duplicate)
 
 	--| Parameters
 
 	---@class tooltipData : tooltipFrameData, tooltipTextData # t
-	---@field anchor? TooltipAnchor ***Default:*** "ANCHOR_CURSOR"
-	---@field offset? offsetData Values to offset the position of ***tooltipData*.tooltip** by
-	---@field position? positionData_base|positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with when the tooltip is not automatically positioned via **t.anchor** | ***Default:*** "TOPLEFT" if ***tooltipData*.anchor** == "ANCHOR_NONE"<ul><li>***Note:*** **t.offset** will be used when calling [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) as well.</li></ul>
+	---@field anchor? TooltipAnchor ***Default:*** `"ANCHOR_CURSOR"`
+	---@field offset? offsetData Values to offset the position of <code><i>tooltipData</i>.tooltip</code> by
+	---@field position? positionData_base|positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with when the tooltip is not automatically positioned via `t.anchor` | ***Default:*** `"TOPLEFT"` if <code><i>tooltipData</i>.anchor</code> == "ANCHOR_NONE"<ul><li>***Note:*** `t.offset` will be used when calling [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) as well.</li></ul>
 	---@field flipColors? boolean Flip the default color values of the title and the text lines | ***Default:*** `false`
 
 		---@class tooltipFrameData
 		---@field tooltip? GameTooltip Reference to the tooltip frame to set up | ***Default:*** *default WidgetTools custom tooltip*
 
 		---@class tooltipTextData
-		---@field title? string String to be shown as the tooltip title (text color: NORMAL_FONT_COLOR) | ***Default:*** **owner:GetName()` or **tostring(owner)**
+		---@field title? string String to be shown as the tooltip title (text color: NORMAL_FONT_COLOR) | ***Default:*** `owner:GetName() or tostring(owner)`
 		---@field lines? tooltipLineData[] Table containing the lists of parameters for the text lines after the title
 
 			---@class tooltipLineData
 			---@field text string Text to be displayed in the line
 			---@field font? string|FontObject The [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to set for this line | ***Default:*** GameTooltipTextSmall
-			---@field color? rgbData Table containing the RGB values to color this line with (overriding **font**)
+			---@field color? rgbData Table containing the RGB values to color this line with (overriding `font`)
 			---@field wrap? boolean Allow the text in this line to be wrapped | ***Default:*** `true`
 
 	---@class tooltipToggleData # toggle
-	---@field triggers? Frame[] List of references to additional frames to add hover events to to toggle ***tooltipData*.tooltip** for **owner** besides **owner** itself
-	---@field checkParent? boolean Whether to check if **owner** is being hovered before hiding ***tooltipData*.tooltip** when triggers stop being hovered | ***Default:*** `true`
-	---@field replace? boolean If false, while ***tooltipData*.tooltip** is already visible for a different owner, don't change it | ***Default:*** `true`<ul><li>***Note:*** If ***tooltipData*.tooltip** is already shown for **owner**, <code><i>WidgetToolbox</i>.UpdateTooltip(...)</code> will be called anyway.</li></ul>
+	---@field triggers? Frame[] List of references to additional frames to add hover events to to toggle <code><i>tooltipData</i>.tooltip</code> for `owner` besides `owner` itself
+	---@field checkParent? boolean Whether to check if `owner` is being hovered before hiding <code><i>tooltipData</i>.tooltip</code> when triggers stop being hovered | ***Default:*** `true`
+	---@field replace? boolean If false, while <code><i>tooltipData</i>.tooltip</code> is already visible for a different owner, don't change it | ***Default:*** `true`<ul><li>***Note:*** If <code><i>tooltipData</i>.tooltip</code> is already shown for `owner`, <code><i>WidgetToolbox</i>.UpdateTooltip(...)</code> will be called anyway.</li></ul>
 end
 
 ---Update and show a GameTooltip already set up to be toggled for a frame
 ---***
----@param frame AnyFrameObject Owner frame the tooltip to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via <code><i>WidgetToolbox</i>.AddTooltip(...)</code> yet, no tooltip will be shown.</li></ul>
----@param t? tooltipUpdateData|tooltipData Use this set of parameters to update the tooltip for **owner** with | ***Default:*** *(fill values from the data in the registry)*
+---@param frame AnyFrameObject Owner frame the tooltip to be updated for<ul><li>***Note:*** If no entry has been registered for `owner` in the tooltip data registry via <code><i>WidgetToolbox</i>.AddTooltip(...)</code> yet, no tooltip will be shown.</li></ul>
+---@param t? tooltipUpdateData|tooltipData Use this set of parameters to update the tooltip for `owner` with | ***Default:*** *(fill values from the data in the registry)*
 function wt.UpdateTooltip(frame, t)
 
 	--| Parameters
 
 	---@class tooltipUpdateData # t
-	---@field title? string String to be shown as the tooltip title (text color: NORMAL_FONT_COLOR) | ***Default:*** **owner.tooltipData.title**
-	---@field lines? tooltipLineData[] Table containing the lists of parameters for the text lines after the title | ***Default:*** **owner.tooltipData.lines**
-	---@field tooltip? GameTooltip Reference to the tooltip frame to set up | ***Default:*** **owner.tooltipData.tooltip**
-	---@field offset? offsetData Values to offset the position of ***tooltipData*.tooltip** by | ***Default:*** **owner.tooltipData.offset**
-	---@field position? positionData_base|positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with when the tooltip is not automatically positioned via **t.anchor** | ***Default:*** **owner.tooltipData.position**
-	---@field flipColors? boolean Flip the default color values of the title and the text lines | ***Default:*** **owner.tooltipData.flipColors**
-	---@field anchor? TooltipAnchor [GameTooltip anchor](https://warcraft.wiki.gg/wiki/API_GameTooltip_SetOwner) | ***Default:*** **owner.tooltipData.anchor**
+	---@field title? string String to be shown as the tooltip title (text color: NORMAL_FONT_COLOR) | ***Default:*** `owner.tooltipData.title`
+	---@field lines? tooltipLineData[] Table containing the lists of parameters for the text lines after the title | ***Default:*** `owner.tooltipData.lines`
+	---@field tooltip? GameTooltip Reference to the tooltip frame to set up | ***Default:*** `owner.tooltipData.tooltip`
+	---@field offset? offsetData Values to offset the position of <code><i>tooltipData</i>.tooltip</code> by | ***Default:*** `owner.tooltipData.offset`
+	---@field position? positionData_base|positionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with when the tooltip is not automatically positioned via `t.anchor` | ***Default:*** `owner.tooltipData.position`
+	---@field flipColors? boolean Flip the default color values of the title and the text lines | ***Default:*** `owner.tooltipData.flipColors`
+	---@field anchor? TooltipAnchor [GameTooltip anchor](https://warcraft.wiki.gg/wiki/API_GameTooltip_SetOwner) | ***Default:*** `owner.tooltipData.anchor`
  end
 
 ---Verify and update the tooltip data values stored in the registry for a frame
 ---***
----@param frame AnyFrameObject Owner frame the tooltip data to be updated for<ul><li>***Note:*** If no entry has been registered for **owner** in the tooltip data registry via <code><i>WidgetToolbox</i>.AddTooltip(...)</code> yet, no data will be changed.</li></ul>
+---@param frame AnyFrameObject Owner frame the tooltip data to be updated for<ul><li>***Note:*** If no entry has been registered for `owner` in the tooltip data registry via <code><i>WidgetToolbox</i>.AddTooltip(...)</code> yet, no data will be changed.</li></ul>
 ---@param t? tooltipUpdateData|tooltipData The parameters to update the tooltip with are to be provided in this table | ***Default:*** *(fill values from the data in the registry or use default values for required values missing from the registry)*
----@param linesUpdate boolean|nil If true, replace the full set of lines in the registry with **t.lines**, or if explicitly false, append the lines to the current list of lines, or if nil or something else, adjust the values of existing lines at matching indexes instead without adding or removing lines | ***Default:*** `nil`
+---@param linesUpdate boolean|nil If true, replace the full set of lines in the registry with `t.lines`, or if explicitly false, append the lines to the current list of lines, or if nil or something else, adjust the values of existing lines at matching indexes instead without adding or removing lines | ***Default:*** `nil`
 ---***
----@return tooltipData|nil # Reference to the tooltip data table registered for **owner** to display the tooltip info by | ***Default:*** `nil`
+---@return tooltipData|nil # Reference to the tooltip data table registered for `owner` to display the tooltip info by | ***Default:*** `nil`
 function wt.UpdateTooltipData(frame, t, linesUpdate) end
 
 ---Add default value and utility menu hint tooltip lines to widget tooltip tables
 ---***
 ---@param frames AnyFrameObject[] List of reference to the frames to add the tooltip lines to<ul><li>***Note:*** If no entry has been registered for a frame in the list in the tooltip data registry via <code><i>WidgetToolbox</i>.AddTooltip(...)</code> yet, no changes will be made for that frame.</li></ul>
 ---@param default? string Default value, formatted | ***Default:*** *(don't show default value)*
----@param utilityNote? boolean Is true, add a note for the utility context menu | ***Default:*** true
+---@param utilityNote? boolean Is true, add a note for the utility context menu | ***Default:*** `true`
 function wt.AddWidgetTooltipLines(frames, default, utilityNote) end
 
 
@@ -1102,12 +1104,12 @@ function wt.CreateReloadNotice(t)
 	--| Parameters
 
 	---@class reloadNoticeData # t
-	---@field title? string Text to be shown as the title of the reload notice | ***Default:*** "Pending Changes" *(when the language is set to English)*
-	---@field message? string Text to be shown as the message of the reload notice | ***Default:*** "Reload the interface to apply the pending changes." *(when the language is set to English)*
-	---@field position? reloadFramePositionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** "TOPRIGHT", -300, -80
+	---@field title? string Text to be shown as the title of the reload notice | ***Default:*** `"Pending Changes"` *(when the language is set to English)*
+	---@field message? string Text to be shown as the message of the reload notice | ***Default:*** `"Reload the interface to apply the pending changes."` *(when the language is set to English)*
+	---@field position? reloadFramePositionData Table of parameters to call [Region:SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** `"TOPRIGHT"`, `-300`, `-80`
 
 		---@class reloadFramePositionData : positionData_base
-		---@field anchor? FramePoint ***Default:*** "TOPRIGHT"
+		---@field anchor? FramePoint ***Default:*** `"TOPRIGHT"`
 		---@field offset? reloadFrameOffsetData
 
 			---@class reloadFrameOffsetData
@@ -1123,19 +1125,19 @@ end
 ---Set up the [Addon Compartment](https://warcraft.wiki.gg/wiki/Addon_compartment#Automatic_registration) functionality by registering global functions for call
 ---***
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
----@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
----@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified **addon**'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
+---@param calls? addonCompartmentFunctions Functions to call wrapped in a table<ul><li>***Note:*** `AddonCompartmentFunc`, `AddonCompartmentFuncOnEnter` and/or `AddonCompartmentFuncOnLeave` must be set in the specified `addon`'s TOC file to enable this functionality, defining the names of the global functions to be set for call.</li></ul>
+---@param tooltip? addonCompartmentTooltipData|tooltipData List of text lines to be added to the tooltip of the addon compartment button displayed when mousing over it<ul><li>***Note:*** Both `AddonCompartmentFuncOnEnter` and `AddonCompartmentFuncOnLeave` must be set in the specified `addon`'s TOC file to enable this functionality, defining the names of the global functions to be overloaded.</li></ul>
 function wt.SetUpAddonCompartment(addon, calls, tooltip)
 
 	--| Parameters
 
 	---@class addonCompartmentFunctions # calls
-	---@field onClick? fun(addon: string, button: string, frame: Button) Called when the **addon**'s compartment button is clicked<ul><li>***Note:*** `AddonCompartmentFunc`, must be set in the specified **addon**'s TOC file, defining the name of the global function to be set for call.</li></ul>
-	---@field onEnter? fun(addon: string, frame: Button|Frame) Called when the **addon**'s compartment button is being hovered before the tooltip (if set) is shown<ul><li>***Note:*** `AddonCompartmentFuncOnEnter`, must be set in the specified **addon**'s TOC file, defining the name of the global function to be set for call.</li></ul>
-	---@field onLeave? fun(addon: string, frame: Button|Frame) Called when the **addon**'s compartment button is stopped being hovered before the tooltip (if set) is hidden<ul><li>***Note:*** `AddonCompartmentFuncOnLeave`, must be set in the specified **addon**'s TOC file, defining the name of the global function to be set for call.</li></ul>
+	---@field onClick? fun(addon: string, button: string, frame: Button) Called when the `addon`'s compartment button is clicked<ul><li>***Note:*** `AddonCompartmentFunc`, must be set in the specified `addon`'s TOC file, defining the name of the global function to be set for call.</li></ul>
+	---@field onEnter? fun(addon: string, frame: Button|Frame) Called when the `addon`'s compartment button is being hovered before the tooltip (if set) is shown<ul><li>***Note:*** `AddonCompartmentFuncOnEnter`, must be set in the specified `addon`'s TOC file, defining the name of the global function to be set for call.</li></ul>
+	---@field onLeave? fun(addon: string, frame: Button|Frame) Called when the `addon`'s compartment button is stopped being hovered before the tooltip (if set) is hidden<ul><li>***Note:*** `AddonCompartmentFuncOnLeave`, must be set in the specified `addon`'s TOC file, defining the name of the global function to be set for call.</li></ul>
 
 	---@class addonCompartmentTooltipData : tooltipFrameData, tooltipTextData # tooltip
-	---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
+	---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** [GetAddOnMetadata(`addon`, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
 end
 
 
@@ -1153,21 +1155,21 @@ function wt.RegisterChatCommands(addon, keywords, t)
 	--| Parameters
 
 	---@class chatCommandManagerCreationData # t
-	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified **keywords**
+	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
 	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
 	---@field defaultHandler? fun(commandManager: chatCommandManager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<hr><p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
 	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
 
 		---@class chatCommandData
 		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
-		---@field description? string|fun(): string Note to append to the first specified keyword and **command** in this command's line in the list printed out via the help command(s)
-		---@field handler? fun(manager: chatCommandManager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<hr><p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><hr><p>@*return* `result`? boolean|nil ― Call **[*value*].onSuccess** if true or **[*value*].onError** if false (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
-		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after **commands[*value*].handler** returns with true<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
-		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after **commands[*value*].handler** returns with false (not nil)<hr><p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
-		---@field onSuccess? fun(manager: chatCommandManager, ...: any) Function to call after **commands[*value*].handler** returns with true to handle a successful result (after **success** is printed)<hr><p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field onError? fun(manager: chatCommandManager, ...: any) Function to call after **commands[*value*].handler** returns with false (not nil) to handle a failed result (after **error** is printed)<hr><p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If **onHelp** is specified, it will still be called even if the command is hidden.</li></ul>
-		---@field help? boolean If true, call **chatCommandManager.help()` on trigger | ***Default:*** `false`
+		---@field description? string|fun(): string Note to append to the first specified keyword and `command` in this command's line in the list printed out via the help command(s)
+		---@field handler? fun(manager: chatCommandManager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<hr><p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><hr><p>@*return* `result`? boolean|nil ― Call <code>[<i>value</i>].onSuccess</code> if true or <code>[<i>value</i>].onError</code> if false (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
+		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after<code>commands[<i>value</i>].handler</code> returns with true<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
+		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after<code>commands[<i>value</i>].handler</code> returns with false (not nil)<hr><p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
+		---@field onSuccess? fun(manager: chatCommandManager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with true to handle a successful result (after `success` is printed)<hr><p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field onError? fun(manager: chatCommandManager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with false (not nil) to handle a failed result (after `error` is printed)<hr><p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If `onHelp` is specified, it will still be called even if the command is hidden.</li></ul>
+		---@field help? boolean If true, call `chatCommandManager.help()` on trigger | ***Default:*** `false`
 		---@field onHelp? function Function to call after a specified help command has been triggered or an invalid command is typed with the specified keywords
 
 		---@class chatCommandColors
@@ -1183,9 +1185,9 @@ function wt.RegisterChatCommands(addon, keywords, t)
 
 		---Print out a formatted chat message
 		---@param message string Message content
-		---@param title? string Title to start the message with | ***Default:*** *(**addon** title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of **addon**, a logo will also be included at the start of the message.</li></ul>
-		---@param contentColor? chatCommandColorNames|color ***Default:*** "content"
-		---@param titleColor? chatCommandColorNames|color ***Default:*** "title"
+		---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
+		---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
+		---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
 		function _.print(message, title, titleColor, contentColor) end
 
 			---@alias chatCommandColorNames
@@ -1218,8 +1220,8 @@ end
 ---@field changeHandlers table<string, function> List of pairs of addon-specific unique keys and change handler scripts
 
 	---@class settingsRule
-	---@field widget DataWidgetType Reference to the widget to be saved & loaded data to/from with defined **loadData** and **saveData** functions
-	---@field onChange? string[] List of keys referencing functions to be called after the value of **widget** was changed by the user or via settings datamanagement
+	---@field widget DataWidgetType Reference to the widget to be saved & loaded data to/from with defined `loadData` and `saveData` functions
+	---@field onChange? string[] List of keys referencing functions to be called after the value of `widget` was changed by the user or via settings datamanagement
 
 		---@alias DataWidgetType
 		---| datamanager
@@ -1247,10 +1249,10 @@ end
 		---| fontPanel
 
 ---Register the settings page to the Settings window if it wasn't already
---- - ***Note:*** No settings page will be registered if **WidgetToolsDB.lite** is true.
+--- - ***Note:*** No settings page will be registered if `WidgetToolsDB.lite` is true.
 ---@param page settingsPage Reference to the settings page to register to Settings
----@param parent? settingsPage Reference to the parent settings page to set **page** as a child category page of | ***Default:*** *set as a parent category page*
----@param icon? boolean If true, append the icon set for the settings page to its button title in the AddOns list of the Settings window as well | ***Default:*** true if **parent** == nil
+---@param parent? settingsPage Reference to the parent settings page to set `page` as a child category page of | ***Default:*** *set as a parent category page*
+---@param icon? boolean If true, append the icon set for the settings page to its button title in the AddOns list of the Settings window as well | ***Default:*** `true` if `parent == nil`
 function wt.RegisterSettingsPage(page, parent, icon) end
 
 --[ Data Management ]
@@ -1260,49 +1262,49 @@ function wt.RegisterSettingsPage(page, parent, icon) end
 ---@param widget DataWidgetType Reference to the widget to be saved & loaded data to/from with defined `widget.loadData()` & `widget.saveData()` functions
 ---@param t settingsData Optional parameters
 ---***
----@return integer|nil index The index for the new entry for **widget** where it ended up in the settings datamanagement registry | ***Default:*** `nil`
+---@return integer|nil index The index for the new entry for `widget` where it ended up in the settings datamanagement registry | ***Default:*** `nil`
 function wt.AddSettingsDataManagementEntry(widget, t) end
 
----Load all data from storage to the widgets specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].loadData(...)` for each
+---Load all data from storage to the widgets specified in the settings datamanagement registry in the specified `category` under the specified `key` by calling `datamanager.loadData(...)` for each
 ---***
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
----@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** false
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
+---@param handleChanges? boolean If true, also call all registered change handlers | ***Default:*** `false`
 function wt.LoadSettingsData(category, key, handleChanges) end
 
----Save all data from the widgets to storage specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].saveData(...)` for each
+---Save all data from the widgets to storage specified in the settings datamanagement registry in the specified `category` under the specified `key` by calling `datamanager.saveData(...)` for each
 ---***
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.SaveSettingsData(category, key) end
 
----Call all **onChange** handlers registered in the settings datamanagement registry in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---Call all `onChange` handlers registered in the settings datamanagement registry in the specified `category` under the specified `key`
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.ApplySettingsData(category, key) end
 
----Set a data snapshot for each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** calling **[*widget*].revertData()` for each
+---Set a data snapshot for each widget specified in the settings datamanagement registry in the specified `category` under the specified `key` calling `datamanager.revertData()` for each
 ---***
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.SnapshotSettingsData(category, key) end
 
----Set & load the stored data managed by each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].revertData()` for each
+---Set & load the stored data managed by each widget specified in the settings datamanagement registry in the specified `category` under the specified `key` by calling `datamanager.revertData()` for each
 ---***
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.RevertSettingsData(category, key) end
 
----Set & load the default data managed by each widget specified in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].resetData()` for each
+---Set & load the default data managed by each widget specified in the settings datamanagement registry in the specified `category` under the specified `key` by calling `datamanager.resetData()` for each
 ---***
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.ResetSettingsData(category, key) end
 
----Handle changes for widgets in the settings datamanagement registry in the specified **category** under the specified **key** by calling **[*widget*].onChange()` for each
----@param index integer Filter the call of change handlers to only include the list under the specified index not each list in the specified **category** under the specified **key**
----@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(global rule)*
----@param key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
+---Handle changes for widgets in the settings datamanagement registry in the specified `category` under the specified `key` by calling registered `onChange` handlers for each
+---@param index integer Filter the call of change handlers to only include the list under the specified index not each list in the specified `category` under the specified `key`
+---@param category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(global rule)*
+---@param key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
 function wt.HandleWidgetChanges(index, category, key) end
 
 
@@ -1314,19 +1316,19 @@ function wt.HandleWidgetChanges(index, category, key) end
 ---***
 ---@param t? panelCreationData Optional parameters
 ---***
----@return panel|Frame panel Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame) overloaded with custom fields or none if **WidgetToolsDB.lite** is true**
+---@return panel|Frame panel Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame) overloaded with custom fields or none if `WidgetToolsDB.lite == true`
 function wt.CreatePanel(t)
 
 	--| Parameters
 
 	---@class panelCreationData : labeledChildObject, describableObject, positionableScreenObject, arrangeableObject, visibleObject_base, backdropData, liteObject # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Panel"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_panel|sizeData
 	---@field background? backdropBackgroundData_panel Table containing the parameters used for the background
 	---@field border? backdropBorderData_panel Table containing the parameters used for the border
 	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the panel and the functions to assign as event handlers called when they trigger
 	---@field arrangement? arrangementRules_panel If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
-	---@field initialize? fun(container?: panel, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? panel ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+	---@field initialize? fun(container?: panel, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? panel ― Reference to the frame to be set as the parent for child objects created during initialization (nil if `WidgetToolsDB.lite` is true)</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 		---@class labeledChildObject : titledChildObject, labeledObject_base
 
@@ -1339,10 +1341,10 @@ function wt.CreatePanel(t)
 					---@field parent? AnyFrameObject Reference to the frame to set as the parent
 
 					---@class namedObject_base
-					---@field name? string Unique string used to set the frame name | ***Default:*** "Frame"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+					---@field name? string Unique string used to set the frame name | ***Default:*** `"Frame"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 
 				---@class titledObject_base
-				---@field title? string Text to be displayed as the title | ***Default:*** **t.name**
+				---@field title? string Text to be displayed as the title | ***Default:*** `t.name`
 
 			---@class labeledObject_base
 			---@field label? boolean Whether to show the title textline or not | ***Default:*** `true`
@@ -1351,11 +1353,11 @@ function wt.CreatePanel(t)
 		---@field description? string Text to be displayed as the subtitle or description | ***Default:*** *no description textline shown*
 
 		---@class liteObject
-		---@field lite? boolean If false, overrule **WidgetToolsDB.lite** and use full GUI functionality | ***Default:*** `true`
+		---@field lite? boolean If false, overrule `WidgetToolsDB.lite` and use full GUI functionality | ***Default:*** `true`
 
 		---@class sizeData_panel
-		---@field w? number Width | ***Default:*** **t.parent** and *width of the parent frame* - 20 or 0
-		---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and **t.arrangeContent.resize** is true, the height will be set dynamically based on the calculated height of the content.</li></ul>
+		---@field w? number Width | ***Default:*** `t.parent` and *width of the parent frame* - 20 or 0
+		---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is true, the height will be set dynamically based on the calculated height of the content.</li></ul>
 
 		---@class backdropBackgroundData_panel
 		---@field texture? backdropBackgroundTextureData_panel Parameters used for setting the background texture
@@ -1372,10 +1374,10 @@ function wt.CreatePanel(t)
 				---@field b? number Bottom | ***Default:*** 4
 
 			---@class backgroundColorData_panel
-			---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** 0.175
-			---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** 0.175
-			---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** 0.175
-			---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 0.65
+			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
+			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
+			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.65
 
 		---@class backdropBorderData_panel
 		---@field texture? backdropBorderTextureData_panel Parameters used for setting the border texture
@@ -1385,10 +1387,10 @@ function wt.CreatePanel(t)
 			---@field width? number Width of the backdrop edge | ***Default:*** 16
 
 			---@class borderColorData_panel
-			---@field r? number Red | ***Range:*** (0, 1) | ***Default:*** 0.75
-			---@field g? number Green | ***Range:*** (0, 1) | ***Default:*** 0.75
-			---@field b? number Blue | ***Range:*** (0, 1) | ***Default:*** 0.75
-			---@field a? number Opacity | ***Range:*** (0, 1) | ***Default:*** 0.5
+			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
+			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
+			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.5
 
 		---@class arrangementRules_panel : arrangementRules
 		---@field margins? spacingData_panel Inset the content inside the container frame by the specified amount on each side
@@ -1397,7 +1399,7 @@ function wt.CreatePanel(t)
 		---@field resize? boolean Set the height of the container frame to match the space taken up by the arranged content (including margins) | ***Default:*** `true`
 
 			---@class spacingData_panel : spacingData
-			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** **t.description** and 30 or 12
+			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** `t.description` and 30 or 12
 
 	--| Returns
 
@@ -1428,9 +1430,9 @@ function wt.CreateContextMenu(t)
 
 		---@class contextMenuTriggerData
 		---@field frame AnyFrameObject? Reference to the frame to set as a trigger | ***Default:*** UIParent *(opened at cursor position)*
-		---@field rightClick? boolean If true, create and open the context menu via a right-click mouse click event on **frame** | ***Default:*** `true`
-		---@field leftClick? boolean If true, create and open the context menu via a left-click mouse click event on **frame** | ***Default:*** `false`
-		---@field hover? boolean If true, create and open the context menu via a mouse hover event on **frame** | ***Default:*** `false`
+		---@field rightClick? boolean If true, create and open the context menu via a right-click mouse click event on `frame` | ***Default:*** `true`
+		---@field leftClick? boolean If true, create and open the context menu via a left-click mouse click event on `frame` | ***Default:*** `false`
+		---@field hover? boolean If true, create and open the context menu via a mouse hover event on `frame` | ***Default:*** `false`
 		---@field condition? fun(action: "click"|"hover"|nil): boolean Function to call and evaluate before creating and opening the menu: if the returned value is not true, don't open the menu
 
 	--| Returns
@@ -1441,7 +1443,7 @@ function wt.CreateContextMenu(t)
 
 		---Open the context menu
 		---***
-		---@param trigger? integer Index of the trigger to activate to have the menu opened defined in **t.triggers** | ***Default:*** 1
+		---@param trigger? integer Index of the trigger to activate to have the menu opened defined in `t.triggers` | ***Default:*** `1`
 		---@param action "click"|"hover"|nil The action that prompted the menu to be opened | ***Default:*** *no action:* `nil`
 		function _.open(trigger, action) end
 
@@ -1460,14 +1462,14 @@ function wt.CreatePopupMenu(t)
 
 	---@class popupMenuCreationData : labeledChildObject, tooltipDescribableWidget, positionableScreenObject, arrangeableObject, visibleObject_base, contextMenuCreationData_base # t
 	---@field parent? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [Region:SetParent(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
-	---@field name? string Unique string used to set the frame name | ***Default:*** "PopupMenu"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"PopupMenu"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_menuButton|sizeData
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the **t.onEvent** table.</li></ul>
+	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent)" handlers specified here will not be set. Handler functions for specific global events should be specified in the `t.onEvent` table.</li></ul>
 	---@field onEvent? table<WowEvent, fun(self: Frame, ...: any)> Table of key, value pairs that holds global event tags & their corresponding event handlers to be registered for the frame<ul><li>***Note:*** You may want to include [Frame:UnregisterEvent(...)](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent the handler function to be executed again.</li><li>***Example:*** "[ADDON_LOADED](https://warcraft.wiki.gg/wiki/ADDON_LOADED)" is fired repeatedly after each addon. To call the handler only after one specified addon is loaded, you may check the parameter the handler is called with. It's a good idea to unregister the event to prevent repeated calling for every other addon after the specified one has been loaded already.<pre>```function(self, addon)```<br>&#9;```if addon ~= "AddonNameSpace" then return end --Replace "AddonNameSpace" with the namespace of the specific addon to watch```<br>&#9;```self:UnregisterEvent("ADDON_LOADED")```<br>&#9;```--Do something```<br>```end```</pre></li></ul>
 
 		---@class sizeData_menuButton
-		---@field w? number Width | ***Default:*** 180
-		---@field h? number Height | ***Default:*** 26
+		---@field w? number Width | ***Default:*** `18`0
+		---@field h? number Height | ***Default:*** `26`
 
 	return {}, {}
 end
@@ -1488,7 +1490,7 @@ function wt.CreateSubmenu(menu, t)
 	---@field rootDescription ElementMenuDescriptionProxy Container of menu elements (such as titles, widgets, dividers or other frames)
 
 	---@class contextSubmenuCreationData : contextMenuCreationData_base # t
-	---@field title? string Text to be shown on the opener button item representing the submenu within the parent menu | ***Default:*** "Submenu"
+	---@field title? string Text to be shown on the opener button item representing the submenu within the parent menu | ***Default:*** `"Submenu"`
 end
 
 ---Create a textline item for an already existing Blizzard context menu
@@ -1502,7 +1504,7 @@ function wt.CreateMenuTextline(menu, t)
 	--| Parameters
 
 	---@class menuTextlineCreationData : queuedMenuItem # t
-	---@field text? string Text to be shown on the textline item within the parent menu | ***Default:*** "Title"
+	---@field text? string Text to be shown on the textline item within the parent menu | ***Default:*** `"Title"`
 
 		---Optional parameters
 		---@class queuedMenuItem
@@ -1536,7 +1538,7 @@ function wt.CreateMenuButton(menu, t)
 	--| Parameters
 
 	---@class menuButtonCreationData # t
-	---@field title? string Text to be shown on the button item within the parent menu | ***Default:*** "Button"
+	---@field title? string Text to be shown on the button item within the parent menu | ***Default:*** `"Button"`
 	---@field action? fun(...: any) Function to call when the button is clicked in the menu<hr><p>@*param* `...` any</p>
 end
 
@@ -1561,29 +1563,27 @@ function wt.CreateWidget(t)
 
 			---@class dependencyRule
 			---@field frame AnyFrameObject|binary|selector|multiselector|specialSelector|textual|numeric Tie the state of the widget to the evaluation of the current value of the frame specified here
-			---@field evaluate? fun(value?: any): evaluation: boolean Call this function to evaluate the current value of the specified frame, enabling the dependant widget when true, or disabling it when false is returned | ***Default:*** *no evaluation, only for checkboxes*<ul><li>***Note:*** **evaluate** must be defined if the [FrameType](https://warcraft.wiki.gg/wiki/API_CreateFrame#Frame_types) if **frame** is not "CheckButton".</li><li>***Overloads:***</li><ul><li>function(`value`: boolean) -> `evaluation`: boolean — If **frame** is recognized as a checkbox</li><li>function(`value`: string) -> `evaluation`: boolean — If **frame** is recognized as an editbox</li><li>function(`value`: number) -> `evaluation`: boolean — If **frame** is recognized as a slider</li><li>function(`value`: integer) -> `evaluation`: boolean — If **frame** is recognized as a dropdown or selector</li><li>function(`value`: boolean[]) -> `evaluation`: boolean — If **frame** is recognized as multiselector</li><li>function(`value`: AnchorPoint|JustifyH|JustifyV|FrameStrata) -> `evaluation`: boolean — If **frame** is recognized as a special selector</li><li>function(`value`: nil) -> `evaluation`: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*</li></ul></ul>
+			---@field evaluate? fun(value?: any): evaluation: boolean Call this function to evaluate the current value of the specified frame, enabling the dependant widget when true, or disabling it when false is returned | ***Default:*** *no evaluation, only for checkboxes*<ul><li>***Note:*** `evaluate` must be defined if the [FrameType](https://warcraft.wiki.gg/wiki/API_CreateFrame#Frame_types) if `frame` is not "CheckButton".</li><li>***Overloads:***</li><ul><li>function(`value`: boolean) -> `evaluation`: boolean — If `frame` is recognized as a checkbox</li><li>function(`value`: string) -> `evaluation`: boolean — If `frame` is recognized as an editbox</li><li>function(`value`: number) -> `evaluation`: boolean — If `frame` is recognized as a slider</li><li>function(`value`: integer) -> `evaluation`: boolean — If `frame` is recognized as a dropdown or selector</li><li>function(`value`: boolean[]) -> `evaluation`: boolean — If `frame` is recognized as multiselector</li><li>function(`value`: AnchorPoint|JustifyH|JustifyV|FrameStrata) -> `evaluation`: boolean — If `frame` is recognized as a special selector</li><li>function(`value`: nil) -> `evaluation`: boolean — In any other case *(could be used to add a unique rule tied to unrecognized frame types)*</li></ul></ul>
 
 		---@class widget_listeners
 		---@field enabled? widget_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `widget.setEnabled(...)` was called
-		---@field _? widget_listener_any[] Ordered list of functions to call when a custom event is invoked
+		---@field [string]? widget_listener_any[] Ordered list of functions to call when a custom event is invoked
 
 			---@class widget_listener_enabled : eventHandlerIndex
 			---@field handler widget_handler_enabled Handler function to register for call
 
 				---@class eventHandlerIndex
-				---@field callIndex? integer Set when to call **handler** in the execution order | ***Default:*** *placed at the end of the current list*
+				---@field callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *placed at the end of the current list*
 
 				---@alias widget_handler_enabled
 				---| fun(self: widget, state: boolean) Called when an "enabled" event is invoked after `widget.setEnabled(...)` was called<hr><p>@*param* `self` widget ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class widget_listener_any : eventTag, eventHandlerIndex
+			---@class widget_listener_any : eventHandlerIndex
 			---@field handler widget_handler_any Handler function to register for call
 
-				---@class eventTag
-				---@field event string Custom event tag
-
+				---Handler function to call on trigger
 				---@alias widget_handler_any
-			---| fun(self: widget, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` widget ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: widget, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` widget ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
@@ -1617,30 +1617,23 @@ function wt.CreateWidget(t)
 
 		--| Events
 
+		---Add a new custom widget event tag (not yet assigned to this widget) to be to assign and call listeners for by invoking
+		---***
+		---@param event string Unique custom event tag
+		function _.addEvent(event) end
+
 		---@class widget_invoke
-		local invoke = {}
-
-			--Invoke an "enabled" event calling registered listeners
-			function invoke.enabled() end
-
-			---Invoke a custom event calling registered listeners
-			---@param event string Custom event tag
-			---@param ... any Any number of leftover arguments passed to listeners
-			function invoke._(event, ...) end
+		---@field enabled function Invoke an "enabled" event to notify registered listeners and call handlers
+		---@field [string] fun(...) Invoke a custom event to notify registered listeners and call handlers, passing arguments along
 
 		---@class widget_setListener
+		---@field [string] fun(handler: widget_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "enabled" widget event
 			---@param handler widget_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler widget_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 		--| State
 
@@ -1657,205 +1650,7 @@ function wt.CreateWidget(t)
 	return _
 end
 
----Create a non-GUI base widget with generic datamanagement logic
----***
----@param t? datamanagerCreationData Optional parameters
----@param widget? widget Reference to an already existing base widget to mutate into a datamanager instead of creating a new one
----***
----@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a table
-function wt.CreateDatamanager(t, widget)
-
-	--| Parameters
-
-	---@class datamanagerCreationData : widgetCreationData, settingsWidget # t
-	---@field listeners? datamanager_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** `false`</p>
-	---@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
-	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid
-	---@field default? any Default value of the widget | ***Default:*** `nil`
-
-		---@class settingsWidget
-		---@field dataManagement? settingsData If set, register this widget to settings datamanagement for batched data saving & loading and handling data changes
-		---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`<ul><li>***Note:*** Any unsaved data will be saved when <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> is executed.</li></ul>
-
-			---@class settingsData
-			---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** "WidgetTools" *(register as a global rule)*
-			---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "" *(category-wide rule)*
-			---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *placed at the end of the current list*
-			---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings datamanagement<ul><li>**[*key*]**? string|integer ― A unique string appended to **category** to point to a newly defined function to be added to settings datamanagement or just the index of the next function name | ***Default:*** *next assigned index*</li><li>**[*value*]** function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings datamanagement. Functions registered under duplicate keys are overwritten.</li></ul></ul>
-
-		---@class datamanager_listeners : widget_listeners
-		---@field loaded? datamanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? datamanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? datamanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager.setValue(...)` was called
-		---@field enabled? datamanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called
-		---@field _? datamanager_listener_any[] Ordered list of functions to call when a custom event is invoked
-
-			---@class datamanager_listener_loaded : eventHandlerIndex
-			---@field handler datamanager_handler_loaded Handler function to register for call
-
-				---@alias datamanager_handler_loaded
-				---| fun(self: datamanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by `t.getData()` and it was loaded to the widget</p>
-
-			---@class datamanager_listener_saved : eventHandlerIndex
-			---@field handler datamanager_handler_saved Handler function to register for call
-
-				---@alias datamanager_handler_saved
-				---| fun(self: datamanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
-
-			---@class datamanager_listener_changed : eventHandlerIndex
-			---@field handler datamanager_handler_changed Handler function to register for call
-
-				---@alias datamanager_handler_changed
-				---| fun(self: datamanager, state: boolean, user: boolean) Called when a "changed" event is invoked after `datamanager.setValue(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class datamanager_listener_enabled : eventHandlerIndex
-			---@field handler datamanager_handler_enabled Handler function to register for call
-
-				---@alias datamanager_handler_enabled
-				---| fun(self: datamanager, state: boolean) Called when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
-
-			---@class datamanager_listener_any : eventTag, eventHandlerIndex
-			---@field handler datamanager_handler_any Handler function to register for call
-
-				---@alias datamanager_handler_any
-			---| fun(self: datamanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
-
-	--| Returns
-
-	---@class datamanager : widget
-	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
-	---@field setListener datamanager_setListener Hook a handler function as a listener for a widget event
-	local _ = {}
-
-		---Validate a value to be accepted by the widget
-		---@param value? any
-		---***
-		---@return any? ***Default:*** *current value*
-		function _.verify(value) end
-
-		---Turn a value into a formatted string
-		---***
-		---@param value? any ***Default:*** *current value*
-		---@return string
-		function _.format(value) return "" end
-
-		---Returns the current value of the widget
-		---@return any
-		function _.getValue() end
-
-		---Verify and set the value of the widget
-		---***
-		---@param value? any
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _.setValue(value, user, silent) end
-
-		---Read the data from storage then verify and load it to the widget
-		---***
-		---@param handleChanges? any If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.loadData(handleChanges, silent) end
-
-		---Verify and save the provided data or the current value of the widget to storage via `t.saveData(...)`
-		---***
-		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(data, silent) end
-
-		---Get the currently stored data via `t.getData()`
-		---@return any
-		function _.getData() end
-
-		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
-		---***
-		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(data, handleChanges, silent) end
-
-		---Get the currently set default value
-		---@return any
-		function _.getDefault() end
-
-		---Set the default value
-		---@param value? boolean ***Default:*** *current default value*
-		function _.setDefault(value) end
-
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.resetData(handleChanges, silent) end
-
-		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via `datamanager.revertData()`
-		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
-		function _.snapshotData(stored) end
-
-		---Set and load the stored data managed by the widget to the last saved data snapshot set via `datamanager.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
-		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.revertData(handleChanges, silent) end
-
-		--| Type
-
-		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, }
-		function _.getTypes() return {} end
-
-			---@alias typename_datamanager
-			---| "Datamanager"
-
-		--| Events
-
-		---@class datamanager_invoke : widget_invoke
-		local invoke = {}
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param success boolean
-			function invoke.loaded(success) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param success boolean
-			function invoke.saved(success) end
-
-			---Invoke a "changed" event calling registered listeners
-			---@param user boolean
-			function invoke.changed(user) end
-
-		---@class datamanager_setListener
-		local setListener = {}
-
-			---Register a listener for a "loaded" widget event
-			---@param handler datamanager_handler_loaded Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.loaded(handler, callIndex) end
-
-			---Register a listener for a "saved" widget event
-			---@param handler datamanager_handler_saved Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.saved(handler, callIndex) end
-
-			---Register a listener for a "changed" widget event
-			---@param handler datamanager_handler_changed Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.changed(handler, callIndex) end
-
-			---Register a listener for a "enabled" widget event
-			---@param handler datamanager_handler_enabled Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler datamanager_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
-	return _
-end
-
-
---[[ ACTION ]]
+--[ Action ]
 
 ---Create a non-GUI action widget base
 ---***
@@ -1888,7 +1683,7 @@ function wt.CreateAction(t, widget)
 				---@alias action_handler_enabled
 			---| fun(self: action, state: boolean) Called when an "enabled" event is invoked after `action.setEnabled(...)` was called<hr><p>@*param* `self` action ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class action_listener_any : eventTag, eventHandlerIndex
+			---@class action_listener_any : eventHandlerIndex
 			---@field handler action_handler_any Handler function to register for call
 
 				---@alias action_handler_any
@@ -1932,13 +1727,10 @@ function wt.CreateAction(t, widget)
 		--| Events
 
 		---@class action_invoke : widget_invoke
-		local invoke = {}
-
-			---Invoke a "triggered" event calling registered listeners
-			---@param user boolean
-			function invoke.triggered(user) end
+		---@field triggered fun(user: boolean) Invoke a "triggered" event to notify registered listeners and call handlers
 
 		---@class action_setListener : widget_setListener
+		---@field [string] fun(handler: action_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "triggered" widget event
@@ -1950,12 +1742,6 @@ function wt.CreateAction(t, widget)
 			---@param handler action_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler action_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -1973,21 +1759,21 @@ function wt.CreateButton(t, action)
 	--| Parameters
 
 	---@class actionButtonCreationData : actionCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Button"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Button"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field titleOffset? offsetData Offset the position of the label of the button
 	---@field size? sizeData_button|sizeData
 	---@field font? labelFontOptions_highlight List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field listeners? button_listeners|action_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** **t.action** will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
+	---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** `t.action` will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
 
 		---@class sizeData_button
 	---@field w? number Width | ***Default:*** 80
-	---@field h? number Height | ***Default:*** 22
+	---@field h? number Height | ***Default:*** `22`
 
 		---@class labelFontOptions_highlight
-		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** "GameFontNormal"
-		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is being hovered | ***Default:*** "GameFontHighlight"
-		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** "GameFontDisable"
+		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontNormal"`
+		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is being hovered | ***Default:*** `"GameFontHighlight"`
+		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** `"GameFontDisable"`
 
 		---@class button_listeners : action_listeners
 		---@field trigger? button_listener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after `button.trigger(...)` was called
@@ -2006,7 +1792,7 @@ function wt.CreateButton(t, action)
 				---@alias button_handler_enabled
 			---| fun(self: button, state: boolean) Called when an "enabled" event is invoked after `button.setEnabled(...)` was called<hr><p>@*param* `self` button ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class button_listener_any : eventTag, eventHandlerIndex
+			---@class button_listener_any : eventHandlerIndex
 			---@field handler button_handler_any Handler function to register for call
 
 				---@alias button_handler_any
@@ -2033,6 +1819,7 @@ function wt.CreateButton(t, action)
 		--| Events
 
 		---@class button_setListener : action_setListener
+		---@field [string] fun(handler: button_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "triggered" widget event
@@ -2044,12 +1831,6 @@ function wt.CreateButton(t, action)
 			---@param handler button_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler button_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -2070,13 +1851,13 @@ function wt.CreateCustomButton(t, action)
 
 		---@class customizableObject
 		---@field backdrop? backdropData Parameters to set the custom backdrop with
-		---@field backdropUpdates? backdropUpdateRule[] Table of key, value pairs containing the list of events to set listeners for assigned to **t.backdropUpdates[*key*].frame**, linking backdrop changes to it, modifying the specified parameters on trigger
-		--- - ***Note:*** All update rules are additive, calling <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> multiple times with **t.backdropUpdates** specified *will not* override previously set update rules. The base **backdrop** values used for these old rules *will not* change by setting a new backdrop via <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> either!
+		---@field backdropUpdates? backdropUpdateRule[] Table of key, value pairs containing the list of events to set listeners for assigned to <code>t.backdropUpdates[<i>key</i>].frame</code>, linking backdrop changes to it, modifying the specified parameters on trigger
+		--- - ***Note:*** All update rules are additive, calling <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> multiple times with `t.backdropUpdates` specified *will not* override previously set update rules. The base `backdrop` values used for these old rules *will not* change by setting a new backdrop via <code><i>WidgetToolbox</i>.SetBackdrop(...)</code> either!
 
 		---@class labelFontOptions_small_highlight
-		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** "GameFontNormalSmall"
-		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is being hovered | ***Default:*** "GameFontHighlightSmall"
-		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** "GameFontDisableSmall"
+		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontNormalSmall"`
+		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is being hovered | ***Default:*** `"GameFontHighlightSmall"`
+		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** `"GameFontDisableSmall"`
 
 		---@class customButton_listeners : action_listeners
 		---@field trigger? customButton_listener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after `customButton.trigger(...)` was called
@@ -2095,7 +1876,7 @@ function wt.CreateCustomButton(t, action)
 				---@alias customButton_handler_enabled
 			---| fun(self: customButton, state: boolean) Called when an "enabled" event is invoked after `customButton.setEnabled(...)` was called<hr><p>@*param* `self` customButton ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class customButton_listener_any : eventTag, eventHandlerIndex
+			---@class customButton_listener_any : eventHandlerIndex
 			---@field handler customButton_handler_any Handler function to register for call
 
 				---@alias customButton_handler_any
@@ -2120,6 +1901,7 @@ function wt.CreateCustomButton(t, action)
 		--| Events
 
 		---@class customButton_setListener : action_setListener
+		---@field [string] fun(handler: customButton_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "triggered" widget event
@@ -2132,17 +1914,206 @@ function wt.CreateCustomButton(t, action)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler customButton_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
 
---[[ BINARY ]]
+--[[ DATAMANAGER ]]
+
+---Create a non-GUI base widget with generic datamanagement logic
+---***
+---@param t? datamanagerCreationData Optional parameters
+---@param widget? widget Reference to an already existing base widget to mutate into a datamanager instead of creating a new one
+---***
+---@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a table
+function wt.CreateDatamanager(t, widget)
+
+	--| Parameters
+
+		---Called to (if needed, modify and) load the widget data from storage
+		---***
+		---@return any? data ***Default:*** `nil`
+		---@return boolean? success ***Default:*** `true`
+		local function getData() end ---@cast getData +nil
+
+		---Called to (if needed, modify and) save the widget data to storage
+		---***
+		---@param data? any ***Default:*** `nil`
+		---***
+		---@return boolean? success ***Default:*** `true`
+		local function saveData(data) end ---@cast saveData +nil
+
+	---Optional parameters
+	---@class datamanagerCreationData : widgetCreationData
+	---@field listeners? datamanager_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field dataManagement? settingsData If set, register this widget to settings datamanagement for batched data saving & loading and handling data changes
+	---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`<ul><li>***Note:*** Any unsaved data will be saved when <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> is executed.</li></ul>
+	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid
+	---@field default? any Default value of the widget | ***Default:*** `nil`
+	t = { getData = getData, saveData = saveData, }
+
+		---@class settingsData
+		---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `"WidgetTools"` *(register as a global rule)*
+		---@field key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
+		---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *placed at the end of the current list*
+		---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings datamanagement<ul><li><code>[<i>key</i>]</code>? string|integer ― A unique string appended to `category` to point to a newly defined function to be added to settings datamanagement or just the index of the next function name | ***Default:*** *next assigned index*</li><li><code>[<i>value</i>]</code> function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings datamanagement. Functions registered under duplicate keys are overwritten.</li></ul></ul>
+
+		---@class datamanager_listeners : widget_listeners
+		---@field loaded? datamanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? datamanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? datamanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager.setValue(...)` was called
+		---@field enabled? datamanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called
+		---@field _? datamanager_listener_any[] Ordered list of functions to call when a custom event is invoked
+
+			---@class datamanager_listener_loaded : eventHandlerIndex
+			---@field handler datamanager_handler_loaded Handler function to register for call
+
+				---@alias datamanager_handler_loaded
+				---| fun(self: datamanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by `t.getData()` and it was loaded to the widget</p>
+
+			---@class datamanager_listener_saved : eventHandlerIndex
+			---@field handler datamanager_handler_saved Handler function to register for call
+
+				---@alias datamanager_handler_saved
+				---| fun(self: datamanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
+
+			---@class datamanager_listener_changed : eventHandlerIndex
+			---@field handler datamanager_handler_changed Handler function to register for call
+
+				---@alias datamanager_handler_changed
+				---| fun(self: datamanager, state: boolean, user: boolean) Called when a "changed" event is invoked after `datamanager.setValue(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class datamanager_listener_enabled : eventHandlerIndex
+			---@field handler datamanager_handler_enabled Handler function to register for call
+
+				---@alias datamanager_handler_enabled
+				---| fun(self: datamanager, state: boolean) Called when an "enabled" event is invoked after `datamanager.setEnabled(...)` was called<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
+
+			---@class datamanager_listener_any : eventHandlerIndex
+			---@field handler datamanager_handler_any Handler function to register for call
+
+				---@alias datamanager_handler_any
+			---| fun(self: datamanager, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` datamanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class datamanager : widget
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field setListener datamanager_setListener Hook a handler function as a listener for a widget event
+	local _ = {}
+
+		---Validate a value to be accepted by the widget
+		---@param value? any
+		---***
+		---@return any # ***Default:*** `nil`
+		function _.verify(value) end
+
+		---Turn a value into a formatted string
+		---***
+		---@param value? any ***Default:*** *current value*
+		---@return string
+		function _.format(value) return "" end
+
+		---Returns the current value of the widget
+		---@return any
+		function _.getValue() end
+
+		---Verify and set the value of the widget
+		---***
+		---@param value? any
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
+		function _.setValue(value, user, silent) end
+
+		---Read the data from storage then verify and load it to the widget
+		---***
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _.loadData(handleChanges, silent) end
+
+		---Verify and save the provided data or the current value of the widget to storage via `t.saveData(...)`
+		---***
+		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
+		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
+		function _.saveData(data, silent) end
+
+		---Get the currently stored data via `t.getData()`
+		---@return any
+		function _.getData() end
+
+		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
+		---***
+		---@param data? any Data to be saved | ***Default:*** *the currently set value of the widget*
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.setData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return any
+		function _.getDefault() end
+
+		---Set the default value
+		---@param value? boolean ***Default:*** *current default value*
+		function _.setDefault(value) end
+
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.resetData(handleChanges, silent) end
+
+		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value via `datamanager.revertData()`
+		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
+		function _.snapshotData(stored) end
+
+		---Set and load the stored data managed by the widget to the last saved data snapshot set via `datamanager.snapshotData()`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _.revertData(handleChanges, silent) end
+
+		--| Type
+
+		---Returns the type list of this widget
+		---@return { [typename_widget]: true, [typename_datamanager]: true, }
+		function _.getTypes() return {} end
+
+			---@alias typename_datamanager
+			---| "Datamanager"
+
+		--| Events
+
+		---@class datamanager_invoke : widget_invoke
+		---@field loaded  fun(success: boolean) Invoke a "loaded" event to notify registered listeners and call handlers
+		---@field saved  fun(success: boolean) Invoke a "saved" event to notify registered listeners and call handlers
+		---@field changed fun(user: boolean) Invoke a "changed" event to notify registered listeners and call handlers
+
+		---@class datamanager_setListener : widget_setListener
+		---@field [string] fun(handler: datamanager_handler_any, callIndex?: integer) Register a listener for a custom widget event
+		local setListener = {}
+
+			---Register a listener for a "loaded" widget event
+			---@param handler datamanager_handler_loaded Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler datamanager_handler_saved Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler datamanager_handler_changed Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(handler, callIndex) end
+
+			---Register a listener for a "enabled" widget event
+			---@param handler datamanager_handler_enabled Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.enabled(handler, callIndex) end
+
+	return _
+end
+
+--[ Binary ]
 
 ---Create a non-GUI binary base widget with boolean datamanagement logic
 ---***
@@ -2158,14 +2129,13 @@ function wt.CreateBinary(t, datamanager)
 	---@field listeners? binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): state: boolean|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `state` boolean|nil | ***Default:*** `false`</p>
 	---@field saveData? fun(state: boolean) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `state` boolean</p>
-	---@field value? boolean The starting state of the widget to set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid
+	---@field value? boolean The starting state of the widget to set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid
 	---@field default? boolean Default value of the widget | ***Default:*** `false`
 
 		---@class binary_listeners : datamanager_listeners
 		---@field loaded? binary_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? binary_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? binary_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `binary.setValue(...)` was called
-		---@field flipped? binary_listener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after `binary.setState(...)` was called
+		---@field changed? binary_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `binary.setState(...)` was called
 		---@field enabled? binary_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `binary.setEnabled(...)` was called
 		---@field _? binary_listener_any[] Ordered list of functions to call when a custom event is invoked
 
@@ -2185,13 +2155,7 @@ function wt.CreateBinary(t, datamanager)
 			---@field handler binary_handler_changed Handler function to register for call
 
 				---@alias binary_handler_changed
-				---| fun(self: binary, state: boolean, user: boolean) Called when a "changed" event is invoked after `binary.setValue(...)` was called<hr><p>@*param* `self` binary ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class binary_listener_flipped : eventHandlerIndex
-			---@field handler binary_handler_flipped Handler function to register for call
-
-				---@alias binary_handler_flipped
-				---| fun(self: binary, state: boolean, user: boolean) Called when a "flipped" event is invoked after `binary.setState(...)` was called<hr><p>@*param* `self` binary ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: binary, state: boolean, user: boolean) Called when a "changed" event is invoked after `binary.setState(...)` was called<hr><p>@*param* `self` binary ― Reference to the binary widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class binary_listener_enabled : eventHandlerIndex
 			---@field handler binary_handler_enabled Handler function to register for call
@@ -2199,7 +2163,7 @@ function wt.CreateBinary(t, datamanager)
 				---@alias binary_handler_enabled
 			---| fun(self: binary, state: boolean) Called when an "enabled" event is invoked after `binary.setEnabled(...)` was called<hr><p>@*param* `self` binary ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class binary_listener_any : eventTag, eventHandlerIndex
+			---@class binary_listener_any : eventHandlerIndex
 			---@field handler binary_handler_any Handler function to register for call
 
 				---@alias binary_handler_any
@@ -2208,7 +2172,7 @@ function wt.CreateBinary(t, datamanager)
 	--| Returns
 
 	---@class binary : datamanager
-	---@field invoke binary_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener binary_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
@@ -2223,33 +2187,60 @@ function wt.CreateBinary(t, datamanager)
 
 		--| Events
 
-		---@class binary_invoke : datamanager_invoke
-		local invoke = {}
-
-			---Invoke a "flipped" event calling registered listeners
-			---@param user boolean
-			function invoke.flipped(user) end
-
 		---@class binary_setListener : datamanager_setListener
+		---@field [string] fun(handler: binary_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
-			---Register a listener for a "flipped" widget event
-			---@param handler binary_handler_flipped Handler function to call on trigger
+			---Register a listener for a "loaded" widget event
+			---@param handler binary_handler_loaded Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.flipped(handler, callIndex) end
+			function setListener.loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler binary_handler_saved Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler binary_handler_changed Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler binary_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler binary_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Data management
+
+		---Validate a value to be accepted by the widget
+		---@param value? any
+		---***
+		---@return boolean # ***Default:*** `false`
+		function _.verify(value) end
+
+		---Turn a logical state into formatted string
+		---***
+		---@param state? boolean ***Default:*** *current value*
+		---@return string
+		function _.format(state) return "" end
+
+		---Returns the current logical state of the widget
+		---@return boolean
+		function _.getValue() return false end
+
+		---Verify and set the logical state of the widget to the provided state
+		---***
+		---@param state? boolean ***Default:*** `false`
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
+		function _.setValue(state, user, silent) end
+
+		---Flip the current logical state of the widget
+		---***
+		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If false, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
+		function _.flip(user, silent) end
 
 		---Verify and save the provided data or the current value of the widget to storage via `t.saveData(...)`
 		---***
@@ -2264,7 +2255,7 @@ function wt.CreateBinary(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param state? boolean Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(state, handleChanges, silent) end
 
@@ -2281,32 +2272,9 @@ function wt.CreateBinary(t, datamanager)
 		function _.snapshotData(stored) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `binary.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
-
-		---Returns the current logical state of the widget
-		---@return boolean
-		function _.getState() return false end
-
-		---Verify and set the logical state of the widget to the provided state
-		---***
-		---@param state? boolean ***Default:*** `false`
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If false, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _.setState(state, user, silent) end
-
-		---Flip the current logical state of the widget
-		---***
-		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If false, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _.flipState(user, silent) end
-
-		---Utility to turn a logical state value into formatted string
-		---***
-		---@param state? boolean ***Default:*** *current value*
-		---@return string
-		function _.formatValue(state) return "" end
 
 	return _
 end
@@ -2324,35 +2292,49 @@ function wt.CreateCheckbox(t, binary)
 	--| Parameters
 
 	---@class checkboxCreationData : binaryCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Toggle"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Checkbox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_checkbox|sizeData
 	---@field font? labelFontOptions List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field listeners? checkbox_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― The checked state of the checkbox widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
+	---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― The checked state of the checkbox widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
 
 		---@class tooltipDescribableSettingsWidget
 		---@field showDefault? boolean If true, show the default value of the widget in its tooltip and display the reset button its the utility menu | ***Default:*** `true`
 		---@field utilityMenu? boolean If true, assign a context menu to the settings widget frame to allow for quickly resetting changes or the default value | ***Default:*** `true`
 
 		---@class sizeData_checkbox
-	---@field w? number Width | ***Default:*** **t.label** and 180 or **t.size.h**
-	---@field h? number Height | ***Default:*** 26
+	---@field w? number Width | ***Default:*** `t.label and 180 or t.size.h`
+	---@field h? number Height | ***Default:*** `26`
 
 		---@class labelFontOptions
-		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** "GameFontHighlight"
-		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in a highlighted state | ***Default:*** "GameFontNormal"
-		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** "GameFontDisable"
+		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontHighlight"`
+		---@field highlight? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in a highlighted state | ***Default:*** `"GameFontNormal"`
+		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** `"GameFontDisable"`
 
 		---@class checkbox_listeners : binary_listeners
-		---@field flipped? checkbox_listener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after `checkbox.setState(...)` was called
+		---@field loaded? binary_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? binary_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? checkbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `checkbox.setState(...)` was called
 		---@field enabled? checkbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkbox.setEnabled(...)` was called
 		---@field _? checkbox_listener_any[] Ordered list of functions to call when a custom event is invoked
 
-			---@class checkbox_listener_flipped : eventHandlerIndex
-			---@field handler checkbox_handler_flipped Handler function to register for call
+			---@class checkbox_listener_loaded : eventHandlerIndex
+			---@field handler checkbox_handler_loaded Handler function to register for call
 
-				---@alias checkbox_handler_flipped
-				---| fun(self: checkbox, state: boolean, user: boolean) Called when a "flipped" event is invoked after `checkbox.setState(...)` was called<hr><p>@*param* `self` checkbox ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias checkbox_handler_loaded
+				---| fun(self: checkbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by `t.getData()` and it was loaded to the widget</p>
+
+			---@class checkbox_listener_saved : eventHandlerIndex
+			---@field handler checkbox_handler_saved Handler function to register for call
+
+				---@alias checkbox_handler_saved
+				---| fun(self: checkbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
+
+			---@class checkbox_listener_changed : eventHandlerIndex
+			---@field handler checkbox_handler_changed Handler function to register for call
+
+				---@alias checkbox_handler_changed
+				---| fun(self: checkbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `checkbox.setState(...)` was called<hr><p>@*param* `self` checkbox ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class checkbox_listener_enabled : eventHandlerIndex
 			---@field handler checkbox_handler_enabled Handler function to register for call
@@ -2360,7 +2342,7 @@ function wt.CreateCheckbox(t, binary)
 				---@alias checkbox_handler_enabled
 			---| fun(self: checkbox, state: boolean) Called when an "enabled" event is invoked after `checkbox.setEnabled(...)` was called<hr><p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class checkbox_listener_any : eventTag, eventHandlerIndex
+			---@class checkbox_listener_any : eventHandlerIndex
 			---@field handler checkbox_handler_any Handler function to register for call
 
 				---@alias checkbox_handler_any
@@ -2391,23 +2373,28 @@ function wt.CreateCheckbox(t, binary)
 		--| Events
 
 		---@class checkbox_setListener : binary_setListener
+		---@field [string] fun(handler: checkbox_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
-			---Register a listener for a "flipped" widget event
-			---@param handler checkbox_handler_flipped Handler function to call on trigger
+			---Register a listener for a "loaded" widget event
+			---@param handler checkbox_handler_loaded Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.flipped(handler, callIndex) end
+			function setListener.loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler checkbox_handler_saved Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler checkbox_handler_changed Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler checkbox_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler checkbox_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -2424,17 +2411,32 @@ function wt.CreateClassicCheckbox(t, binary)
 
 	---@class classicCheckboxCreationData : checkboxCreationData
 	---@field listeners? classicCheckbox_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field font nil
 
 	---@class classicCheckbox_listeners : binary_listeners
-	---@field flipped? classicCheckbox_listener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after `classicCheckbox.setState(...)` was called
+	---@field loaded? classicCheckbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+	---@field saved? classicCheckbox_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+	---@field changed? classicCheckbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `classicCheckbox.setState(...)` was called
 	---@field enabled? classicCheckbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `classicCheckbox.setEnabled(...)` was called
 	---@field _? classicCheckbox_listener_any[] Ordered list of functions to call when a custom event is invoked
 
-		---@class classicCheckbox_listener_flipped : eventHandlerIndex
-		---@field handler classicCheckbox_handler_flipped Handler function to register for call
+		---@class classicCheckbox_listener_loaded : eventHandlerIndex
+		---@field handler classicCheckbox_handler_loaded Handler function to register for call
 
-			---@alias classicCheckbox_handler_flipped
-			---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when a "flipped" event is invoked after `classicCheckbox.setState(...)` was called<hr><p>@*param* `self` classicCheckbox ― Reference to the classicCheckbox widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+			---@alias classicCheckbox_handler_loaded
+			---| fun(self: classicCheckbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by `t.getData()` and it was loaded to the widget</p>
+
+		---@class classicCheckbox_listener_saved : eventHandlerIndex
+		---@field handler classicCheckbox_handler_saved Handler function to register for call
+
+			---@alias classicCheckbox_handler_saved
+			---| fun(self: classicCheckbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
+
+		---@class classicCheckbox_listener_changed : eventHandlerIndex
+		---@field handler classicCheckbox_handler_changed Handler function to register for call
+
+			---@alias classicCheckbox_handler_changed
+			---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `classicCheckbox.setState(...)` was called<hr><p>@*param* `self` classicCheckbox ― Reference to the classicCheckbox widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 		---@class classicCheckbox_listener_enabled : eventHandlerIndex
 		---@field handler classicCheckbox_handler_enabled Handler function to register for call
@@ -2442,7 +2444,7 @@ function wt.CreateClassicCheckbox(t, binary)
 			---@alias classicCheckbox_handler_enabled
 		---| fun(self: classicCheckbox, state: boolean) Called when an "enabled" event is invoked after `classicCheckbox.setEnabled(...)` was called<hr><p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-		---@class classicCheckbox_listener_any : eventTag, eventHandlerIndex
+		---@class classicCheckbox_listener_any : eventHandlerIndex
 		---@field handler classicCheckbox_handler_any Handler function to register for call
 
 			---@alias classicCheckbox_handler_any
@@ -2469,23 +2471,28 @@ function wt.CreateClassicCheckbox(t, binary)
 		--| Events
 
 		---@class classicCheckbox_setListener : binary_setListener
+		---@field [string] fun(handler: classicCheckbox_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
-			---Register a listener for a "flipped" widget event
-			---@param handler classicCheckbox_handler_flipped Handler function to call on trigger
+			---Register a listener for a "loaded" widget event
+			---@param handler classicCheckbox_handler_loaded Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.flipped(handler, callIndex) end
+			function setListener.loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler classicCheckbox_handler_saved Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler classicCheckbox_handler_changed Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler classicCheckbox_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler classicCheckbox_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -2504,28 +2511,42 @@ function wt.CreateRadiobutton(t, binary)
 
 	---@class radiobuttonCreationData : checkboxCreationData # t
 	---@field size? sizeData_radiobutton|sizeData
-	---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** `false`<ul><li>***Note:*** The radio button will be registered for "RightButtonUp" triggers to call "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" events with **button** = "RightButton".</li></ul>
+	---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** `false`<ul><li>***Note:*** The radio button will be registered for `"RightButtonUp"` triggers to call "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" events with `button = "RightButton"`.</li></ul>
 	---@field listeners? radiobutton_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(self: radiobutton, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the radio button and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― The checked state of the radiobutton widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** "LeftButton"</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
+	---@field events? table<ScriptButton, fun(self: radiobutton, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the radio button and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― The checked state of the radiobutton widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
 
 		---@class sizeData_radiobutton
-	---@field w? number Width | ***Default:***  **t.label** and 180 or **t.size.h**
-	---@field h? number Height | ***Default:*** 18
+	---@field w? number Width | ***Default:***  `t.label` and 180 or `t.size.h`
+	---@field h? number Height | ***Default:*** `18`
 
 		---@class labelFontOptions_small
-		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** "GameFontHighlightSmall"
-		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** "GameFontDisableSmall"
+		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontHighlightSmall"`
+		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** `"GameFontDisableSmall"`
 
 		---@class radiobutton_listeners : binary_listeners
-		---@field flipped? radiobutton_listener_flipped[] Ordered list of functions to call when a "flipped" event is invoked after `radiobutton.setState(...)` was called
+		---@field loaded? radiobutton_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? radiobutton_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? radiobutton_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `radiobutton.setState(...)` was called
 		---@field enabled? radiobutton_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiobutton.setEnabled(...)` was called
 		---@field _? radiobutton_listener_any[] Ordered list of functions to call when a custom event is invoked
 
-			---@class radiobutton_listener_flipped : eventHandlerIndex
-			---@field handler radiobutton_handler_flipped Handler function to register for call
+			---@class radiobutton_listener_loaded : eventHandlerIndex
+			---@field handler radiobutton_handler_loaded Handler function to register for call
 
-				---@alias radiobutton_handler_flipped
-				---| fun(self: radiobutton, state: boolean, user: boolean) Called when a "flipped" event is invoked after `radiobutton.setState(...)` was called<hr><p>@*param* `self` radiobutton ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias radiobutton_handler_loaded
+				---| fun(self: radiobutton, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<hr><p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was returned by `t.getData()` and it was loaded to the widget</p>
+
+			---@class radiobutton_listener_saved : eventHandlerIndex
+			---@field handler radiobutton_handler_saved Handler function to register for call
+
+				---@alias radiobutton_handler_saved
+				---| fun(self: radiobutton, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
+
+			---@class radiobutton_listener_changed : eventHandlerIndex
+			---@field handler radiobutton_handler_changed Handler function to register for call
+
+				---@alias radiobutton_handler_changed
+				---| fun(self: radiobutton, state: boolean, user: boolean) Called when a "changed" event is invoked after `radiobutton.setState(...)` was called<hr><p>@*param* `self` radiobutton ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class radiobutton_listener_enabled : eventHandlerIndex
 			---@field handler radiobutton_handler_enabled Handler function to register for call
@@ -2533,7 +2554,7 @@ function wt.CreateRadiobutton(t, binary)
 				---@alias radiobutton_handler_enabled
 			---| fun(self: radiobutton, state: boolean) Called when an "enabled" event is invoked after `radiobutton.setEnabled(...)` was called<hr><p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class radiobutton_listener_any : eventTag, eventHandlerIndex
+			---@class radiobutton_listener_any : eventHandlerIndex
 			---@field handler radiobutton_handler_any Handler function to register for call
 
 				---@alias radiobutton_handler_any
@@ -2560,29 +2581,33 @@ function wt.CreateRadiobutton(t, binary)
 		--| Events
 
 		---@class radiobutton_setListener : binary_setListener
+		---@field [string] fun(handler: radiobutton_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
-			---Register a listener for a "flipped" widget event
-			---@param handler radiobutton_handler_flipped Handler function to call on trigger
+			---Register a listener for a "loaded" widget event
+			---@param handler radiobutton_handler_loaded Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.flipped(handler, callIndex) end
+			function setListener.loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler radiobutton_handler_saved Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler radiobutton_handler_changed Handler function to call on trigger
+			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler radiobutton_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler radiobutton_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
-
---[[ SELECTOR ]]
+--[ Selector ]
 
 ---Create a non-GUI selector base widget (managing a set of binary widgets) with integer (selection index) datamanagement logic
 ---***
@@ -2594,27 +2619,27 @@ function wt.CreateSelector(t, datamanager)
 
 	--| Parameters
 
-	---@class selectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
+	---@class selectorCreationData : datamanagerCreationData, selectorCreationData_base # t
 	---@field items? (selectorItem|selectorBinary|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
 	---@field listeners? selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(selected?: integer) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selected`? integer</p>
-	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** `t.getData()` or **t.default** if invalid or 1 if **t.clearable** is false
-	---@field default? integer Default value of the widget | ***Default:*** 1 or nil *(no selection)* if **t.clearable** is true
+	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** `t.getData()` or `t.default` if invalid or 1 if `t.clearable` is false
+	---@field default? integer Default value of the widget | ***Default:*** `1 or nil` *(no selection)* if `t.clearable` is true
 
 		---@class selectorCreationData_base
 		---@field clearable? boolean If true, the value of the selector input should be clearable and allowed to be set to nil | ***Default:*** `false`
 
 		---@class selectorItem
-		---@field title? string Text to be shown on the right of the item to represent the item within the selector frame (if **t.labels** is true)
+		---@field title? string Text to be shown on the right of the item to represent the item within the selector frame (if `t.labels` is true)
 		---@field tooltip? itemTooltipTextData|widgetTooltipTextData List of text lines to be added to the tooltip of the item displayed when mousing over the frame
 		---@field onSelect? function The function to be called when the item is selected by the user
 
 			---@class itemTooltipTextData : tooltipTextData
-			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** **t.items[*index*].title**
+			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** <code>t.items[<i>index</i>].title</code>
 
 			---@class widgetTooltipTextData : tooltipTextData
-			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** **t.title**
+			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** `t.title`
 
 		---@class selectorBinary : binary
 		---@field index integer The index of this binary item inside a selector widget
@@ -2622,7 +2647,7 @@ function wt.CreateSelector(t, datamanager)
 		---@class selector_listeners : datamanager_listeners
 		---@field loaded? selector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? selector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? selector_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `selector.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? selector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `selector.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? selector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `selector.updatedItems(...)` was called
 		---@field added? selector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `selector.updatedItems(...)`
 		---@field enabled? selector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selector.setEnabled(...)` was called
@@ -2640,11 +2665,11 @@ function wt.CreateSelector(t, datamanager)
 				---@alias selector_handler_saved
 				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class selector_listener_selected : eventHandlerIndex
-			---@field handler selector_handler_selected Handler function to register for call
+			---@class selector_listener_changed : eventHandlerIndex
+			---@field handler selector_handler_changed Handler function to register for call
 
-				---@alias selector_handler_selected
-				---| fun(self: selector, selected?: integer, user: boolean) Called when an "selected" event is invoked after `selector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias selector_handler_changed
+				---| fun(self: selector, selected?: integer, user: boolean) Called when an "changed" event is invoked after `selector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class selector_listener_updated : eventHandlerIndex
 			---@field handler selector_handler_updated Handler function to register for call
@@ -2664,7 +2689,7 @@ function wt.CreateSelector(t, datamanager)
 				---@alias selector_handler_enabled
 				---| fun(self: selector, state: boolean) Called when an "enabled" event is invoked after `selector.setEnabled(...)` was called<hr><p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class selector_listener_any : eventTag, eventHandlerIndex
+			---@class selector_listener_any : eventHandlerIndex
 			---@field handler selector_handler_any Handler function to register for call
 
 				---@alias selector_handler_any
@@ -2673,7 +2698,7 @@ function wt.CreateSelector(t, datamanager)
 	--| Returns
 
 	---@class selector : datamanager
-	---@field binaries (binary|selectorBinary)[]
+	---@field items (binary|selectorBinary)[]
 	---@field invoke selector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener selector_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -2690,20 +2715,11 @@ function wt.CreateSelector(t, datamanager)
 		--| Events
 
 		---@class selector_invoke : datamanager_invoke
-		local invoke = {}
-
-			---Invoke a "selected" event calling registered listeners
-			---@param user boolean
-			function invoke.selected(user) end
-
-			--Invoke a "updated" event calling registered listeners
-			function invoke.updated() end
-
-			---Invoke an "added" event calling registered listeners
-			---@param binary binary|selectorBinary
-			function invoke.added(binary) end
+		---@field updated function Invoke a "updated" event to notify registered listeners and call handlers
+		---@field added fun(binary: binary|selectorBinary) Invoke an "added" event to notify registered listeners and call handlers
 
 		---@class selector_setListener : datamanager_setListener
+		---@field [string] fun(handler: selector_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -2716,10 +2732,10 @@ function wt.CreateSelector(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler selector_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler selector_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
 			---@param handler selector_handler_updated Handler function to call on trigger
@@ -2736,12 +2752,6 @@ function wt.CreateSelector(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler selector_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Toggle items
 
 		---Update the list of items currently set for the selector widget, updating its parameters and binary widgets
@@ -2754,9 +2764,15 @@ function wt.CreateSelector(t, datamanager)
 
 		--| Data management
 
+		---Validate a value to be accepted by the widget
+		---@param value any
+		---***
+		---@return integer|nil ***Default:*** *current value*
+		function _.verify(value) end
+
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -2776,7 +2792,7 @@ function wt.CreateSelector(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(data, handleChanges, silent) end
 
@@ -2788,8 +2804,8 @@ function wt.CreateSelector(t, datamanager)
 		---@param index integer|nil | ***Default:*** *no change*
 		function _.setDefault(index) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -2798,7 +2814,7 @@ function wt.CreateSelector(t, datamanager)
 		function _.snapshotData(stored) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `selector.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -2828,7 +2844,7 @@ function wt.CreateSelector(t, datamanager)
 	return _
 end
 
----Create a non-GUI special selector base widget (managing a set of binary widgets) with datamanagement logic specific to the specified **itemset**
+---Create a non-GUI special selector base widget (managing a set of binary widgets) with datamanagement logic specific to the specified `itemset`
 ---***
 ---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelectorCreationData Optional parameters
@@ -2849,12 +2865,12 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 		---| "justifyV" Using the set of vertical text alignment items (JustifyV)
 		---| "strata" Using the set of [FrameStrata](https://warcraft.wiki.gg/wiki/Frame_Strata) items (excluding "WORLD")
 
-	---@class specialSelectorCreationData : togglableObject, settingsWidget, selectorCreationData_base # t
+	---@class specialSelectorCreationData : datamanagerCreationData, selectorCreationData_base # t
 	---@field listeners? specialSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: specialSelectorValueTypes) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
-	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.getData()` or **t.default** if invalid or *option 1* if **t.clearable** is false
-	---@field default? integer|specialSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if **t.clearable** is true
+	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.getData()` or `t.default` if invalid or *option 1* if `t.clearable` is false
+	---@field default? integer|specialSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is true
 
 		---@alias specialSelectorValueTypes
 		---| FramePoint
@@ -2865,7 +2881,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 		---@class specialSelector_listeners : datamanager_listeners
 		---@field loaded? specialSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? specialSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? specialSelector_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `specialSelector.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? specialSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `specialSelector.setSelected(...)` was called or an option was clicked or cleared
 		---@field enabled? specialSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialSelector.setEnabled(...)` was called
 		---@field _? specialSelector_listener_any[] Ordered list of functions to call when a custom event is invoked
 
@@ -2881,11 +2897,11 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 				---@alias specialSelector_handler_saved
 				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class specialSelector_listener_selected : eventHandlerIndex
-			---@field handler specialSelector_handler_selected Handler function to register for call
+			---@class specialSelector_listener_changed : eventHandlerIndex
+			---@field handler specialSelector_handler_changed Handler function to register for call
 
-				---@alias specialSelector_handler_selected
-				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "selected" event is invoked after `specialSelector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias specialSelector_handler_changed
+				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `specialSelector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialSelector_listener_enabled : eventHandlerIndex
 			---@field handler specialSelector_handler_enabled Handler function to register for call
@@ -2893,7 +2909,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 				---@alias specialSelector_handler_enabled
 				---| fun(self: specialSelector, state: boolean) Called when an "enabled" event is invoked after `specialSelector.setEnabled(...)` was called<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class specialSelector_listener_any : eventTag, eventHandlerIndex
+			---@class specialSelector_listener_any : eventHandlerIndex
 			---@field handler specialSelector_handler_any Handler function to register for call
 
 				---@alias specialSelector_handler_any
@@ -2902,8 +2918,8 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	--| Returns
 
 	---@class specialSelector : datamanager
-	---@field binaries (binary|selectorBinary)[]
-	---@field invoke specialSelector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field items (binary|selectorBinary)[]
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener specialSelector_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
@@ -2922,14 +2938,8 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 		--| Events
 
-		---@class specialSelector_invoke : datamanager_invoke
-		local invoke = {}
-
-			---Invoke a "selected" event calling registered listeners
-			---@param user boolean
-			function invoke.selected(user) end
-
 		---@class specialSelector_setListener : datamanager_setListener
+		---@field [string] fun(handler: specialSelector_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -2942,27 +2952,21 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler specialSelector_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler specialSelector_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler specialSelector_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler specialSelector_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -2991,7 +2995,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(data, handleChanges, silent) end
 
@@ -3005,9 +3009,9 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 		---<p></p>
 		function _.setDefault(selected) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -3018,7 +3022,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `selector.snapshotData()`
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -3060,23 +3064,23 @@ function wt.CreateMultiselector(t, datamanager)
 
 	--| Parameters
 
-	---@class multiselectorCreationData : togglableObject, settingsWidget # t
+	---@class multiselectorCreationData : datamanagerCreationData # t
 	---@field items? (selectorItem|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
 	---@field limits? limitValues Parameters to specify the limits of the number of selectable items
 	---@field listeners? multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selections: boolean[] Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `selections` boolean[] | ***Default:*** *no selected items: `false[]`*</p>
 	---@field saveData? fun(selections?: boolean[]) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `selections`? boolean[] | ***Default:*** *no selected items: `false[]`*</p>
-	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid
+	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid
 	---@field default? boolean[] Default value of the widget | ***Default:*** *no selected items: `false[]`*
 
 		---@class limitValues
-		---@field min? integer The minimal number of items that need to be selected at all times | ***Default:*** 1
-		---@field max? integer The maximal number of items that can be selected at once | ***Default:*** #**t.items** *(all items)*
+		---@field min? integer The minimal number of items that need to be selected at all times | ***Default:*** `1`
+		---@field max? integer The maximal number of items that can be selected at once | ***Default:*** `#t.items` *(all items)*
 
 		---@class multiselector_listeners : datamanager_listeners
 		---@field loaded? multiselector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? multiselector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? multiselector_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `multiselector.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? multiselector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `multiselector.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? multiselector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `multiselector.updatedItems(...)` was called
 		---@field added? multiselector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `multiselector.updatedItems(...)`
 		---@field min? multiselector_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
@@ -3095,11 +3099,11 @@ function wt.CreateMultiselector(t, datamanager)
 				---@alias multiselector_handler_saved
 				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class multiselector_listener_selected : eventHandlerIndex
-			---@field handler multiselector_handler_selected Handler function to register for call
+			---@class multiselector_listener_changed : eventHandlerIndex
+			---@field handler multiselector_handler_changed Handler function to register for call
 
-				---@alias multiselector_handler_selected
-				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "selected" event is invoked after `multiselector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias multiselector_handler_changed
+				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `multiselector.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class multiselector_listener_updated : eventHandlerIndex
 			---@field handler multiselector_handler_updated Handler function to register for call
@@ -3125,7 +3129,7 @@ function wt.CreateMultiselector(t, datamanager)
 				---@alias multiselector_handler_enabled
 				---| fun(self: multiselector, state: boolean) Called when an "enabled" event is invoked after `multiselector.setEnabled(...)` was called<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class multiselector_listener_any : eventTag, eventHandlerIndex
+			---@class multiselector_listener_any : eventHandlerIndex
 	---@field handler multiselector_handler_any Handler function to register for call
 
 				---@alias multiselector_handler_any
@@ -3134,7 +3138,7 @@ function wt.CreateMultiselector(t, datamanager)
 	--| Returns
 
 	---@class multiselector : datamanager
-	---@field binaries (binary|selectorBinary)[]
+	---@field items (binary|selectorBinary)[]
 	---@field invoke multiselector_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener multiselector_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -3151,24 +3155,12 @@ function wt.CreateMultiselector(t, datamanager)
 		--| Events
 
 		---@class multiselector_invoke : datamanager_invoke
-		local invoke = {}
-
-			---Invoke a "selected" event calling registered listeners
-			---@param user boolean
-			function invoke.selected(user) end
-
-			--Invoke a "updated" event calling registered listeners
-			function invoke.updated() end
-
-			---Invoke an "added" event calling registered listeners
-			---@param binary binary|selectorBinary
-			function invoke.added(binary) end
-
-			---Invoke a "limited" event calling registered listeners
-			---@param count integer
-			function invoke.limited(count) end
+		---@field updated function Invoke a "updated" event to notify registered listeners and call handlers
+		---@field added fun(binary: binary|selectorBinary) Invoke an "added" event to notify registered listeners and call handlers
+		---@field limited fun(count: integer) Invoke a "limited" event to notify registered listeners and call handlers
 
 		---@class multiselector_setListener : datamanager_setListener
+		---@field [string] fun(handler: multiselector_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3181,10 +3173,10 @@ function wt.CreateMultiselector(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler multiselector_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler multiselector_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
 			---@param handler multiselector_handler_updated Handler function to call on trigger
@@ -3206,12 +3198,6 @@ function wt.CreateMultiselector(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler multiselector_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Toggle items
 
 		---Update the list of items currently set for the selector widget, updating its parameters and binary widgets
@@ -3226,7 +3212,7 @@ function wt.CreateMultiselector(t, datamanager)
 
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -3246,7 +3232,7 @@ function wt.CreateMultiselector(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(data, handleChanges, silent) end
 
@@ -3259,7 +3245,7 @@ function wt.CreateMultiselector(t, datamanager)
 		function _.setDefault(selections) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `selector.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -3267,8 +3253,8 @@ function wt.CreateMultiselector(t, datamanager)
 		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
 		function _.snapshotData(stored) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -3286,7 +3272,7 @@ function wt.CreateMultiselector(t, datamanager)
 
 		---Set the specified item as selected
 		---***
-		---@param index integer Index of the item | ***Range:*** (1, #selector.binaries)
+		---@param index integer Index of the item | ***Range:*** (`1`, `#selector.items`)
 		---@param selected? boolean If true, set the item at this index as selected | ***Default:*** `false`
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
@@ -3320,14 +3306,14 @@ function wt.CreateRadiogroup(t, selector)
 	--| Parameters
 
 	---@class radiogroupCreationData : selectorCreationData, selectorFrameCreationData, radiogroupCreationData_base # t
-	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 180 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 180 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
 	---@field items? (selectorItem|selectorRadiobutton)[] Table containing subtables with data used to create item widgets, or already existing radio buttons
-	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
 	---@field listeners? radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class selectorFrameCreationData : labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject
-		---@field name? string Unique string used to set the frame name | ***Default:*** "Selector"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+		---@field name? string Unique string used to set the frame name | ***Default:*** `"Selector"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 		---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
 
 		---@class radiogroupCreationData_base : tooltipDescribableSettingsWidget
@@ -3336,7 +3322,7 @@ function wt.CreateRadiogroup(t, selector)
 		---@class radiogroup_listeners : selector_listeners
 		---@field loaded? radiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? radiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? radiogroup_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `radiogroup.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? radiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `radiogroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? radiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `radiogroup.updatedItems(...)` was called
 		---@field added? radiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the radiogroup via `radiogroup.updatedItems(...)`
 		---@field enabled? radiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiogroup.setEnabled(...)` was called
@@ -3354,11 +3340,11 @@ function wt.CreateRadiogroup(t, selector)
 				---@alias radiogroup_handler_saved
 				---| fun(self: radiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class radiogroup_listener_selected : eventHandlerIndex
-			---@field handler radiogroup_handler_selected Handler function to register for call
+			---@class radiogroup_listener_changed : eventHandlerIndex
+			---@field handler radiogroup_handler_changed Handler function to register for call
 
-				---@alias radiogroup_handler_selected
-				---| fun(self: radiogroup, selected?: integer, user: boolean) Called when an "selected" event is invoked after `radiogroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias radiogroup_handler_changed
+				---| fun(self: radiogroup, selected?: integer, user: boolean) Called when an "changed" event is invoked after `radiogroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class radiogroup_listener_updated : eventHandlerIndex
 			---@field handler radiogroup_handler_updated Handler function to register for call
@@ -3378,7 +3364,7 @@ function wt.CreateRadiogroup(t, selector)
 				---@alias radiogroup_handler_enabled
 				---| fun(self: radiogroup, state: boolean) Called when an "enabled" event is invoked after `radiogroup.setEnabled(...)` was called<hr><p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class radiogroup_listener_any : eventTag, eventHandlerIndex
+			---@class radiogroup_listener_any : eventHandlerIndex
 			---@field handler radiogroup_handler_any Handler function to register for call
 
 				---@alias radiogroup_handler_any
@@ -3413,6 +3399,7 @@ function wt.CreateRadiogroup(t, selector)
 		--| Events
 
 		---@class radiogroup_setListener : selector_setListener
+		---@field [string] fun(handler: radiogroup_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3425,10 +3412,10 @@ function wt.CreateRadiogroup(t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler radiogroup_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler radiogroup_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
 			---@param handler radiogroup_handler_updated Handler function to call on trigger
@@ -3445,12 +3432,6 @@ function wt.CreateRadiogroup(t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler radiogroup_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
@@ -3465,22 +3446,22 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	--| Parameters
 
 	---@class dropdownRadiogroupCreationData : radiogroupCreationData, widgetWidthValue, tooltipDescribableSettingsWidget # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Dropdown"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field width? number The width of the dropdown frame containing the toggle and (optionally) cycle buttons and the label (if **t.label** is true) | ***Default:*** 180
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Dropdown"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field width? number The width of the dropdown frame containing the toggle and (optionally) cycle buttons and the label (if `t.label` is true) | ***Default:*** `18`0
 	---@field scrollThreshold? integer Number of items to show before changing the dropdown menu to be scrollable | ***Default:*** 15<ul><li>***Note:*** Scrollability does not change when the number of items change after the initial setup.</li></ul>
-	---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** ""
-	---@field clearable? boolean If true, the selector input should be clearable by right clicking on its radio buttons, or, if **t.utilityMenu** is false, the dropdown toggle button itself (if true, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
+	---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** `""`
+	---@field clearable? boolean If true, the selector input should be clearable by right clicking on its radio buttons, or, if `t.utilityMenu` is false, the dropdown toggle button itself (if true, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
 	---@field autoClose? boolean Close the dropdown menu after an item is selected by the user | ***Default:*** `true`
 	---@field cycleButtons? boolean Add previous & next item buttons next to the dropdown | ***Default:*** `true`
 	---@field listeners? dropdownRadiogroup_listeners|radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class widgetWidthValue
-		---@field width? number ***Default:*** 180
+		---@field width? number ***Default:*** `18`0
 
 		---@class dropdownRadiogroup_listeners : radiogroup_listeners
 		---@field loaded? dropdownRadiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? dropdownRadiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? dropdownRadiogroup_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `dropdownRadiogroup.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? dropdownRadiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `dropdownRadiogroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? dropdownRadiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `dropdownRadiogroup.updatedItems(...)` was called
 		---@field added? dropdownRadiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the dropdownRadiogroup via `dropdownRadiogroup.updatedItems(...)`
 		---@field enabled? dropdownRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `dropdownRadiogroup.setEnabled(...)` was called
@@ -3498,10 +3479,10 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				---@alias dropdownRadiogroup_handler_saved
 				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class dropdownRadiogroup_listener_selected : eventHandlerIndex
-			---@field handler dropdownRadiogroup_handler_selected Handler function to register for call
+			---@class dropdownRadiogroup_listener_changed : eventHandlerIndex
+			---@field handler dropdownRadiogroup_handler_changed Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_selected
+				---@alias dropdownRadiogroup_handler_changed
 				---| fun(self: dropdownRadiogroup, selected?: integer, user: boolean) Called when an "selected" event is invoked after `dropdownRadiogroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class dropdownRadiogroup_listener_updated : eventHandlerIndex
@@ -3522,7 +3503,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				---@alias dropdownRadiogroup_handler_enabled
 				---| fun(self: dropdownRadiogroup, state: boolean) Called when an "enabled" event is invoked after `dropdownRadiogroup.setEnabled(...)` was called<hr><p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class dropdownRadiogroup_listener_any : eventTag, eventHandlerIndex
+			---@class dropdownRadiogroup_listener_any : eventHandlerIndex
 			---@field handler dropdownRadiogroup_handler_any Handler function to register for call
 
 				---@alias dropdownRadiogroup_handler_any
@@ -3542,12 +3523,12 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 		---Set the text displayed on the label of the toggle button
 		---***
-		---@param text? string ***Default:*** **t.items[*index*].title** *(the title of the currently selected item)* or "…" *(if there is no selection)*
+		---@param text? string ***Default:*** <code>t.items[<i>index</i>].title</code> *(the title of the currently selected item)* or "…" *(if there is no selection)*
 		---@param silent? boolean If false, invoke a "labeled" event and call registered listeners | ***Default:*** `false`
 		function _.setText(text, silent) end
 
 		---Toggle the dropdown menu
-		---@param state? boolean ***Default:*** not `selector.list:IsVisible()`
+		---@param state? boolean ***Default:*** `not selector.list:IsVisible()`
 		function _.toggleMenu(state) end
 
 		--| Type
@@ -3562,6 +3543,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		--| Events
 
 		---@class dropdownRadiogroup_setListener : radiogroup_setListener
+		---@field [string] fun(handler: dropdownRadiogroup_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3574,10 +3556,10 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler dropdownRadiogroup_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler dropdownRadiogroup_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
 			---@param handler dropdownRadiogroup_handler_updated Handler function to call on trigger
@@ -3593,12 +3575,6 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			---@param handler dropdownRadiogroup_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler dropdownRadiogroup_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -3627,7 +3603,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		---@class specialRadiogroup_listeners : specialSelector_listeners
 		---@field loaded? specialRadiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? specialRadiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? specialRadiogroup_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `specialRadiogroup.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? specialRadiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `specialRadiogroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field enabled? specialRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialRadiogroup.setEnabled(...)` was called
 		---@field _? specialRadiogroup_listener_any[] Ordered list of functions to call when a custom event is invoked
 
@@ -3643,11 +3619,11 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 				---@alias specialRadiogroup_handler_saved
 				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class specialRadiogroup_listener_selected : eventHandlerIndex
-			---@field handler specialRadiogroup_handler_selected Handler function to register for call
+			---@class specialRadiogroup_listener_changed : eventHandlerIndex
+			---@field handler specialRadiogroup_handler_changed Handler function to register for call
 
-				---@alias specialRadiogroup_handler_selected
-				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "selected" event is invoked after `specialRadiogroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias specialRadiogroup_handler_changed
+				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `specialRadiogroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialRadiogroup_listener_enabled : eventHandlerIndex
 			---@field handler specialRadiogroup_handler_enabled Handler function to register for call
@@ -3655,7 +3631,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 				---@alias specialRadiogroup_handler_enabled
 				---| fun(self: specialSelector, state: boolean) Called when an "enabled" event is invoked after `specialRadiogroup.setEnabled(...)` was called<hr><p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class specialRadiogroup_listener_any : eventTag, eventHandlerIndex
+			---@class specialRadiogroup_listener_any : eventHandlerIndex
 			---@field handler specialRadiogroup_handler_any Handler function to register for call
 
 				---@alias specialRadiogroup_handler_any
@@ -3682,6 +3658,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		--| Events
 
 		---@class specialRadiogroup_setListener : specialSelector_setListener
+		---@field [string] fun(handler: specialRadiogroup_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3694,21 +3671,15 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler specialRadiogroup_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler specialRadiogroup_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "enabled" widget event
 			---@param handler specialRadiogroup_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler specialRadiogroup_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -3724,16 +3695,16 @@ function wt.CreateCheckgroup(t, selector)
 	--| Parameters
 
 	---@class checkgroupCreationData : multiselectorCreationData, selectorFrameCreationData, tooltipDescribableSettingsWidget # t
-	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or **t.label** and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to **t.width** if **t.columns** is 1 and **t.width** is specified.</li></ul>
+	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
 	---@field items? (selectorItem|selectorCheckbox)[] Table containing subtables with data used to create item widgets, or already existing checkboxes
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
-	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** 1
+	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
 	---@field listeners? checkgroup_listeners|multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class checkgroup_listeners : multiselector_listeners
 		---@field loaded? checkgroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? checkgroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field selected? checkgroup_listener_selected[] Ordered list of functions to call when an "selected" event is invoked after `checkgroup.setSelected(...)` was called or an option was clicked or cleared
+		---@field changed? checkgroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `checkgroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? checkgroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `checkgroup.updatedItems(...)` was called
 		---@field added? checkgroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `checkgroup.updatedItems(...)`
 		---@field min? checkgroup_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
@@ -3752,11 +3723,11 @@ function wt.CreateCheckgroup(t, selector)
 				---@alias checkgroup_handler_saved
 				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class checkgroup_listener_selected : eventHandlerIndex
-			---@field handler checkgroup_handler_selected Handler function to register for call
+			---@class checkgroup_listener_changed : eventHandlerIndex
+			---@field handler checkgroup_handler_changed Handler function to register for call
 
-				---@alias checkgroup_handler_selected
-				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "selected" event is invoked after `checkgroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias checkgroup_handler_changed
+				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `checkgroup.setSelected(...)` was called or an option was clicked or cleared<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class checkgroup_listener_updated : eventHandlerIndex
 			---@field handler checkgroup_handler_updated Handler function to register for call
@@ -3782,7 +3753,7 @@ function wt.CreateCheckgroup(t, selector)
 				---@alias checkgroup_handler_enabled
 				---| fun(self: multiselector, state: boolean) Called when an "enabled" event is invoked after `checkgroup.setEnabled(...)` was called<hr><p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class checkgroup_listener_any : eventTag, eventHandlerIndex
+			---@class checkgroup_listener_any : eventHandlerIndex
 			---@field handler checkgroup_handler_any Handler function to register for call
 
 				---@alias checkgroup_handler_any
@@ -3811,6 +3782,7 @@ function wt.CreateCheckgroup(t, selector)
 		--| Events
 
 		---@class checkgroup_setListener : multiselector_setListener
+		---@field [string] fun(handler: checkgroup_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3823,10 +3795,10 @@ function wt.CreateCheckgroup(t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.saved(handler, callIndex) end
 
-			---Register a listener for a "selected" widget event
-			---@param handler checkgroup_handler_selected Handler function to call on trigger
+			---Register a listener for a "changed" widget event
+			---@param handler checkgroup_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener.selected(handler, callIndex) end
+			function setListener.changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
 			---@param handler checkgroup_handler_updated Handler function to call on trigger
@@ -3848,17 +3820,10 @@ function wt.CreateCheckgroup(t, selector)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler checkgroup_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
-
---[[ TEXTUAL ]]
+--[ Text ]
 
 ---Create a non-GUI textual base widget with string datamanagement logic
 ---***
@@ -3870,13 +3835,13 @@ function wt.CreateTextual(t, datamanager)
 
 	--| Parameters
 
-	---@class textualCreationData : togglableObject, settingsWidget # t
-	---@field color? color Apply the specified color to all text in the editbox (overriding all font objects set in **t.font**)
+	---@class textualCreationData : datamanagerCreationData # t
+	---@field color? color Apply the specified color to all text in the editbox (overriding all font objects set in `t.font`)
 	---@field listeners? textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): text: string|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `text` string|nil | ***Default:*** "" *(empty string)*</p>
+	---@field getData? fun(): text: string|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `text` string|nil | ***Default:*** `""` *(empty string)*</p>
 	---@field saveData? fun(text: string) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `text` string</p>
-	---@field value? string The starting text to be set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid
-	---@field default? string Default value of the widget | ***Default:*** "" *(empty string)*
+	---@field value? string The starting text to be set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid
+	---@field default? string Default value of the widget | ***Default:*** `""` *(empty string)*
 
 		---@class textual_listeners : datamanager_listeners
 		---@field loaded? textual_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
@@ -3909,7 +3874,7 @@ function wt.CreateTextual(t, datamanager)
 				---@alias textual_handler_enabled
 				---| fun(self: textual, state: boolean) Called when an "enabled" event is invoked after `textual.setEnabled(...)` was called<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class textual_listener_any : eventTag, eventHandlerIndex
+			---@class textual_listener_any : eventHandlerIndex
 			---@field handler textual_handler_any Handler function to register for call
 
 				---@alias textual_handler_any
@@ -3918,7 +3883,7 @@ function wt.CreateTextual(t, datamanager)
 	--| Returns
 
 	---@class textual : datamanager
-	---@field invoke textual_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener textual_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
@@ -3933,9 +3898,8 @@ function wt.CreateTextual(t, datamanager)
 
 		--| Events
 
-		---@class textual_invoke : datamanager_invoke
-
 		---@class textual_setListener : datamanager_listeners
+		---@field [string] fun(handler: textual_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -3958,17 +3922,11 @@ function wt.CreateTextual(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler textual_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -3985,7 +3943,7 @@ function wt.CreateTextual(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param text? string Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(text, handleChanges, silent) end
 
@@ -3997,8 +3955,8 @@ function wt.CreateTextual(t, datamanager)
 		---@param text string | ***Default:*** `""`
 		function _.setDefault(text) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -4007,7 +3965,7 @@ function wt.CreateTextual(t, datamanager)
 		function _.snapshotData(stored) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `textual.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -4017,7 +3975,7 @@ function wt.CreateTextual(t, datamanager)
 
 		---Set the text value of the widget
 		---***
-		---@param text? string ***Default:*** ""
+		---@param text? string ***Default:*** `""`
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 		function _.setText(text, user, silent) end
@@ -4050,12 +4008,12 @@ function wt.CreateEditbox(t, textual)
 	--| Properties
 
 	---@class editboxCreationData : textualCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Textbox"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Textbox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_editbox|sizeData
 	---@field insets? insetData Table containing padding values by which to offset the position of the text in the editbox
 	---@field font? labelFontOptions_editbox List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
-	---@field justify? justifyData_left Set the justification of the text (overriding all font objects set in **t.font**)
-	---@field charLimit? number The value to limit the character count by | ***Default:*** 0 (*no limit*)
+	---@field justify? justifyData_left Set the justification of the text (overriding all font objects set in `t.font`)
+	---@field charLimit? number The value to limit the character count by | ***Default:*** `0` *(no limit)*
 	---@field readOnly? boolean The text will be uneditable if true | ***Default:*** `false`
 	---@field focusOnShow? boolean Focus the editbox when its shown and highlight the text | ***Default:*** `false`
 	---@field keepFocused? boolean Keep the editbox focused while its being shown | ***Default:*** `false`
@@ -4066,7 +4024,7 @@ function wt.CreateEditbox(t, textual)
 
 		---@class sizeData_editbox
 		---@field w? number Width | ***Default:***  180
-		---@field h? number Height | ***Default:*** 18
+		---@field h? number Height | ***Default:*** `18`
 
 		---@class labelFontOptions_editbox
 		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** *default font based on the frame template*
@@ -4074,8 +4032,8 @@ function wt.CreateEditbox(t, textual)
 		---@field disabled? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is disabled | ***Default:*** *default font based on the frame template*
 
 		---@class justifyData_left
-		---@field h? JustifyHorizontal Horizontal text alignment| ***Default:*** "LEFT"
-		---@field v? JustifyVertical Vertical text alignment | ***Default:*** "MIDDLE"
+		---@field h? JustifyHorizontal Horizontal text alignment| ***Default:*** `"LEFT"`
+		---@field v? JustifyVertical Vertical text alignment | ***Default:*** `"MIDDLE"`
 
 		---@class editbox_listeners : textual_listeners
 		---@field loaded? editbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
@@ -4108,7 +4066,7 @@ function wt.CreateEditbox(t, textual)
 				---@alias editbox_handler_enabled
 				---| fun(self: textual, state: boolean) Called when an "enabled" event is invoked after `editbox.setEnabled(...)` was called<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class editbox_listener_any : eventTag, eventHandlerIndex
+			---@class editbox_listener_any : eventHandlerIndex
 			---@field handler editbox_handler_any Handler function to register for call
 
 				---@alias editbox_handler_any
@@ -4135,6 +4093,7 @@ function wt.CreateEditbox(t, textual)
 		--| Events
 
 		---@class editbox_setListener : textual_listeners
+		---@field [string] fun(handler: editbox_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4156,12 +4115,6 @@ function wt.CreateEditbox(t, textual)
 			---@param handler editbox_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler editbox_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 	return _
 end
@@ -4210,7 +4163,7 @@ function wt.CreateCustomEditbox(t, textual)
 				---@alias customEditbox_handler_enabled
 				---| fun(self: textual, state: boolean) Called when an "enabled" event is invoked after `customEditbox.setEnabled(...)` was called<hr><p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class customEditbox_listener_any : eventTag, eventHandlerIndex
+			---@class customEditbox_listener_any : eventHandlerIndex
 			---@field handler customEditbox_handler_any Handler function to register for call
 
 				---@alias customEditbox_handler_any
@@ -4237,6 +4190,7 @@ function wt.CreateCustomEditbox(t, textual)
 		--| Events
 
 		---@class customEditbox_setListener : textual_setListener
+		---@field [string] fun(handler: customEditbox_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4259,12 +4213,6 @@ function wt.CreateCustomEditbox(t, textual)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler customEditbox_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
@@ -4280,7 +4228,7 @@ function wt.CreateMultilineEditbox(t, textual)
 
 	---@class multilineEditboxCreationData : editboxCreationData, scrollSpeedData # t
 	---@field size? sizeData
-	---@field charCount? boolean Show or hide the remaining number of characters | ***Default:*** **t.charLimit** > 0
+	---@field charCount? boolean Show or hide the remaining number of characters | ***Default:*** `t.charLimit` > 0
 	---@field scrollToTop? boolean Automatically scroll to the top when the text is loaded or changed while not being actively edited | ***Default:*** `false`
 	---@field scrollEvents? table<ScriptScrollFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the scroll frame of the editbox and the functions to assign as event handlers called when they trigger
 	---@field listeners? multilineEditbox_listeners|textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -4316,7 +4264,7 @@ function wt.CreateMultilineEditbox(t, textual)
 				---@alias multilineEditbox_handler_enabled
 				---| fun(self: multilineEditbox, state: boolean) Called when an "enabled" event is invoked after `multilineEditbox.setEnabled(...)` was called<hr><p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class multilineEditbox_listener_any : eventTag, eventHandlerIndex
+			---@class multilineEditbox_listener_any : eventHandlerIndex
 			---@field handler multilineEditbox_handler_any Handler function to register for call
 
 				---@alias multilineEditbox_handler_any
@@ -4355,6 +4303,7 @@ function wt.CreateMultilineEditbox(t, textual)
 		--| Events
 
 		---@class multilineEditbox_setListener : textual_setListener
+		---@field [string] fun(handler: multilineEditbox_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4377,14 +4326,10 @@ function wt.CreateMultilineEditbox(t, textual)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler multilineEditbox_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
+
+--| Copybox
 
 ---Create a custom button with a toggled textline & editbox from which text can be copied
 ---***
@@ -4396,14 +4341,14 @@ function wt.CreateCopybox(t)
 	--| Parameters
 
 	---@class copyboxCreationData : labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Copybox"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Copybox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_editbox|sizeData
 	---@field layer? DrawLayer
-	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** "GameFontNormalSmall"<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
-	---@field color? color Apply the specified color to the text (overriding **t.font**)
-	---@field justify? JustifyHorizontal Set the horizontal text alignment of the label (overriding **t.font**) | ***Default:*** "LEFT"
+	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** `"GameFontNormalSmall"`<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
+	---@field color? color Apply the specified color to the text (overriding `t.font`)
+	---@field justify? JustifyHorizontal Set the horizontal text alignment of the label (overriding `t.font`) | ***Default:*** `"LEFT"`
 	---@field flipOnMouse? boolean Hide/Reveal the editbox on mouseover instead of after a click | ***Default:*** `false`
-	---@field colorOnMouse? color If set, change the color of the text on mouseover to the specified color (if **t.flipOnMouse** is false) | ***Default:*** *no color change*
+	---@field colorOnMouse? color If set, change the color of the text on mouseover to the specified color (if `t.flipOnMouse` is false) | ***Default:*** *no color change*
 	---@field value? string The copyable text to be shown | ***Default:*** `""`
 
 	--| Returns
@@ -4426,7 +4371,7 @@ function wt.CreateCopybox(t)
 	return {}
 end
 
---[ Popup Input Box ]
+--| Popup Inputbox
 
 ---Show a movable input window with a textbox, accept and cancel buttons
 ---***
@@ -4437,7 +4382,7 @@ function wt.CreatePopupInputbox(t)
 
 	---@class popupInputBoxData : positionableObject, tooltipDescribableWidget # t
 	---@field title? string Text to be displayed as the title | ***Default:*** *(no title)*
-	---@field text? string Text to set as the starting text inside the input editbox | ***Default:*** ""
+	---@field text? string Text to set as the starting text inside the input editbox | ***Default:*** `""`
 	---@field accept? fun(text: string) Function to call when the inputted text is accepted
 	---@field cancel? function Function to call when the inputted text is dismissed
 
@@ -4445,8 +4390,7 @@ function wt.CreatePopupInputbox(t)
 		---@field tooltip? widgetTooltipTextData List of text lines to be added to the tooltip of the widget displayed when mousing over the frame
 end
 
-
---[[ NUMERIC ]]
+--[ Numeric ]
 
 ---Create a non-GUI numeric base widget with number datamanagement logic
 ---***
@@ -4458,18 +4402,18 @@ function wt.CreateNumeric(t, datamanager)
 
 	--| Parameters
 
-	---@class numericCreationData : togglableObject, settingsWidget # t
-	---@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* **t.min**, **t.max** *or* **t.step**
-	---@field min? number Lower numeric value limit | ***Range:*** (any, **t.max**) | ***Default:*** 0
-	---@field max? number Upper numeric value limit | ***Range:*** (**t.min**, any) | ***Default:*** 100
-	---@field step? number Add/subtract this much when calling `numeric.increase(...)` or `numeric.decrease(...)` | ***Range:*** (> 0) | ***Default:*** 10% of range (**t.min**, **t.max**)
-	---@field altStep? number If set, add/subtract this much when calling `numeric.increase(...)` or `numeric.decrease(...)` with **alt** == true | ***Range:*** (> 0) | ***Default:*** *no alternative step value*
-	---@field hardStep? boolean Use **t.step** to force the slider jump to step values on drag | ***Default:*** `true`
+	---@class numericCreationData : datamanagerCreationData # t
+	---@field fractional? integer If the value is fractional, display this many decimal digits | ***Default:*** *the most amount of digits present in the fractional part of* `t.min`, `t.max` *or* `t.step`
+	---@field min? number Lower numeric value limit | ***Range:*** (`any`, `t.max`) | ***Default:*** `0`
+	---@field max? number Upper numeric value limit | ***Range:*** (`t.min`, `any`) | ***Default:*** 100
+	---@field step? number Add/subtract this much when calling `numeric.increase(...)` or `numeric.decrease(...)` | ***Range:*** (> `0`) | ***Default:*** 10% of range (`t.min`, `t.max`)
+	---@field altStep? number If set, add/subtract this much when calling `numeric.increase(...)` or `numeric.decrease(...)` with `alt == true` | ***Range:*** (> `0`) | ***Default:*** *no alternative step value*
+	---@field hardStep? boolean Use `t.step` to force the slider jump to step values on drag | ***Default:*** `true`
 	---@field listeners? numeric_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): value: number|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` number|nil | ***Default:*** **t.min**</p>
+	---@field getData? fun(): value: number|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `value` number|nil | ***Default:*** `t.min`<p>
 	---@field saveData? fun(value: number) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `value` number</p>
-	---@field value? number The starting value of the widget to set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid
-	---@field default? number Default value of the widget | ***Default:*** **t.min**
+	---@field value? number The starting value of the widget to set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid
+	---@field default? number Default value of the widget | ***Default:*** `t.min`
 
 		---@class numeric_listeners : datamanager_listeners
 		---@field loaded? numeric_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
@@ -4516,7 +4460,7 @@ function wt.CreateNumeric(t, datamanager)
 				---@alias numeric_handler_enabled
 				---| fun(self: numeric, state: boolean) Called when an "enabled" event is invoked after `numeric.setEnabled(...)` was called<hr><p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class numeric_listener_any : eventTag, eventHandlerIndex
+			---@class numeric_listener_any : eventHandlerIndex
 			---@field handler numeric_handler_any Handler function to register for call
 
 				---@alias numeric_handler_any
@@ -4541,15 +4485,11 @@ function wt.CreateNumeric(t, datamanager)
 		--| Events
 
 		---@class numeric_invoke : datamanager_invoke
-		local invoke = {}
-
-			--Invoke a "min" event calling registered listeners
-			function invoke.min() end
-
-			--Invoke a "max" event calling registered listeners
-			function invoke.max() end
+		---@field min function Invoke a "min" event to notify registered listeners and call handlers
+		---@field max function Invoke a "max" event to notify registered listeners and call handlers
 
 		---@class numeric_setListener : datamanager_setListener
+		---@field [string] fun(handler: numeric_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4582,17 +4522,11 @@ function wt.CreateNumeric(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler numeric_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -4609,7 +4543,7 @@ function wt.CreateNumeric(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param number? number Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(number, handleChanges, silent) end
 
@@ -4621,8 +4555,8 @@ function wt.CreateNumeric(t, datamanager)
 		---@param number number | ***Default:*** *no change*
 		function _.setDefault(number) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -4631,7 +4565,7 @@ function wt.CreateNumeric(t, datamanager)
 		function _.snapshotData(stored) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `numeric.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -4641,7 +4575,7 @@ function wt.CreateNumeric(t, datamanager)
 
 		---Set the value of the widget
 		---***
-		---@param number? number A valid number value within the specified **t.min**, **t.max** range | ***Default:*** **t.min**
+		---@param number? number A valid number value within the specified `t.min`, `t.max` range | ***Default:*** `t.min`
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		function _.setNumber(number, user, silent) end
 
@@ -4665,7 +4599,7 @@ function wt.CreateNumeric(t, datamanager)
 
 		---Set the lower value limit of the widget
 		---***
-		---@param number number Updates the lower limit value | ***Range:*** (any, *current upper limit*) *capped automatically*
+		---@param number number Updates the lower limit value | ***Range:*** (`any`, `numeric.getMax()`) *capped automatically*
 		---@param silent? boolean If false, invoke a "min" event and call registered listeners | ***Default:*** `false`
 		function _.setMin(number, silent) end
 
@@ -4675,7 +4609,7 @@ function wt.CreateNumeric(t, datamanager)
 
 		---Set the upper value limit of the widget
 		---***
-		---@param number number Updates the upper limit value | ***Range:*** (*current lower limit*, any) *floored automatically*
+		---@param number number Updates the upper limit value | ***Range:*** (`numeric.getMin()`, `any`) *floored automatically*
 		---@param silent? boolean If false, invoke a "max" event and call registered listeners | ***Default:*** `false`
 		function _.setMax(number, silent) end
 
@@ -4717,7 +4651,7 @@ function wt.CreateSlider(t, numeric)
 	--| Parameters
 
 	---@class sliderCreationData : numericCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, widgetWidthValue, visibleObject_base, liteObject, tooltipDescribableSettingsWidget # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Slider"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Slider"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field valuebox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** `true`
 	---@field listeners? slider_listeners|numeric_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
@@ -4767,7 +4701,7 @@ function wt.CreateSlider(t, numeric)
 				---@alias slider_handler_enabled
 				---| fun(self: slider, state: boolean) Called when an "enabled" event is invoked after `slider.setEnabled(...)` was called<hr><p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class slider_listener_any : eventTag, eventHandlerIndex
+			---@class slider_listener_any : eventHandlerIndex
 			---@field handler slider_handler_any Handler function to register for call
 
 				---@alias slider_handler_any
@@ -4803,6 +4737,7 @@ function wt.CreateSlider(t, numeric)
 		--| Events
 
 		---@class slider_setListener : numeric_setListener
+		---@field [string] fun(handler: slider_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4835,12 +4770,6 @@ function wt.CreateSlider(t, numeric)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler slider_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
@@ -4855,7 +4784,7 @@ function wt.CreateClassicSlider(t, numeric)
 	--| Parameters
 
 	---@class classicSliderCreationData : sliderCreationData # t
-	---@field sideButtons? boolean Whether or not to add increase/decrease buttons next to the slider to change the value by the increment set in **t.step** | ***Default:*** `true`
+	---@field sideButtons? boolean Whether or not to add increase/decrease buttons next to the slider to change the value by the increment set in `t.step` | ***Default:*** `true`
 	---@field listeners? classicSlider_listeners|numeric_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class classicSlider_listeners : numeric_listeners
@@ -4903,7 +4832,7 @@ function wt.CreateClassicSlider(t, numeric)
 				---@alias classicSlider_handler_enabled
 				---| fun(self: slider, state: boolean) Called when an "enabled" event is invoked after `classicSlider.setEnabled(...)` was called<hr><p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class classicSlider_listener_any : eventTag, eventHandlerIndex
+			---@class classicSlider_listener_any : eventHandlerIndex
 			---@field handler classicSlider_handler_any Handler function to register for call
 
 				---@alias classicSlider_handler_any
@@ -4935,6 +4864,7 @@ function wt.CreateClassicSlider(t, numeric)
 		--| Events
 
 		---@class classicSlider_setListener : numeric_setListener
+		---@field [string] fun(handler: classicSlider_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -4967,17 +4897,10 @@ function wt.CreateClassicSlider(t, numeric)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler classicSlider_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
-
---[[ COLOR DATA ]]
+--[ Color ]
 
 ---Create a non-GUI colormanager base widget with color datamanagement logic
 ---***
@@ -4989,18 +4912,18 @@ function wt.CreateColormanager(t, datamanager)
 
 	--| Parameters
 
-	---@class colormanagerCreationData : togglableObject, settingsWidget # t
+	---@class colormanagerCreationData : datamanagerCreationData # t
 	---@field listeners? colormanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field onCancel? function The function to be called when the color change is cancelled (after calling **t.onColorUpdate**)
+	---@field onCancel? function The function to be called when the color change is cancelled (after calling `t.onColorUpdate`)
 	---@field getData? fun(): color: color|nil Called to (if needed, modify and) load the widget data from storage<hr><p>@*return* `color` colorData|nil | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`</p>
 	---@field saveData? fun(color: color) Called to (if needed, modify and) save the widget data to storage<hr><p>@*param* `color` colorData</p>
-	---@field value? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** `t.getData()` or **t.default** if invalid<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
+	---@field value? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** `t.getData()` or `t.default` if invalid<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
 	---@field default? color Default value of the widget | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 
 		---@class colormanager_listeners : datamanager_listeners
 		---@field loaded? colormanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colormanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field colored? colormanager_listener_applied[] Ordered list of functions to call when a "colored" event is invoked after `colormanager.setColor(...)` was called
+		---@field changed? colormanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `colormanager.setColor(...)` was called
 		---@field enabled? colormanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colormanager.setEnabled(...)` was called
 		---@field _? colormanager_listener_any[] Ordered list of functions to call when a custom event is invoked
 
@@ -5016,11 +4939,11 @@ function wt.CreateColormanager(t, datamanager)
 				---@alias colormanager_handler_saved
 				---| fun(self: colormanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class colormanager_listener_applied : eventHandlerIndex
-			---@field handler colormanager_handler_colored Handler function to register for call
+			---@class colormanager_listener_changed : eventHandlerIndex
+			---@field handler colormanager_handler_changed Handler function to register for call
 
-				---@alias colormanager_handler_colored
-				---| fun(self: colormanager, color: color, user: boolean) Called when an "colored" event is invoked after `colormanager.setColor(...)` was called<hr><p>@*param* `self` colormanager ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias colormanager_handler_changed
+				---| fun(self: colormanager, color: color, user: boolean) Called when an "changed" event is invoked after `colormanager.setColor(...)` was called<hr><p>@*param* `self` colormanager ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colormanager_listener_enabled : eventHandlerIndex
 			---@field handler colormanager_handler_enabled Handler function to register for call
@@ -5028,7 +4951,7 @@ function wt.CreateColormanager(t, datamanager)
 				---@alias colormanager_handler_enabled
 				---| fun(self: colormanager, state: boolean) Called when an "enabled" event is invoked after `colormanager.setEnabled(...)` was called<hr><p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class colormanager_listener_any : eventTag, eventHandlerIndex
+			---@class colormanager_listener_any : eventHandlerIndex
 			---@field handler colormanager_handler_any Handler function to register for call
 
 				---@alias colormanager_handler_any
@@ -5037,7 +4960,7 @@ function wt.CreateColormanager(t, datamanager)
 	--| Returns
 
 	---@class colormanager : datamanager
-	---@field invoke colormanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
+	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
 	---@field setListener colormanager_setListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
@@ -5052,14 +4975,8 @@ function wt.CreateColormanager(t, datamanager)
 
 		--| Events
 
-		---@class colormanager_invoke : datamanager_invoke
-		local invoke = {}
-
-			---Invoke a "colored" event calling registered listeners
-			---@param user boolean
-			function invoke.colored(user) end
-
 		---@class colormanager_setListener : datamanager_setListener
+		---@field [string] fun(handler: colormanager_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -5073,7 +4990,7 @@ function wt.CreateColormanager(t, datamanager)
 			function setListener.saved(handler, callIndex) end
 
 			---Register a listener for a "colored" widget event
-			---@param handler colormanager_handler_colored Handler function to call on trigger
+			---@param handler colormanager_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.colored(handler, callIndex) end
 
@@ -5082,17 +4999,11 @@ function wt.CreateColormanager(t, datamanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler colormanager_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Data management
 
 		---Read the data from storage then verify and load it to the widget
 		---***
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _.loadData(handleChanges, silent) end
 
@@ -5109,7 +5020,7 @@ function wt.CreateColormanager(t, datamanager)
 		---Verify and save the provided data to storage via `t.saveData(...)` then load it to the widget via `t.loadData()`
 		---***
 		---@param color? color Data to be saved | ***Default:*** *the currently set value of the widget*
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.setData(color, handleChanges, silent) end
 
@@ -5122,7 +5033,7 @@ function wt.CreateColormanager(t, datamanager)
 		function _.setDefault(color) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot set via `colormanager.snapshotData()`
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.revertData(handleChanges, silent) end
 
@@ -5130,8 +5041,8 @@ function wt.CreateColormanager(t, datamanager)
 		---@param stored? boolean If true, use the data from storage to create the snapshot instead of using the current widget value | ***Default:*** `false`
 		function _.snapshotData(stored) end
 
-		---Set and load the stored data managed by the widget to the default value specified via **t.default** at construction
-		---@param handleChanges? boolean If true, call the specified **t.onChange** handlers | ***Default:*** `true`
+		---Set and load the stored data managed by the widget to the default value specified via `t.default` at construction
+		---@param handleChanges? boolean If true, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If false, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _.resetData(handleChanges, silent) end
 
@@ -5170,7 +5081,7 @@ function wt.CreateColormanager(t, datamanager)
 	return _
 end
 
---| Color Picker
+--| Colorpicker
 
 ---Create a color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---***
@@ -5183,7 +5094,7 @@ function wt.CreateColorpicker(t, colormanager)
 	--| Properties
 
 	---@class colorpickerCreationData : colormanagerCreationData, labeledChildObject, tooltipDescribableWidget, arrangeableObject, positionableObject, visibleObject_base, liteObject, tooltipDescribableSettingsWidget # t
-	---@field name? string Unique string used to set the frame name | ***Default:*** "Colorpicker"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field name? string Unique string used to set the frame name | ***Default:*** `"Colorpicker"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
 	---@field listeners? colorpicker_listeners|colormanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
@@ -5191,7 +5102,7 @@ function wt.CreateColorpicker(t, colormanager)
 		---@class colorpicker_listeners : colormanager_listeners
 		---@field loaded? colorpicker_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colorpicker_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field colored? colorpicker_listener_applied[] Ordered list of functions to call when a "colored" event is invoked after `colorpicker.setColor(...)` was called
+		---@field changed? colorpicker_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `colorpicker.setColor(...)` was called
 		---@field enabled? colorpicker_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colorpicker.setEnabled(...)` was called
 		---@field _? colorpicker_listener_any[] Ordered list of functions to call when a custom event is invoked
 
@@ -5207,11 +5118,11 @@ function wt.CreateColorpicker(t, colormanager)
 				---@alias colorpicker_handler_saved
 				---| fun(self: colorpicker, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<hr><p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `success` boolean ― True if data was committed successfully via `t.saveData(...)`</p>
 
-			---@class colorpicker_listener_applied : eventHandlerIndex
-			---@field handler colorpicker_handler_colored Handler function to register for call
+			---@class colorpicker_listener_changed : eventHandlerIndex
+			---@field handler colorpicker_handler_changed Handler function to register for call
 
-				---@alias colorpicker_handler_colored
-				---| fun(self: colorpicker, color: color, user: boolean) Called when an "colored" event is invoked after `colorpicker.setColor(...)` was called<hr><p>@*param* `self` colorpicker ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
+				---@alias colorpicker_handler_changed
+				---| fun(self: colorpicker, color: color, user: boolean) Called when an "changed" event is invoked after `colorpicker.setColor(...)` was called<hr><p>@*param* `self` colorpicker ― Reference to the binary widget</p><p>@*param* `number` number ― The current value of the widget</p><p>@*param* `user` boolean ― True if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colorpicker_listener_enabled : eventHandlerIndex
 			---@field handler colorpicker_handler_enabled Handler function to register for call
@@ -5219,7 +5130,7 @@ function wt.CreateColorpicker(t, colormanager)
 				---@alias colorpicker_handler_enabled
 				---| fun(self: colorpicker, state: boolean) Called when an "enabled" event is invoked after `colorpicker.setEnabled(...)` was called<hr><p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class colorpicker_listener_any : eventTag, eventHandlerIndex
+			---@class colorpicker_listener_any : eventHandlerIndex
 			---@field handler colorpicker_handler_any Handler function to register for call
 
 				---@alias colorpicker_handler_any
@@ -5252,6 +5163,7 @@ function wt.CreateColorpicker(t, colormanager)
 		--| Events
 
 		---@class colorpicker_setListener : colormanager_setListener
+		---@field [string] fun(handler: colorpicker_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -5265,7 +5177,7 @@ function wt.CreateColorpicker(t, colormanager)
 			function setListener.saved(handler, callIndex) end
 
 			---Register a listener for a "colored" widget event
-			---@param handler colorpicker_handler_colored Handler function to call on trigger
+			---@param handler colorpicker_handler_changed Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.colored(handler, callIndex) end
 
@@ -5274,17 +5186,10 @@ function wt.CreateColorpicker(t, colormanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler colorpicker_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 	return _
 end
 
-
---[[ POSITION DATA ]]
+--[ Position ]
 
 ---Create a non-GUI positionmanager base widget with positioning datamanagement logic
 ---***
@@ -5310,7 +5215,7 @@ end
 ---@param frame AnyFrameObject Reference to the frame to create the settings for
 ---@param getData fun(): table: positionPresetData|table Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@param defaultData positionPresetData|table Reference to the table containing the default values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.getData()*.</li></ul>
----@param settingsData positionOptionsSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key **keepInPlace** if it didn't already exist in this table.</li></ul>
+---@param settingsData positionOptionsSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key `keepInPlace` if it didn't already exist in this table.</li></ul>
 ---@param t positionManagementCreationData Optional parameters
 ---***
 ---@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** `nil`
@@ -5319,7 +5224,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	--| Parameters
 
 	---@class positionPresetData # defaultData
-	---@field position positionData Table of parameters to call **frame**:[SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with
+	---@field position positionData Table of parameters to call `frame`:[SetPoint(...)](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with
 	---@field keepInBounds? boolean Whether to keep the frame within screen bounds whenever it's moved | ***Default:*** `false`
 	---@field layer? widgetLayerOptions Table containing the screen layer parameters of the frame
 
@@ -5329,20 +5234,20 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 		---@field keepOnTop? boolean Whether to raise the frame level on mouse interaction | ***Default:*** `false`
 
 	---@class positionOptionsSettingsData # settingsData
-	---@field keepInPlace boolean If true, don't move **frame** when changing the anchor, update the offset values instead.
+	---@field keepInPlace boolean If true, don't move `frame` when changing the anchor, update the offset values instead.
 
 	---@class positionManagementCreationData : settingsWidgetPanel_frame
-	---@field presets? presetItemList Reference to the table containing **frame** position presets to be managed by settings widgets added when set
-	---@field setMovable? movabilityData_position When specified, set **frame** as movable, dynamically updating the position settings widgets when it's moved by the user
+	---@field presets? presetItemList Reference to the table containing `frame` position presets to be managed by settings widgets added when set
+	---@field setMovable? movabilityData_position When specified, set `frame` as movable, dynamically updating the position settings widgets when it's moved by the user
 	---@field dataManagement? settingsData_position Register the widgets to settings datamanagement to be linked with the specified key under the specified category
-	---@field onChangePosition? function Function to call after the value of **panel.widgets.position.anchor**, **panel.widgets.position.relativeTo**, **panel.widgets.position.relativePoint**, **panel.widgets.position.offset.x** or **panel.widgets.position.offset.y** was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **frame**
-	---@field onChangeKeepInBounds? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeStrata? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeLevel? function Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
-	---@field onChangeKeepOnTop? function Function to call after the value of **panel.widgets.layer.keepOnTop** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **frame**
+	---@field onChangePosition? function Function to call after the value of `panel.widgets.position.anchor` `panel.widgets.position.relativeTo` `panel.widgets.position.relativePoint` `panel.widgets.position.offset.x` or `panel.widgets.position.offset.y` was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of `frame`
+	---@field onChangeKeepInBounds? function Function to call after the value of `panel.widgets.position.keepInBounds` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `frame`
+	---@field onChangeStrata? function Function to call after the value of `panel.widgets.layer.strata` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `frame`
+	---@field onChangeLevel? function Function to call after the value of `panel.widgets.layer.level` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `frame`
+	---@field onChangeKeepOnTop? function Function to call after the value of `panel.widgets.layer.keepOnTop` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `frame`
 
 		---@class settingsWidgetPanel_frame : settingsWidgetPanel_base
-		---@field name? string Refer to **frame** by this display name in the tooltips and descriptions of settings widgets | ***Default:*** **frame:GetName()`
+		---@field name? string Refer to `frame` by this display name in the tooltips and descriptions of settings widgets | ***Default:*** `frame:GetName()`
 
 			---@class settingsWidgetPanel_base
 			---@field canvas Frame The canvas frame child item of an existing settings category page to add the panel to
@@ -5350,25 +5255,25 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		---@class presetItemList
 		---@field items positionPresetItemData[] Table containing the dropdown items described within subtables
-		---@field onPreset? fun(preset?: positionPresetItemData, index?: integer) Called after a preset is selected and applied via the dropdown widget or by calling **applyPreset**
+		---@field onPreset? fun(preset?: positionPresetItemData, index?: integer) Called after a preset is selected and applied via the dropdown widget or by calling `applyPreset`
 		---@field custom? customPositionPresetData When set, add widgets to manage a user-modifiable custom preset
 
 			---@class positionPresetItemData
 			---@field title string Text to represent the item within the dropdown frame
-			---@field data? positionPresetData|table Table containing the preset data to be modified by the position settings widgets and applied to **frame** on demand
+			---@field data? positionPresetData|table Table containing the preset data to be modified by the position settings widgets and applied to `frame` on demand
 
 			---@class customPositionPresetData
-			---@field index? integer Index of the custom preset modifiable by the user | ***Default:*** 1
+			---@field index? integer Index of the custom preset modifiable by the user | ***Default:*** `1`
 			---@field getData fun(): positionPresetData|table Return a reference to the table within the SavedVariables(PerCharacter) addon database where the custom preset data is committed to when the custom preset is saved
 			---@field defaultsTable positionPresetData|table Reference to the table containing the default custom preset values<ul>
 			---@field onSave? function Called after saving the custom preset
 			---@field onReset? function Called after resetting the custom preset before it is applied
 
 		---@class movabilityData_position : movabilityData
-		---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move **frame** (if **frame** has the "OnUpdate" script defined) | ***Default:*** "SHIFT"<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
+		---@field modifier? ModifierKey|any The specific (or any) modifier key required to be pressed down to move `frame` (if `frame` has the "OnUpdate" script defined) | ***Default:*** `"SHIFT"`<ul><li>***Note:*** Used to determine the specific modifier check to use. Example: when set to "any" [IsModifierKeyDown](https://warcraft.wiki.gg/wiki/API_IsModifierKeyDown) is used.</li></ul>
 
 		---@class settingsData_position : settingsData_base
-		---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Position"
+		---@field key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `"Position"`
 
 	--| Returns
 
@@ -5427,8 +5332,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 end
 
-
---[[ FONT DATA ]]
+--[ Font ]
 
 ---Create a non-GUI fontmanager base widget with font customization datamanagement logic
 ---***
@@ -5473,21 +5377,21 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 	---@class fontManagementCreationData : settingsWidgetPanel_text # t
 	---@field colors? table<string, textColorInfo> Use this list of specifications to dictate what colors appear and how: their order and displayed name | ***Default:*** *none*<ul><li>***Note:*** If set, the default color of key "base" will be added if it's missing.</ul></li>
 	---@field dataManagement? settingsData_font Register the widgets to settings datamanagement to be linked with the specified key under the specified category
-	---@field onChangeFont? function Function to call after the value of **panel.widgets.path** or **panel.widgets.size** was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of **text**
-	---@field onChangeSize? function Function to call after the value of **panel.widgets.position.keepInBounds** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
-	---@field onChangeAlignment? function Function to call after the value of **panel.widgets.layer.strata** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
-	---@field onChangeColor? fun(color: string) Function to call after the value of **panel.widgets.layer.level** was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating **text**
+	---@field onChangeFont? function Function to call after the value of `panel.widgets.path` or `panel.widgets.size` was changed by the user or via settings datamanagement before the base onChange handler is called built-in to the functionality of the settings panel template updating the position of `text`
+	---@field onChangeSize? function Function to call after the value of `panel.widgets.position.keepInBounds` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `text`
+	---@field onChangeAlignment? function Function to call after the value of `panel.widgets.layer.strata` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `text`
+	---@field onChangeColor? fun(color: string) Function to call after the value of `panel.widgets.layer.level` was changed by the user or via settings datamanagement before the base onChange handlers are called built-in to the functionality of the settings panel template updating `text`
 
 		---@class settingsWidgetPanel_text : settingsWidgetPanel_base
-		---@field name? string Refer to **text** by this display name in the tooltips and descriptions of settings widgets | ***Default:*** **text:GetName()`
+		---@field name? string Refer to `text` by this display name in the tooltips and descriptions of settings widgets | ***Default:*** `text:GetName()`
 
 		---@class textColorInfo
 		---@field index? integer Ordering index of the color | ***Default:*** *unspecified*
 		---@field name? string Display name to set their widget and tooltip titles paired to their datamanagement keys | ***Default:*** *datamanagement key in Title case*
-		---@field wrap? boolean If true, wrap the list of colors at this color (starting this one in a new row) | ***Default:*** **index** == 1
+		---@field wrap? boolean If true, wrap the list of colors at this color (starting this one in a new row) | ***Default:*** `index == 1`
 
 		---@class settingsData_font : settingsData_base
-		---@field key? string A unique string appended to **category** linking a subset of settings data rules to be handled together | ***Default:*** "Font"
+		---@field key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `"Font"`
 
 	--| Returns
 
@@ -5526,35 +5430,35 @@ function wt.CreateSettingsmanager(t, widget)
 	--| Parameters
 
 	---@class settingsmanagerCreationData : settingsmanagerCreationData_base, describableObject, togglableObject, settingsCategoryData, settingsmanagerEvents, initializableOptionsContainer, liteObject # t
-	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
-	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys**, committing their data to storage via <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys** from storage via <code><i>WidgetToolbox</i>.LoadOptionsData(...)</code> | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field append? boolean When setting the name of the settings category page, append `t.name` after `addon` | ***Default:*** `true` if `t.name` ~= nil
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in `t.dataManagement.keys`, committing their data to storage via <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> | ***Default:*** `true` if `t.dataManagement.keys` ~= nil<ul><li>***Note:*** If `t.dataManagement.keys` is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in `t.dataManagement.keys` from storage via <code><i>WidgetToolbox</i>.LoadOptionsData(...)</code> | ***Default:*** `true` if `t.dataManagement.keys` ~= nil<ul><li>***Note:*** If `t.dataManagement.keys` is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field listeners? settingsmanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class settingsmanagerCreationData_base
 		---@field register? boolean|settingsPage If true, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via <code><i>WidgetToolbox</i>.RegisterSettingsPage(...)</code>.</li></ul>
-		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** **addon**<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
+		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** `addon`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [GetAddOnMetadata(`addon`, "title")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
 		---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `false`
 
 		---@class settingsCategoryData
 		---@field dataManagement? settingsData_collection If set, register this settings page to settings datamanagement for batched data saving & loading and handling data changes of all linked widgets
 
 			---@class settingsData_collection : settingsData_base
-			---@field keys? string[] An ordered list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** { **t.name** }
+			---@field keys? string[] An ordered list of unique strings appended to `category` linking a subset of settings data rules to be handled together in the specified order via this settings category page | ***Default:*** `{ t.name }`
 
 				---@class settingsData_base
-				---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** **addon**
+				---@field category? string A unique string used for categorizing settings datamanagement rules & change handler scripts | ***Default:*** `addon`
 
 		---@class settingsmanagerEvents
 		---@field onLoad? fun(user: boolean) Called after the data of the settings widgets linked to this page has been loaded from storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 		---@field onSave? fun(user: boolean) Called after the data of the settings widgets linked to this page has been committed to storage<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 		---@field onApply? fun(user: boolean) Called after the data of the settings widgets linked to this page has been applied by calling change handlers<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
 		---@field onCancel? fun(user: boolean) Called after the changes are scrapped (for instance when the custom "Revert Changes" button is clicked)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p>
-		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through **[*settingsCategory*].defaults(...)` or not (or example when "All Settings" have been clicked)</p>
+		---@field onDefault? fun(user: boolean, category: boolean) Called after settings data handled by this settings page has been restored to default values (for example when the "Accept" or "These Settings" - affecting this settings category page only - is clicked in the dialogue opened by clicking on the "Restore Defaults" button)<hr><p>@*param* `user` boolean — Marking whether the call is due to a user interaction or not</p><p>@*param* `category` boolean — Marking whether the call is through <code>[<i>settingsCategory</i>].defaults(...)</code> or not (or example when "All Settings" have been clicked)</p>
 
 		---@class initializableOptionsContainer : initializableContainer
-		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if **WidgetToolsDB.lite** is true)</p><p>@*param* `width` number The current width of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `height` number The current height of the container frame (0 if **WidgetToolsDB.lite** is true)</p><p>@*param* `category`? string A unique string used for categorizing settings datamanagement rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to **t.dataManagement.keys**, a list of unique strings appended to **category** linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
+		---@field initialize? fun(container?: Frame, width: number, height: number, category?: string, keys?: string[], name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container`? AnyFrameObject ― Reference to the frame to be set as the parent for child objects created during initialization (nil if `WidgetToolsDB.lite` is true)</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is true)</p><p>@*param* `category`? string A unique string used for categorizing settings datamanagement rules & change handler scripts</p><p>@*param* `keys`? string[] Reference to `t.dataManagement.keys`, a list of unique strings appended to `category` linking a subset of settings data rules to be handled together in the specified order</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
 		---@class settingsmanager_listeners : widget_listeners
 		---@field loaded? settingsmanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after `settingsmanager.load(...)` was called
@@ -5601,7 +5505,7 @@ function wt.CreateSettingsmanager(t, widget)
 				---@alias settingsmanager_handler_enabled
 				---| fun(self: settingsmanager, state: boolean) Called when an "enabled" event is invoked after `settingsmanager.setEnabled(...)` was called<hr><p>@*param* `self` settingsmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class settingsmanager_listener_any : eventTag, eventHandlerIndex
+			---@class settingsmanager_listener_any : eventHandlerIndex
 			---@field handler settingsmanager_handler_any Handler function to register for call
 
 				---@alias settingsmanager_handler_any
@@ -5626,29 +5530,14 @@ function wt.CreateSettingsmanager(t, widget)
 		--| Events
 
 		---@class settingsmanager_invoke : widget_invoke
-		local invoke = {}
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param user boolean
-			function invoke.loaded(user) end
-
-			---Invoke a "saved" event calling registered listeners
-			---@param user boolean
-			function invoke.saved(user) end
-
-			---Invoke a "applied" event calling registered listeners
-			---@param user boolean
-			function invoke.applied(user) end
-
-			---Invoke a "reverted" event calling registered listeners
-			---@param user boolean
-			function invoke.reverted(user) end
-
-			---Invoke a "reset" event calling registered listeners
-			---@param user boolean
-			function invoke.reset(user) end
+		---@field loaded fun(user: boolean) Invoke a "loaded" event to notify registered listeners and call handlers
+		---@field saved fun(user: boolean) Invoke a "saved" event to notify registered listeners and call handlers
+		---@field applied fun(user: boolean) Invoke a "applied" event to notify registered listeners and call handlers
+		---@field reverted fun(user: boolean) Invoke a "reverted" event to notify registered listeners and call handlers
+		---@field reset fun(user: boolean) Invoke a "reset" event to notify registered listeners and call handlers
 
 		---@class settingsmanager_setListener : widget_setListener
+		---@field [string] fun(handler: settingsmanager_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -5681,12 +5570,6 @@ function wt.CreateSettingsmanager(t, widget)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler settingsmanager_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Batched datamanagement
 
 		---Force update all linked settings widgets in this category page
@@ -5702,7 +5585,7 @@ function wt.CreateSettingsmanager(t, widget)
 		---@param silent? boolean If false, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 		function _.save(user, silent) end
 
-		---Apply settings data of this category page by calling all registered **onChange** handlers of all linked widgets
+		---Apply settings data of this category page by calling all registered `onChange` handlers of all linked widgets
 		---***
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke an "applied" event and call registered listeners | ***Default:*** `false`
@@ -5748,29 +5631,29 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	--| Parameters
 
 	---@class settingsPageCreationData : settingsmanagerCreationData_base, describableObject, settingsCategoryData, settingsmanagerEvents, initializableOptionsContainer, liteObject # t
-	---@field append? boolean When setting the name of the settings category page, append **t.name** after **addon** | ***Default:*** `true` if **t.name** ~= nil
+	---@field append? boolean When setting the name of the settings category page, append `t.name` after `addon` | ***Default:*** `true` if `t.name` ~= nil
 	---@field icon? string Path to the texture file to use as the icon of this settings page | ***Default:*** *the addon's logo specified in its TOC file with the "IconTexture" tag*
-	---@field titleIcon? boolean Append **t.icon** to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if **t.register == true**
+	---@field titleIcon? boolean Append `t.icon` to the title of the button of the setting page in the AddOns list of the Settings window as well | ***Default:*** `true` if `t.register == true`
 	---@field scroll? settingsPageScrollData If set, make the canvas frame scrollable by creating a [ScrollFrame](https://warcraft.wiki.gg/wiki/UIOBJECT_ScrollFrame) as its child
-	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys**, committing their data to storage via <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
-	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in **t.dataManagement.keys** from storage via <code><i>WidgetToolbox</i>.LoadOptionsData(...)</code> | ***Default:*** `true` if **t.dataManagement.keys** ~= nil<ul><li>***Note:*** If **t.dataManagement.keys** is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoSave? boolean If true, automatically save the values of all widgets registered for settings datamanagement under settings keys listed in `t.dataManagement.keys`, committing their data to storage via <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> | ***Default:*** `true` if `t.dataManagement.keys` ~= nil<ul><li>***Note:*** If `t.dataManagement.keys` is not set, the automatic load will not be executed even if this is set to true.</li></ul>
+	---@field autoLoad? boolean If true, automatically load all data to the widgets registered for settings datamanagement under settings keys listed in `t.dataManagement.keys` from storage via <code><i>WidgetToolbox</i>.LoadOptionsData(...)</code> | ***Default:*** `true` if `t.dataManagement.keys` ~= nil<ul><li>***Note:*** If `t.dataManagement.keys` is not set, the automatic load will not be executed even if this is set to true.</li></ul>
 	---@field arrangement? arrangementData_settingsPage If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field listeners? settingsPage_listeners|settingsmanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class settingsPageScrollData : scrollSpeedData
-		---@field height? number Set the height of the scrollable child frame to the specified value | ***Default:*** 0 *(no height)*
-		---@field speed? number Percentage of one page of content to scroll at a time | ***Range:*** (0, 1) | ***Default:*** 0.25
+		---@field height? number Set the height of the scrollable child frame to the specified value | ***Default:*** `0` *(no height)*
+		---@field speed? number Percentage of one page of content to scroll at a time | ***Range:*** (`0`, `1`) | ***Default:*** `0.25`
 
 		---@class arrangementData_settingsPage : arrangementRules
 		---@field margins? spacingData_settingsPage Inset the content inside the canvas frame by the specified amount on each side
-		---@field gaps? number The amount of space to leave between rows | ***Default:*** 44
-		---@field resize? boolean Set the height of the canvas frame to match the space taken up by the arranged content (including margins) | ***Default:*** **t.scroll** ~= nil
+		---@field gaps? number The amount of space to leave between rows | ***Default:*** `44`
+		---@field resize? boolean Set the height of the canvas frame to match the space taken up by the arranged content (including margins) | ***Default:*** `t.scroll ~= nil`
 
 			---@class spacingData_settingsPage
 			---@field l? number Space to leave on the left side | 10
 			---@field r? number Space to leave on the right side (doesn't need to be negated) | ***Default:*** 10
-			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** 44
-			---@field b? number Space to leave at the bottom | ***Default:*** 44
+			---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** `44`
+			---@field b? number Space to leave at the bottom | ***Default:*** `44`
 
 		---@class settingsPage_listeners: settingsmanager_listeners
 		---@field loaded? settingsPage_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after `settingsPage.load(...)` was called
@@ -5817,7 +5700,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 				---@alias settingsPage_handler_enabled
 				---| fun(self: settingsPage, state: boolean) Called when an "enabled" event is invoked after `settingsPage.setEnabled(...)` was called<hr><p>@*param* `self` settingsPage ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class settingsPage_listener_any : eventTag, eventHandlerIndex
+			---@class settingsPage_listener_any : eventHandlerIndex
 			---@field handler settingsPage_handler_any Handler function to register for call
 
 				---@alias settingsPage_handler_any
@@ -5842,7 +5725,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		---@field OnRefresh function
 		---@field OnDefault function
 
-		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global **StaticPopupDialogs** table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
+		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global `StaticPopupDialogs` table, and used as the parameter when calling [StaticPopup_Show()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [StaticPopup_Hide()](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 		---@return string
 		function _.getResetPopupKey() return "" end
 
@@ -5863,6 +5746,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		--| Events
 
 		---@class settingsPage_setListener : settingsmanager_setListener
+		---@field [string] fun(handler: settingsPage_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -5895,27 +5779,21 @@ function wt.CreateSettingsPage(t, settingsmanager)
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler settingsPage_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Utilities
 
 		---Open the Settings window to this category page
-		--- - ***Note:*** No category page will be opened if **WidgetToolsDB.lite** is true.
+		--- - ***Note:*** No category page will be opened if `WidgetToolsDB.lite` is true.
 		function _.open() end
 end
 
 ---Create an new Settings category with a parent page, its child pages, and set up shared settings datamanagement for them
 ---***
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
----@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a **category** value), it will be dismissed and no new category will be created at all.</li></ul>
----@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under **parent**<ul><li>***Note:*** Already registered pages (which contain a **category** value) will be skipped and won't be included in the new category.</li></ul>
+---@param parent settingsPageCreationData|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a `category` value), it will be dismissed and no new category will be created at all.</li></ul>
+---@param pages? settingsPageCreationData[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under `parent`<ul><li>***Note:*** Already registered pages (which contain a `category` value) will be skipped and won't be included in the new category.</li></ul>
 ---@param t? settingsCategoryCreationData Optional parameters
 ---***
----@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified **parent** was invalid
+---@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified `parent` was invalid
 function wt.CreateSettingsCategory(addon, parent, pages, t)
 
 	--| Parameters
@@ -5939,7 +5817,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		---Reset all settings data to their default values for all pages in this category
 		---***
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param callListeners? boolean If true, call the **onDefault** listeners (if set) of each individual category page separately | ***Default:*** `true`
+		---@param callListeners? boolean If true, call the `onDefault` listeners (if set) of each individual category page separately | ***Default:*** `true`
 		function _.defaults(user, callListeners) end
 
 		--| Type
@@ -5952,8 +5830,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 			---| "SettingsCategory"
 end
 
-
---[[ PROFILES ]]
+--[ Profiles ]
 
 ---Create a non-GUI profilemanager widget with live database management and profile selection logic
 ---***
@@ -5990,7 +5867,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	---| table
 
 		---@class characterProfileData # characterData
-		---@field activeProfile integer The index of the currently active profile | ***Default:*** 1
+		---@field activeProfile integer The index of the currently active profile | ***Default:*** `1`
 
 	---A static table containing all default settings values to be cloned when creating a new profile or resetting one
 	---@alias CreateProfilemanager_param3 # defaultData
@@ -6000,7 +5877,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	---@field category? string Category name to be used for identifying this group of profile data when modified in popups and chat messages | ***Default:*** `"Addon"`
 	---@field valueChecker? fun(key: number|string, value: any): boolean Helper function for validating values when checking profile data, returning true if the value is to be accepted as valid
 	---@field recoveryMap? table<string, recoveryData>|fun(tableToCheck: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>|nil Static map or function returning a dynamically creatable map for removed but recoverable data
-	---@field onRecovery? fun(tableToCheck: table) Function called after the data has been has been recovered via the **recoveryMap**
+	---@field onRecovery? fun(tableToCheck: table) Function called after the data has been has been recovered via the `recoveryMap`
 	---@field listeners? profilemanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class recoveryData
@@ -6064,7 +5941,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 				---@alias profilemanager_handler_enabled
 				---| fun(self: profilemanager, state: boolean) Called when an "enabled" event is invoked after `profilemanager.setEnabled(...)` was called<hr><p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class profilemanager_listener_any : eventTag, eventHandlerIndex
+			---@class profilemanager_listener_any : eventHandlerIndex
 			---@field handler profilemanager_handler_any Handler function to register for call
 
 				---@alias profilemanager_handler_any
@@ -6092,45 +5969,15 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		--| Events
 
 		---@class profilemanager_invoke : widget_invoke
-		local invoke = {}
-
-			---Invoke a "loaded" event calling registered listeners
-			---@param user boolean
-			function invoke.loaded(user) end
-
-			---Invoke an "activated" event calling registered listeners
-			---@param success boolean
-			---@param user boolean
-			function invoke.activated(success, user) end
-
-			---Invoke a "created" event calling registered listeners
-			---@param index integer
-			---@param title string
-			---@param user boolean
-			function invoke.created(index, title, user) end
-
-			---Invoke a "renamed" event calling registered listeners
-			---@param success boolean
-			---@param user boolean
-			---@param index any
-			---@param title? string
-			function invoke.renamed(success, user, index, title) end
-
-			---Invoke a "deleted" event calling registered listeners
-			---@param success boolean
-			---@param user boolean
-			---@param index any
-			---@param title? string
-			function invoke.deleted(success, user, index, title) end
-
-			---Invoke a "reset" event calling registered listeners
-			---@param success boolean
-			---@param user boolean
-			---@param index any
-			---@param title? string
-			function invoke.reset(success, user, index, title) end
+		---@field loaded fun(user: boolean) Invoke a "loaded" event to notify registered listeners and call handlers
+		---@field activated fun(success: boolean, user: boolean) Invoke an "activated" event to notify registered listeners and call handlers
+		---@field created fun(index: integer, title: string, user: boolean) Invoke a "created" event to notify registered listeners and call handlers
+		---@field renamed fun(success: boolean, user: boolean, index: any, title?: string) Invoke a "renamed" event to notify registered listeners and call handlers
+		---@field deleted fun(success: boolean, user: boolean, index: any, title?: string) Invoke a "deleted" event to notify registered listeners and call handlers
+		---@field reset fun(success: boolean, user: boolean, index: any, title?: string) Invoke a "reset" event to notify registered listeners and call handlers
 
 		---@class profilemanager_setListener : widget_setListener
+		---@field [string] fun(handler: profilemanager_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -6168,12 +6015,6 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
 
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler profilemanager_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
-
 		--| Utilities
 
 		---Activate the specified settings profile
@@ -6194,19 +6035,19 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 		---Create a new settings profile
 		---***
-		---@param name? string Name tag to use when setting the display title of the new profile | ***Default:*** `duplicate` and **accountData.profiles[duplicate].title** or "Profile"
-		---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** 2
+		---@param name? string Name tag to use when setting the display title of the new profile | ***Default:*** `duplicate and accountData.profiles[duplicate].title or "Profile"`
+		---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** `2`
 		---@param duplicate? integer Index of the profile to create the new profile as a duplicate of instead of using default data values
 		---@param apply? boolean Whether to immediately set the new profile as the active profile or not | ***Default:*** `true`
-		---@param index? integer Place the new profile under this specified index in **accountData.profile** instead of the end of the list | ***Range:*** (1, #**accountData.profiles** + 1)
+		---@param index? integer Place the new profile under this specified index in `accountData.profile` instead of the end of the list | ***Range:*** (`1`, `#accountData.profiles + 1`)
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke an "created" event and call registered listeners | ***Default:*** `false`
 		function _.create(name, number, duplicate, index, apply, user, silent) end
 
 		---Rename the specified profile
 		---@param index? integer Index of the profile to rename | ***Default:*** *currently active profile index*
-		---@param name? string The new title of the profile to set | ***Default:*** "Profile"
-		---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** 2
+		---@param name? string The new title of the profile to set | ***Default:*** `"Profile"`
+		---@param number? integer Starting value for the incremented number appended to `name` if it's used | ***Default:*** `2`
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke an "renamed" event and call registered listeners | ***Default:*** `false`
 		---***
@@ -6243,7 +6084,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 		---Load profiles data
 		---***
-		---@param p? profileStorage Table holding the list of profiles to store | ***Default:*** *validate* **accountData** *(if the data is missing or invalid, set up a default profile)*
+		---@param p? profileStorage Table holding the list of profiles to store | ***Default:*** *validate* `accountData` *(if the data is missing or invalid, set up a default profile)*
 		---@param activeProfile? integer Index of the active profile to set | ***Default:*** *currently active profile index*
 		---@param user? boolean If true, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If false, invoke an "loaded" event and call registered listeners | ***Default:*** `false`
@@ -6281,8 +6122,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		---@field compactBackup boolean Whether to skip including additional white spaces to the backup string for more readability
 
 	---@class profilesPageCreationData : profilemanagerCreationData, settingsmanagerCreationData_base, settingsmanagerEvents, liteObject # t
-	---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** "Profiles"<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field title? string Text to be shown as the title of the settings page | ***Default:*** "Data Management"
+	---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** `"Profiles"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
+	---@field title? string Text to be shown as the title of the settings page | ***Default:*** `"Data Management"`
 	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** *describing profiles & backup*
 	---@field listeners? profilesPage_listeners|profilemanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field onImport? fun(success: boolean, data: table) Called after a settings backup string import has been performed by the user loading data for the currently active profile<hr><p>@*param* `success` boolean — Whether the imported string was successfully processed</p><p>@*param* `data` table — The table containing the imported backup data</p>
@@ -6340,7 +6181,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 				---@alias profilesPage_handler_enabled
 				---| fun(self: profilesPage, state: boolean) Called when an "enabled" event is invoked after `profilesPage.setEnabled(...)` was called<hr><p>@*param* `self` profilesPage ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class profilesPage_listener_any : eventTag, eventHandlerIndex
+			---@class profilesPage_listener_any : eventHandlerIndex
 			---@field handler profilesPage_handler_any Handler function to register for call
 
 				---@alias profilesPage_handler_any
@@ -6382,6 +6223,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		--| Events
 
 		---@class profilesPage_setListener : profilemanager_setListener
+		---@field [string] fun(handler: profilesPage_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "loaded" widget event
@@ -6418,16 +6260,9 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 			---@param handler profilesPage_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler profilesPage_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 end
 
-
---[[ ADDON INFO ]]
+--[ Addon ]
 
 ---Create a non-GUI addonmanager widget providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---***
@@ -6460,7 +6295,7 @@ function wt.CreateAddonmanager(t, widget)
 				---@alias addonmanager_handler_enabled
 				---| fun(self: addonmanager, state: boolean) Called when an "enabled" event is invoked after `addonmanager.setEnabled(...)` was called<hr><p>@*param* `self` addonmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class addonmanager_listener_any : eventTag, eventHandlerIndex
+			---@class addonmanager_listener_any : eventHandlerIndex
 			---@field handler addonmanager_handler_any Handler function to register for call
 
 				---@alias addonmanager_handler_any
@@ -6485,14 +6320,10 @@ function wt.CreateAddonmanager(t, widget)
 		--| Events
 
 		---@class addonmanager_invoke : widget_invoke
-		local invoke = {}
-
-			---Invoke a "changed" event calling registered listeners
-			---@param addon string
-			---@param user boolean
-			function invoke.changed(addon, user) end
+		---@field changed fun(addon: string, user: boolean) Invoke a "changed" event to notify registered listeners and call handlers
 
 		---@class addonmanager_setListener : widget_setListener
+		---@field [string] fun(handler: addonmanager_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "changed" widget event
@@ -6504,12 +6335,6 @@ function wt.CreateAddonmanager(t, widget)
 			---@param handler profilesPage_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler addonmanager_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 
 		--| Metadata
 
@@ -6636,7 +6461,7 @@ function wt.CreateAddonPage(t, addonmanager)
 	--| Parameters
 
 	---@class aboutPageCreationData : settingsmanagerCreationData_base, addonmanagerCreationData # t
-	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** [GetAddOnMetadata(**addon**, "Notes")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
+	---@field description? string Text to be shown as the description below the title of the settings page | ***Default:*** [GetAddOnMetadata(`addon`, "Notes")](https://warcraft.wiki.gg/wiki/API_GetAddOnMetadata)
 	---@field static? boolean If true, disable the "Restore Defaults" & "Revert Changes" buttons | ***Default:*** `true`
 	---@field listeners? addonPage_listeners|addonmanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
@@ -6656,7 +6481,7 @@ function wt.CreateAddonPage(t, addonmanager)
 				---@alias addonPage_handler_enabled
 					---| fun(self: addonPage, state: boolean) Called when an "enabled" event is invoked after `addonPage.setEnabled(...)` was called<hr><p>@*param* `self` addonPage ― Reference to the widget table</p><p>@*param* `state` boolean ― True if the widget is enabled</p>
 
-			---@class addonPage_listener_any : eventTag, eventHandlerIndex
+			---@class addonPage_listener_any : eventHandlerIndex
 			---@field handler addonPage_handler_any Handler function to register for call
 
 				---@alias addonPage_handler_any
@@ -6687,6 +6512,7 @@ function wt.CreateAddonPage(t, addonmanager)
 		--| Events
 
 		---@class addonPage_setListener : addonmanager_setListener
+		---@field [string] fun(handler: addonPage_handler_any, callIndex?: integer) Register a listener for a custom widget event
 		local setListener = {}
 
 			---Register a listener for a "changed" widget event
@@ -6698,10 +6524,4 @@ function wt.CreateAddonPage(t, addonmanager)
 			---@param handler addonPage_handler_enabled Handler function to call on trigger
 			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
 			function setListener.enabled(handler, callIndex) end
-
-			---Register a listener for a custom widget event
-			---@param event string Custom event tag
-			---@param handler addonPage_handler_any Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *placed at the end of the current list*
-			function setListener._(event, handler, callIndex) end
 end

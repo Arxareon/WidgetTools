@@ -290,7 +290,7 @@ end
 ---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)</li></ul></li></ul>
 ---@param latest? FormatChangelog_param2 If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
 ---***
----@return string c # ***Default:*** ""
+---@return string c # ***Default:*** `""`
 function utilities.FormatChangelog(changelog, latest)
 
 	--| Parameters
