@@ -289,7 +289,7 @@ end
 
 ---Set the parameters of a frame
 ---@param frame Frame
----@param t frameCreationData
+---@param t frame_options
 local function setUpFrame(frame, t)
 	t.size = t.size or {}
 	t.size.w = t.size.w or 0
@@ -896,8 +896,8 @@ function wt.AddDependencies(rules, setState)
 		local f = rules[i].frame
 
 		if wt.IsWidget(f, "Datamanager") then
-			f.setListener.loaded(function(_, success) if success then setter() end end)
-			f.setListener.changed(setter)
+			f.addListener.loaded(function(_, success) if success then setter() end end)
+			f.addListener.changed(setter)
 		elseif us.IsFrame(f) then
 			local scriptType = dataObjectScriptType[f:GetObjectType()]
 
@@ -923,11 +923,11 @@ function wt.CheckDependencies(rules)
 
 			if t == "Toggle" then if e then state = e(f.getValue()) else state = f.getValue() end
 			elseif e then
-				if t == "Selector" then state = e(f.getSelected())
-				elseif t == "SpecialSelector" then state = e(f.getSelected())
-				elseif t == "Multiselector" then state = e(f.getSelections())
-				elseif t == "Textbox" then state = e(f.getText())
-				elseif t == "Numeric" then state = e(f.getNumber()) end
+				if t == "Selector" then state = e(f.getValue())
+				elseif t == "SpecialSelector" then state = e(f.getValue())
+				elseif t == "Multiselector" then state = e(f.getValue())
+				elseif t == "Textbox" then state = e(f.getValue())
+				elseif t == "Numeric" then state = e(f.getValue()) end
 			end
 		elseif us.IsFrame(f) then
 			local ot = f:GetObjectType()
@@ -1104,7 +1104,7 @@ function wt.CreateTexture(frame, t, updates)
 
 	--[ Set Texture Utility ]
 
-	---@param data textureUpdateData|textureCreationData
+	---@param data textureUpdateData|texture_options
 	local function setTexture(data)
 
 		--| Position & dimensions
@@ -1926,7 +1926,7 @@ end
 local settingsData = { rules = {}, changeHandlers = {} } ---@type settingsRegistry
 
 function wt.AddSettingsDataManagementEntry(widget, t)
-	if not wt.IsWidget(widget) or type(t) ~= "table" then return nil end
+	if not wt.IsWidget(widget, "Datamanager") or type(t) ~= "table" then return nil end
 
 	t.category = type(t.category) == "string" and t.category or "WidgetTools"
 	local key = t.category .. (type(t.key) == "string" and t.key or "")

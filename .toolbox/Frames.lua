@@ -124,7 +124,7 @@ end
 
 ---Set the parameters of a GUI button widget frame
 ---@param button actionButton|customButton
----@param t actionButtonCreationData|customButtonCreationData
+---@param t actionButton_options|customButton_options
 ---@param name string
 ---@param title string
 ---@param useHighlight boolean
@@ -221,7 +221,7 @@ local function setUpButtonFrame(button, t, name, title, useHighlight)
 	updateState(button, button.isEnabled())
 
 	--Handle widget updates
-	button.setListener.enabled(updateState, 1)
+	button.addListener.enabled(updateState, 1)
 end
 
 function wt.CreateButton(t, action)
@@ -414,7 +414,7 @@ function wt.CreateCheckbox(t, binary)
 	local function updateBinaryState(_, state) checkbox.widget:SetChecked(state) end
 
 	--Handle widget updates
-	checkbox.setListener.changed(updateBinaryState, 1)
+	checkbox.addListener.changed(updateBinaryState, 1)
 
 	checkbox.widget:HookScript("OnClick", function(self)
 		local state = self:GetChecked()
@@ -496,7 +496,7 @@ function wt.CreateCheckbox(t, binary)
 	end
 
 	--Handle widget updates
-	checkbox.setListener.enabled(updateState, 1)
+	checkbox.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -514,7 +514,7 @@ end
 ---Set the parameters of a GUI binary frame
 ---@param binary checkbox|classicCheckbox|radiobutton
 ---@param title string
----@param t checkboxCreationData
+---@param t checkbox_options
 local function setUpToggleFrame(binary, title, t)
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
@@ -557,7 +557,7 @@ local function setUpToggleFrame(binary, title, t)
 	local function updateBinaryState(_, state) binary.widget:SetChecked(state) end
 
 	--Handle widget updates
-	binary.setListener.changed(updateBinaryState, 1)
+	binary.addListener.changed(updateBinaryState, 1)
 
 	--| Tooltip
 
@@ -682,7 +682,7 @@ function wt.CreateClassicCheckbox(t, binary)
 	end
 
 	--Handle widget updates
-	checkbox.setListener.enabled(updateState, 1)
+	checkbox.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -776,7 +776,7 @@ function wt.CreateRadiobutton(t, binary)
 	end
 
 	--Handle widget updates
-	radiobutton.setListener.enabled(updateState, 1)
+	radiobutton.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -804,7 +804,7 @@ end
 
 ---Set the parameters of a GUI selector widget frame
 ---@param selector radiogroup|specialRadiogroup|checkgroup
----@param t radiogroupCreationData|checkgroupCreationData
+---@param t radiogroup_options|checkgroup_options
 ---@param name string
 ---@param title string
 local function setUpSelectorFrame(selector, t, name, title)
@@ -852,7 +852,7 @@ local function setUpSelectorFrame(selector, t, name, title)
 	local function updateState(_, state) if selector.label then selector.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end end
 
 	--Handle widget updates
-	selector.setListener.enabled(updateState, 1)
+	selector.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -906,8 +906,8 @@ function wt.CreateRadiogroup(t, selector)
 				size = { w = (width and columns == 1) and width or nil, },
 				clearable = clearable,
 				events = { OnClick = function(_, _, button)
-					if button == "LeftButton" then radiogroup.setSelected(item.index, true)
-					elseif clearable and button == "RightButton" and not radiogroup.getSelected() then radiogroup.setSelected(nil, true) end
+					if button == "LeftButton" then radiogroup.setValue(item.index, true)
+					elseif clearable and button == "RightButton" and not radiogroup.getValue() then radiogroup.setValue(nil, true) end
 				end, },
 				showDefault = false,
 				utilityMenu = false,
@@ -937,17 +937,17 @@ function wt.CreateRadiogroup(t, selector)
 		setRadioButton(radiogroup.binaries[i], true)
 
 		--Handle item updates
-		radiogroup.binaries[i].setListener._("activated", function(self, active) setRadioButton(self, active) end)
+		radiogroup.binaries[i].addListener._("activated", function(self, active) setRadioButton(self, active) end)
 	end
 
 	--Handle item list updates
-	if radiogroup.setListener.updated and radiogroup.setListener.added then
-		radiogroup.setListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.binaries) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
-		radiogroup.setListener.added(function (_, binary)
+	if radiogroup.addListener.updated and radiogroup.addListener.added then
+		radiogroup.addListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.binaries) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
+		radiogroup.addListener.added(function (_, binary)
 			setRadioButton(binary, true)
 
 			--Handle item updates
-			binary.setListener._("activated", function(self, active) setRadioButton(self, active) end)
+			binary.addListener._("activated", function(self, active) setRadioButton(self, active) end)
 		end)
 	end
 
@@ -990,9 +990,9 @@ function wt.CreateRadiogroup(t, selector)
 		triggers = openTriggers,
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = radiogroup.getSelected() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = radiogroup.getValue() } end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				radiogroup.setSelected(wt.clipboard.selection.index, true)
+				radiogroup.setValue(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
@@ -1301,9 +1301,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				end,
 			}, }, },
 			action = function()
-				local selected = dropdown.getSelected()
+				local selected = dropdown.getValue()
 
-				dropdown.setSelected(selected and selected - 1 or #dropdown.binaries, true)
+				dropdown.setValue(selected and selected - 1 or #dropdown.binaries, true)
 			end,
 			dependencies = previousDependencies
 		})
@@ -1379,9 +1379,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				end,
 			}, }, },
 			action = function()
-				local selected = dropdown.getSelected()
+				local selected = dropdown.getValue()
 
-				dropdown.setSelected(selected and selected + 1 or 1, true)
+				dropdown.setValue(selected and selected + 1 or 1, true)
 			end,
 			dependencies = nextDependencies
 		})
@@ -1390,7 +1390,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	--[ Getters & Setters ]
 
 	function dropdown.setText(text, silent)
-		local index = dropdown.getSelected()
+		local index = dropdown.getValue()
 		local item = t.items[index] or {}
 		text = type(text) == "string" and text or item.title or "…"
 
@@ -1434,17 +1434,17 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	end, false)
 
 	--Handle widget updates
-	dropdown.toggle.setListener.triggered(function() dropdown.toggleMenu() end)
-	dropdown.setListener.changed(function()
+	dropdown.toggle.addListener.triggered(function() dropdown.toggleMenu() end)
+	dropdown.addListener.changed(function()
 		dropdown.setText()
 
 		if t.autoClose then dropdown.toggleMenu(false) end
 	end, 1)
-	dropdown.setListener._("open", function(state)
+	dropdown.addListener._("open", function(state)
 		dropdown.holderFrame:SetAttribute("open", state)
 		if not state then PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) end
 	end)
-	dropdown.setListener.updated(function(self) self.menu:SetHeight(#self.binaries * 18 + 12) end, 1) --TODO add size & scroll update
+	dropdown.addListener.updated(function(self) self.menu:SetHeight(#self.binaries * 18 + 12) end, 1) --TODO add size & scroll update
 
 	--| Backdrop
 
@@ -1500,10 +1500,10 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = dropdown.getSelected() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = dropdown.getValue() } end })
 			if clearable then wt.CreateMenuButton(menu, { title = wt.strings.dropdown.clear, action = function() dropdown.setText(nil, true) end }) end
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				dropdown.setSelected(wt.clipboard.selection.index, true)
+				dropdown.setValue(wt.clipboard.selection.index, true)
 			end }):SetEnabled(wt.clipboard.selection ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
@@ -1528,7 +1528,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		dropdown.menu:Hide()
 	end
 
-	dropdown.setListener.enabled(updateState, 1)
+	dropdown.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -1559,7 +1559,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if wt.IsWidget(selector, typenameBase) then itemset = selector.getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
 
-	---@type specialRadiogroupCreationData|radiogroupCreationData
+	---@type specialRadiogroup_options|radiogroup_options
 	t = us.Pull(t or {}, {
 		labels = false,
 		columns = itemset == "strata" and 8 or 3,
@@ -1593,9 +1593,9 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or "Selector" })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard[specialRadiogroup.getItemset()] = { value = specialRadiogroup.getSelected() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard[specialRadiogroup.getItemset()] = { value = specialRadiogroup.getValue() } end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				specialRadiogroup.setSelected(wt.clipboard[specialRadiogroup.getItemset()].value, true)
+				specialRadiogroup.setValue(wt.clipboard[specialRadiogroup.getItemset()].value, true)
 			end }):SetEnabled(wt.clipboard[specialRadiogroup.getItemset()] ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup.revertData() end })
 			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup.resetData() end }) end
@@ -1674,7 +1674,7 @@ function wt.CreateCheckgroup(t, selector)
 			if item.label then item.label:SetIgnoreParentAlpha(true) end
 
 			--Handle limit updates
-			checkgroup.setListener.limited(function(_, min, max)
+			checkgroup.addListener.limited(function(_, min, max)
 				local state = item.getValue()
 
 				setLock(item, (min and state) or (max and not state))
@@ -1702,16 +1702,16 @@ function wt.CreateCheckgroup(t, selector)
 		setCheckbox(checkgroup.items[i], true)
 
 		--Handle item updates
-		checkgroup.items[i].setListener._("activated", function(self, active) setCheckbox(self, active) end)
+		checkgroup.items[i].addListener._("activated", function(self, active) setCheckbox(self, active) end)
 	end
 
 	--Handle item list updates
-	checkgroup.setListener.updated(function() checkgroup.frame:SetHeight(math.ceil((#checkgroup.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
-	checkgroup.setListener.added(function (_, binary)
+	checkgroup.addListener.updated(function() checkgroup.frame:SetHeight(math.ceil((#checkgroup.items) / t.columns) * 16 + (t.label ~= false and 14 or 0)) end, 1)
+	checkgroup.addListener.added(function (_, binary)
 		setCheckbox(binary, true)
 
 		--Handle item updates
-		binary.setListener._("activated", function(self, active) setCheckbox(self, active) end)
+		binary.addListener._("activated", function(self, active) setCheckbox(self, active) end)
 	end)
 
 	--[ Events ]
@@ -1759,9 +1759,9 @@ function wt.CreateCheckgroup(t, selector)
 		triggers = openTriggers,
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selections = { states = checkgroup.getSelections() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selections = { states = checkgroup.getValue() } end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				checkgroup.setSelections(wt.clipboard.selections.states, true)
+				checkgroup.setValue(wt.clipboard.selections.states, true)
 			end }):SetEnabled(wt.clipboard.selections ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
@@ -1779,7 +1779,7 @@ end
 
 ---Set the parameters of a GUI textual widget
 ---@param editbox textualEditbox|customEditbox|multilineEditbox
----@param t editboxCreationData
+---@param t editbox_options
 local function setUpEditboxFrame(editbox, t)
 
 	--[ Frame ]
@@ -1834,13 +1834,13 @@ local function setUpEditboxFrame(editbox, t)
 	else scriptEvent = false end end
 
 	--Handle widget updates
-	editbox.setListener.changed(updateText, 1)
+	editbox.addListener.changed(updateText, 1)
 
 	--Link value changes
 	editbox.widget:HookScript("OnTextChanged", function(self, user)
 		scriptEvent = true
 
-		editbox.setText(self:GetText(), user)
+		editbox.setValue(self:GetText(), user)
 	end)
 
 	editbox.widget:SetAutoFocus(t.keepFocused)
@@ -1878,7 +1878,7 @@ local function setUpEditboxFrame(editbox, t)
 	end
 
 	--Handle widget updates
-	editbox.setListener.enabled(updateState, 1)
+	editbox.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -1886,13 +1886,13 @@ local function setUpEditboxFrame(editbox, t)
 	updateState(nil, editbox.isEnabled())
 
 	--Set up starting text
-	updateText(nil, editbox.getText())
+	updateText(nil, editbox.getValue())
 end
 
 ---Set the parameters of a single-line GUI textual widget
 ---@param editbox textualEditbox|customEditbox
 ---@param title string
----@param t editboxCreationData
+---@param t editbox_options
 local function setUpEditbox(editbox, title, t)
 	editbox.widget:SetMultiLine(false)
 
@@ -1935,9 +1935,9 @@ local function setUpEditbox(editbox, title, t)
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = editbox.getText() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = editbox.getValue() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				editbox.setText(wt.clipboard.textual, true)
+				editbox.setValue(wt.clipboard.textual, true)
 			end }):SetEnabled(wt.clipboard.textual ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
@@ -2142,14 +2142,14 @@ function wt.CreateMultilineEditbox(t, textual)
 	---@param scrolling boolean
 	local function resizeEditbox(scrolling)
 		local scrollBarOffset = scrolling and (wt.classic and 32 or 16) or 0
-		local charCountWidth = t.charCount ~= false and (t.charLimit or 0) > 0 and tostring(t.charLimit - editbox.getText():len()):len() * 6 + 3 or 0
+		local charCountWidth = t.charCount ~= false and (t.charLimit or 0) > 0 and tostring(t.charLimit - editbox.getValue():len()):len() * 6 + 3 or 0
 
 		editbox.widget:SetWidth(editbox.scrollframe:GetWidth() - scrollBarOffset - charCountWidth)
 
 		--Update the character counter
 		if editbox.scrollframe.CharCount:IsVisible() and t.charLimit then --WATCH: Remove when the character counter gets fixed..
 			editbox.scrollframe.CharCount:SetWidth(charCountWidth)
-			editbox.scrollframe.CharCount:SetText(tostring(t.charLimit - editbox.getText():len()))
+			editbox.scrollframe.CharCount:SetText(tostring(t.charLimit - editbox.getValue():len()))
 			editbox.scrollframe.CharCount:SetPoint("BOTTOMRIGHT", editbox.scrollframe, "BOTTOMRIGHT", -scrollBarOffset + 1, 0)
 		end
 	end
@@ -2194,9 +2194,9 @@ function wt.CreateMultilineEditbox(t, textual)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = editbox.getText() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = editbox.getValue() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				editbox.setText(wt.clipboard.textual, true)
+				editbox.setValue(wt.clipboard.textual, true)
 			end }):SetEnabled(wt.clipboard.textual ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
@@ -2335,7 +2335,7 @@ function wt.CreatePopupInputbox(t) --FIX lite
 		wt.SetPosition(customPopupInputBoxFrame.panel, t.position)
 
 		--Update the textual data manager
-		customPopupInputBoxFrame.textual.setText(t.text)
+		customPopupInputBoxFrame.textual.setValue(t.text)
 		if t.title then
 			if customPopupInputBoxFrame.textual.label then customPopupInputBoxFrame.textual.label:SetText(t.title) else
 				customPopupInputBoxFrame.textual.label = wt.CreateTitle(customPopupInputBoxFrame.textual.frame, {
@@ -2356,7 +2356,7 @@ function wt.CreatePopupInputbox(t) --FIX lite
 	--| Utilities
 
 	local function accept()
-		if type(customPopupInputBoxFrame.accept) == "function" then customPopupInputBoxFrame.accept(customPopupInputBoxFrame.textual.getText()) end
+		if type(customPopupInputBoxFrame.accept) == "function" then customPopupInputBoxFrame.accept(customPopupInputBoxFrame.textual.getValue()) end
 
 		customPopupInputBoxFrame.panel:Hide()
 	end
@@ -2589,10 +2589,10 @@ function wt.CreateSlider(t, numeric)
 			}, }, },
 			events = {
 				OnChar = function(frame, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(frame) slider.setNumber(frame:GetNumber(), true) end,
+				OnEnterPressed = function(frame) slider.setValue(frame:GetNumber(), true) end,
 				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.widget.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
-			value = tostring(slider.getNumber()):gsub(matchPattern, replacePattern),
+			value = tostring(slider.getValue()):gsub(matchPattern, replacePattern),
 			showDefault = false,
 			utilityMenu = false,
 		})
@@ -2600,7 +2600,7 @@ function wt.CreateSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		slider.setListener.changed(function(_, number) slider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider.addListener.changed(function(_, number) slider.valuebox.setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ]
@@ -2633,17 +2633,17 @@ function wt.CreateSlider(t, numeric)
 	end
 
 	--Handle widget updates
-	slider.setListener.changed(updateNumber, 1)
-	slider.setListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
-	slider.setListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
+	slider.addListener.changed(updateNumber, 1)
+	slider.addListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
+	slider.addListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
 
 	--Link value changes
 	slider.widget.Slider:HookScript("OnValueChanged", function(_, number, user)
-		if not IsMouseButtonDown("LeftButton") then slider.widget.Slider:SetValue(slider.getNumber()) return end
+		if not IsMouseButtonDown("LeftButton") then slider.widget.Slider:SetValue(slider.getValue()) return end
 
 		scriptEvent = true
 
-		slider.setNumber(number, user)
+		slider.setValue(number, user)
 	end)
 
 	--| Backdrop
@@ -2701,9 +2701,9 @@ function wt.CreateSlider(t, numeric)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = slider.getNumber() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = slider.getValue() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				slider.setNumber(wt.clipboard.numeric, true)
+				slider.setValue(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
@@ -2728,7 +2728,7 @@ function wt.CreateSlider(t, numeric)
 		slider.widget.Forward:SetEnabled(state and wt.CheckDependencies({ { frame = slider.widget.Slider, evaluate = function(value) return value < slider.getMax() end }, }))
 	end
 
-	slider.setListener.enabled(updateState, 1)
+	slider.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -2741,7 +2741,7 @@ function wt.CreateSlider(t, numeric)
 	updateLimits(minValue, maxValue)
 
 	-- Set up slider value
-	updateNumber(nil, slider.getNumber(), false)
+	updateNumber(nil, slider.getValue(), false)
 
 	return slider
 end
@@ -2871,10 +2871,10 @@ function wt.CreateClassicSlider(t, numeric)
 			}, }, },
 			events = {
 				OnChar = function(frame, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(frame) classicSlider.setNumber(frame:GetNumber(), true) end,
+				OnEnterPressed = function(frame) classicSlider.setValue(frame:GetNumber(), true) end,
 				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(classicSlider.widget:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
-			value = tostring(classicSlider.getNumber()):gsub(matchPattern, replacePattern),
+			value = tostring(classicSlider.getValue()):gsub(matchPattern, replacePattern),
 			showDefault = false,
 			utilityMenu = false,
 		})
@@ -2882,7 +2882,7 @@ function wt.CreateClassicSlider(t, numeric)
 		--| UX
 
 		--Handle widget updates
-		classicSlider.setListener.changed(function(_, number) classicSlider.valuebox.setText(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		classicSlider.addListener.changed(function(_, number) classicSlider.valuebox.setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--| Side buttons
@@ -3072,15 +3072,15 @@ function wt.CreateClassicSlider(t, numeric)
 	end
 
 	--Handle widget updates
-	classicSlider.setListener.changed(updateNumber, 1)
-	classicSlider.setListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
-	classicSlider.setListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
+	classicSlider.addListener.changed(updateNumber, 1)
+	classicSlider.addListener.min(function(_, limitMin) updateLimits(limitMin) end, 1)
+	classicSlider.addListener.max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
 
 	--Link value changes
 	classicSlider.widget:HookScript("OnValueChanged", function(_, number, user)
 		scriptEvent = true
 
-		classicSlider.setNumber(number, user)
+		classicSlider.setValue(number, user)
 
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 	end)
@@ -3109,9 +3109,9 @@ function wt.CreateClassicSlider(t, numeric)
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = classicSlider.getNumber() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = classicSlider.getValue() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				classicSlider.setNumber(wt.clipboard.numeric, true)
+				classicSlider.setValue(wt.clipboard.numeric, true)
 			end }):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() classicSlider.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() classicSlider.resetData() end }) end
@@ -3136,7 +3136,7 @@ function wt.CreateClassicSlider(t, numeric)
 		end
 	end
 
-	classicSlider.setListener.enabled(updateState, 1)
+	classicSlider.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -3149,7 +3149,7 @@ function wt.CreateClassicSlider(t, numeric)
 	updateLimits(minValue, maxValue)
 
 	--Set up slider value
-	updateNumber(nil, classicSlider.getNumber(), false)
+	updateNumber(nil, classicSlider.getValue(), false)
 
 	return classicSlider
 end
@@ -3336,8 +3336,8 @@ function wt.CreateColorpicker(t, colormanager)
 		}, }, },
 		events = {
 			OnChar = function(frame, _, text) frame:SetText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
-			OnEnterPressed = function(_, text) colorpicker.setColor(wt.PackColor(wt.HexToColor(text)), true) end,
-			OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorpicker.getColor())) end,
+			OnEnterPressed = function(_, text) colorpicker.setValue(wt.PackColor(wt.HexToColor(text)), true) end,
+			OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorpicker.getValue())) end,
 		},
 		showDefault = false,
 		utilityMenu = false,
@@ -3362,11 +3362,11 @@ function wt.CreateColorpicker(t, colormanager)
 	local function updateColor(color)
 		colorpicker.button.widget:SetBackdropColor(color.r, color.g, color.b, color.a)
 		colorpicker.button.gradient:SetVertexColor(color.r, color.g, color.b, 1)
-		colorpicker.hexBox.setText(wt.ColorToHex(color))
+		colorpicker.hexBox.setValue(wt.ColorToHex(color))
 	end
 
 	--Handle widget updates
-	colorpicker.setListener.colored(function(_, color) updateColor(color) end)
+	colorpicker.addListener.colored(function(_, color) updateColor(color) end)
 
 	--Color wheel toggle updates
 	ColorPickerFrame:HookScript("OnShow", function() setLock(false) end)
@@ -3416,9 +3416,9 @@ function wt.CreateColorpicker(t, colormanager)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.color = colorpicker.getColor() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.color = colorpicker.getValue() end })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.paste, action = function()
-				colorpicker.setColor(wt.clipboard.color, true)
+				colorpicker.setValue(wt.clipboard.color, true)
 			end }):SetEnabled(wt.clipboard.color ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker.revertData() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
@@ -3439,7 +3439,7 @@ function wt.CreateColorpicker(t, colormanager)
 		if ColorPickerFrame:IsVisible() then setLock(false) end
 	end
 
-	colorpicker.setListener.enabled(updateState, 1)
+	colorpicker.addListener.enabled(updateState, 1)
 
 	--[ Initialization ]
 
@@ -3449,7 +3449,7 @@ function wt.CreateColorpicker(t, colormanager)
 	updateState(nil, colorpicker.isEnabled())
 
 	--Set up coloring
-	updateColor(colorpicker.getColor())
+	updateColor(colorpicker.getValue())
 
 	return colorpicker
 end
@@ -4134,7 +4134,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 								local label = fontPanel.widgets.path.toggle.label
 								local _, size, flags = label:GetFont()
 
-								pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+								pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getValue() or 1].path, size, flags)
 							end or nil,
 						},
 					},
@@ -4143,7 +4143,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 						local label = fontPanel.widgets.path.toggle.label
 						local _, size, flags = label:GetFont()
 
-						pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getSelected() or 1].path, size, flags)
+						pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getValue() or 1].path, size, flags)
 					end },
 				}),
 				size = wt.CreateSlider({
@@ -4661,12 +4661,12 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					--| UX
 
 					--Update the activation widget UI based on profile data changes
-					profilesPage.setListener.activated(function(_, index) profilesPage.widgets.activate.setSelected(index, false, true) end)
-					profilesPage.setListener.created(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.setListener.renamed(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.setListener.deleted(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.setListener.reset(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.setListener.loaded(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.addListener.activated(function(_, index) profilesPage.widgets.activate.setValue(index, false, true) end)
+					profilesPage.addListener.created(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.addListener.renamed(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.addListener.deleted(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.addListener.reset(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage.addListener.loaded(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
 				end,
 			})
 
@@ -4685,7 +4685,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					--[ Active Profile ]
 
 					local function refresh()
-						profilesPage.backup.box.setText(us.TableToString(profilesPage.data, settingsData.compactBackup))
+						profilesPage.backup.box.setValue(us.TableToString(profilesPage.data, settingsData.compactBackup))
 
 						--Set focus after text change to set the scroll to the top and refresh the position character counter
 						profilesPage.backup.box.scrollframe.EditBox:SetFocus()
@@ -4721,7 +4721,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						text = wt.strings.backup.warning,
 						accept = wt.strings.backup.import,
 						onAccept = function()
-							local success, load = pcall(loadstring("return " .. wt.Clear(profilesPage.backup.box.getText())))
+							local success, load = pcall(loadstring("return " .. wt.Clear(profilesPage.backup.box.getValue())))
 							success = success and type(load) == "table"
 
 							if success then
@@ -4808,7 +4808,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						},
 						initialize = function(windowPanel)
 							local function refreshAll()
-								profilesPage.backupAll.box.setText(us.TableToString({
+								profilesPage.backupAll.box.setValue(us.TableToString({
 									activeProfile = characterData.activeProfile,
 									profiles = accountData.profiles
 								}, settingsData.compactBackup))
@@ -4848,7 +4848,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								text = wt.strings.backup.warning,
 								accept = wt.strings.backup.import,
 								onAccept = function()
-									local success, data = pcall(loadstring("return " .. wt.Clear(profilesPage.backupAll.box.getText())))
+									local success, data = pcall(loadstring("return " .. wt.Clear(profilesPage.backupAll.box.getValue())))
 									data = type(data) == "table" and data or {}
 
 									if success then profilesPage.load(data.profiles, data.activeProfile, true) end
