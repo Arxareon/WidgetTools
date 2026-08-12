@@ -344,8 +344,8 @@ function wt.CreateFrame(t)
 
 	--[ Frame Setup ]
 
-	local name = t.name and ((t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. t.name:gsub("%s+", "")) or nil
-	local frame = CreateFrame("Frame", name, t.parent)
+	local name = t.name and ((t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")) or nil
+	local frame = CreateFrame("Frame", name, t.parentFrame)
 
 	--| Shared setup
 
@@ -359,8 +359,8 @@ function wt.CreateCustomFrame(t)
 
 	--[ Frame Setup ]
 
-	local name = t.name and ((t.append ~= false and t.parent and t.parent ~= UIParent and t.parent:GetName() or "") .. t.name:gsub("%s+", "")) or nil
-	local frame = CreateFrame("Frame", name, t.parent, BackdropTemplateMixin and "BackdropTemplate")
+	local name = t.name and ((t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")) or nil
+	local frame = CreateFrame("Frame", name, t.parentFrame, BackdropTemplateMixin and "BackdropTemplate")
 
 	--| Shared setup
 
@@ -377,14 +377,14 @@ function wt.CreateScrollframe(t)
 
 	--[ Frame Setup ]
 
-	local parentName = t.parent and t.parent:GetName() or ""
+	local parentName = t.parentFrame and t.parentFrame:GetName() or ""
 	local name = t.name and t.name:gsub("%s+", "")
 
-	local scrollframe = CreateFrame("ScrollFrame", parentName .. (name or "") .. "ScrollParent", t.parent, ScrollControllerMixin and "ScrollFrameTemplate")
+	local scrollframe = CreateFrame("ScrollFrame", parentName .. (name or "") .. "ScrollParent", t.parentFrame, ScrollControllerMixin and "ScrollFrameTemplate")
 
 	--| Position & dimensions
 
-	t.size = t.size or t.parent and { w = t.parent:GetWidth(), h = t.parent:GetHeight() } or { w = 0, h = 0 }
+	t.size = t.size or t.parentFrame and { w = t.parentFrame:GetWidth(), h = t.parentFrame:GetHeight() } or { w = 0, h = 0 }
 
 	wt.SetPosition(scrollframe, t.position)
 
@@ -403,7 +403,7 @@ function wt.CreateScrollframe(t)
 
 	--Create scrollable child frame
 	local scrollChild = wt.CreateFrame({
-		parent = scrollframe,
+		parentFrame = scrollframe,
 		name = parentName .. (name or "Scroller"),
 		append = false,
 		size = { w = t.scrollSize.w or scrollframe:GetWidth() - (wt.classic and 32 or 16), h = t.scrollSize.h },
@@ -879,12 +879,18 @@ function wt.SetBackdrop(frame, backdrop, updates)
 	end end
 end
 
---[ Dependencies ]
+--[ Dependencies ] --REPLACE
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
 	EditBox = "OnTextChanged",
 	Slider = "OnValueChanged",
+}
+
+local dataObjectValueGetterKeys = {
+	CheckButton = "GetChecked",
+	EditBox = "GetText",
+	Slider = "GetValue",
 }
 
 function wt.AddDependencies(rules, setState)
@@ -893,7 +899,7 @@ function wt.AddDependencies(rules, setState)
 	local setter = function() setState(wt.CheckDependencies(rules)) end
 
 	for i = 1, #rules do
-		local f = rules[i].frame
+		local f = rules[i].dependency
 
 		if wt.IsWidget(f, "Datamanager") then
 			f.addListener.loaded(function(_, success) if success then setter() end end)
@@ -915,29 +921,17 @@ function wt.CheckDependencies(rules)
 	local state = true
 
 	for i = 1, #rules do
-		local f = rules[i].frame
-		local e = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
+		local widget = rules[i].dependency
+		local evaluate = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
+		local value
 
-		if wt.IsWidget(f) then
-			local t = f.getTypes()
+		if wt.IsWidget(widget, "Datamanager") then value = widget.getValue() elseif us.IsFrame(widget) then
+			local getterKey = dataObjectValueGetterKeys[widget:GetObjectType()]
 
-			if t == "Toggle" then if e then state = e(f.getValue()) else state = f.getValue() end
-			elseif e then
-				if t == "Selector" then state = e(f.getValue())
-				elseif t == "SpecialSelector" then state = e(f.getValue())
-				elseif t == "Multiselector" then state = e(f.getValue())
-				elseif t == "Textbox" then state = e(f.getValue())
-				elseif t == "Numeric" then state = e(f.getValue()) end
-			end
-		elseif us.IsFrame(f) then
-			local ot = f:GetObjectType()
-
-			if ot == "CheckButton" then if e then state = e(f:GetChecked()) else state = f:GetChecked() end
-			elseif e then
-				if ot == "EditBox" then state = e(f:GetText())
-				elseif ot == "Slider" then state = e(f:GetValue()) end
-			end
+			if getterKey then value = widget[getterKey](widget) end
 		end
+
+		if type(value) == "boolean" and not evaluate then state = value elseif evaluate then state = evaluate(value) end
 
 		if not state then break end
 	end
@@ -996,9 +990,9 @@ end
 
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
-	t.parent = us.IsFrame(t.parent) and t.parent or UIParent
+	t.parentFrame = us.IsFrame(t.parentFrame) and t.parentFrame or UIParent
 
-	local text = t.parent:CreateFontString((t.parent:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
+	local text = t.parentFrame:CreateFontString((t.parentFrame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
 
 	--| Position & dimensions
 
@@ -1026,7 +1020,7 @@ function wt.CreateTitle(frame, t)
 	if not us.IsFrame(frame) then return end
 
 	return wt.CreateText({
-		parent = frame,
+		parentFrame = frame,
 		name = "Title",
 		position = {
 			anchor = t.anchor,
@@ -1060,7 +1054,7 @@ function wt.CreateDescription(title, t)
 	t.color = type(t.color) == "table" and t.color or us.Fill({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
 
 	local separator = wt.CreateText({
-		parent = parent,
+		parentFrame = parent,
 		name = "Separator",
 		position = {
 			anchor = anchor,
@@ -1075,7 +1069,7 @@ function wt.CreateDescription(title, t)
 	})
 
 	return wt.CreateText({
-		parent = parent,
+		parentFrame = parent,
 		name = "Description",
 		position = {
 			anchor = anchor,
@@ -1468,7 +1462,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 	--[ Frame Setup ]
 
 	reloadFrame = wt.CreatePanel({
-		parent = UIParent,
+		parentFrame = UIParent,
 		name = "WidgetToolsReloadNotice",
 		title = t.title or wt.strings.reload.title,
 		position = t.position or {
@@ -1485,14 +1479,14 @@ function wt.CreateReloadNotice(t) --FIX lite
 
 	--| Position & dimensions
 
-	wt.SetMovability(reloadFrame, true)
+	wt.SetMovability(reloadFrame.frame, true)
 
 	--| Title & description
 
 	reloadFrame.title:SetPoint("TOPLEFT", 14, -14)
 
 	wt.CreateText({
-		parent = reloadFrame,
+		parentFrame = reloadFrame.frame,
 		name = "Description",
 		position = {
 			anchor = "TOPLEFT",
@@ -1506,7 +1500,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 	--| Buttons
 
 	wt.CreateButton({
-		parent = reloadFrame,
+		parentFrame = reloadFrame.frame,
 		name = "ReloadButton",
 		title = wt.strings.reload.accept.label,
 		tooltip = { lines = { { text = wt.strings.reload.accept.tooltip, }, } },
@@ -1520,7 +1514,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 	})
 
 	wt.CreateButton({
-		parent = reloadFrame,
+		parentFrame = reloadFrame.frame,
 		name = "CancelButton",
 		title = wt.strings.reload.cancel.label,
 		tooltip = { lines = { { text = wt.strings.reload.cancel.tooltip, }, } },
@@ -1528,7 +1522,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 			anchor = "BOTTOMRIGHT",
 			offset = { x = -12, y = 12 }
 		},
-		action = function() reloadFrame:Hide() end,
+		action = function() reloadFrame.frame:Hide() end,
 		lite = false,
 	})
 
@@ -1585,7 +1579,7 @@ function wt.CreatePopupMenu(t)
 	t.size.h = t.size.h or 26
 
 	local trigger = wt.CreateCustomFrame({
-		parent = t.parent,
+		parentFrame = t.parentFrame,
 		name = t.name or "PopupMenu",
 		position = t.position,
 		arrange = t.arrange,
@@ -1594,7 +1588,7 @@ function wt.CreatePopupMenu(t)
 		onEvent = t.onEvent,
 		initialize = function(frame)
 			local label = wt.CreateText({
-				parent = frame,
+				parentFrame = frame,
 				name = "Label",
 				text = t.title,
 				position = { anchor = "LEFT", offset = { x = 12, }, },
@@ -1604,7 +1598,7 @@ function wt.CreatePopupMenu(t)
 			})
 
 			local arrow = wt.CreateText({
-				parent = frame,
+				parentFrame = frame,
 				name = "Arrow",
 				text = "►",
 				position = { anchor = "RIGHT", offset = { x = -12, }, },

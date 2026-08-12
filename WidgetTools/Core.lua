@@ -961,13 +961,13 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			wt.CreatePanel({
-				parent = canvas,
+				parentFrame = canvas,
 				name = "General",
 				title = rs.strings.specifications.general.title,
 				description = rs.strings.specifications.general.description,
 				arrange = {},
 				arrangement = {},
-				initialize = function(panel)
+				initialize = function(_, panel)
 					local silentSave = false
 
 					local enableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_ENABLE_LITE_MODE", {
@@ -992,7 +992,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					})
 
 					liteToggle = wt.CreateCheckbox({
-						parent = panel,
+						parentFrame = panel,
 						name = "LiteMode",
 						title = rs.strings.specifications.general.lite.label,
 						tooltip = { lines = { { text = rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
@@ -1023,7 +1023,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					})
 
 					wt.CreateCheckbox({
-						parent = panel,
+						parentFrame = panel,
 						name = "PositioningAids",
 						title = rs.strings.specifications.general.positioningAids.label,
 						tooltip = { lines = { { text = rs.strings.specifications.general.positioningAids.tooltip, }, } },
@@ -1042,14 +1042,14 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			})
 
 			wt.CreatePanel({
-				parent = canvas,
+				parentFrame = canvas,
 				name = "DevTools",
 				title = rs.strings.specifications.dev.title,
 				arrange = {},
 				arrangement = {},
-				initialize = function(panel)
+				initialize = function(_, panel)
 					debugToggle = wt.CreateCheckbox({
-						parent = panel,
+						parentFrame = panel,
 						name = "ToggleDebugging",
 						title = rs.strings.specifications.dev.debugging.enabled.label,
 						tooltip = { lines = { { text = rs.strings.specifications.dev.debugging.enabled.tooltip, }, } },
@@ -1073,7 +1073,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					})
 
 					local toggle = wt.CreateCheckbox({
-						parent = panel,
+						parentFrame = panel,
 						name = "ToggleWideFrameAttributes",
 						title = rs.strings.specifications.dev.frameAttributes.enabled.label,
 						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
@@ -1112,7 +1112,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					})
 
 					wt.CreateSlider({
-						parent = panel,
+						parentFrame = panel,
 						name = "FrameAttributesWidth",
 						title = rs.strings.specifications.dev.frameAttributes.width.label,
 						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
@@ -1121,7 +1121,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						max = 1400,
 						step = 20,
 						altStep = 1,
-						dependencies = { { frame = toggle, } },
+						dependencies = { { dependency = toggle, } },
 						getData = function() return WidgetToolsDB.frameAttributes.width end,
 						saveData = function(value) WidgetToolsDB.frameAttributes.width = value end,
 						default = 620,
@@ -1159,7 +1159,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				if type(title) ~= "string" then title = rs.strings.toolboxes.toolbox:gsub("#VERSION", rs.strings.about.version:gsub("#VERSION", version)) end
 
 				wt.CreatePanel({
-					parent = canvas,
+					parentFrame = canvas,
 					name = "Toolbox" .. version:gsub("[^%w]", "_"),
 					title = title,
 					arrange = {},
@@ -1168,7 +1168,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						margins = { l = 30, },
 						gaps = 10,
 					},
-					initialize = function(toolboxPanel, width, _, name)
+					initialize = function(_, toolboxPanel, width, _, name)
 
 						--[ Toolbox Info ]
 
@@ -1176,7 +1176,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							local changelogFrame
 
 							wt.CreateButton({
-								parent = toolboxPanel,
+								parentFrame = toolboxPanel,
 								name = "ChangelogButton",
 								title = wt.strings.about.fullChangelog.open.label,
 								tooltip = { lines = { { text = wt.strings.about.fullChangelog.open.tooltip, }, } },
@@ -1186,7 +1186,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 								},
 								size = { w = 120, },
 								action = function() if changelogFrame then changelogFrame:Show() else changelogFrame = wt.CreatePanel({
-									parent = canvas:GetParent():GetParent(),
+									parentFrame = canvas:GetParent():GetParent(),
 									name = name .. "FullChangelog",
 									append = false,
 									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
@@ -1200,9 +1200,9 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										margins = { l = 16, r = 16, t = 42, b = 16 },
 										resize = false,
 									},
-									initialize = function(windowPanel)
+									initialize = function(_, windowPanel)
 										wt.CreateMultilineEditbox({
-											parent = windowPanel,
+											parentFrame = windowPanel,
 											name = "Box",
 											title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 											label = false,
@@ -1217,7 +1217,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										})
 
 										wt.CreateButton({
-											parent = windowPanel,
+											parentFrame = windowPanel,
 											name = "CloseButton",
 											title = CLOSE,
 											position = {
@@ -1262,7 +1262,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 								}
 
 								wt.CreatePanel({
-									parent = toolboxPanel,
+									parentFrame = toolboxPanel,
 									name = a,
 									label = false,
 									arrange = {},
@@ -1272,7 +1272,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										margins = { l = 34, },
 										resize = false,
 									},
-									initialize = function(addonPanel)
+									initialize = function(_, addonPanel)
 										wt.CreateTexture(addonPanel, {
 											name = "Logo",
 											position = {
@@ -1298,7 +1298,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										end
 
 										local toggle = wt.CreateCheckbox({
-											parent = addonPanel,
+											parentFrame = addonPanel,
 											name = "Toggle",
 											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
 											tooltip = { lines = { { text = rs.strings.about.toggle.tooltip, }, } },
@@ -1318,12 +1318,12 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											},
 										})
 
-										if toggle.frame then toggle.frame:SetIgnoreParentAlpha(true) end
+										if toggle.holder then toggle.holder:SetIgnoreParentAlpha(true) end
 
 										--| Description
 
 										if data.notes then wt.CreateText({
-											parent = addonPanel,
+											parentFrame = addonPanel,
 											name = "Notes",
 											position = { offset = { x = 16, y = -49 } },
 											width = 318,
@@ -1339,7 +1339,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 										if data.version then
 											local versionLabel = wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "VersionTitle",
 												position = position,
 												width = 48,
@@ -1349,7 +1349,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											})
 
 											wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "Version",
 												position = {
 													relativeTo = versionLabel,
@@ -1376,7 +1376,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 										if data.category then
 											local categoryLabel = wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "Category",
 												position = position,
 												width = 48,
@@ -1387,7 +1387,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											})
 
 											wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "Category",
 												position = {
 													relativeTo = categoryLabel,
@@ -1408,7 +1408,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 										if data.author then
 											local authorLabel = wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "AuthorTitle",
 												position = position,
 												width = 48,
@@ -1418,7 +1418,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											})
 
 											wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "Author",
 												position = {
 													relativeTo = authorLabel,
@@ -1439,7 +1439,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 										if data.license then
 											local licenseLabel = wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "LicenseTitle",
 												position = position,
 												width = 48,
@@ -1449,7 +1449,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											})
 
 											wt.CreateText({
-												parent = addonPanel,
+												parentFrame = addonPanel,
 												name = "License",
 												position = {
 													relativeTo = licenseLabel,
