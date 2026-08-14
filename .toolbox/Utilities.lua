@@ -925,7 +925,7 @@ function wt.CheckDependencies(rules)
 		local evaluate = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
 		local value
 
-		if wt.IsWidget(widget, "Datamanager") then value = widget.getValue() elseif us.IsFrame(widget) then
+		if wt.IsWidget(widget, "Datamanager") then value = widget:getValue() elseif us.IsFrame(widget) then
 			local getterKey = dataObjectValueGetterKeys[widget:GetObjectType()]
 
 			if getterKey then value = widget[getterKey](widget) end
@@ -1962,7 +1962,7 @@ function wt.LoadSettingsData(category, key, handleChanges)
 	local changeHandlers = handleChanges == true and {} or nil
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget.loadData(false)
+		settingsData.rules[key][i].widget:loadData(false)
 
 		--Register onChange handlers for call
 		if changeHandlers and type(settingsData.rules[key][i].onChange) == "table" then
@@ -2004,7 +2004,7 @@ function wt.SnapshotSettingsData(category, key)
 
 	if not settingsData.rules[key] then return end
 
-	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.snapshotData() end
+	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:snapshot() end
 end
 
 function wt.RevertSettingsData(category, key)
@@ -2016,7 +2016,7 @@ function wt.RevertSettingsData(category, key)
 	local applyChanges = {}
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget.revertData(false)
+		settingsData.rules[key][i].widget:revert(false)
 
 		--Register onChange handlers for call
 		if type(settingsData.rules[key][i].onChange) == "table" then
@@ -2037,7 +2037,7 @@ function wt.ResetSettingsData(category, key)
 	local applyChanges = {}
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget.resetData(false)
+		settingsData.rules[key][i].widget:reset(false)
 
 		--Register onChange handlers for call
 		if type(settingsData.rules[key][i].onChange) == "table" then

@@ -12,22 +12,22 @@ local crc = C_ColorUtil.WrapTextInColorCode
 
 local widget_base ---@type widget
 
-local types ---@type table<anyWidget, table<typename_widget, true>>
+local widget_types ---@type table<widget, table<typename_widget, true>>
 
-local handlers ---@type table<anyWidget, table<string, fun(self: anyWidget, ...: any)[]>>
+local widget_handlers ---@type table<widget, table<string, fun(self: widget, ...: any)[]>>
 
-local invoke_enabled ---@type fun(self: anyWidget, user: boolean)
-local handlers_enabled ---@type table<anyWidget, widget_handler_enabled[]>
+local widget_parent ---@type table<widget, widget>
+local widget_children ---@type table<widget, widget[]>
+local widget_isIndependent ---@type table<widget, table<widget, boolean>>
 
-local parent ---@type table<anyWidget, anyWidget>
-local children ---@type table<anyWidget, anyWidget[]>
-local isIndependent ---@type table<anyWidget, table<widget, boolean>>
+local widget_enabled ---@type table<widget, boolean>
 
-local enabled ---@type table<anyWidget, boolean>
+local invoke_enabled ---@type fun(self: widget, user: boolean)
+local handlers_enabled ---@type table<widget, widget_handler_enabled[]>
 
-local dependencies ---@type table<anyWidget, dependencyType[]>
-local isData ---@type table<anyWidget, table<dependencyType, true|function>>
-local evaluate ---@type table<anyWidget, table<dependencyType, dependencyEvaluator>>
+local widget_dependencies ---@type table<widget, dependencyType[]>
+local widget_dataDependency ---@type table<widget, table<dependencyType, true|function>>
+local widget_dependencyEvaluator ---@type table<widget, table<dependencyType, dependencyEvaluator>>
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
@@ -44,67 +44,67 @@ local dataObjectValueGetterKeys = {
 ---Widget class builder
 ---@return widget
 local function buildWidget()
-	local widget = { __metatable = "Base" }
+	local widget = {}
+
+	widget.__metatable = widget_types[widget]
 	widget.__index = widget ---@cast widget widget
 
 	--[ Type ]
 
-	if not types then types = {} end
+	if not widget_types then widget_types = {} end
 
 	local typename = "Widget" ---@type typename_widget
 
-	types[widget] = { [typename] = true }
+	widget_types[widget] = { [typename] = true }
 
-	function widget:getTypes() return us.Clone(types[widget]) end
-	function widget:isType(s) return types[widget][s] or false end
+	function widget:getTypes() return us.Clone(widget_types[widget]) end
+	function widget:isType(s) return widget_types[widget][s] or false end
 
 	--[ Events ]
 
-	if not handlers then handlers = {} end
+	if not widget_handlers then widget_handlers = {} end
 
 	function widget:addEvent(event)
-		if not handlers[self] then handlers[self] = {} end
-		if not handlers[self][event] then handlers[self][event] = {} end
+		if not widget_handlers[self] then widget_handlers[self] = {} end
+		if not widget_handlers[self][event] then widget_handlers[self][event] = {} end
 	end
 
 	function widget:invoke(event, ...)
-		local h = handlers[self][event]
+		local handlers = widget_handlers[self][event]
 
-		for i = 1, #h do h[i](self, ...) end
+		for i = 1, #handlers do handlers[i](self, ...) end
 	end
 
 	function widget:addListener(event, handler, callIndex)
-		local h = handlers[self][event]
+		local handlers = widget_handlers[self][event]
 
-		if not h or type(handler) ~= "function" then return end
+		if not handlers or type(handler) ~= "function" then return end
 
-		if type(callIndex) ~= "number" then table.insert(h, handler) else table.insert(h, Clamp(math.floor(callIndex), 1, #h + 1), handler) end
+		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
 	--[ Hierarchy ]
 
 	--| Parent
 
-	if not parent then parent = {} end
+	if not widget_parent then widget_parent = {} end
 
-	function widget:getParent() return parent[self] end
+	function widget:getParent() return widget_parent[self] end
 	function widget:setParent(newParent, independent, childIndex)
-		if newParent == widget or newParent == parent[self] then return false end
+		local parent = widget_parent[self]
+
+		if newParent == widget or newParent == parent then return false end
 
 		if newParent == nil then
-			local pastParent = parent[self]
-			parent[self] = nil
+			widget_parent[self] = nil
 
-			if pastParent and pastParent.hasChild(widget) then pastParent:removeChild(widget) end
+			if parent and parent.hasChild(widget) then parent:removeChild(widget) end
 
 			return true
-		end
+		elseif wt.IsWidget(newParent) then
+			widget_parent[self] = newParent
 
-		if wt.IsWidget(newParent) then
-			local pastParent = parent[self]
-			parent[self] = newParent
-
-			if pastParent and pastParent:hasChild(widget) then pastParent:removeChild(widget) end
+			if parent and parent:hasChild(widget) then parent:removeChild(widget) end
 			if not newParent:hasChild(widget) then newParent:addChild(widget, independent, childIndex) end
 
 			return true
@@ -115,26 +115,29 @@ local function buildWidget()
 
 	--| Children
 
-	if not children then children = {} end
-	if not isIndependent then isIndependent = {} end
+	if not widget_children then widget_children = {} end
+	if not widget_isIndependent then widget_isIndependent = {} end
 
-	function widget:hasChild(child) return isIndependent[self][child] ~= nil end
-	function widget:getChild(index) return children[self][index] end
+	function widget:hasChild(child) return widget_isIndependent[self][child] ~= nil end
+	function widget:getChild(index) return widget_children[self][index] end
 	function widget:getChildren()
+		local children = widget_children[self]
 		local c = {}
 
-		for i = 1, #children[self] do c[i] = children[self][i] end
+		for i = 1, #children do c[i] = children[i] end
 
 		return c
 	end
 
 	function widget:addChild(child, independent, index)
-		if child == widget or not wt.IsWidget(child) or isIndependent[self][child] ~= nil then return nil end
+		if child == widget or not wt.IsWidget(child) or widget_isIndependent[self][child] ~= nil then return nil end
 
-		index = type(index) ~= "number" and #children[self] + 1 or Clamp(math.floor(index), 1, #children[self] + 1)
+		local children = widget_children[self]
 
-		table.insert(children[self], index, child)
-		isIndependent[self][child] = independent == true
+		index = type(index) ~= "number" and #children + 1 or Clamp(math.floor(index), 1, #children + 1)
+
+		table.insert(children, index, child)
+		widget_isIndependent[self][child] = independent == true
 
 		if child:getParent() ~= widget then child:setParent(widget) end
 
@@ -142,30 +145,33 @@ local function buildWidget()
 	end
 
 	function widget:removeChild(child)
-		if isIndependent[self][child] == nil then return false end
+		if widget_isIndependent[self][child] == nil then return end
 
-		for i = 1, #children[self] do if children[self][i] == child then table.remove(children[self], i) break end end
-		isIndependent[self][child] = nil
+		local children = widget_children[self]
+
+		for i = 1, #children do if children[i] == child then table.remove(children, i) break end end
+		widget_isIndependent[self][child] = nil
 
 		if child:getParent() == widget then child:setParent(nil) end
-
-		return true
 	end
 
-	function widget:isIndependent(child) return isIndependent[self][child] end
-	function widget:setIndependent(child, independent) if isIndependent[self][child] == nil then return false else isIndependent[self][child] = independent ~= false return true end end
+	function widget:isIndependent(child) return widget_isIndependent[self][child] end
+	function widget:setIndependent(child, independent) if widget_isIndependent[self][child] ~= nil then widget_isIndependent[self][child] = independent ~= false end end
 
 	--[ State ]
 
-	if not enabled then enabled = {} end
+	if not widget_enabled then widget_enabled = {} end
 
-	function widget:isEnabled() return enabled[self] end
+	function widget:isEnabled() return widget_enabled[self] end
 	function widget:setEnabled(state, ignoreParent, ignoreDependencies, user, silent)
-		if ignoreParent ~= true and parent[self] and not parent[self]:isIndependent(widget) then state = parent[self]:isEnabled() end
+		local parent = widget_parent[self]
+		local children = widget_children[self]
 
-		if ignoreDependencies then enabled[self] = state ~= false else enabled[self] = state ~= false and widget:checkDependencies() end
+		if ignoreParent ~= true and parent and not parent:isIndependent(widget) then state = parent:isEnabled() end
 
-		for i = 1, #children[self] do if not isIndependent[self][children[self][i]] then children[self][i]:setEnabled(state, true, false, user, silent) break end end
+		if ignoreDependencies then widget_enabled[self] = state ~= false else widget_enabled[self] = state ~= false and widget:checkDependencies() end
+
+		for i = 1, #children do if not widget_isIndependent[self][children[i]] then children[i]:setEnabled(state, true, false, user, silent) break end end
 
 		if not silent then invoke_enabled(self, user) end
 	end
@@ -177,63 +183,90 @@ local function buildWidget()
 	function widget:addListener_enabled(handler, callIndex)
 		if type(handler) ~= "function" then return end
 
-		if not handlers_enabled[self] then handlers_enabled[self] = {} end
+		local handlers = handlers_enabled[self]
 
-		local h = handlers_enabled[self]
+		if not handlers then
+			handlers = {}
+			handlers_enabled[self] = handlers
+		end
 
-		if type(callIndex) ~= "number" then table.insert(h, handler) else table.insert(h, Clamp(math.floor(callIndex), 1, #h + 1), handler) end
+		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
 	if not invoke_enabled then invoke_enabled = function(self, user)
-		local h = handlers_enabled[self]
+		local handlers = handlers_enabled[self]
 
-		for i = 1, #h do h[i](self, enabled[self], user == true) end
+		if not handlers then return end
+
+		local enabled = widget_enabled[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, enabled, user) end
 	end end
 
 	--| Dependencies
 
-	if not dependencies then dependencies = {} end
-	if not isData then isData = {} end
-	if not evaluate then evaluate = {} end
+	if not widget_dependencies then widget_dependencies = {} end
+	if not widget_dataDependency then widget_dataDependency = {} end
+	if not widget_dependencyEvaluator then widget_dependencyEvaluator = {} end
 
 	function widget:addDependency(rule)
 		if type(rule) ~= "table" then return false end
 
+		local dependencies = widget_dependencies[self]
+		local data = widget_dataDependency[self]
+		local evaluate = widget_dependencyEvaluator[self]
+
+		if not dependencies then
+			dependencies = {}
+			widget_dependencies[self] = dependencies
+		end
+
+		if not data then
+			data = {}
+			widget_dataDependency[self] = data
+		end
+
+		if not evaluate then
+			evaluate = {}
+			widget_dependencyEvaluator[self] = evaluate
+		end
+
 		local dependency = rule.dependency
-		local index = type(rule.index) ~= "number" and #dependencies[self] + 1 or Clamp(math.floor(rule.index), 1, #dependencies[self] + 1)
-		local data = rule.isData
+		local index = type(rule.index) ~= "number" and #dependencies + 1 or Clamp(math.floor(rule.index), 1, #dependencies + 1)
+		local isData = rule.isData
 		local evaluator = type(rule.evaluate) == "function" and rule.evaluate
 		local setter = function() widget:setEnabled() end
 
 		if wt.IsWidget(dependency) then
-			if data then if wt.IsWidget(dependency, "Datamanager") and (wt.IsWidget(dependency, "Binary") or evaluator) then
+			if isData then if wt.IsWidget(dependency, "Datamanager") and (wt.IsWidget(dependency, "Binary") or evaluator) then
 				dependency:addListener_loaded(function(_, success) if success then widget:setEnabled() end end)
 				dependency:addListener_changed(setter)
 
-				table.insert(dependencies[self], index, dependency)
-				isData[self][dependency] = true
-				if evaluator then evaluate[self][dependency] = evaluator end
+				table.insert(dependencies, index, dependency)
+				data[dependency] = true
+				if evaluator then evaluate[dependency] = evaluator end
 
 				return true
 			end else
 				dependency:addListener_enabled(setter)
 
-				table.insert(dependencies[self], index, dependency)
-				if evaluator then evaluate[self][dependency] = evaluator end
+				table.insert(dependencies, index, dependency)
+				if evaluator then evaluate[dependency] = evaluator end
 
 				return true
 			end
 		elseif us.IsFrame(dependency) then
-			if data then
+			if isData then
 				local objectType = dependency:GetObjectType()
 				local scriptType = dataObjectScriptType[objectType]
 
 				if scriptType then
 					dependency:HookScript(scriptType, widget.setEnabled)
 
-					table.insert(dependencies[self], index, dependency)
-					isData[self][dependency] = dependency[dataObjectValueGetterKeys[objectType]]
-					if evaluator then evaluate[self][dependency] = evaluator end
+					table.insert(dependencies, index, dependency)
+					data[dependency] = dependency[dataObjectValueGetterKeys[objectType]]
+					if evaluator then evaluate[dependency] = evaluator end
 
 					return true
 				end
@@ -241,8 +274,8 @@ local function buildWidget()
 				dependency:HookScript("OnEnable", widget.setEnabled)
 				dependency:HookScript("OnDisable", widget.setEnabled)
 
-				table.insert(dependencies[self], index, dependency)
-				if evaluator then evaluate[self][dependency] = evaluator end
+				table.insert(dependencies, index, dependency)
+				if evaluator then evaluate[dependency] = evaluator end
 
 				return true
 			end
@@ -252,30 +285,35 @@ local function buildWidget()
 	end
 
 	function widget:setDependencies(rules)
-		dependencies[self] = {}
-		isData[self] = {}
-		evaluate[self] = {}
+		widget_dependencies[self] = {}
+		widget_dataDependency[self] = {}
+		widget_dependencyEvaluator[self] = {}
 
 		for i = 1, #rules do widget:addDependency(rules[i]) end
 	end
 
 	function widget:checkDependencies()
+		local dependencies = widget_dependencies[self]
+
+		if not dependencies then return true end
+
 		local state = true
 
-		for i = 1, #dependencies[self] do
-			local dependency = dependencies[self][i]
-			local data = isData[self][dependency]
+		for i = 1, #dependencies do
+			local dependency = dependencies[i]
+			local data = widget_dataDependency[self][dependency]
+			local evaluate = widget_dependencyEvaluator[self][dependency]
 
 			if data then
 				local value
 
-				if wt.IsWidget(dependency, "Datamanager") then value = dependency.getValue() elseif type(data) == "function" then value = data(dependency) end
+				if type(data) == "function" then value = data(dependency) else value = dependency:getValue() end
 
-				if evaluate[self][dependency] then state = evaluate[self][dependency](value) else state = value end
+				if evaluate then state = evaluate(value) else state = value end
 			else
 				if wt.IsWidget(dependency) then state = dependency:isEnabled() else state = dependency:IsEnabled() end
 
-				if evaluate[self][dependency] then state = evaluate[self][dependency](state) end
+				if evaluate then state = evaluate(state) end
 			end
 
 			if not state then break end
@@ -288,31 +326,36 @@ local function buildWidget()
 end
 
 function wt.CreateWidget(t)
-	t = type(t) == "table" and t or {} ---@type widget_options
-
 	if not widget_base then widget_base = buildWidget() end
 
 	local widget = setmetatable({}, widget_base) ---@cast widget widget
 
-	--Register event handlers
-	if type(t.listeners) == "table" then if type(t.listeners.enabled) == "table" then for i = 1, #t.listeners.enabled do
-		if type(t.listeners.enabled[i]) == "table" then widget:addListener_enabled(t.listeners.enabled[i].handler, t.listeners.enabled[i].callIndex) end
-	end end end
+	--[ Initialization ]
 
-	--Add custom events
-	if type(t.customEvents) == "table" then for k, v in pairs(t.customEvents) do
-		widget:addEvent(k)
+	t = type(t) == "table" and t or {}
 
-		if type(v) == "table" then for i = 1, #v do widget:addListener(k, v[i].handler, v[i].callIndex) end
-	end end end
+	local listeners = t.listeners
 
-	--Assign to parent
+	if type(listeners) == "table" then
+		local enabled = listeners.enabled
+
+		if type(enabled) == "table" then for i = 1, #enabled do
+			local listener = enabled[i]
+
+			if type(listener) == "table" then widget:addListener_enabled(listener.handler, listener.callIndex) end
+		end end
+
+		--Add custom events
+		if type(listeners[1]) == "table" then for k, v in pairs(listeners[1]) do
+			widget:addEvent(k)
+
+			if type(v) == "table" then for i = 1, #v do if type(v[i]) == "table" then widget:addListener(k, v[i].handler, v[i].callIndex) end end end
+		end end
+	end
+
 	if t.parent then widget:setParent(t.parent, t.independent, t.childIndex) end
 
-	--Assign dependencies
 	widget:setDependencies(t.dependencies)
-
-	--Set starting state
 	widget:setEnabled(t.disabled ~= true)
 
 	return widget
@@ -334,7 +377,7 @@ local function buildAction()
 
 	local typename = "Action" ---@type typename_action
 
-	types[action][typename] = true
+	widget_types[action][typename] = true
 
 	--[ Action ]
 
@@ -343,50 +386,67 @@ local function buildAction()
 	function action:trigger(user, silent)
 		local call = callAction[self]
 
-		if enabled[action] and call then call(action, user) end
+		if call and widget_enabled[action] then call(action, user) end
 
 		if not silent then invoke_triggered(self, user) end
 	end
 
-	function action:setAction(call) if type(call) == "function" then callAction = call end end
+	function action:setAction(call) if type(call) == "function" then callAction[self] = call end end
 
 	--| Event
 
-	if not invoke_triggered then invoke_triggered = function()
+	if not handlers_triggered then handlers_triggered = {} end
 
+	function action:addListener_triggered(handler, callIndex)
+		if type(handler) ~= "function" then return end
+
+		local handlers = handlers_triggered[self]
+
+		if not handlers then
+			handlers = {}
+			handlers_triggered[self] = handlers
+		end
+
+		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
+	end
+
+	if not invoke_triggered then invoke_triggered = function(self, user)
+		local handlers = handlers_triggered[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
 	end end
 
 	return action
 end
 
 function wt.CreateAction(t, widget)
-	t = type(t) == "table" and t or {}
-
 	if not action_base then action_base = buildAction() end
 
-	local typename = "Action" ---@type typename_action
 	local typenameBase = "Widget" ---@type typename_widget
 
-	widget = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
-	local action = widget ---@cast action action
+	local action = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), action_base) ---@cast action action
 
+	--[ Initialization ]
 
-	--[ Action ]
+	t = type(t) == "table" and t or {}
 
-	local callAction = nil
+	local listeners = t.listeners
 
-	function action.trigger(user, silent)
-		if action.isEnabled() and callAction then callAction(action, user) end
+	if type(listeners) == "table" then
+		local triggered = listeners.triggered
 
-		if not silent then action.invoke.triggered(user) end
+		if type(triggered) == "table" then for i = 1, #triggered do
+			local listener = triggered[i]
+
+			if type(listener) == "table" then action:addListener_triggered(listener.handler, listener.callIndex) end
+		end end
 	end
 
-	function action.setAction(call) if type(call) == "function" then callAction = call end end
-
-	--Create event
-	action.addEvent("triggered")
-
-	action.setAction(t.action)
+	action:setAction(t.action)
 
 	return action
 end
@@ -396,32 +456,129 @@ end
 
 wt.clipboard = {}
 
-function wt.CreateDatamanager(t, widget)
-	t = type(t) == "table" and t or {}
+local datamanager_base ---@type datamanager
+
+local data_default ---@type table<datamanager, any>
+local data_value ---@type table<datamanager, any>
+local data_snapshot ---@type table<datamanager, any>
+
+local datamanager_instantSave ---@type table<datamanager, boolean?>
+
+local invoke_loaded ---@type fun(self: datamanager, user: boolean)
+local handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
+
+local invoke_saved ---@type fun(self: datamanager, user: boolean)
+local handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
+
+local invoke_changed ---@type fun(self: datamanager, user: boolean)
+local handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
+
+local datamanagement
+
+local function buildDatamanager()
+	local datamanager = buildWidget() ---@cast datamanager datamanager
+
+	--[ Type ]
 
 	local typename = "Datamanager" ---@type typename_datamanager
-	local typenameBase = "Widget" ---@type typename_widget
 
-	widget = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
-	local datamanager = widget ---@cast datamanager datamanager
-
-	datamanager.addType(typename)
+	widget_types[datamanager][typename] = true
 
 	--[ Data ]
 
-	local default, value, snapshot
+	--| Value
 
-	--| Datamanagement
+	if not data_value then data_value = {} end
 
-	local datamanagement = t.dataManagement or nil
+	function datamanager:verify(v) return us.Clone(v) end
+	function datamanager:format(v) return v == nil and us.ToString(data_value[self]) or us.ToString(v) end
 
-	--Register for datamanagement
-	if datamanagement then wt.AddSettingsDataManagementEntry(datamanager, datamanagement) end
+	function datamanager:getValue() return data_value[self] end
+	function datamanager:setValue(newValue, user, silent)
+		data_value[self] = datamanager:verify(newValue)
 
-	--| Utilities
+		if data_value[self] == nil and read then data_value[self] = read() end
+		if data_value[self] == nil then data_value[self] = data_default[self] end
 
-	function datamanager.verify(v) return us.Clone(v) end
-	function datamanager.format(v) return v == nil and us.ToString(value) or us.ToString(v) end
+		if user then
+			if datamanager_instantSave[self] then datamanager:saveData(nil, silent) end
+
+			if datamanagement then wt.HandleWidgetChanges(datamanagement.index, datamanagement.category, datamanagement.key) end
+		end
+
+		if not silent then invoke_changed(self, user) end
+	end
+
+	--| Storage
+
+	function datamanager:loadData(_, silent) if not silent then datamanager.invoke.loaded(false) end end
+	function datamanager:saveData(_, silent) if not silent then datamanager.invoke.saved(false) end end
+
+	function datamanager:getData() return data_value[self] end
+	function datamanager:setData(data, handleChanges, silent)
+		datamanager:saveData(data, silent)
+		datamanager:loadData(handleChanges, silent)
+	end
+
+	if not invoke_loaded then invoke_loaded= function(self, success)
+		local handlers = handlers_loaded[self]
+
+		if not handlers then return end
+
+		success = success == true
+
+		for i = 1, #handlers do handlers[i](self, success) end
+	end end
+
+	if not invoke_saved then invoke_saved = function(self, success)
+		local handlers = handlers_saved[self]
+
+		if not handlers then return end
+
+		success = success == true
+
+		for i = 1, #handlers do handlers[i](self, success) end
+	end end
+
+	--| Default
+
+	if not data_default then data_default = {} end
+
+	function datamanager:getDefault() return data_default[self] end
+	function datamanager:setDefault(newDefault) data_default[self] = datamanager:verify(newDefault) end
+	function datamanager:reset(handleChanges, silent) datamanager:setData(data_default[self], handleChanges, silent) end
+
+	if not invoke_changed then invoke_changed = function(self, user)
+		local handlers = handlers_changed[self]
+
+		if not handlers then return end
+
+		local value = data_value[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, value, user) end
+	end end
+
+	--| Snapshot
+
+	if not data_snapshot then data_snapshot = {} end
+
+	function datamanager:snapshot(stored) if stored == true then data_snapshot[self] = datamanager:getData() else data_snapshot[self] = data_value[self] end end
+	function datamanager:revert(handleChanges, silent) datamanager:setData(data_snapshot[self], handleChanges, silent) end
+
+	return datamanager
+end
+
+function wt.CreateDatamanager(t, widget)
+	if not datamanager_base then datamanager_base = buildDatamanager() end
+
+	local typenameBase = "Widget" ---@type typename_widget
+
+	local datamanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), datamanager_base) ---@cast datamanager datamanager
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
 
 	--| Storage
 
@@ -429,69 +586,39 @@ function wt.CreateDatamanager(t, widget)
 	local save = type(t.saveData) == "function" and t.saveData or nil
 
 	if read then
-		function datamanager.getData() return read() end
-		function datamanager.loadData(handleChanges, silent)
-			datamanager.setValue(read(), handleChanges ~= false, silent)
+		function datamanager:getData() return read() end
+		function datamanager:loadData(handleChanges, silent)
+			datamanager:setValue(read(), handleChanges ~= false, silent)
 
 			if not silent then datamanager.invoke.loaded(true) end
 		end
-	else
-		function datamanager.getData() return value end
-		function datamanager.loadData(_, silent) if not silent then datamanager.invoke.loaded(false) end end
 	end
 
-	if save then function datamanager.saveData(data, silent)
+	if save then function datamanager:saveData(data, silent)
 		save(datamanager.verify(data))
 
 		if not silent then datamanager.invoke.saved(true) end
-	end else function datamanager.saveData(_, silent) if not silent then datamanager.invoke.saved(false) end end end
+	end end
 
-	function datamanager.setData(data, handleChanges, silent)
-		datamanager.saveData(data, silent)
-		datamanager.loadData(handleChanges, silent)
+	function datamanager:setData(data, handleChanges, silent)
+		datamanager:saveData(data, silent)
+		datamanager:loadData(handleChanges, silent)
 	end
 
-	--Create events
-	datamanager.addEvent("loaded")
-	datamanager.addEvent("saved")
+	if t.instantSave ~= false then datamanager_instantSave[datamanager] = true end
 
-	--| Default
+	datamanager:setDefault(t.default)
+	datamanager:setValue(t.value)
+	datamanager:snapshot()
 
-	function datamanager.getDefault() return default end
-	function datamanager.setDefault(newDefault) default = datamanager.verify(newDefault) end
-	function datamanager.resetData(handleChanges, silent) datamanager.setData(default, handleChanges, silent) end
+	--| Datamanagement
 
-	datamanager.setDefault(t.default)
+	if not datamanagement then datamanagement = {} end
 
-	--| Value
+	datamanagement[datamanager] = t.dataManagement or nil
 
-	function datamanager.getValue() return value end
-	function datamanager.setValue(newValue, user, silent)
-		value = datamanager.verify(newValue)
-
-		if value == nil and read then value = read() end
-		if value == nil then value = default end
-
-		if user then
-			if t.instantSave ~= false then datamanager.saveData(nil, silent) end
-
-			if datamanagement then wt.HandleWidgetChanges(datamanagement.index, datamanagement.category, datamanagement.key) end
-		end
-
-		if not silent then datamanager.invoke.changed(user == true) end
-	end
-
-	--Create event
-	addEvent(datamanager, "changed", function(handlers) return function(user) for i = 1, #handlers do handlers[i](user, value) end end end)
-
-	datamanager.setValue(t.value)
-
-	--| Snapshot
-
-	function datamanager.snapshotData(stored) if stored == true then snapshot = datamanager.getData() else snapshot = value end end
-	function datamanager.revertData(handleChanges, silent) datamanager.setData(snapshot, handleChanges, silent) end
-
-	datamanager.snapshotData()
+	--Register for datamanagement
+	if datamanagement[datamanager] then wt.AddSettingsDataManagementEntry(datamanager, datamanagement[datamanager]) end --TODO update
 
 	return datamanager
 end
@@ -522,7 +649,7 @@ function wt.CreateBinary(t, datamanager)
 
 	binary.setDefault(t.default)
 	binary.setValue(t.value, false, true)
-	binary.snapshotData()
+	binary.snapshot()
 
 	return binary
 end
@@ -655,12 +782,12 @@ function wt.CreateSelector(t, datamanager)
 
 	selector.setDefault(t.default)
 	selector.setValue(t.value, false, true)
-	selector.snapshotData()
+	selector.snapshot()
 
 	function selector.setValue(index, user, silent)
-		value = selector.verify(index)
+		data_value[self] = selector.verify(index)
 
-		for i = 1, #selector.items do selector.items[i].setValue(i == value, user, silent) end
+		for i = 1, #selector.items do selector.items[i].setValue(i == data_value[self], user, silent) end
 
 		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
 
@@ -670,7 +797,7 @@ function wt.CreateSelector(t, datamanager)
 	end
 
 	--Set starting value
-	selector.setValue(value, false, true)
+	selector.setValue(data_value[self], false, true)
 
 	return selector
 end
@@ -765,10 +892,10 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 	function specialSelector.getDefault() return itemsets[itemset][default] and itemsets[itemset][default].value or nil end
 	function specialSelector.setDefault(selected) default = verify(selected) end
-	function specialSelector.resetData(handleChanges, silent) specialSelector.setData(default, handleChanges, silent) end
+	function specialSelector.reset(handleChanges, silent) specialSelector.setData(default, handleChanges, silent) end
 
-	function specialSelector.snapshotData(stored) snapshot = stored and specialSelector.getData() or value end
-	function specialSelector.revertData(handleChanges, silent) specialSelector.setData(snapshot, handleChanges, silent) end
+	function specialSelector.snapshot(stored) snapshot = stored and specialSelector.getData() or value end
+	function specialSelector.revert(handleChanges, silent) specialSelector.setData(snapshot, handleChanges, silent) end
 
 	function specialSelector.getValue() return itemsets[itemset][value] and itemsets[itemset][value].value or nil end
 	function specialSelector.setValue(selected, user, silent)
@@ -928,10 +1055,10 @@ function wt.CreateMultiselector(t, datamanager)
 
 	function multiselector.getDefault() return default end
 	function multiselector.setDefault(selections) default = verify(selections) end
-	function multiselector.revertData(handleChanges, silent) multiselector.setData({ states = us.Clone(snapshot) }, handleChanges, silent) end
+	function multiselector.revert(handleChanges, silent) multiselector.setData({ states = us.Clone(snapshot) }, handleChanges, silent) end
 
-	function multiselector.snapshotData(stored) us.CopyValues(snapshot, stored and multiselector.getData() or value) end
-	function multiselector.resetData(handleChanges, silent) multiselector.setData({ states = us.Clone(default) }, handleChanges, silent) end
+	function multiselector.snapshot(stored) us.CopyValues(snapshot, stored and multiselector.getData() or value) end
+	function multiselector.reset(handleChanges, silent) multiselector.setData({ states = us.Clone(default) }, handleChanges, silent) end
 
 	function multiselector.getValue() return us.Clone(value) end
 	function multiselector.setValue(selections, user, silent)
@@ -1041,10 +1168,10 @@ function wt.CreateTextual(t, datamanager)
 
 	function textual.getDefault() return default end
 	function textual.setDefault(text) default = type(text) == "string" and text or "" end
-	function textual.resetData(handleChanges, silent) textual.setData(default, handleChanges, silent) end
+	function textual.reset(handleChanges, silent) textual.setData(default, handleChanges, silent) end
 
-	function textual.snapshotData(stored) snapshot = stored and textual.getData() or value end
-	function textual.revertData(handleChanges, silent) textual.setData(snapshot, handleChanges, silent) end
+	function textual.snapshot(stored) snapshot = stored and textual.getData() or value end
+	function textual.revert(handleChanges, silent) textual.setData(snapshot, handleChanges, silent) end
 
 	function textual.getValue() return value end
 	function textual.setValue(text, user, silent)
@@ -1131,10 +1258,10 @@ function wt.CreateNumeric(t, datamanager)
 
 	function numeric.getDefault() return default end
 	function numeric.setDefault(number) default = verify(number) end
-	function numeric.resetData(handleChanges, silent) numeric.setData(default, handleChanges, silent) end
+	function numeric.reset(handleChanges, silent) numeric.setData(default, handleChanges, silent) end
 
-	function numeric.snapshotData(stored) snapshot = stored and numeric.getData() or value end
-	function numeric.revertData(handleChanges, silent) numeric.setData(snapshot, handleChanges, silent) end
+	function numeric.snapshot(stored) snapshot = stored and numeric.getData() or value end
+	function numeric.revert(handleChanges, silent) numeric.setData(snapshot, handleChanges, silent) end
 
 	function numeric.getValue() return value end
 	function numeric.setValue(number, user, silent)
@@ -1231,10 +1358,10 @@ function wt.CreateColormanager(t, datamanager)
 
 	function colormanager.getDefault() return us.Clone(default) end
 	function colormanager.setDefault(color) default = wt.PackColor(wt.UnpackColor(color)) end
-	function colormanager.resetData(handleChanges, silent) colormanager.setData(default, handleChanges, silent) end
+	function colormanager.reset(handleChanges, silent) colormanager.setData(default, handleChanges, silent) end
 
-	function colormanager.snapshotData(stored) us.CopyValues(snapshot, stored and colormanager.getData() or value) end
-	function colormanager.revertData(handleChanges, silent) colormanager.setData(snapshot, handleChanges, silent) end
+	function colormanager.snapshot(stored) us.CopyValues(snapshot, stored and colormanager.getData() or value) end
+	function colormanager.revert(handleChanges, silent) colormanager.setData(snapshot, handleChanges, silent) end
 
 	function colormanager.getValue() return us.Clone(value) end
 	function colormanager.setValue(color, user, silent)
@@ -1307,6 +1434,8 @@ end
 
 
 --[[ SETTINGS ]]
+
+
 
 function wt.CreateSettingsmanager(t, widget)
 	t = type(t) == "table" and t or {}
@@ -1754,79 +1883,115 @@ end
 
 --[ Addon ]
 
-function wt.CreateAddonmanager(t, widget)
-	t = type(t) == "table" and t or {}
+local addonmanager_base ---@type addonmanager
+
+local addon ---@type table<addonmanager, addonInfo>
+
+local invoke_addonChanged ---@type fun(self: addonmanager, user: boolean)
+local handlers_addonChanged ---@type table<addonmanager, addonmanager_handler_changed[]>
+
+local function buildAddonmanager()
+	local addonmanager = buildWidget() ---@cast addonmanager addonmanager
+
+	--[ Type ]
 
 	local typename = "Addonmanager" ---@type typename_addonmanager
-	local typenameBase = "Widget" ---@type typename_widget
 
-	widget = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
-	local addonmanager = widget ---@cast addonmanager addonmanager
-
-	addonmanager.addType(typename)
+	widget_types[addonmanager][typename] = true
 
 	--[ Metadata ]
 
-	local addon, title = "", ""
-	local version, date, day, month, year, category, notes, author, license, curse, wago, repo, issues, sponsors, logo, changelogLatest, changelog
+	if not addon then addon = {} end
 
-	function addonmanager.getAddon() return addon end
-	function addonmanager.getTitle() return title end
-	function addonmanager.getVersion() return version end
-	function addonmanager.getDate() return date, day, month, year end
-	function addonmanager.getCategory() return category end
-	function addonmanager.getNotes() return notes end
-	function addonmanager.getAuthor() return author end
-	function addonmanager.getLicense() return license end
-	function addonmanager.getCurseForgeLink() return curse end
-	function addonmanager.getWagoLink() return wago end
-	function addonmanager.getRepositoryLink() return repo end
-	function addonmanager.getIssuesLink() return issues end
-	function addonmanager.getSponsors() return sponsors end
-	function addonmanager.getLogo() return logo end
-	function addonmanager.getChangelog() return changelogLatest, changelog end
+	function addonmanager:getName() return addon[self].name end
+	function addonmanager:getTitle() return addon[self].title end
+	function addonmanager:getNotes() return addon[self].notes end
+	function addonmanager:getLogo() return addon[self].logo end
+	function addonmanager:getCategory() return addon[self].category end
+	function addonmanager:getAuthor() return addon[self].author end
+	function addonmanager:getVersion() return addon[self].version end
+	function addonmanager:getDate() return addon[self].date, addon[self].day, addon[self].month, addon[self].year end
+	function addonmanager:getLicense() return addon[self].license end
+	function addonmanager:getCurseForgeLink() return addon[self].curse end
+	function addonmanager:getWagoLink() return addon[self].wago end
+	function addonmanager:getRepositoryLink() return addon[self].repo end
+	function addonmanager:getIssuesLink() return addon[self].issues end
+	function addonmanager:getSponsors() return addon[self].sponsors end
+	function addonmanager:getChangelog() return addon[self].changelog_latest, addon[self].changelog_full end
 
 	--| Rebind
 
-	function addonmanager.setAddon(newAddon, newChangelog, user, silent)
+	if not invoke_addonChanged then invoke_addonChanged = function(self, user)
+		local handlers = handlers_addonChanged[self]
+
+		if not handlers then return end
+
+		local name = addon[self].name
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, name, user) end
+	end end
+
+	function addonmanager:setAddon(newAddon, newChangelog, user, silent)
 		if newAddon == addon then return true end
 
 		local addon_type = type(newAddon)
 
-		if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(newAddon) then return false end
+		if addon_type ~= "string" then
+			if not C_AddOns.IsAddOnLoaded(newAddon) then return false end
+			if addon_type ~= "number" then return false else newAddon = C_AddOns.GetAddOnName(newAddon) end
+		end
 
-		addon = addon_type ~= "string" and C_AddOns.GetAddOnName(newAddon) or newAddon
-		title = C_AddOns.GetAddOnTitle(addon)
-		version = C_AddOns.GetAddOnMetadata(addon, "Version")
-		day = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Day"))
-		month = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Month"))
-		year = tonumber(C_AddOns.GetAddOnMetadata(addon, "X-Year"))
-		date = day and month and year and wt.strings.date:gsub("#DAY", day):gsub("#MONTH", month):gsub("#YEAR", year) or nil
-		category = C_AddOns.GetAddOnMetadata(addon, "Category")
-		notes = C_AddOns.GetAddOnNotes(addon)
-		author = C_AddOns.GetAddOnMetadata(addon, "Author")
-		license = C_AddOns.GetAddOnMetadata(addon, "X-License")
-		curse = C_AddOns.GetAddOnMetadata(addon, "X-CurseForge")
-		wago = C_AddOns.GetAddOnMetadata(addon, "X-Wago")
-		repo = C_AddOns.GetAddOnMetadata(addon, "X-Repository")
-		issues = C_AddOns.GetAddOnMetadata(addon, "X-Issues")
-		sponsors = C_AddOns.GetAddOnMetadata(addon, "X-Sponsors")
-		logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-		changelogLatest, changelog = nil, nil
+		local data = addon[self]
 
-		if newChangelog then changelogLatest, changelog = us.FormatChangelog(newChangelog, true), us.FormatChangelog(newChangelog) end
+		if not data then
+			data = {
+				name = newAddon,
+				title = C_AddOns.GetAddOnTitle(newAddon),
+				notes = C_AddOns.GetAddOnNotes(newAddon),
+				logo = C_AddOns.GetAddOnMetadata(newAddon, "IconTexture"),
+				category = C_AddOns.GetAddOnMetadata(newAddon, "Category"),
+				author = C_AddOns.GetAddOnMetadata(newAddon, "Author"),
+				version = C_AddOns.GetAddOnMetadata(newAddon, "Version"),
+				day = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Day")),
+				month = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Month")),
+				year = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Year")),
+				license = C_AddOns.GetAddOnMetadata(newAddon, "X-License"),
+				curse = C_AddOns.GetAddOnMetadata(newAddon, "X-CurseForge"),
+				wago = C_AddOns.GetAddOnMetadata(newAddon, "X-Wago"),
+				repo = C_AddOns.GetAddOnMetadata(newAddon, "X-Repository"),
+				issues = C_AddOns.GetAddOnMetadata(newAddon, "X-Issues"),
+				sponsors = C_AddOns.GetAddOnMetadata(newAddon, "X-Sponsors"),
+			}
 
-		--Call listeners
-		if not silent then addonmanager.invoke.changed(addon, user == true) end
+			data.date = data.day and data.month and data.year and wt.strings.date:gsub("#DAY", data.day):gsub("#MONTH", data.month):gsub("#YEAR", data.year) or nil
+
+			if newChangelog then data.changelog_latest, data.changelog_full = us.FormatChangelog(newChangelog, true), us.FormatChangelog(newChangelog) end
+
+			addon[self] = data
+		end
+
+		if not silent then invoke_addonChanged(self, user) end
 
 		return true
 	end
 
-	--Create event
-	addonmanager.addEvent("changed")
+	return addonmanager
+end
+
+function wt.CreateAddonmanager(t, widget)
+	if not addonmanager_base then addonmanager_base = buildAddonmanager() end
+
+	local typenameBase = "Widget" ---@type typename_widget
+
+	local addonmanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), addonmanager_base) ---@cast addonmanager addonmanager
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
 
 	--Load metadata
-	addonmanager.setAddon(t.addon, t.changelog)
+	addonmanager:setAddon(t.addon, t.changelog)
 
 	return addonmanager
 end

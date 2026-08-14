@@ -542,8 +542,8 @@ function wt.CreateCheckbox(t, binary)
 				title = wt.strings.value.paste,
 				action = function() checkbox.setValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox.reset() end }) end
 		end
 	}) end
 
@@ -663,8 +663,8 @@ local function setUpClassicToggle(binary, holder, frame, title, t)
 				title = wt.strings.value.paste,
 				action = function() binary.setValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() binary.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() binary.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() binary.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() binary.reset() end }) end
 		end
 	}) end
 
@@ -1077,8 +1077,8 @@ function wt.CreateRadiogroup(t, selector)
 				title = wt.strings.value.paste,
 				action = function() radiogroup.setValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup.reset() end }) end
 		end
 	}) end
 
@@ -1591,8 +1591,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				title = wt.strings.value.paste,
 				action = function() dropdown.setValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown.reset() end }) end
 		end
 	}) end
 
@@ -1676,8 +1676,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 				title = wt.strings.value.paste,
 				action = function() specialRadiogroup.setValue(wt.clipboard[specialRadiogroup.getItemset()].value, true) end
 			}):SetEnabled(wt.clipboard[specialRadiogroup.getItemset()] ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup.revertData() end })
-			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup.revert() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup.reset() end }) end
 		end
 	}) end
 
@@ -1838,8 +1838,8 @@ function wt.CreateCheckgroup(t, selector)
 				title = wt.strings.value.paste,
 				action = function() checkgroup.setValue(wt.clipboard.selections.states, true) end
 			}):SetEnabled(wt.clipboard.selections ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.reset() end }) end
 		end
 	}) end
 
@@ -2011,8 +2011,8 @@ local function setUpSinglelineEditbox(editbox, title, t)
 				title = wt.strings.value.paste,
 				action = function() editbox.setValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.reset() end }) end
 		end
 	}) end
 end
@@ -2271,8 +2271,8 @@ function wt.CreateMultilineEditbox(t, textual)
 				title = wt.strings.value.paste,
 				action = function() editbox.setValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox.reset() end }) end
 		end
 	}) end
 
@@ -2779,8 +2779,8 @@ function wt.CreateSlider(t, numeric)
 				title = wt.strings.value.paste,
 				action = function() slider.setValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider.reset() end }) end
 		end
 	}) end
 
@@ -3194,8 +3194,8 @@ function wt.CreateClassicSlider(t, numeric)
 				title = wt.strings.value.paste,
 				action = function() classicSlider.setValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() classicSlider.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() classicSlider.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() classicSlider.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() classicSlider.reset() end }) end
 		end
 	}) end
 
@@ -3510,8 +3510,8 @@ function wt.CreateColorpicker(t, colormanager)
 				title = wt.strings.value.paste,
 				action = function() colorpicker.setValue(wt.clipboard.color, true) end
 			}):SetEnabled(wt.clipboard.color ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker.revertData() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.resetData() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker.revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker.reset() end }) end
 		end
 	}) end
 
