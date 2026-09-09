@@ -1980,7 +1980,7 @@ function wt.SaveSettingsData(category, key)
 
 	if not settingsData.rules[key] then return end
 
-	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.save() end
+	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:save() end
 end
 
 function wt.ApplySettingsData(category, key)

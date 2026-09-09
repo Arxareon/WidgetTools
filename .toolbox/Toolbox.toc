@@ -1,8 +1,8 @@
-## Interface: 120007, 50504, 20505, 11508
+## Interface: 120100, 50504, 20506, 11509
 ## Title: Widget Toolbox (3.1)
 ## Version: 3.1
-## X-Day: 2
-## X-Month: 7
+## X-Day: 9
+## X-Month: 9
 ## X-Year: 2026
 ## Category: Development Tools
 ## Notes: Responsible for doing the heavy lifting for other addons built with it in the background & provides extra development tools.
