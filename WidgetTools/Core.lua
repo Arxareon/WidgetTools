@@ -21,14 +21,14 @@ local crc = C_ColorUtil.WrapTextInColorCode
 
 local noop = function() end
 
-local eventFrame = CreateFrame("Frame")
-
 ---@type widgetToolsDebugging
 local ds = {
 	Log = noop,
 	LogRaw = noop,
 	history = {} --ADD an option to save logs across sessions
 }
+
+local eventFrame = CreateFrame("Frame")
 
 
 --[[ RESOURCES ]]

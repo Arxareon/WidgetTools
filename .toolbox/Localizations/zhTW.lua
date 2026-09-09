@@ -189,8 +189,8 @@ wt.strings = {
 		title = "贊助者",
 		description = "感謝您的持續支持！",
 	},
-	dataManagement = {
-		title = "資料管理",
+	profilesPage = {
+		title = "設定檔 & 備份",
 		description = "透過匯入、匯出選項管理設定檔與備份以進一步設定#ADDON。",
 	},
 	profiles = {

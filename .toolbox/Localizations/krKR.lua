@@ -189,8 +189,8 @@ wt.strings = {
 		title = "후원자",
 		description = "지속적인 후원에 진심으로 감사드립니다!",
 	},
-	dataManagement = {
-		title = "데이터 관리",
+	profilesPage = {
+		title = "프로필 & 백업",
 		description = "프로필 및 백업을 가져오기/내보내기로 #ADDON 설정을 추가로 관리하세요.",
 	},
 	profiles = {

@@ -15,6 +15,7 @@ local crc = C_ColorUtil.WrapTextInColorCode
 wt.addon = ...
 wt.title = C_AddOns.GetAddOnMetadata(..., "Title")
 wt.root = "Interface/AddOns/" .. wt.addon .. "/"
+wt.version = C_AddOns.GetAddOnMetadata(..., "Version")
 wt.classic = select(4, GetBuildInfo()) < 100000
 
 --[ Textures ]
@@ -91,23 +92,23 @@ end
 
 function wt.IsColor(t)
 	if type(t) ~= "table" then
-		ds.Log(function() return "Not a color: " ..  us.TableToString(t), "IsColor" end)
+		ds.Log(function() return "Not a color table: " ..  us.TableToString(t), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.r) ~= "number" or t.r < 0 or t.r > 1 then
-		ds.Log(function() return "Invalid red color value: " .. tostring(t.r) end)
+		ds.Log(function() return "Invalid red value: " .. us.ToString(t.r), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.g) ~= "number" or t.g < 0 or t.g > 1 then
-		ds.Log(function() return "Invalid green color value: " .. tostring(t.g) end)
+		ds.Log(function() return "Invalid green value: " .. us.ToString(t.g), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.b) ~= "number" or t.b < 0 or t.b > 1 then
-		ds.Log(function() return "Invalid blue color value: " .. tostring(t.b) end)
+		ds.Log(function() return "Invalid blue value: " .. us.ToString(t.b), wt.title .. ".IsColor" end)
 
 		return false
 	elseif t.a ~= nil and (type(t.a) ~= "number" or t.a < 0 or t.a > 1) then
-		ds.Log(function() return "Invalid alpha color value: " .. tostring(t.a) end)
+		ds.Log(function() return "Invalid alpha value: " .. us.ToString(t.a), wt.title .. ".IsColor" end)
 
 		return false
 	end
@@ -1962,7 +1963,7 @@ function wt.LoadSettingsData(category, key, handleChanges)
 	local changeHandlers = handleChanges == true and {} or nil
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget:loadData(false)
+		settingsData.rules[key][i].widget:load(false)
 
 		--Register onChange handlers for call
 		if changeHandlers and type(settingsData.rules[key][i].onChange) == "table" then
@@ -1979,7 +1980,7 @@ function wt.SaveSettingsData(category, key)
 
 	if not settingsData.rules[key] then return end
 
-	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.saveData() end
+	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget.save() end
 end
 
 function wt.ApplySettingsData(category, key)
@@ -2062,7 +2063,7 @@ function wt.HandleWidgetChanges(index, category, key)
 		if type(handler) == "function" then handler()
 		else ds.Log(function() return
 			"Cannot call invalid or unset " .. key .. " handler of " .. us.ToString(settingsData.rules[key][index].onChange[i]),
-			"HandleWidgetChanges"
+			wt.title .. ".HandleWidgetChanges"
 		end) end
 	end
 end

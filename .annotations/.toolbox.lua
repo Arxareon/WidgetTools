@@ -1,6 +1,6 @@
 --NOTE: Annotations are for development purposes only, providing live documentation via Lua Language Server. This file does not need to be loaded by the game client.
 
-----@meta toolbox
+----@meta toolbox --TODO reinstate
 
 
 --[[ TOOLBOX ]]
@@ -10,6 +10,7 @@
 ---@field addon string Toolbox sub-addon namespace name
 ---@field title string Toolbox sub-addon display title
 ---@field root string Toolbox sub-addon root folder path
+---@field version string Toolbox version number string
 ---@field classic boolean Classic vs modern UI code separation
 ---@field textures { alphaBG: string,  gradientBG: string }
 ---@field strings toolboxStrings
@@ -433,7 +434,7 @@ end
 
 --| Base frame
 
----Create & set up a new base frame
+---Create & set up a new basic frame
 ---***
 ---@param t? frame_options Optional parameters
 ---@return Frame frame
@@ -1496,7 +1497,7 @@ end
 
 --[[ WIDGET ]]
 
----Create a non-GUI parentable base widget with typename, event callback, child widget, enabled state and dependency management logic
+---Create a basic non-GUI parentable widget with typename, event callback, child widget, enabled state and dependency management logic
 ---***
 ---@param t? widget_options Optional parameters
 ---***
@@ -1743,7 +1744,7 @@ end
 ---Create a basic GUI container frame
 ---***
 ---@param t? container_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into a container frame instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into a container frame instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return container|widget container References to the new container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateContainer(t, widget)
@@ -1826,7 +1827,7 @@ end
 ---Create a GUI container frame with customizable UI elements
 ---***
 ---@param t? customContainer_options Optional parameters
----@param widget? widget Reference to an already existing base widget frame to turn into a custom container instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into a custom container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return customContainer|widget customContainer References to the new custom container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomContainer(t, widget)
@@ -1940,7 +1941,7 @@ end
 ---Create a GUI container panel frame with customized panel UI
 ---***
 ---@param t? panel_options Optional parameters
----@param container? customContainer Reference to an already existing custom container to turn into a panel instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param container? customContainer Reference to an already existing custom container to turn into a panel instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return panel|widget panel References to the new panel [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreatePanel(t, container)
@@ -2068,10 +2069,10 @@ end
 
 --[ Action ]
 
----Create a non-GUI action base widget with custom trigger logic
+---Create a non-GUI action widget with custom trigger logic
 ---***
 ---@param t? action_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into an action instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into an action instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return action action Reference to the new action widget, utility functions and more wrapped in a widget table
 function wt.CreateAction(t, widget)
@@ -2109,8 +2110,6 @@ function wt.CreateAction(t, widget)
 	--| Returns
 
 	---@class action : widget
-	---@field invoke action_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
-	---@field addListener action_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
 		--[ Type ]
@@ -2142,8 +2141,8 @@ function wt.CreateAction(t, widget)
 		function _:addListener_triggered(handler, callIndex) end
 
 		--[ Action ]
-
-		---Trigger the action registered for the action (if it is enabled)
+		
+		---Trigger the registered action (if the widget is enabled)
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "trigger" event and call registered listeners | ***Default:*** `false`
 		function _:trigger(user, silent) end
@@ -2170,7 +2169,7 @@ end
 ---Create a Blizzard button GUI frame with enhanced widget functionality
 ---***
 ---@param t? actionButton_options Optional parameters
----@param action? action Reference to an already existing action to turn into a button instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param action? action Reference to an already existing action instance to turn into a button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return actionButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
 function wt.CreateButton(t, action)
@@ -2183,6 +2182,7 @@ function wt.CreateButton(t, action)
 	---@field titleOffset? offsetData Offset the position of the label of the button
 	---@field size? sizeData_button|sizeData
 	---@field font? labelFontOptions_highlight List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
+	---@field action? fun(self: actionButton, user?: boolean) Function to call when the action is triggered<p>@*param* `self` actionButton — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
 	---@field listeners? button_listeners|action_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** `t.action` will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
 
@@ -2222,35 +2222,53 @@ function wt.CreateButton(t, action)
 
 	---@class actionButton : action
 	---@field label FontString|nil
-	---@field frame Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
-	---@field widget Button
-	---@field addListener button_addListener Hook a handler function as a listener for a widget event
+	---@field holder Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
+	---@field frame Button
 	local _ = {}
 
 		--[ Type ]
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
-		function _.getTypes() return {} end
+		function _:getTypes() return {} end
 
 			---@alias typename_button
 			---| "Button"
 
 		--[ Events ]
 
-		---@class button_addListener : action_addListener
-		---@field [string] fun(handler: button_handler, callIndex?: integer) Register a listener for a custom widget event
-		local addListener = {}
+		---Register a listener for a custom event to call the specified handler on invoke
+		---***
+		---@param event string Unique event identifier tag
+		---@param handler button_handler Called when a custom event is invoked
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener(event, handler, callIndex) end
 
-			---Register a listener for a "triggered" widget event
-			---@param handler button_handler_triggered Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.triggered(handler, callIndex) end
+		---Register a listener for a "enabled" event to call the specified handler on invoke
+		---@param handler button_handler_enabled Called when an "enabled" event is invoked after `button.setEnabled(...)` was called
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_enabled(handler, callIndex) end
 
-			---Register a listener for a "enabled" widget event
-			---@param handler button_handler_enabled Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.enabled(handler, callIndex) end
+		---Register a listener for a "triggered" event to call the specified handler on invoke
+		---@param handler button_handler_triggered Called when a "triggered" event is invoked after `button.trigger(...)` was called
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_triggered(handler, callIndex) end
+
+		--[ Action ]
+
+		---Set the function to call on trigger
+		---@param call button_setAction_param1
+		function _:setAction(call)
+
+			--| Parameters
+
+			---Function to call when the action is triggered
+			---***
+			---<p>@<i>param</i> <code>self</code> actionButton — Reference to the widget table</p>
+			---<p>@<i>param</i> <code>user</code>? boolean — Marking whether the call is due to a user interaction or not | <b><i>Default:</i></b> <code>false</code></p>
+			---@alias button_setAction_param1 # call
+			---| fun(self: actionButton, user?: boolean)
+		end
 
 	return _
 end
@@ -2258,7 +2276,7 @@ end
 ---Create a Blizzard button GUI frame with customizable UI elements and enhanced widget functionality
 ---***
 ---@param t? customButton_options Optional parameters
----@param action? action Reference to an already existing action to turn into a custom button instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param action? action Reference to an already existing action instance to turn into a custom button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return customButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button) (inheriting [BackdropTemplate](https://warcraft.wiki.gg/wiki/BackdropTemplate)), utility functions and more wrapped in a widget table
 function wt.CreateCustomButton(t, action)
@@ -2268,6 +2286,7 @@ function wt.CreateCustomButton(t, action)
 	---Optional parameters
 	---@class customButton_options : actionButton_options, customizableObject # t
 	---@field font? labelFontOptions_small_highlight Table of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *small default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
+	---@field action? fun(self: customButton, user?: boolean) Function to call when the action is triggered<p>@*param* `self` customButton — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
 	---@field listeners? customButton_listeners|action_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class customizableObject
@@ -2306,34 +2325,52 @@ function wt.CreateCustomButton(t, action)
 	--| Returns
 
 	---@class customButton : actionButton
-	---@field widget Button|BackdropTemplate
-	---@field addListener customButton_addListener Hook a handler function as a listener for a widget event
+	---@field frame Button|BackdropTemplate
 	local _ = {}
 
 		--[ Type ]
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
-		function _.getTypes() return {} end
+		function _:getTypes() return {} end
 
 			---@alias typename_customButton
 			---| "CustomButton"
 
 		--[ Events ]
 
-		---@class customButton_addListener : action_addListener
-		---@field [string] fun(handler: customButton_handler, callIndex?: integer) Register a listener for a custom widget event
-		local addListener = {}
+		---Register a listener for a custom event to call the specified handler on invoke
+		---***
+		---@param event string Unique event identifier tag
+		---@param handler customButton_handler Called when a custom event is invoked
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener(event, handler, callIndex) end
 
-			---Register a listener for a "triggered" widget event
-			---@param handler customButton_handler_triggered Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.triggered(handler, callIndex) end
+		---Register a listener for a "enabled" event to call the specified handler on invoke
+		---@param handler customButton_handler_enabled Called when an "enabled" event is invoked after `button.setEnabled(...)` was called
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_enabled(handler, callIndex) end
 
-			---Register a listener for a "enabled" widget event
-			---@param handler customButton_handler_enabled Handler function to call on trigger
-			---@param callIndex? integer Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.enabled(handler, callIndex) end
+		---Register a listener for a "triggered" event to call the specified handler on invoke
+		---@param handler customButton_handler_triggered Called when a "triggered" event is invoked after `button.trigger(...)` was called
+		---@param callIndex? integer Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_triggered(handler, callIndex) end
+
+		--[ Action ]
+
+		---Set the function to call on trigger
+		---@param call customButton_setAction_param1
+		function _:setAction(call)
+
+			--| Parameters
+
+			---Function to call when the action is triggered
+			---***
+			---<p>@<i>param</i> <code>self</code> customButton — Reference to the widget table</p>
+			---<p>@<i>param</i> <code>user</code>? boolean — Marking whether the call is due to a user interaction or not | <b><i>Default:</i></b> <code>false</code></p>
+			---@alias customButton_setAction_param1 # call
+			---| fun(self: customButton, user?: boolean)
+		end
 
 	return _
 end
@@ -2341,10 +2378,10 @@ end
 
 --[[ DATAMANAGER ]]
 
----Create a non-GUI datamanager base widget with generic data management logic
+---Create a non-GUI datamanager widget with generic data management logic
 ---***
 ---@param t? datamanager_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into a datamanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a widget table
 function wt.CreateDatamanager(t, widget)
@@ -2478,13 +2515,13 @@ function wt.CreateDatamanager(t, widget)
 		---***
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:loadData(handleChanges, silent) end
+		function _:load(handleChanges, silent) end
 
 		---Verify and save the provided data or the current value of the widget to storage via `t.saveData(...)`
 		---***
 		---@param data? any Data to be saved | ***Default:*** *current value *
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(data, silent) end
+		function _:save(data, silent) end
 
 		---Get the currently stored data via `t.getData()`
 		---@return any # ***Default:*** *current value*
@@ -2535,10 +2572,10 @@ end
 
 --[ Binary ]
 
----Create a non-GUI binary datamanager base widget with boolean data management logic
+---Create a non-GUI binary datamanager widget with boolean data management logic
 ---***
 ---@param t? binary_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into binary instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into binary instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return binary binary Reference to the new binary widget, utility functions and more wrapped in a widget table
 function wt.CreateBinary(t, datamanager)
@@ -2707,7 +2744,7 @@ end
 ---Create a Blizzard checkbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? checkbox_options Optional parameters
----@param binary? binary Reference to an already existing binary datamanager to turn into a checkbox instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param binary? binary Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return checkbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCheckbox(t, binary)
@@ -2826,7 +2863,7 @@ end
 ---Create a classic Blizzard checkbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? classicCheckbox_options Optional parameters
----@param binary? binary Reference to an already existing binary datamanager to turn into a checkbox instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param binary? binary Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return classicCheckbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateClassicCheckbox(t, binary)
@@ -2927,7 +2964,7 @@ end
 ---Create a classic Blizzard radio button GUI frame with enhanced widget functionality
 ---***
 ---@param t? radiobutton_options Optional parameters
----@param binary? binary Reference to an already existing binary datamanager to turn into a radio button instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param binary? binary Reference to an already existing binary datamanager instance to turn into a radio button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return radiobutton|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateRadiobutton(t, binary)
@@ -3035,10 +3072,10 @@ end
 
 --[ Selector ]
 
----Create a non-GUI selector datamanager base widget (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
+---Create a non-GUI selector datamanager widget (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---***
 ---@param t? selector_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return selector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSelector(t, datamanager)
@@ -3250,11 +3287,11 @@ function wt.CreateSelector(t, datamanager)
 	return _
 end
 
----Create a non-GUI special selector datamanager base widget (managing a set of binary datamanager child widgets) with specific pre-defined `itemset` data management logic
+---Create a non-GUI special selector datamanager widget (managing a set of binary datamanager child widgets) with specific pre-defined `itemset` data management logic
 ---***
 ---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelector_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a special selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a special selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return specialSelector specialSelector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSpecialSelector(itemset, t, datamanager)
@@ -3437,10 +3474,10 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	return _
 end
 
----Create a non-GUI multiselector datamanager base widget (managing a set of binary datamanager child widgets) with boolean mask data management logic
+---Create a non-GUI multiselector datamanager widget (managing a set of binary datamanager child widgets) with boolean mask data management logic
 ---***
 ---@param t? multiselector_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a multiselector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a multiselector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return multiselector multiselector Reference to the new multiselector widget, utility functions and more wrapped in a widget table
 function wt.CreateMultiselector(t, datamanager)
@@ -3661,7 +3698,7 @@ end
 ---Create a radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
 ---***
 ---@param t? radiogroup_options Optional parameters
----@param selector? CreateRadiogroup_param2 Reference to an already existing selector to turn into a radio selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param selector? CreateRadiogroup_param2 Reference to an already existing selector instance to turn into a radio selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return radiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateRadiogroup(t, selector)
@@ -3734,7 +3771,7 @@ function wt.CreateRadiogroup(t, selector)
 				---@alias radiogroup_handler
 				---| fun(self: radiogroup, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` radiogroup ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
-	---Reference to an already existing selector to turn into a radio selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+	---Reference to an already existing selector instance to turn into a radio selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 	---@alias CreateRadiogroup_param2
 	---| selector
 	---| specialSelector
@@ -3802,7 +3839,7 @@ end
 ---Create a dropdown radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
 ---***
 ---@param t? dropdownRadiogroup_options Optional parameters
----@param selector? selector Reference to an already existing selector to turn into a radio selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param selector? selector Reference to an already existing selector instance to turn into a radio selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return dropdownRadiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
 function wt.CreateDropdownRadiogroup(t, selector)
@@ -3949,7 +3986,7 @@ end
 ---@param itemset CreateSpecialRadiogroup_param1 Specify what type of selector should be created
 --- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroup_options Optional parameters
----@param selector? specialSelector Reference to an already existing special selector widget to turn into a special selector frame instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param selector? specialSelector Reference to an already existing special selector widget to turn into a special selector frame instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
@@ -4053,7 +4090,7 @@ end
 ---Create a checkbox selector GUI frame to pick multiple options out of a list with enhanced widget functionality
 ---***
 ---@param t? checkgroup_options Optional parameters
----@param selector? multiselector Reference to an already existing selector to turn into a multiple selector instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param selector? multiselector Reference to an already existing selector instance to turn into a multiple selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return checkgroup|multiselector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateCheckgroup(t, selector)
@@ -4192,10 +4229,10 @@ end
 
 --[ Text ]
 
----Create a non-GUI textual datamanager base widget with string data management logic
+---Create a non-GUI textual datamanager widget with string data management logic
 ---***
 ---@param t? textual_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into textual instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into textual instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return textual textual Reference to the new textual datamanager, utility functions and more wrapped in a widget table
 function wt.CreateTextual(t, datamanager)
@@ -4347,7 +4384,7 @@ end
 ---Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? editbox_options Optional parameters
----@param textual? textual Reference to an already existing textual datamanager to turn into an editbox instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param textual? textual Reference to an already existing textual datamanager instance to turn into an editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return textualEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateEditbox(t, textual)
@@ -4470,7 +4507,7 @@ end
 ---Create a single-line Blizzard editbox GUI frame with customizable UI elements and enhanced widget functionality
 ---***
 ---@param t? customEditbox_options Optional parameters
----@param textual? textual Reference to an already existing textual datamanager to turn into a customizable editbox instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param textual? textual Reference to an already existing textual datamanager instance to turn into a customizable editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return customEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomEditbox(t, textual)
@@ -4568,7 +4605,7 @@ end
 ---Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
 ---***
 ---@param t? multilineEditbox_options Optional parameters
----@param textual? textual Reference to an already existing textual datamanager to turn into a multiline editbox instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param textual? textual Reference to an already existing textual datamanager instance to turn into a multiline editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return multilineEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateMultilineEditbox(t, textual)
@@ -4743,10 +4780,10 @@ end
 
 --[ Numeric ]
 
----Create a non-GUI numeric datamanager base widget with number data management logic
+---Create a non-GUI numeric datamanager widget with number data management logic
 ---***
 ---@param t? numeric_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into numeric instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into numeric instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return numeric numeric Reference to the new numeric widget, utility functions and more wrapped in a widget table
 function wt.CreateNumeric(t, datamanager)
@@ -4974,7 +5011,7 @@ end
 ---Create a Blizzard slider GUI frame with enhanced widget functionality
 ---***
 ---@param t? slider_options Optional parameters
----@param numeric? numeric Reference to an already existing numeric widget to turn into a slider instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param numeric? numeric Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return numericSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateSlider(t, numeric)
@@ -5108,7 +5145,7 @@ end
 ---Create a classic Blizzard slider GUI frame with enhanced widget functionality
 ---***
 ---@param t? classicSlider_options Optional parameters
----@param numeric? numeric Reference to an already existing numeric widget to turn into a slider instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param numeric? numeric Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return classicSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateClassicSlider(t, numeric)
@@ -5235,10 +5272,10 @@ end
 
 --[ Color ]
 
----Create a non-GUI colormanager datamanager base widget with color data management logic
+---Create a non-GUI colormanager datamanager widget with color data management logic
 ---***
 ---@param t? colormanager_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a colormanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a colormanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return colormanager colormanager Reference to the new color pick manager widget, utility functions and more wrapped in a widget table
 function wt.CreateColormanager(t, datamanager)
@@ -5399,7 +5436,7 @@ end
 ---Create a color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---***
 ---@param t? colorpicker_options Optional parameters
----@param colormanager? colormanager Reference to an already existing color datamanager to turn into a colorpicker instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param colormanager? colormanager Reference to an already existing color datamanager instance to turn into a colorpicker instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateColorpicker(t, colormanager)
@@ -5505,10 +5542,10 @@ end
 
 --[ Position ]
 
----Create a non-GUI position datamanager base widget with frame positioning data management logic
+---Create a non-GUI position datamanager widget with frame positioning data management logic
 ---***
 ---@param t positionmanager_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a positionmanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a positionmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return positionmanager positionmanager Reference to the new positionmanager widget, utility functions and more wrapped in a widget table
 function wt.CreatePositionmanager(t, datamanager)
@@ -5668,10 +5705,10 @@ end
 
 --[ Font ]
 
----Create a non-GUI font datamanager base widget with font customization data management logic
+---Create a non-GUI font datamanager widget with font customization data management logic
 ---***
 ---@param t fontmanager_options Optional parameters
----@param datamanager? datamanager Reference to an already existing datamanager to turn into a fontmanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a fontmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return fontmanager fontmanager Reference to the new fontmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateFontmanager(t, datamanager)
@@ -5773,10 +5810,10 @@ end
 
 --[[ SETTINGS ]]
 
----Create a non-GUI settingsmanager base widget
+---Create a non-GUI settingsmanager widget
 ---***
 ---@param t settingsmanager_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into a settingsmanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into a settingsmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return settingsmanager settingsmanager Reference to the new settingsmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateSettingsmanager(t, widget)
@@ -5966,7 +6003,7 @@ end
 ---Create an new Settings Panel frame and add it to the Options
 ---***
 ---@param t? settingsPage_options Optional parameters
----@param settingsmanager? settingsmanager Reference to an already existing settings datamanager to turn into a settings page instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param settingsmanager? settingsmanager Reference to an already existing settings datamanager instance to turn into a settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(t, settingsmanager)
@@ -6177,7 +6214,7 @@ end
 
 --[ Profiles ]
 
----Create a non-GUI profilemanager base widget with live database management and profile selection logic
+---Create a non-GUI profilemanager widget with live database management and profile selection logic
 ---***
 ---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
 	--- - ***Note:*** A subtable will be created under the key `profiles` if it doesn't already exist, any other keys will be removed (any possible old data will be recovered and incorporated into the active profile data).
@@ -6185,7 +6222,7 @@ end
 	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
 ---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanager_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into a profilemanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into a profilemanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return profilemanager? profilemanager Reference to the new profilemanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t, widget)
@@ -6219,7 +6256,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	---| table
 
 	---Optional parameters
-	---@class profilemanager_options # t
+	---@class profilemanager_options : widget_options # t
 	---@field category? string Category name to be used for identifying this group of profile data when modified in popups and chat messages | ***Default:*** `"Addon"`
 	---@field valueChecker? fun(key: number|string, value: any): boolean Helper function for validating values when checking profile data, returning `true` if the value is to be accepted as valid
 	---@field recoveryMap? table<string, recoveryData>|fun(tableToCheck: table, recoveredData: recoveredData): recoveryMap: table<string, recoveryData>|nil Static map or function returning a dynamically creatable map for removed but recoverable data
@@ -6307,7 +6344,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_profilemanager]: true, }
-		function _.getTypes() return {} end
+		function _:getTypes() return {} end
 
 			---@alias typename_profilemanager
 			---| "Profilemanager"
@@ -6370,14 +6407,14 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "applied" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return integer? index The index of the active profile | ***Default:*** `nil`
-		function _.activate(index, user, silent) end
+		function _:activate(index, user, silent) end
 
 		---Find a profile by its display title and return its index
 		---***
 		---@param title string Name of the profile to find
 		---@param skipFirst? boolean Set to `true` to find duplicate `title` | ***Default:*** `false`
 		---@return integer? index
-		function _.findIndex(title, skipFirst) end
+		function _:findIndex(title, skipFirst) end
 
 		---Create a new settings profile
 		---***
@@ -6388,7 +6425,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param index? integer Place the new profile under this specified index in `accountData.profile` instead of the end of the list | ***Range:*** (`1`, `#accountData.profiles + 1`)
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke an "created" event and call registered listeners | ***Default:*** `false`
-		function _.create(name, number, duplicate, index, apply, user, silent) end
+		function _:create(name, number, duplicate, index, apply, user, silent) end
 
 		---Rename the specified profile
 		---@param index? integer Index of the profile to rename | ***Default:*** *currently active profile index*
@@ -6398,7 +6435,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "renamed" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _.rename(index, name, number, user, silent) return false end
+		function _:rename(index, name, number, user, silent) return false end
 
 		---Delete the specified profile
 		---***
@@ -6408,7 +6445,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "deleted" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _.delete(index, unsafe, user, silent) return false end
+		function _:delete(index, unsafe, user, silent) return false end
 
 		---Reset the specified profile data to default values
 		---***
@@ -6418,7 +6455,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "reset" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _.reset(index, unsafe, user, silent) return false end
+		function _:reset(index, unsafe, user, silent) return false end
 
 		---Check & fix a profile data table based on the specified sample profile
 		---***
@@ -6426,7 +6463,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param compareWith? table  Profile data table to sample | ***Default:*** `defaultData`
 		---***
 		---@return table profileData Reference to `profileData` (it was already updated during the operation, no need for setting it again)
-		function _.validate(profileData, compareWith) return {} end
+		function _:validate(profileData, compareWith) return {} end
 
 		---Load profiles data
 		---***
@@ -6434,7 +6471,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param activeProfile? integer Index of the active profile to set | ***Default:*** *currently active profile index*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke an "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.load(p, activeProfile, user, silent) end
+		function _:load(p, activeProfile, user, silent) end
 
 	return _
 end
@@ -6451,7 +6488,7 @@ end
 ---@param settingsData CreateProfilesPage_param4 Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
 --- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPage_options Optional parameters
----@param profilemanager? profilemanager Reference to an already existing profile datamanager to turn into a profile management settings page instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param profilemanager? profilemanager Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
@@ -6632,10 +6669,10 @@ end
 ---@field changelog_latest string? Formatted changelog text of the latest release
 ---@field changelog_full string? Formatted changelog text of the entire version history
 
----Create a non-GUI addonmanager base widget providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
+---Create a non-GUI addonmanager widget providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---***
 ---@param t? addonmanager_options Optional parameters
----@param widget? widget Reference to an already existing base widget to turn into an addonmanager instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param widget? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return addonmanager? addonmanager Reference to the new addonmanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
 function wt.CreateAddonmanager(t, widget)
@@ -6681,7 +6718,7 @@ function wt.CreateAddonmanager(t, widget)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_addonmanager]: true, }
-		function _.getTypes() return {} end
+		function _:getTypes() return {} end
 
 			---@alias typename_addonmanager
 			---| "Addonmanager"
@@ -6822,7 +6859,7 @@ end
 ---Create and set up a new settings page with about into for an addon
 ---***
 ---@param t? aboutPage_options Optional parameters
----@param addonmanager CreateAddonPage_param3? Reference to an already existing addonmanager to turn into an addon about settings page instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+---@param addonmanager CreateAddonPage_param3? Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---***
 ---@return addonPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** `nil`
 function wt.CreateAddonPage(t, addonmanager)
@@ -6857,7 +6894,7 @@ function wt.CreateAddonPage(t, addonmanager)
 				---@alias addonPage_handler
 				---| fun(self: addonPage, ...: any) Called when a custom event is invoked<hr><p>@*param* `self` addonPage ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
-	---Reference to an already existing addonmanager to turn into an addon about settings page instead of creating a new one as a base (reusing its own already set parameters retaining their current values)
+	---Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 	---@alias CreateAddonPage_param3 # addonmanager
 	---| addonmanager
 	---| nil

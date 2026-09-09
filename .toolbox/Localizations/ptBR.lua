@@ -189,9 +189,9 @@ wt.strings = {
 		title = "Patrocinadores",
 		description = "Seu apoio contínuo é muito apreciado! Obrigado!",
 	},
-	dataManagement = {
-		title = "Gerenciamento de Dados",
-		description = "Configure ainda mais as opções do #ADDON gerenciando perfis e backups através das opções de importação e exportação.",
+	profilesPage = {
+		title = "Perfis & Backup",
+		description = "Configure mais as opções do #ADDON gerenciando perfis e backups por meio das opções de importação e exportação.",
 	},
 	profiles = {
 		title = "Perfis",

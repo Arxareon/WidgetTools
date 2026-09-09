@@ -189,8 +189,8 @@ wt.strings = {
 		title = "Sponsors",
 		description = "Votre soutien continu est très apprécié ! Merci !",
 	},
-	dataManagement = {
-		title = "Gestion des données",
+	profilesPage = {
+		title = "Profils & Sauvegardes",
 		description = "Configurez davantage #ADDON en gérant les profils et sauvegardes via les options d'import/export.",
 	},
 	profiles = {
