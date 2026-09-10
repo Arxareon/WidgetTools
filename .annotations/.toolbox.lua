@@ -430,6 +430,86 @@ end
 
 --[[ FRAME MANAGEMENT ]]
 
+--[ Events ]
+
+---Register script event handlers for a frame or script object
+---***
+---@param frame RegisterScriptEvents_param1 Reference to the script object to register the event handlers for
+---@param events scriptEventList Table of key, value pairs of frame script event tags and the handler functions called on trigger
+--- - ***Note:*** Use `t.onEvent` to set [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for global events.
+--- - ***Note:*** Use `t.attributes` to set [`"OnAttributeChanged"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for custom frame attribute change events.
+function wt.RegisterScriptEvents(frame, events)
+
+	--| Parameters
+
+	---Reference to the script object to register the event handlers for
+	---@alias RegisterScriptEvents_param1 # frame
+	---| AnyFrameObject
+	---| ScriptRegion
+
+	---Table of key, value pairs of frame script event tags and the handler functions called on trigger
+	--- - ***Note:*** Use `t.onEvent` to set [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for global events.
+	--- - ***Note:*** Use `t.attributes` to set [`"OnAttributeChanged"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for custom frame attribute change events.
+	---@alias scriptEventList # events
+	---| table<ScriptFrame, fun(...: any)>
+end
+
+---Register global `"OnEvent"` script event handlers for a frame
+---***
+---@param frame RegisterGlobalEvents_param1 Reference to the frame to register the event handlers for
+---@param events globalEventList Table of key, value pairs of global event tags and event handlers to be registered for the frame
+--- - ***Note:*** Include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent unwanted repeated calls of the handler function.
+--- - ***Example:*** [`"ADDON_LOADED"`](https://warcraft.wiki.gg/wiki/ADDON_LOADED) is fired for every single addon. To have the handler execute code only after one specific addon is loaded, check its second parameter, the loaded addon's namespace name. Unregister the event to prevent repeated calls for every addon loaded after the specific one.
+--- 	```
+--- 	function(self, addon)
+--- 		if addon ~= "addon" then return end --Replace "addon" with the namespace name of the specific addon to watch
+--- 		self:UnregisterEvent("ADDON_LOADED")
+--- 		--Do something
+--- 	end
+--- 	```
+function wt.RegisterGlobalEvents(frame, events)
+
+	--| Parameters
+
+	---Reference to the frame to register the event handlers for
+	---@alias RegisterGlobalEvents_param1 # frame
+	---| AnyFrameObject
+
+	---Table of key, value pairs of global event tags and event handlers to be registered for the frame
+	--- - ***Note:*** Include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent unwanted repeated calls of the handler function.
+	--- - ***Example:*** [`"ADDON_LOADED"`](https://warcraft.wiki.gg/wiki/ADDON_LOADED) is fired for every single addon. To have the handler execute code only after one specific addon is loaded, check its second parameter, the loaded addon's namespace name. Unregister the event to prevent repeated calls for every addon loaded after the specific one.
+	--- 	```
+	--- 	function(self, addon)
+	--- 		if addon ~= "addon" then return end --Replace "addon" with the namespace name of the specific addon to watch
+	--- 		self:UnregisterEvent("ADDON_LOADED")
+	--- 		--Do something
+	--- 	end
+	--- 	```
+	---@alias globalEventList # events
+	---| table<WowEvent, fun(self: Frame, ...: any)>
+end
+
+---Register custom frame attributes and `"OnAttributeChanged"` script event handlers for a frame
+---***
+---@param frame RegisterAttributes_param1 Reference to the frame to set custom attributes and register the event handlers for
+---@param attributes attributeList Table of key, value pairs of custom attribute names and tables of initial attribute values and `"OnAttributeChanged"` script event handlers called on trigger for each specific attribute
+function wt.RegisterAttributes(frame, attributes)
+
+	--| Parameters
+
+	---Reference to the frame to set custom attributes and register the event handlers for
+	---@alias RegisterAttributes_param1 # frame
+	---| AnyFrameObject
+
+	---Table of key, value pairs of custom attribute names and tables of initial attribute values and `"OnAttributeChanged"` script event handlers called on trigger for each specific attribute
+	---@alias attributeList # events
+	---| table<string, attributeData>
+
+		---@class attributeData
+		---@field value any The initial value of this specific custom frame attribute
+		---@field handler fun(...: any) The function called when an `"OnAttributeChanged"` script event triggers for this specific custom frame attribute
+end
+
 --[ Constructors ]
 
 --| Base frame
@@ -443,13 +523,11 @@ function wt.CreateFrame(t)
 	--| Parameters
 
 	---Optional parameters
-	---@class frame_options : positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame # t
+	---@class frame_options : positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame, eventFrame # t
 	---@field parentFrame? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [`Region:SetParent(...)`](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the name of the new frame | ***Default:*** `nil` *(anonymous frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= UIParent
 	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers specified here will not be set. Handler functions for specific global events should be specified in the `t.onEvent` table.</li></ul>
-	---@field onEvent? table<WowEvent, fun(self: Frame, ...: any)> Table of key, value pairs that holds global event tags & their corresponding event handlers to be registered for the frame<ul><li>***Note:*** You may want to include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent the handler function to be executed again.</li><li>***Example:*** [`"ADDON_LOADED"`](https://warcraft.wiki.gg/wiki/ADDON_LOADED) is fired repeatedly after each addon. To call the handler only after one specified addon is loaded, you may check the parameter the handler is called with. It's a good idea to unregister the event to prevent repeated calling for every other addon after the specified one has been loaded already.<pre>```function(self, addon)```<br>&#9;```if addon ~= "AddonNameSpace" then return end --Replace "AddonNameSpace" with the namespace of the specific addon to watch```<br>&#9;```self:UnregisterEvent("ADDON_LOADED")```<br>&#9;```--Do something```<br>```end```</pre></li></ul>
 
 		---@class positionableScreenFrame : positionableFrame
 		---@field keepInBounds? boolean Whether to keep the frame within screen bounds whenever it's moved | ***Default:*** `false`
@@ -501,6 +579,11 @@ function wt.CreateFrame(t)
 		---@class sizeData_zeroDefault
 		---@field w? number Width | ***Default:*** `0`
 		---@field h? number Height | ***Default:*** `0`
+
+		---@class eventFrame
+		---@field events? scriptEventList
+		---@field onEvent? globalEventList
+		---@field attributes? attributeList
 
 	return {}
 end
@@ -918,7 +1001,7 @@ function wt.CreateTexture(frame, t, updates)
 	---@field color? color Apply the specified color to the texture
 	---@field edges? edgeCoordinates Edge coordinate offsets
 	---@field vertices? vertexCoordinates Vertex coordinate offsets<ul><li>***Note:*** Setting texture coordinate offsets is exclusive between edges and vertices. If set, `t.edges` will be used first ignoring `t.vertices`.</li></ul>
-	---@field events? table<ScriptType, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the texture object and the functions to assign as event handlers called when they trigger
+	---@field events? table<ScriptRegionScriptType, fun(...: any)> Table of key, value pairs of [texture object script event tags](https://warcraft.wiki.gg/wiki/UIOBJECT_Texture#Script_Types) and the handler functions called on trigger
 
 		---@class pathData_ChatFrameDefault
 		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `"Interface/ChatFrame/ChatFrameBackground"`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
@@ -967,9 +1050,15 @@ function wt.CreateTexture(frame, t, updates)
 				---@field x number ***Reference Range:*** (0, 1) | ***Default:*** `1`
 				---@field y number ***Value:*** *using canvas coordinates (inverted y axis)* | ***Reference Range:*** (0, 1) | ***Default:*** `1`
 
-		---@class attributeEventData
-		---@field name string
-		---@field handler fun(...: any)
+		---@alias ScriptRegionScriptType
+		---| "OnShow"
+		---| "OnHide"
+		---| "OnEnter"
+		---| "OnLeave"
+		---| "OnMouseDown"
+		---| "OnMouseUp"
+		---| "OnMouseWheel"
+		---| "OnLoad"
 
 	---@class textureUpdateRule # updates
 	---@field frame? AnyFrameObject Reference to the frame to add the listener script to | ***Default:*** `t.parent`
@@ -1409,12 +1498,10 @@ function wt.CreatePopupMenu(t)
 	--| Parameters
 
 	---Optional parameters
-	---@class popupMenu_options : labeledChildFrame, tooltipDescribableWidget, positionableScreenFrame, arrangeableFrame, visibleFrame, contextMenu_options_base # t
+	---@class popupMenu_options : labeledChildFrame, tooltipDescribableWidget, positionableScreenFrame, arrangeableFrame, visibleFrame, contextMenu_options_base, eventFrame # t
 	---@field parentFrame? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [`Region:SetParent(...)`](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"PopupMenu"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_menuButton|sizeData
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers specified here will not be set. Handler functions for specific global events should be specified in the `t.onEvent` table.</li></ul>
-	---@field onEvent? table<WowEvent, fun(self: Frame, ...: any)> Table of key, value pairs that holds global event tags & their corresponding event handlers to be registered for the frame<ul><li>***Note:*** You may want to include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent the handler function to be executed again.</li><li>***Example:*** "[ADDON_LOADED](https://warcraft.wiki.gg/wiki/ADDON_LOADED)" is fired repeatedly after each addon. To call the handler only after one specified addon is loaded, you may check the parameter the handler is called with. It's a good idea to unregister the event to prevent repeated calling for every other addon after the specified one has been loaded already.<pre>```function(self, addon)```<br>&#9;```if addon ~= "AddonNameSpace" then return end --Replace "AddonNameSpace" with the namespace of the specific addon to watch```<br>&#9;```self:UnregisterEvent("ADDON_LOADED")```<br>&#9;```--Do something```<br>```end```</pre></li></ul>
 
 		---@class sizeData_menuButton
 		---@field w? number Width | ***Default:*** `18`0
@@ -1752,12 +1839,11 @@ function wt.CreateContainer(t, widget)
 	--| Parameters
 
 	---Optional parameters
-	---@class container_options : widget_options, namedChildFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame # t
+	---@class container_options : widget_options, namedChildFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame, eventFrame, liteObject # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= UIParent
 	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
 	---@field listeners? container_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the container and the functions to assign as event handlers called when they trigger
 	---@field arrangement? arrangementRules_container If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field initialize? fun(container: container, canvas?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container` container ― Reference to the container to be set as the parent for child objects created during initialization</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
@@ -1835,13 +1921,12 @@ function wt.CreateCustomContainer(t, widget)
 	--| Parameters
 
 	---Optional parameters
-	---@class customContainer_options : container_options, backdropData, liteObject # t
+	---@class customContainer_options : container_options, backdropData # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_customContainer|sizeData
 	---@field background? backdropBackgroundData_customContainer Table containing the parameters used for the background
 	---@field border? backdropBorderData_customContainer Table containing the parameters used for the border
 	---@field listeners? customContainer_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the customContainer and the functions to assign as event handlers called when they trigger
 	---@field arrangement? arrangementRules_customContainer If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field initialize? fun(container: customContainer, canvas?: Frame|BackdropTemplate, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container` container|customContainer ― Reference to the container to be set as the parent for child objects created during initialization</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
@@ -1949,13 +2034,12 @@ function wt.CreatePanel(t, container)
 	--| Parameters
 
 	---Optional parameters
-	---@class panel_options : widget_options, labeledChildFrame, describableFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, backdropData, liteObject # t
+	---@class panel_options : widget_options, labeledChildFrame, describableFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, backdropData, eventFrame, liteObject # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field size? sizeData_panel|sizeData
 	---@field background? backdropBackgroundData_panel Table containing the parameters used for the background
 	---@field border? backdropBorderData_panel Table containing the parameters used for the border
 	---@field listeners? panel_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the panel and the functions to assign as event handlers called when they trigger
 	---@field arrangement? arrangementRules_panel If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field initialize? fun(container: panel, canvas?: Frame|BackdropTemplate, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<hr><p>@*param* `container` container|panel ― Reference to the container to be set as the parent for child objects created during initialization</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
 
@@ -1989,7 +2073,7 @@ function wt.CreatePanel(t, container)
 		---@field description? string Text to be displayed as the subtitle or description | ***Default:*** *no description textline shown*
 
 		---@class liteObject
-		---@field lite? boolean If `false`, overrule `WidgetToolsDB.lite` and use full GUI functionality | ***Default:*** `true`
+		---@field lite? boolean If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 
 		---@class sizeData_panel
 		---@field w? number Width | ***Default:*** `t.parent` and *width of the parent frame* - 20 or 0
@@ -2184,7 +2268,7 @@ function wt.CreateButton(t, action)
 	---@field font? labelFontOptions_highlight List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field action? fun(self: actionButton, user?: boolean) Function to call when the action is triggered<p>@*param* `self` actionButton — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
 	---@field listeners? button_listeners|action_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the button and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** `t.action` will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
+	---@field events? table<ScriptButton, fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** `t.action` will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
 
 		---@class sizeData_button
 	---@field w? number Width | ***Default:*** 80
@@ -2452,9 +2536,7 @@ function wt.CreateDatamanager(t, widget)
 
 	--| Returns
 
-	---@class datamanager : widget # datamanager
-	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
-	---@field addListener datamanager_addListener Hook a handler function as a listener for a widget event
+	---@class datamanager : widget
 	local _ = {}
 
 		--[ Type ]
@@ -2641,8 +2723,6 @@ function wt.CreateBinary(t, datamanager)
 	--| Returns
 
 	---@class binary : datamanager
-	---@field invoke datamanager_invoke Get a trigger function to call all registered listeners for the specified custom widget event with
-	---@field addListener binary_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
 		--[ Type ]
@@ -2757,7 +2837,7 @@ function wt.CreateCheckbox(t, binary)
 	---@field size? sizeData_checkbox|sizeData
 	---@field font? labelFontOptions List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field listeners? checkbox_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the checkbox and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― The checked state of the checkbox widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
+	---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― The checked state of the checkbox widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
 
 		---@class tooltipDescribableSettingsWidget
 		---@field showDefault? boolean If `true`, show the default value of the widget in its tooltip and display the reset button its the utility menu | ***Default:*** `true`
@@ -2815,7 +2895,6 @@ function wt.CreateCheckbox(t, binary)
 	---@field holder Frame Click target
 	---@field frame SettingsCheckbox Checkbox
 	---@field label FontString|nil
-	---@field addListener checkbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
 		---NOTE: Incomplete Toolbox-relevant definition for a Frame of `"SettingsCheckboxTemplate"`
@@ -2976,7 +3055,7 @@ function wt.CreateRadiobutton(t, binary)
 	---@field size? sizeData_radiobutton|sizeData
 	---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** `false`<ul><li>***Note:*** The radio button will be registered for `"RightButtonUp"` triggers to call "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" events with `button = "RightButton"`.</li></ul>
 	---@field listeners? radiobutton_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptButton, fun(self: radiobutton, state: boolean, button?: string, down?: boolean)|fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the radio button and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― The checked state of the radiobutton widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
+	---@field events? table<ScriptButton, fun(self: radiobutton, state: boolean, button?: string, down?: boolean)|fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<hr><p>@*param* `self` AnyFrameObject ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― The checked state of the radiobutton widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
 
 		---@class sizeData_radiobutton
 	---@field w? number Width | ***Default:***  `t.label` and 180 or `t.size.h`
@@ -3713,9 +3792,8 @@ function wt.CreateRadiogroup(t, selector)
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
 	---@field listeners? radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
-		---@class selectorFrame_options : labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject
+		---@class selectorFrame_options : labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, eventFrame, liteObject
 		---@field name? string Unique string used to set the frame name | ***Default:*** `"Selector"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-		---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the selector frame and the functions to assign as event handlers called when they trigger
 
 		---@class radiogroup_options_base : tooltipDescribableSettingsWidget
 		---@field clearable? boolean If `true`, the selector input should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
@@ -4405,7 +4483,7 @@ function wt.CreateEditbox(t, textual)
 	---@field unfocusOnEnter? boolean Whether to automatically clear the focus from the editbox when the ENTER key is pressed | ***Default:*** `true`
 	---@field resetCursor? boolean If `true`, set the cursor position to the beginning of the string after setting the text via `textual.setText(...)` | ***Default:*** `true`
 	---@field listeners? editbox_listeners|textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptEditBox, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the editbox frame and the functions to assign as event handlers called when they trigger<ul><li>***Note:*** "[OnChar](https://warcraft.wiki.gg/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p><p>@*param* `user` string ― `true` if the value was changed by the user, `false` if it was done programmatically</p></li><li>***Note:*** "[OnEnterPressed](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
+	---@field events? table<ScriptEditBox, fun(...: any)> Table of key, value pairs of editbox script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnChar](https://warcraft.wiki.gg/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p><p>@*param* `user` string ― `true` if the value was changed by the user, `false` if it was done programmatically</p></li><li>***Note:*** "[OnEnterPressed](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
 
 		---@class sizeData_editbox
 		---@field w? number Width | ***Default:***  180
@@ -4617,7 +4695,7 @@ function wt.CreateMultilineEditbox(t, textual)
 	---@field size? sizeData
 	---@field charCount? boolean Show or hide the remaining number of characters | ***Default:*** `t.charLimit` > 0
 	---@field scrollToTop? boolean Automatically scroll to the top when the text is loaded or changed while not being actively edited | ***Default:*** `false`
-	---@field scrollEvents? table<ScriptScrollFrame, fun(...: any)> Table of key, value pairs of the names of script event handlers to be set for the scroll frame of the editbox and the functions to assign as event handlers called when they trigger
+	---@field scrollEvents? table<ScriptScrollFrame, fun(...: any)> Table of key, value pairs of scroll frame script event tags and the handler functions called on trigger
 	---@field listeners? multilineEditbox_listeners|textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class multilineEditbox_listeners : textual_listeners
@@ -5023,7 +5101,7 @@ function wt.CreateSlider(t, numeric)
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Slider"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field valuebox? boolean Whether or not should the slider have an [EditBox](https://warcraft.wiki.gg/wiki/UIOBJECT_EditBox) as a child to manually enter a precise value to move the slider to | ***Default:*** `true`
 	---@field listeners? slider_listeners|numeric_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptSlider, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the slider frame and the functions to assign as event handlers called when they trigger<ul><li>***Example:*** "[OnValueChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
+	---@field events? table<ScriptSlider, fun(...: any)> Table of key, value pairs of slider script event tags and the handler functions called on trigger<ul><li>***Example:*** "[OnValueChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnValueChanged)" whenever the value in the slider widget is modified.</li></ul>
 
 		---@class slider_listeners : numeric_listeners
 		---@field [1]? table<string, slider_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -5444,11 +5522,10 @@ function wt.CreateColorpicker(t, colormanager)
 	--| Properties
 
 	---Optional parameters
-	---@class colorpicker_options : colormanager_options, labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject, tooltipDescribableSettingsWidget # t
+	---@class colorpicker_options : colormanager_options, labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, eventFrame, liteObject, tooltipDescribableSettingsWidget # t
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Colorpicker"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field width? number The height is defaulted to 36, the width may be specified | ***Default:*** 120
 	---@field listeners? colorpicker_listeners|colormanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field events? table<ScriptFrame, fun(...: any)|attributeEventData> Table of key, value pairs of the names of script event handlers to be set for the color picker frame and the functions to assign as event handlers called when they trigger
 
 		---@class colorpicker_listeners : colormanager_listeners
 		---@field [1]? table<string, colorpicker_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked

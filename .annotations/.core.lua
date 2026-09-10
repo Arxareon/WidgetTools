@@ -584,7 +584,7 @@ end
 ---@param parent SetListener_param1 Reference to the event frame or event handler collection key to assign the handler to
 ---@param event SetListener_param2 Global Blizzard or custom event tag to modify the handler for
 ---@param handler SetListener_param3 Reference to the function to set as the handler for `event`, or `nil` to unset it
----@param registration? SetListener_param4 If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) of it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
+---@param registration? SetListener_param4 If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) if it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
 ---***
 ---<p></p>
 function utilities.SetListener(parent, event, handler, registration)
@@ -606,7 +606,7 @@ function utilities.SetListener(parent, event, handler, registration)
 	---| fun(parent: AnyFrameObject|any, ...: any): ...:any
 	---| nil
 
-	---If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) of it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
+	---If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) if it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
 	---@alias SetListener_param4 # registration
 	---| boolean
 	---| nil

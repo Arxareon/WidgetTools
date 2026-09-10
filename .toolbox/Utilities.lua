@@ -286,6 +286,28 @@ end
 
 --[[ FRAME MANAGEMENT ]]
 
+--[ Events ]
+
+function wt.RegisterScriptEvents(frame, events)
+	if type(events) == "table" then for event, handler in pairs(events) do if frame:HasScript(event) and type(handler) == "function" then
+		frame:HookScript(event, handler)
+	end end end
+end
+
+function wt.RegisterGlobalEvents(frame, events)
+	if type(events) == "table" then for event, handler in pairs(events) do if type(handler) == "function" then us.SetListener(frame, event, handler) end end end
+end
+
+function wt.RegisterAttributes(frame, attributes)
+	if type(attributes) == "table" then for attribute, data in pairs(attributes) do if type(attribute) == "string" and type(data) == "table" then
+		local handler = data.handler
+
+		if type(handler) == "function" then frame:HookScript("OnAttributeChanged", function(_, a, ...) if a == attribute then handler(...) end end) end
+
+		frame:SetAttribute(attribute, data.value)
+	end end end
+end
+
 --[ Constructors ]
 
 ---Set the parameters of a frame
@@ -315,17 +337,11 @@ local function setUpFrame(frame, t)
 	if t.frameLevel then frame:SetFrameLevel(t.frameLevel) end
 	if t.keepOnTop then frame:SetToplevel(t.keepOnTop) end
 
-	--[ Events ]
+	--| Events & attributes
 
-	--Register script event handlers
-	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then frame:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else frame:HookScript(key, value) end
-	end end
-
-	--| Global events
-
-	if type(t.onEvent) == "table" then for event, handler in pairs(t.onEvent) do if type(handler) == "function" then us.SetListener(frame, event, handler) end end end
+	wt.RegisterScriptEvents(frame, t.events)
+	wt.RegisterGlobalEvents(frame, t.onEvent)
+	wt.RegisterAttributes(frame, t.attributes)
 
 	--[ Initialization ]
 
@@ -903,8 +919,8 @@ function wt.AddDependencies(rules, setState)
 		local f = rules[i].dependency
 
 		if wt.IsWidget(f, "Datamanager") then
-			f.addListener.loaded(function(_, success) if success then setter() end end)
-			f.addListener.changed(setter)
+			f:addListener_loaded(function(_, success) if success then setter() end end)
+			f:addListener_changed(setter)
 		elseif us.IsFrame(f) then
 			local scriptType = dataObjectScriptType[f:GetObjectType()]
 
@@ -1097,8 +1113,6 @@ function wt.CreateTexture(frame, t, updates)
 
 	local texture = frame:CreateTexture((frame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Texture"))
 
-	--[ Set Texture Utility ]
-
 	---@param data textureUpdateData|texture_options
 	local function setTexture(data)
 
@@ -1150,15 +1164,11 @@ function wt.CreateTexture(frame, t, updates)
 
 	setTexture(t)
 
-	--[ Events ]
+	--| Events
 
-	--Register script event handlers
-	if type(t.events) == "table" then for key, value in pairs(t.events) do
-		if key == "attribute" then texture:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else texture:HookScript(key, value) end
-	end end
+	wt.RegisterScriptEvents(texture, t.events)
 
-	--[ Texture Updates ]
+	--[ Updates ]
 
 	if updates then for key, value in pairs(updates) do
 		value.frame = value.frame or frame
@@ -1475,7 +1485,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 		frameStrata = "DIALOG",
 		keepOnTop = true,
 		background = { color = { a = 0.9 }, },
-		lite = false,
+		ignoreLite = false,
 	})
 
 	--| Position & dimensions
@@ -1511,7 +1521,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 		},
 		size = { w = 120, },
 		action = function() ReloadUI() end,
-		lite = false,
+		ignoreLite = false,
 	})
 
 	wt.CreateButton({
@@ -1524,7 +1534,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 			offset = { x = -12, y = 12 }
 		},
 		action = function() reloadFrame.frame:Hide() end,
-		lite = false,
+		ignoreLite = false,
 	})
 
 	return reloadFrame

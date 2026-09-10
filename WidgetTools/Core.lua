@@ -664,13 +664,13 @@ end
 local eventHandlers = {}
 
 function us.SetListener(parent, event, handler, registration)
-	if handler ~= nil and type(handler) ~= "function" then return end
+	if not us.IsFrame(parent) or not C_EventUtils.IsEventValid(event) or (handler ~= nil and type(handler) ~= "function") then return end
 
 	if not eventHandlers[parent] then eventHandlers[parent] = {} end
 
 	eventHandlers[parent][event] = handler
 
-	if registration ~= false and us.IsFrame(parent) and C_EventUtils.IsEventValid(event) then if handler then
+	if registration ~= false then if handler then
 		if parent:GetScript("OnEvent") ~= us.CallListener then parent:SetScript("OnEvent", us.CallListener) end
 
 		parent:RegisterEvent(event)
