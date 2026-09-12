@@ -234,11 +234,11 @@ end
 --[ Hyperlinks ]
 
 function wt.Hyperlink(linkType, content, text)
-	if not linkType or not content or not text then return "" else return "\124H" .. linkType .. ":" .. (content or "") .. "\124h" .. text .. "\124h" end
+	if type(linkType) ~= "string" then return "" else return "\124H" .. linkType .. ":" .. (content or "") .. "\124h" .. (text or "Link") .. "\124h" end
 end
 
 function wt.CustomHyperlink(addon, linkType, content, text)
-	if not addon then return "" else return wt.Hyperlink("addon", addon .. ":" .. (linkType or "-") .. ":" .. (content or ""), text) end
+	if not addon then return "" else return wt.Hyperlink("addon", addon .. ":" .. (linkType or "-") .. ":" .. (content or ""), (text or "Link")) end
 end
 
 --Hyperlink handler script registry

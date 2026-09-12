@@ -224,7 +224,7 @@ end
 function us.IsFrame(o)
 	if type(o) ~= "table" then return false end
 
-	return o.GetObjectType and o.IsObjectType and (o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or true) or false
+	return o.GetObjectType and o.IsObjectType, o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or nil
 end
 
 function us.ToFrame(s)
@@ -273,9 +273,9 @@ function us.ToString(object)
 	local t = type(object)
 
 	if t == "table" then
-		local s = us.IsFrame(object)
+		local f, s = us.IsFrame(object)
 
-		if s then
+		if f then
 			if type(s) == "string" then return crc(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
 			return crc(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
 		end

@@ -681,7 +681,7 @@ local function setUpButton(button, frame, t, name, title, useHighlight)
 	holder:SetPoint("TOPLEFT")
 	holder:SetSize(frame:GetSize())
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for event, listener in pairs(t.events) do
@@ -888,6 +888,9 @@ local data_default ---@type table<datamanager, any>
 local data_value ---@type table<datamanager, any>
 local data_snapshot ---@type table<datamanager, any>
 
+local datamanager_read ---@type table<datamanager, fun(): data: any>
+local datamanager_write ---@type table<datamanager, fun(data: any)>
+
 local datamanager_instantSave ---@type table<datamanager, boolean?>
 
 local invoke_loaded ---@type fun(self: datamanager, user: boolean)
@@ -923,7 +926,7 @@ local function buildDatamanager()
 	function datamanager:setValue(newValue, user, silent)
 		data_value[self] = datamanager:verify(newValue)
 
-		if data_value[self] == nil and read then data_value[self] = read() end
+		if data_value[self] == nil and datamanager_read[datamanager] then data_value[self] = datamanager_read[datamanager]() end
 		if data_value[self] == nil then data_value[self] = data_default[self] end
 
 		if user then
@@ -937,10 +940,37 @@ local function buildDatamanager()
 
 	--| Storage
 
-	function datamanager:load(_, silent) if not silent then datamanager:invoke_loaded(false) end end
-	function datamanager:save(_, silent) if not silent then datamanager:invoke_saved(false) end end
+	if not datamanager_read then datamanager_read = {} end
+	if not datamanager_write then datamanager_write = {} end
 
-	function datamanager:getData() return data_value[self] end
+	local defaultReader = function() return data_value[datamanager] end
+	local defaultWriter = function() return data_value[datamanager] end
+
+	datamanager_read[datamanager] = defaultReader
+
+	function datamanager:setReader(read)
+		datamanager_read[datamanager] = type(read) == "function" and read or defaultReader
+
+		datamanager:load()
+	end
+	function datamanager:setWriter(write)
+		if type(write) == "function" then datamanager_write[datamanager] = write end
+
+		datamanager:load()
+	end
+
+	function datamanager:load(handleChanges, silent)
+		datamanager:setValue(datamanager_read[datamanager](), handleChanges ~= false, silent)
+
+		if not silent then datamanager:invoke_loaded() end
+	end
+	function datamanager:save(data, silent)
+		datamanager_write[datamanager](datamanager:verify(data))
+
+		if not silent then datamanager:invoke_saved() end
+	end
+
+	function datamanager:getData() return datamanager_read[datamanager]() end
 	function datamanager:setData(data, handleChanges, silent)
 		datamanager:save(data, silent)
 		datamanager:load(handleChanges, silent)
@@ -1012,29 +1042,8 @@ function wt.CreateDatamanager(t, widget)
 
 	--| Storage
 
-	local read = type(t.getData) == "function" and t.getData or nil
-	local save = type(t.saveData) == "function" and t.saveData or nil
-
-	if read then
-		function datamanager:load(handleChanges, silent)
-			datamanager:setValue(read(), handleChanges ~= false, silent)
-
-			if not silent then datamanager:invoke_loaded(true) end
-		end
-
-		function datamanager:getData() return read() end
-	end
-
-	if save then function datamanager:save(data, silent)
-		save(datamanager.verify(data))
-
-		if not silent then datamanager:invoke_saved(true) end
-	end end
-
-	function datamanager:setData(data, handleChanges, silent)
-		datamanager:save(data, silent)
-		datamanager:load(handleChanges, silent)
-	end
+	datamanager:setReader(t.reader)
+	datamanager:setWriter(t.writer)
 
 	if t.instantSave ~= false then datamanager_instantSave[datamanager] = true end
 
@@ -1179,7 +1188,7 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 
 	frame:GetPushedTexture():SetVertexColor(.6, .6, .6, 1)
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
@@ -1324,7 +1333,7 @@ local function setUpClassicToggle(binary, frame, holder, title, t)
 	holder:SetFrameLevel(holder:GetFrameLevel() + 1)
 	frame:SetFrameLevel(frame:GetFrameLevel() - 2)
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
@@ -1496,9 +1505,9 @@ function wt.CreateRadiobutton(t, binary) --Lite GUI
 
 	binary = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return end
+	if WidgetToolsDB.lite and t.lite ~= false then return binary end
 
-	local radiobutton = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t) ---@cast radiobutton radiobutton
+	local radiobutton = binary ---@cast radiobutton radiobutton
 
 	--[ Type ]
 
@@ -1635,20 +1644,26 @@ local itemsets = {
 function wt.CreateSelector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
-	local typename = "Selector" ---@type typename_selector
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	local typenameItem = "Binary" ---@type typename_binary
 
 	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+
 	local selector = datamanager ---@cast selector selector
+
+	--[ Type ]
+
+	local typename = "Selector" ---@type typename_selector
 
 	widget_types[selector][typename] = true
 
 	--[ Items ]
 
-	selector.items = {}
+	local typenameItem = "Binary" ---@type typename_binary
+
 	local items = t.items or {}
 	local inactive = {} ---@type selectorBinary[]
+
+	selector.items = {}
 
 	---Register, update or set up a new binary widget item
 	---***
@@ -1757,8 +1772,9 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 	--[ Items ]
 
-	specialSelector.items = {}
 	local items = {} ---@type selectorItemData[]
+
+	specialSelector.items = {}
 
 	for i = 1, #itemsets[itemset] do
 		items[i] = {}
@@ -1861,21 +1877,24 @@ end
 function wt.CreateMultiselector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
-	local typename = "Multiselector" ---@type typename_multiselector
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	local typenameItem = "Binary" ---@type typename_binary
 
 	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 	local multiselector = datamanager ---@cast multiselector multiselector
 
-	widget_types[multiselector][typename] = true
+	--[ Type ]
 
-	--[ Data ]
+	local typename = "Multiselector" ---@type typename_multiselector
+
+	widget_types[multiselector][typename] = true
 
 	--[ Items ]
 
-	multiselector.items = {}
+	local typenameItem = "Binary" ---@type typename_binary
+
 	local inactive = {} ---@type selectorBinary[]
+
+	multiselector.items = {}
 
 	t.items = type(t.items) == "table" and us.Clone(t.items) or {}
 	t.limits = t.limits or {}
@@ -3151,7 +3170,7 @@ local function setUpEditbox(editbox, t)
 
 	if t.charLimit then editbox.widget:SetMaxLetters(t.charLimit) end
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
@@ -4059,7 +4078,7 @@ function wt.CreateSlider(t, numeric)
 		slider.addListener.changed(function(_, number) slider.valuebox.setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
@@ -4505,7 +4524,7 @@ function wt.CreateClassicSlider(t, numeric)
 		})
 	end
 
-	--[ Events ] --REPLACE
+	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
@@ -6691,20 +6710,19 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 	t = type(t) == "table" and t or {}
 
-	---@type typename_profilesPage
-	local typename = "ProfilesPage"
-
-	---@type typename_profilemanager
-	local typenameBase = "Profilemanager"
-
-	--[ Widget ]
+	local typenameBase = "Profilemanager" ---@type typename_profilemanager
 
 	profilemanager = wt.IsWidget(profilemanager, typenameBase) and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
-	if not profilemanager then return nil end
+	if not profilemanager then return nil elseif WidgetToolsDB.lite and t.lite ~= false then return profilemanager end
 
-	---@type profilesPage|profilemanager
-	local profilesPage = profilemanager
+	local profilesPage = profilemanager ---@cast profilesPage profilesPage
+
+	--[ Type ]
+
+	local typename = "ProfilesPage" ---@type typename_profilesPage
+
+	widget_types[profilesPage][typename] = true
 
 	--[ Settings Page ]
 
@@ -7116,10 +7134,6 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		end end,
 	})
 
-	--[ Initialization ]
-
-	widget_types[profilesPage][typename] = true
-
 	return profilesPage
 end
 
@@ -7252,18 +7266,17 @@ end
 function wt.CreateAddonPage(t, addonmanager)
 	t = type(t) == "table" and t or {}
 
-	---@type typename_addonPage
-	local typename = "AddonPage"
+	local typenameBase = "Addonmanager" ---@type typename_addonmanager
 
-	---@type typename_addonmanager
-	local typenameBase = "Addonmanager"
+	local addonPage = wt.IsWidget(addonmanager, typenameBase) and addonmanager or wt.CreateAddonmanager(t) ---@cast addonPage addonPage
 
-	--[ Widget ]
+	if not addonPage:getName() == "" then return nil end --TODO finish
 
-	---@type addonPage|addonmanager
-	local addonPage = wt.IsWidget(addonmanager, typenameBase) and addonmanager or wt.CreateAddonmanager(t)
+	--[ Type ]
 
-	if not addonPage then return nil end
+	local typename = "AddonPage" ---@type typename_addonPage
+
+	widget_types[addonPage][typename] = true
 
 	--[ Getters & Setters ]
 
@@ -7645,37 +7658,5 @@ function wt.CreateAddonPage(t, addonmanager)
 		end,
 	})
 
-	--[ Initialization ]
-
-	widget_types[addonPage][typename] = true
-
 	return addonPage
-end
-
-
-
---||| GUI |||
-
---| Lite mode
-
-if WidgetToolsDB.lite then
-	wt.CreatePanel = wt.CreateCustomContainer
-	wt.CreateButton = wt.CreateAction
-	wt.CreateCustomButton = wt.CreateAction
-	wt.CreateCheckbox = wt.CreateBinary
-	wt.CreateClassicCheckbox = wt.CreateBinary
-	wt.CreateRadiobutton = wt.CreateBinary
-	wt.CreateRadiogroup = wt.CreateSelector
-	wt.CreateDropdownRadiogroup = wt.CreateSelector
-	wt.CreateSpecialRadiogroup = wt.CreateSpecialSelector
-	wt.CreateCheckgroup = wt.CreateMultiselector
-	wt.CreateEditbox = wt.CreateTextual
-	wt.CreateCustomEditbox = wt.CreateTextual
-	wt.CreateMultilineEditbox = wt.CreateTextual
-	wt.CreateCopybox = function() return {} end --FIX lite
-	wt.CreateSlider = wt.CreateNumeric
-	wt.CreateClassicSlider = wt.CreateNumeric
-	wt.CreateColorpicker = wt.CreateColormanager
-
-	return
 end

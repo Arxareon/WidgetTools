@@ -85,7 +85,8 @@
 			"CHAT",
 			"YELL",
 			"NOTE",
-			"class"
+			"class",
+			"Object"
 		],
 		"Lua.workspace.ignoreDir": [
 			"WidgetToolbox_*"
