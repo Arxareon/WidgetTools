@@ -83,8 +83,8 @@ local utilities = {}
 --[ General ]
 
 ---Get the sorted key, value pairs of a table ([Documentation: Sort](https://www.lua.org/pil/19.3.html))
----@param t SortedPairs_param_t
----@return SortedPairs_return_iterator iterator
+---@param t SortedPairs_param_t Table to be sorted (in an ascending order and/or alphabetically, based on the `<` operator)
+---@return SortedPairs_return_iterator iterator Function returning the key, value pairs of the table in order
 function utilities.SortedPairs(t)
 
 	--| Parameters
@@ -103,8 +103,8 @@ end
 --[ Math ]
 
 ---Round a decimal fraction to the specified number of digits
----@param number Round_param_number
----@param decimals Round_param_decimals
+---@param number Round_param_number A fractional number value to round | ***Default:*** `0`
+---@param decimals Round_param_decimals Specify the number of decimal places to round the number to | ***Default:*** `0`
 ---@return number
 function utilities.Round(number, decimals)
 
@@ -140,8 +140,8 @@ function utilities.IsFrame(o)
 end
 
 ---Find a frame or region by its name (or a subregion if a key is included in the input string) and get a reference to it if it exists
----@param s ToFrame_param_s
----@return ToFrame_return_frame frame 
+---@param s ToFrame_param_s Name of the frame to find (and the key of its child region appended to it after a period character)
+---@return ToFrame_return_frame frame Reference to the object | ***Default:*** `nil`
 function utilities.ToFrame(s)
 
 	--| Parameters
@@ -167,11 +167,13 @@ end
 --| Font path
 
 ---Test the specified font path on the specified object by trying to set it to see if the font file is valid, exists and it's loaded by the client
----@param path TryFont_param_path
----@param object TryFont_param_object
----@param size TryFont_param_size
----@param flags TryFont_param_flags
----@return TryFont_return
+---@param path TryFont_param_path Font file path to test
+---@param object TryFont_param_object Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+---@param size TryFont_param_size Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+---@param flags TryFont_param_flags Font styling options | ***Default:*** `""` *(no styling):*
+---@return TryFont_return `true`, if the provided path was valid and the font could be applied to the object, `false` otherwise
 function utilities.TryFont(path, object, size, flags)
 
 	--| Parameters
@@ -186,7 +188,7 @@ function utilities.TryFont(path, object, size, flags)
 	---Font size to set | ***Default:*** `12`
 	---@alias TryFont_param_size number?
 
-	---Font styling options | ***Default:*** *(no styling):* `""`
+	---Font styling options | ***Default:*** `""` *(no styling):*
 	---@alias TryFont_param_flags TBFFlags?
 
 	--| Returns
@@ -200,11 +202,11 @@ end
 --[ Formatting ]
 
 ---Format a number string with thousands separation and optional value rounding
----@param value Thousands_param_value
----@param decimals Thousands_param_decimals
----@param round Thousands_param_round
----@param trim Thousands_param_trim
----@return Thousands_return
+---@param value Thousands_param_value Number value to turn into a string with thousand separation
+---@param decimals Thousands_param_decimals Specify the number of decimal places to display if the number is a fractional value | ***Default:*** `0`
+---@param round Thousands_param_round Round the number value to the specified number of decimal places | ***Default:*** `true`
+---@param trim Thousands_param_trim Trim trailing zeros in decimal places | ***Default:*** `true`
+---@return Thousands_return ***Default:*** `""`
 function utilities.Thousands(value, decimals, round, trim)
 
 	--| Parameters
@@ -230,9 +232,9 @@ function utilities.Thousands(value, decimals, round, trim)
 end
 
 ---Convert the object to an appropriately formatted and colored string based on its type
----@param object ToString_param_object
----@return ToString_return_s s
----@return ToString_return_t t
+---@param object ToString_param_object Object to convert to a formatted text
+---@return ToString_return_s s Formatted output string
+---@return ToString_return_t t Recognized object type
 function utilities.ToString(object)
 
 	--| Parameters
@@ -257,9 +259,9 @@ end
 --- 	local tableAsString = WidgetTools.utilities.TableToString(t) --where t is any table
 --- 	local success, loadedTable = pcall(loadstring("return " .. ns.ut.Clear(tableAsString))) --loadedTable is equivalent to t
 --- 	```
----@param table TableToString_param_table
----@param compact TableToString_param_compact
----@return TableToString_return
+---@param table TableToString_param_table Reference to the table to convert
+---@param compact TableToString_param_compact If `true`, trim spaces & indentation | ***Default:*** `false`
+---@return TableToString_return ***Default:*** `(WidgetTools.utilities.ToString(table))`
 function utilities.TableToString(table, compact)
 
 	--| Parameters
@@ -279,9 +281,18 @@ function utilities.TableToString(table, compact)
 end
 
 ---Get an assembled & fully formatted string of a specifically assembled changelog table
----@param changelog FormatChangelog_param_changelog
----@param latest FormatChangelog_param_latest
----@return FormatChangelog_return_c c
+---@param changelog FormatChangelog_param_changelog Ordered (descending) list of update note subtables of textlines with formatting directives
+	--- - ***Note:*** The first line is expected to be the title containing the version number and/or the date of release.
+	--- - ***Note:*** Version tables are expected to be listed in ascending order by date of release (latest release last).
+	--- - ***Examples:***
+	---   - **Title formatting - version title:** `#V_`*Title text*`_#` (*it will appear as:* • Title text)
+	---   - **Color formatting - highlighted text:** `#H_`*text to be colored*`_#` (*it will be colored white*)
+	---   - **Color formatting - new updates:** `#N_`*text to be colored*`_#` (*it will be colored with:* #FF66EE66)
+	---   - **Color formatting - fixes:** `#F_`*text to be colored*`_#` (*it will be colored with:* #FFEE4444)
+	---   - **Color formatting - changes:** `#C_`*text to be colored*`_#` (*it will be colored with:* #FF8888EE)
+	---   - **Color formatting - note:** `#O_`*text to be colored*`_#` (*it will be colored with:* #FFEEEE66)
+---@param latest FormatChangelog_param_latest If true, get the update notes (without the first title line) of only the latest version instead of the entire changelog | ***Default:*** false
+---@return FormatChangelog_return_c c ***Default:*** `""`
 function utilities.FormatChangelog(changelog, latest)
 
 	--| Parameters
@@ -316,8 +327,8 @@ end
 --- - ***Note:*** The protection will "infect" any and all subtables when they are indexed through a proxy, meaning the readonly protection will be extended at any depth, including new subtables added to the original table structure of `t` after it was protected.
 --- - ***Note:*** Tables for which `getmetatable(t)` returns "public" or "protected", will not be wrapped behind a new proxy.
 ---   - ***Example:*** Use `setmetatable(t, { __metatable = "public" })` to whitelist any table from getting readonly protection.
----@param t Protect_param_t
----@return Protect_return
+---@param t Protect_param_t Reference to the table to create the proxy for
+---@return Protect_return Reference to the new proxy table or `t` itself
 function utilities.Protect(t)
 
 	--| Parameters
@@ -334,9 +345,9 @@ end
 --| Search
 
 ---Find the index of the first matching value in the array provided while also checking subtable branches via a deep search if no match was found at the first level
----@param array FindIndex_param_array
----@param value FindIndex_param_value
----@return FindIndex_return_index index
+---@param array FindIndex_param_array Array to search
+---@param value FindIndex_param_value The value to find
+---@return FindIndex_return_index index ***Default:*** `nil`
 function utilities.FindIndex(array, value)
 
 	--| Parameters
@@ -354,9 +365,9 @@ function utilities.FindIndex(array, value)
 end
 
 ---Find the first matching value and return its key via a deep search
----@param t FindKey_param_t
----@param value FindKey_param_value
----@return FindKey_return_match match
+---@param t FindKey_param_t Reference to the table to find a value at a certain key in
+---@param value FindKey_param_value Value to look for in `t` (including all subtables, recursively)
+---@return FindKey_return_match match The first match of the key `value` was found paired to | ***Default:*** `nil`
 function utilities.FindKey(t, value)
 
 	--| Parameters
@@ -374,9 +385,9 @@ function utilities.FindKey(t, value)
 end
 
 ---Find and return the value at the first matching key via a deep search
----@param t FindValue_param_t
----@param key FindValue_param_key
----@return FindValue_return_match match
+---@param t FindValue_param_t Reference to the table to find a value at a certain key in
+---@param key FindValue_param_key Key to look for in `t` (including all subtables, recursively)
+---@return FindValue_return_match match The first match of the value found at `key` | ***Default:*** `nil`
 function utilities.FindValue(t, key)
 
 	--| Parameters
@@ -396,9 +407,9 @@ end
 --| Sort
 
 ---Reorder select elements in an array based on a list of directives
----@param t Reorder_param_t
----@param directives Reorder_param_directives
----@return Reorder_return_t t
+---@param t Reorder_param_t Reference to the array to reorder the elements of
+---@param directives Reorder_param_directives List of directives: value, index pairs to reorder select elements by (placing matching values at the specified new index)
+---@return Reorder_return_t t Reference to `t` (it was already overwritten during the operation, no need for setting it again)
 function utilities.Reorder(t, directives)
 
 	--| Parameters
@@ -418,8 +429,8 @@ end
 --| Data management
 
 ---Make a new deep copy of a non-frame table
----@param object Clone_param_object
----@return Clone_return_copy copy
+---@param object Clone_param_object Reference to the object to create a copy of
+---@return Clone_return_copy copy `object` itself, if it's a frame or not a table
 function utilities.Clone(object)
 
 	--| Parameters
@@ -434,9 +445,9 @@ function utilities.Clone(object)
 end
 
 ---Merge a table into an array, deep copying all its values over under new integer keys
----@param target Merge_param_target
----@param source Merge_param_source
----@return Merge_return_target target
+---@param target Merge_param_target Reference to table to add the values to
+---@param source Merge_param_source Reference to table to copy all values from
+---@return Merge_return_target target Reference to `target` (it was already overwritten during the operation, no need for setting it again)
 function utilities.Merge(target, source)
 
 	--| Parameters
@@ -454,9 +465,9 @@ function utilities.Merge(target, source)
 end
 
 ---Copy all values at matching keys from a sample table to another table while preserving all table references
----@param target CopyValues_param_target
----@param source CopyValues_param_source
----@return CopyValues_return_target target
+---@param target CopyValues_param_target Reference to the table to copy the values to
+---@param source CopyValues_param_source Reference to the table to copy the values from
+---@return CopyValues_return_target target Reference to `target` (the values were already overwritten during the operation, no need to set it again)
 function utilities.CopyValues(target, source)
 
 	--| Parameters
@@ -474,9 +485,9 @@ function utilities.CopyValues(target, source)
 end
 
 ---Compare two tables and clone any missing data from one to the other
----@param target Fill_param_target
----@param source Fill_param_source
----@return Fill_return_target target
+---@param target Fill_param_target Reference to the table to fill in missing data to (it will be turned into an empty table first if its type is not already `"table"`)
+---@param source Fill_param_source Reference to the table to sample data from
+---@return Fill_return_target target Reference to `target` (it was already updated during the operation, no need for setting it again)
 function utilities.Fill(target, source)
 
 	--| Parameters
@@ -494,9 +505,9 @@ function utilities.Fill(target, source)
 end
 
 ---Copy all values at matching keys and clone any missing data from a reference to the target table
----@param target Pull_param_target
----@param source Pull_param_source
----@return Pull_return_target target
+---@param target Pull_param_target Reference to the table to copy the values to
+---@param source Pull_param_source Reference to the table to sample data from
+---@return Pull_return_target target Reference to `target` (it was already overwritten during the operation, no need for setting it again)
 function utilities.Pull(target, source)
 
 	--| Parameters
@@ -514,9 +525,9 @@ function utilities.Pull(target, source)
 end
 
 ---Remove all nil, empty or otherwise invalid items from a data table
----@param target Prune_param_target
----@param validate Prune_param_validate
----@return Prune_return_target target
+---@param target Prune_param_target Reference to the table to prune
+---@param validate Prune_param_validate Helper function for validating values, returning true if the value is to be accepted as valid
+---@return Prune_return_target target Reference to `target` (it was already overwritten during the operation, no need for setting it again)
 function utilities.Prune(target, validate)
 
 	--| Parameters
@@ -534,11 +545,11 @@ function utilities.Prune(target, validate)
 end
 
 ---Remove unused or outdated data from a table while comparing it to another table while restoring any removed values
----@param target Filter_param_target
----@param sample Filter_param_sample
----@param recoveryMap Filter_param_recoveryMap
----@param onRecovery Filter_param_onRecovery
----@return Filter_return_target target
+---@param target Filter_param_target Reference to the table to remove unused key, value pairs from
+---@param sample Filter_param_sample Reference to the table to sample data from
+---@param recoveryMap Filter_param_recoveryMap Static map or function returning a dynamically creatable map for removed but recoverable data
+---@param onRecovery Filter_param_onRecovery Function called after the data has been has been recovered via the `recoveryMap`
+---@return Filter_return_target target Reference to `target` (it was already overwritten during the operation, no need for setting it again)
 function utilities.Filter(target, sample, recoveryMap, onRecovery)
 
 	--| Parameters
@@ -562,9 +573,9 @@ function utilities.Filter(target, sample, recoveryMap, onRecovery)
 end
 
 ---Verify data in a table and harmonize it with a sample table, removing invalid data & filling defaults
----@param target VerifyData_param_target
----@param source VerifyData_param_source
----@return VerifyData_return_target target
+---@param target VerifyData_param_target Reference to the table to verify
+---@param source VerifyData_param_source Reference to the table to sample
+---@return VerifyData_return_target target Reference to `target` (it was already mutated during the operation)
 function utilities.VerifyData(target, source)
 
 	--| Parameters
@@ -584,10 +595,10 @@ end
 --[ Events ]
 
 ---Set, unset or replace a event handler
----@param parent SetListener_param_parent
----@param event SetListener_param_event
----@param handler SetListener_param_handler
----@param registration SetListener_param_registration
+---@param parent SetListener_param_parent Reference to the event frame or event handler collection key to assign the handler to
+---@param event SetListener_param_event Global Blizzard or custom event tag to modify the handler for
+---@param handler SetListener_param_handler Reference to the function to set as the handler for `event`, or `nil` to unset it
+---@param registration SetListener_param_registration If true and `parent` is a Frame and `event` is a valid Blizzard event tag, also call [`parent:RegisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_RegisterEvent) or [`parent:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) and [`parent:SetScript("OnEvent", WidgetTools.utilities.CallListener)`](https://warcraft.wiki.gg/wiki/UIOBJECT_ScriptObject) if it was not already set set to `WidgetTools.utilities.CallListener` (replacing all currently set and hooked scripts for the [OnEvent](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) trigger) | ***Default:*** `true`
 function utilities.SetListener(parent, event, handler, registration)
 
 	--| Parameters
@@ -606,10 +617,10 @@ function utilities.SetListener(parent, event, handler, registration)
 end
 
 ---Call a registered event handler
----@param parent CallListener_param_parent
----@param event CallListener_param_event
----@param ... CallListener_param_...
----@return CallListener_return_... ...
+---@param parent CallListener_param_parent Reference to the event frame or event handler collection key the handler has been assigned to
+---@param event CallListener_param_event Global Blizzard or custom event tag to call the handler for
+---@param ... any Additional arguments to pass to the handler as payload
+---@return any ... Handler return values
 function utilities.CallListener(parent, event, ...)
 
 	--| Parameters
@@ -619,14 +630,6 @@ function utilities.CallListener(parent, event, ...)
 
 	---Global Blizzard or custom event tag to call the handler for
 	---@alias CallListener_param_event WowEvent|string
-
-	---Additional payload to pass to the handler
-	---@alias CallListener_param_... any
-
-	--| Returns
-
-	---Handler return values
-	---@alias CallListener_return_... any
 end
 
 
@@ -649,8 +652,8 @@ end
 local debugging = {}
 
 ---Save a tab-separated debug log entry to the log history and print out a formatted chat message
----@param message LogRaw_param_message
----@param trace LogRaw_param_trace
+---@param message LogRaw_param_message Included in the log entry as a string
+---@param trace LogRaw_param_trace Custom log trace to help identify the exact log source included in the entry as a string | ***Default:*** `"(source not traced)"`
 function debugging.LogRaw(message, trace)
 
 	--| Parameters
@@ -663,7 +666,7 @@ function debugging.LogRaw(message, trace)
 end
 
 ---Save a tab-separated debug log entry to the log history and print out a formatted chat message
----@param passer Log_param_passer
+---@param passer Log_param_passer Passer function returning the logged message and a custom log trace to help identify the exact log source included in the entry as a string | ***Default:*** `"nil", "(source not traced)"`
 function debugging.Log(passer)
 
 	--| Parameters
@@ -673,13 +676,42 @@ function debugging.Log(passer)
 end
 
 ---Dump an object and its contents to the in-game chat
----@param object Dump_param_object
----@param name Dump_param_name
----@param blockrule Dump_param_blockrule
----@param depth Dump_param_depth
----@param digTables Dump_param_digTables
----@param digFrames Dump_param_digFrames
----@param linesPerMessage Dump_param_linesPerMessage
+---@param object Dump_param_object Object to dump out
+---@param name Dump_param_name A name to print out | ***Default:*** *the dumped object will not be named*
+---@param blockrule Dump_param_blockrule Manually filter further exploring subtables under specific keys, skipping it if the value returned is true
+--- - ***Example:*** **Match:** Skip a specific matching key
+--- 	```
+--- 	function(key) return key == "skip_key" end
+--- 	```
+--- - ***Example:*** **Comparison:** Skip an index key based the result of a comparison
+--- 	```
+--- 	function(key)
+--- 		if type(key) == "number" then --check if the key is an index to avoid issues with mixed tables
+--- 			return key < 10
+--- 		end
+--- 		return true --or false whether to allow string keys in mixed tables
+--- 	end
+--- 	```
+--- - ***Example:*** **Blocklist:** Iterate through an array (indexed table) containing keys, the values of which are to be skipped
+--- 	```
+--- 	function(key)
+--- 		local blocklist = {
+--- 			"skip_key",
+--- 			1,
+--- 		}
+--- 		for i = 1, #blocklist do
+--- 			if key == blocklist[i] then
+--- 			return true --or false to invert the functionality and treat the blocklist as an allowlist
+--- 		end
+--- 	end
+--- 		return false --or true to invert the functionality and treat the blocklist as an allowlist
+--- 	end
+--- 	```
+---@param depth Dump_param_depth How many levels of subtables to print out (root level: `0`) | ***Default:*** *full depth*
+---@param digTables Dump_param_digTables If `true`, explore and dump the non-subtable values of table objects | ***Default:*** `true`
+---@param digFrames Dump_param_digFrames If `true`, explore and dump the insides of objects recognized as frames | ***Default:*** `false`
+---@param linesPerMessage Dump_param_linesPerMessage Print the specified number of output lines in a single chat message to be able to display more message history and allow faster scrolling | ***Default:*** `2`
+--- - ***Note:*** Set to `0` to print all lines in a single message.
 function debugging.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
 
 	--| Parameters
@@ -756,13 +788,13 @@ local toolboxes = {}
 ---Get an already registered toolbox table of the specified version, registering an addon for its use, or, register an already assembled toolbox table or start the initialization of a new one
 --- - ***Note:*** If a toolbox of `version` already exists in the registry, get a reference to it and register `addon` for use, `callback` will not be called.
 --- - ***Note:*** If no existing toolbox entry was found, and `toolbox` is not provided or it's not a valid table, start the initialization of a new toolbox (in an always writeable table accessible via `WidgetTools.toolboxes.initialization[version]`), and call `callback` when `toolboxAddon` finished loading, returning a (raw direct or readonly) reference to the newly initialized toolbox bundled from this initialization table which itself will be cleared.
----@param userAddon Register_param_userAddon
----@param version Register_param_version
----@param callback Register_param_callback
----@param toolboxAddon Register_param_toolboxAddon
----@param toolbox Register_param_toolbox
----@param readonly Register_param_readonly
----@return Register_return_toolbox toolbox
+---@param userAddon Register_param_userAddon Addon namespace (the name of the addon's folder, not its display title) to register for WidgetTools usage
+---@param version Register_param_version Version key the `toolbox` should be registered under (always converted to string)
+---@param callback Register_param_callback Function to be called after a new toolbox initialization has finished when `addon` loaded, returning a readonly reference to the new toolbox table
+---@param toolboxAddon Register_param_toolboxAddon Namespace name of the **LoadOnDemand** toolbox initializer addon to load | ***Default:*** `"WidgetToolbox_" .. version`
+---@param toolbox Register_param_toolbox Reference to an existing toolbox table to register
+---@param readonly Register_param_readonly If true, protect `toolbox` by making it entirely readonly via `WidgetTools.utilities.Protect(...)` | ***Default:*** false
+---@return Register_return_toolbox toolbox Registered toolbox table, or `false` if the toolbox construction addon named `"WidgetToolbox_" .. version` could not be loaded while attempting the initialization of a new toolbox | ***Default:*** *nil*
 function toolboxes.Register(userAddon, version, callback, toolboxAddon, toolbox, readonly)
 
 	--| Parameters

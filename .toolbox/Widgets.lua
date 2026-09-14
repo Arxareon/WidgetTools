@@ -1042,8 +1042,8 @@ function wt.CreateDatamanager(t, widget)
 
 	--| Storage
 
-	datamanager:setReader(t.reader)
-	datamanager:setWriter(t.writer)
+	datamanager:setReader(t.read)
+	datamanager:setWriter(t.write)
 
 	if t.instantSave ~= false then datamanager_instantSave[datamanager] = true end
 
@@ -7659,4 +7659,146 @@ function wt.CreateAddonPage(t, addonmanager)
 	})
 
 	return addonPage
+end
+
+
+--[[ CHAT COMMANDS ]]
+
+local function buildChatmanager()
+	local chatmanager = buildWidget() ---@cast chatmanager chatmanager
+
+	--[ Type ]
+
+	local typename = "Addonmanager" ---@type typename_chatmanager
+
+	widget_types[chatmanager][typename] = true
+
+	--[ Metadata ]
+	
+
+	ds.Log(function() return "Widget base mutated into Addonmanager base: " .. us.ToString(chatmanager), wt.title .. ".buildAddonmanager" end)
+
+	return chatmanager
+end
+
+function wt.CreateChatmanager(addon, keywords, t)
+	local addon_type = type(addon)
+
+	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
+	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+	local branding = logo .. addonTitle .. ": "
+	local commands = type(t.commands) == "table" and t.commands or {}
+	t.colors = t.colors or {}
+	local colors = {
+		title = wt.IsColor(t.colors.title) or YELLOW_FONT_COLOR,
+		content = wt.IsColor(t.colors.content) or WHITE_FONT_COLOR,
+		command = wt.IsColor(t.colors.command) or LIGHTBLUE_FONT_COLOR,
+		description = wt.IsColor(t.colors.description) or LIGHTGRAY_FONT_COLOR,
+	}
+	local onWelcome = type(t.onWelcome) == "function" and t.onWelcome or nil
+	local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+
+	local manager = {} ---@type chatmanager
+
+	addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+
+	--Register the keywords
+	for i = 1, #keywords do
+		keywords[i] = "/" .. keywords[i]
+		_G["SLASH_" .. addon .. i] = keywords[i]
+	end
+
+	--| Utilities
+
+	function manager.print(message, title, titleColor, contentColor)
+		title = type(title) == "string" and title or branding
+		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
+		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
+
+		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
+	end
+
+	function manager.welcome()
+		local keyword = cr(keywords[1], colors.command)
+		if #keywords > 1 then
+			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
+			keyword = wt.strings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
+		end
+
+		print(cr(logo .. wt.strings.chat.welcome.thanks:gsub("#ADDON", cr(addonTitle, colors.title)), colors.content))
+		print(cr(wt.strings.chat.welcome.hint:gsub("#KEYWORD", keyword), colors.description))
+
+		if onWelcome then onWelcome() end
+	end
+
+	function manager.help()
+		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(logo .. addonTitle, colors.title)), colors.content))
+
+		for i = 1, #commands do
+			if not commands[i].hidden then
+				local description = type(commands[i].description) == "function" and commands[i].description() or commands[i].description
+
+				print(cr("    " .. keywords[1] .. " ".. commands[i].command, colors.command) .. (
+					type(description) == "string" and cr(" • " .. description, colors.description) or ""
+				))
+			end
+
+			if type(commands[i].onHelp) == "function" then commands[i].onHelp() end
+		end
+	end
+
+	function manager.handleCommand(command, ...)
+		for i = 1, #commands do if command == commands[i].command then
+			if commands[i].handler then
+				local results = { commands[i].handler(manager, ...) }
+
+				--Response
+				if results[1] == true then
+					local message = type(commands[i].success) == "function" and commands[i].success(unpack(results, 2)) or commands[i].success
+
+					--Print response message
+					if type(message) == "string" then manager.print(message) end
+
+					--Call handler
+					if type(commands[i].onSuccess) == "function" then commands[i].onSuccess(manager, unpack(results, 2)) end
+				elseif results[1] == false then
+					local message = type(commands[i].error) == "function" and commands[i].error(unpack(results, 2)) or commands[i].error
+
+					--Print response message
+					if type(message) == "string" then manager.print(message) end
+
+					--Call handler
+					if type(commands[i].onError) == "function" then commands[i].onError(manager, unpack(results, 2)) end
+				end
+			end
+
+			if commands[i].help then manager.help() end
+
+			return true
+		end end
+
+		return false
+	end
+
+	--| Set global keyword handler
+
+	SlashCmdList[addon] = function(line)
+		local payload = { strsplit(" ", line) }
+		local command = payload[1]
+
+		--Find and handle the specific command or call the default handler script
+		if not manager.handleCommand(command, unpack(payload, 2)) then
+			if defaultHandler then defaultHandler(manager, command, unpack(payload, 2)) end
+
+			--List (non-hidden) commands
+			manager.help()
+		end
+	end
+
+	return manager
 end

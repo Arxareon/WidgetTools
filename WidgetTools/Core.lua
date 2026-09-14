@@ -933,7 +933,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--| Locals
 
-	local chatCommands ---@type chatCommandManager
+	local chatCommands ---@type chatmanager
 
 
 	--[[ SETTINGS ]]
@@ -1475,7 +1475,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[[ CHAT CONTROL ]]
 
-	chatCommands = wt.RegisterChatCommands(rs.addon, { rs.chat.keyword }, {
+	chatCommands = wt.CreateChatmanager(rs.addon, { rs.chat.keyword }, {
 		commands = {
 			{
 				command = rs.chat.commands.about,
