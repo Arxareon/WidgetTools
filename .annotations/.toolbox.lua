@@ -203,7 +203,7 @@ end
 
 ---Check if a variable is a valid color table
 ---@param t any
----@return boolean|color
+---@return color|false
 function wt.IsColor(t) return false end
 
 ---Check & silently repair a color data table
@@ -214,7 +214,7 @@ function wt.VerifyColor(color)
 	--| Returns
 
 	---***Default:*** `{ r = 1, g = 1, b = 1, a = 1 }`
-	---@alias VerifyColor_return boolean|color
+	---@alias VerifyColor_return color
 
 	return false
 end
@@ -7200,7 +7200,7 @@ function wt.CreateChatmanager(addon, keywords, t)
 	---@alias CreateChatmanager_return_chatmanager chatmanager|nil
 
 		---`Chatmanager` WidgetTools widget instance table
-		---@class chatmanager
+		---@class chatmanager : widget
 		local _ = {}
 
 			--[ Type ]
@@ -7238,7 +7238,7 @@ function wt.CreateChatmanager(addon, keywords, t)
 			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
 			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
 			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
-			function _.print(message, title, titleColor, contentColor) end
+			function _:print(message, title, titleColor, contentColor) end
 
 				---@alias chatCommandColorNames
 				---| "title"
@@ -7247,10 +7247,10 @@ function wt.CreateChatmanager(addon, keywords, t)
 				---| "description"
 
 			--Print a welcome message with a hint about chat keywords
-			function _.welcome() end
+			function _:welcome() end
 
 			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
-			function _.help() end
+			function _:help() end
 
 			---Find and a specific command by its name and call its handler script
 			---***
@@ -7258,5 +7258,5 @@ function wt.CreateChatmanager(addon, keywords, t)
 			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
 			---***
 			---@return boolean # Whether the command was found and the handler called successfully
-			function _.handleCommand(command, ...) return false end
+			function _:trigger(command, ...) return false end
 end

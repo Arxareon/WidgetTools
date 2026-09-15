@@ -977,7 +977,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							liteToggle.setValue(true)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
 					local disableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_DISABLE_LITE_MODE", {
@@ -987,7 +987,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							liteToggle.setValue(false)
 							liteToggle.saveData(nil, silentSave)
 
-							chatCommands.print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
@@ -1061,7 +1061,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							changed = { { handler = function (self, state, user)
 								if not user then return end
 
-								chatCommands.print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
+								chatCommands:print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
 							end, }, },
 						},
 						instantSave = false,

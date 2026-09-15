@@ -7142,7 +7142,7 @@ end
 
 local addonmanager_base ---@type addonmanager
 
-local addon ---@type table<addonmanager, addonInfo>
+local addonmanager_addon ---@type table<addonmanager, addonInfo>
 
 local invoke_addonChanged ---@type fun(self: addonmanager, user: boolean)
 local handlers_addonChanged ---@type table<addonmanager, addonmanager_handler_changed[]>
@@ -7158,23 +7158,23 @@ local function buildAddonmanager()
 
 	--[ Metadata ]
 
-	if not addon then addon = {} end
+	if not addonmanager_addon then addonmanager_addon = {} end
 
-	function addonmanager:getName() return addon[self].name end
-	function addonmanager:getTitle() return addon[self].title end
-	function addonmanager:getNotes() return addon[self].notes end
-	function addonmanager:getLogo() return addon[self].logo end
-	function addonmanager:getCategory() return addon[self].category end
-	function addonmanager:getAuthor() return addon[self].author end
-	function addonmanager:getVersion() return addon[self].version end
-	function addonmanager:getDate() return addon[self].date, addon[self].day, addon[self].month, addon[self].year end
-	function addonmanager:getLicense() return addon[self].license end
-	function addonmanager:getCurseForgeLink() return addon[self].curse end
-	function addonmanager:getWagoLink() return addon[self].wago end
-	function addonmanager:getRepositoryLink() return addon[self].repo end
-	function addonmanager:getIssuesLink() return addon[self].issues end
-	function addonmanager:getSponsors() return addon[self].sponsors end
-	function addonmanager:getChangelog() return addon[self].changelog_latest, addon[self].changelog_full end
+	function addonmanager:getName() return addonmanager_addon[self].name end
+	function addonmanager:getTitle() return addonmanager_addon[self].title end
+	function addonmanager:getNotes() return addonmanager_addon[self].notes end
+	function addonmanager:getLogo() return addonmanager_addon[self].logo end
+	function addonmanager:getCategory() return addonmanager_addon[self].category end
+	function addonmanager:getAuthor() return addonmanager_addon[self].author end
+	function addonmanager:getVersion() return addonmanager_addon[self].version end
+	function addonmanager:getDate() return addonmanager_addon[self].date, addonmanager_addon[self].day, addonmanager_addon[self].month, addonmanager_addon[self].year end
+	function addonmanager:getLicense() return addonmanager_addon[self].license end
+	function addonmanager:getCurseForgeLink() return addonmanager_addon[self].curse end
+	function addonmanager:getWagoLink() return addonmanager_addon[self].wago end
+	function addonmanager:getRepositoryLink() return addonmanager_addon[self].repo end
+	function addonmanager:getIssuesLink() return addonmanager_addon[self].issues end
+	function addonmanager:getSponsors() return addonmanager_addon[self].sponsors end
+	function addonmanager:getChangelog() return addonmanager_addon[self].changelog_latest, addonmanager_addon[self].changelog_full end
 
 	--| Rebind
 
@@ -7183,14 +7183,14 @@ local function buildAddonmanager()
 
 		if not handlers then return end
 
-		local name = addon[self].name
+		local name = addonmanager_addon[self].name
 		user = user == true
 
 		for i = 1, #handlers do handlers[i](self, name, user) end
 	end end
 
 	function addonmanager:setAddon(newAddon, newChangelog, user, silent)
-		if newAddon == addon then return true end
+		if newAddon == addonmanager_addon then return true end
 
 		local addon_type = type(newAddon)
 
@@ -7199,7 +7199,7 @@ local function buildAddonmanager()
 			if addon_type ~= "number" then return false else newAddon = C_AddOns.GetAddOnName(newAddon) end
 		end
 
-		local data = addon[self]
+		local data = addonmanager_addon[self]
 
 		if not data then
 			data = {
@@ -7225,7 +7225,7 @@ local function buildAddonmanager()
 
 			if newChangelog then data.changelog_latest, data.changelog_full = us.FormatChangelog(newChangelog, true), us.FormatChangelog(newChangelog) end
 
-			addon[self] = data
+			addonmanager_addon[self] = data
 		end
 
 		if not silent then invoke_addonChanged(self, user) end
@@ -7664,58 +7664,28 @@ end
 
 --[[ CHAT COMMANDS ]]
 
+local chatmanager_base ---@type chatmanager
+
+local chatmanager_keywords ---@type table<chatmanager, string[]>
+local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
+local chatmanager_colors ---@type table<chatmanager, table>
+
+local chatmanager_onWelcome ---@type table<chatmanager, function>
+
 local function buildChatmanager()
 	local chatmanager = buildWidget() ---@cast chatmanager chatmanager
 
 	--[ Type ]
 
-	local typename = "Addonmanager" ---@type typename_chatmanager
+	local typename = "Chatmanager" ---@type typename_chatmanager
 
 	widget_types[chatmanager][typename] = true
 
-	--[ Metadata ]
-	
+	--[ Print ]
 
-	ds.Log(function() return "Widget base mutated into Addonmanager base: " .. us.ToString(chatmanager), wt.title .. ".buildAddonmanager" end)
+	function chatmanager:print(message, title, titleColor, contentColor)
+		local colors = chatmanager_colors[chatmanager]
 
-	return chatmanager
-end
-
-function wt.CreateChatmanager(addon, keywords, t)
-	local addon_type = type(addon)
-
-	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return nil end
-
-	t = type(t) == "table" and t or {}
-
-	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
-	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-	local branding = logo .. addonTitle .. ": "
-	local commands = type(t.commands) == "table" and t.commands or {}
-	t.colors = t.colors or {}
-	local colors = {
-		title = wt.IsColor(t.colors.title) or YELLOW_FONT_COLOR,
-		content = wt.IsColor(t.colors.content) or WHITE_FONT_COLOR,
-		command = wt.IsColor(t.colors.command) or LIGHTBLUE_FONT_COLOR,
-		description = wt.IsColor(t.colors.description) or LIGHTGRAY_FONT_COLOR,
-	}
-	local onWelcome = type(t.onWelcome) == "function" and t.onWelcome or nil
-	local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
-
-	local manager = {} ---@type chatmanager
-
-	addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
-
-	--Register the keywords
-	for i = 1, #keywords do
-		keywords[i] = "/" .. keywords[i]
-		_G["SLASH_" .. addon .. i] = keywords[i]
-	end
-
-	--| Utilities
-
-	function manager.print(message, title, titleColor, contentColor)
 		title = type(title) == "string" and title or branding
 		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
 		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
@@ -7723,7 +7693,12 @@ function wt.CreateChatmanager(addon, keywords, t)
 		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
 	end
 
-	function manager.welcome()
+	--| Commands
+
+	function chatmanager:welcome()
+		local keywords = chatmanager_keywords[chatmanager]
+		local colors = chatmanager_colors[chatmanager]
+
 		local keyword = cr(keywords[1], colors.command)
 		if #keywords > 1 then
 			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
@@ -7733,10 +7708,14 @@ function wt.CreateChatmanager(addon, keywords, t)
 		print(cr(logo .. wt.strings.chat.welcome.thanks:gsub("#ADDON", cr(addonTitle, colors.title)), colors.content))
 		print(cr(wt.strings.chat.welcome.hint:gsub("#KEYWORD", keyword), colors.description))
 
-		if onWelcome then onWelcome() end
+		if chatmanager_onWelcome[chatmanager] then chatmanager_onWelcome[chatmanager]() end
 	end
 
-	function manager.help()
+	function chatmanager:help()
+		local commands = chatmanager_commands[chatmanager]
+		local keywords = chatmanager_keywords[chatmanager]
+		local colors = chatmanager_colors[chatmanager]
+
 		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(logo .. addonTitle, colors.title)), colors.content))
 
 		for i = 1, #commands do
@@ -7752,53 +7731,94 @@ function wt.CreateChatmanager(addon, keywords, t)
 		end
 	end
 
-	function manager.handleCommand(command, ...)
-		for i = 1, #commands do if command == commands[i].command then
-			if commands[i].handler then
-				local results = { commands[i].handler(manager, ...) }
+	function chatmanager:trigger(commandName, ...)
+		local commands = chatmanager_commands[chatmanager]
 
-				--Response
-				if results[1] == true then
-					local message = type(commands[i].success) == "function" and commands[i].success(unpack(results, 2)) or commands[i].success
+		for i = 1, #commands do
+			local command = commands[i]
 
-					--Print response message
-					if type(message) == "string" then manager.print(message) end
+			if commandName == command.command then
+				if type(command.handler) == "function" then
+					local results = { command.handler(chatmanager, ...) }
 
-					--Call handler
-					if type(commands[i].onSuccess) == "function" then commands[i].onSuccess(manager, unpack(results, 2)) end
-				elseif results[1] == false then
-					local message = type(commands[i].error) == "function" and commands[i].error(unpack(results, 2)) or commands[i].error
+					if results[1] == true then
+						local message = type(command.success) == "function" and command.success(unpack(results, 2)) or command.success
 
-					--Print response message
-					if type(message) == "string" then manager.print(message) end
+						if type(message) == "string" then chatmanager:print(message) end
 
-					--Call handler
-					if type(commands[i].onError) == "function" then commands[i].onError(manager, unpack(results, 2)) end
+						if type(command.onSuccess) == "function" then command.onSuccess(chatmanager, unpack(results, 2)) end
+					elseif results[1] == false then
+						local message = type(command.error) == "function" and command.error(unpack(results, 2)) or command.error
+
+						if type(message) == "string" then chatmanager:print(message) end
+
+						if type(command.onError) == "function" then command.onError(chatmanager, unpack(results, 2)) end
+					end
 				end
+
+				if commands[i].help then chatmanager:help() end
+
+				return true
 			end
-
-			if commands[i].help then manager.help() end
-
-			return true
-		end end
+		end
 
 		return false
 	end
 
-	--| Set global keyword handler
+	ds.Log(function() return "Widget base mutated into Addonmanager base: " .. us.ToString(chatmanager), wt.title .. ".buildAddonmanager" end)
 
+	return chatmanager
+end
+
+function wt.CreateChatmanager(addon, keywords, t)
+	local addon_type = type(addon)
+
+	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return nil end
+
+	t = type(t) == "table" and t or {}
+
+	local chatmanager = {} ---@type chatmanager
+
+	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
+
+	local branding = logo .. addonTitle .. ": "
+
+	t.colors = t.colors or {}
+
+	chatmanager_colors[chatmanager] = {
+		title = wt.IsColor(t.colors.title) or YELLOW_FONT_COLOR,
+		content = wt.IsColor(t.colors.content) or WHITE_FONT_COLOR,
+		command = wt.IsColor(t.colors.command) or LIGHTBLUE_FONT_COLOR,
+		description = wt.IsColor(t.colors.description) or LIGHTGRAY_FONT_COLOR,
+	}
+
+	chatmanager_commands[chatmanager] = type(t.commands) == "table" and t.commands or {}
+
+	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
+
+	addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+
+	--Register the keywords
+	for i = 1, #keywords do
+		keywords[i] = "/" .. keywords[i]
+		_G["SLASH_" .. addon .. i] = keywords[i]
+	end
+
+	local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+
+	--Set global keyword handler
 	SlashCmdList[addon] = function(line)
 		local payload = { strsplit(" ", line) }
 		local command = payload[1]
 
-		--Find and handle the specific command or call the default handler script
-		if not manager.handleCommand(command, unpack(payload, 2)) then
-			if defaultHandler then defaultHandler(manager, command, unpack(payload, 2)) end
+		if not chatmanager:trigger(command, unpack(payload, 2)) then
+			if defaultHandler then defaultHandler(chatmanager, command, unpack(payload, 2)) end
 
-			--List (non-hidden) commands
-			manager.help()
+			chatmanager:help()
 		end
 	end
 
-	return manager
+	return chatmanager
 end
