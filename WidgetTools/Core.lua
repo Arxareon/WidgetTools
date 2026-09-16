@@ -940,12 +940,14 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[ Addon ]
 
-	local mainPage = wt.CreateAddonPage({
+	local addonPage = wt.CreateAddonPage({
 		register = true,
 		name = "About",
 		addon = rs.addon,
 		changelog = ns.changelog
-	}).settings
+	}) ---@cast addonPage -nil
+
+	local aboutPage = addonPage.settings
 
 	--[ Specifications ]
 
@@ -953,7 +955,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local debugToggle ---@type checkbox
 
 	local specificationsPage = wt.CreateSettingsPage({
-		register = mainPage,
+		register = aboutPage,
 		name = "Specifications",
 		title = rs.strings.specifications.title,
 		description = rs.strings.specifications.description,
@@ -1142,7 +1144,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[ Toolboxes ]
 
 	local toolboxesPage = wt.CreateSettingsPage({
-		register = mainPage,
+		register = aboutPage,
 		name = "Addons",
 		title = rs.strings.toolboxes.title,
 		description = rs.strings.toolboxes.description:gsub("#ADDON", rs.title),
@@ -1318,7 +1320,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											},
 										})
 
-										if toggle.holder then toggle.holder:SetIgnoreParentAlpha(true) end
+										if toggle.frame then toggle.frame:SetIgnoreParentAlpha(true) end
 
 										--| Description
 
@@ -1475,12 +1477,12 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[[ CHAT CONTROL ]]
 
-	chatCommands = wt.CreateChatmanager(rs.addon, { rs.chat.keyword }, {
+	chatCommands = wt.CreateChatmanager({ rs.chat.keyword }, {
 		commands = {
 			{
 				command = rs.chat.commands.about,
 				description = rs.strings.chat.about.description,
-				handler = mainPage.open,
+				handler = aboutPage.open,
 			},
 			{
 				command = rs.chat.commands.lite,
@@ -1497,6 +1499,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				end,
 			}
 		},
+		addon = addonPage,
 		colors = {
 			title = rs.colors.gold[1],
 			content = rs.colors.gold[2],
@@ -1514,7 +1517,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {
 					title = wt.strings.about.title,
-					action = mainPage.open
+					action = aboutPage.open
 				})
 				wt.CreateMenuButton(menu, {
 					title = rs.strings.specifications.title,

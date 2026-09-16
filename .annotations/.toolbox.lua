@@ -2149,9 +2149,11 @@ function wt.CreateContainer(t, widget)
 
 	--| Returns
 
-	---@class container : widget
-	---@field frame Frame Reference to the container frame
+	---@class container : widget, guiFrame
 	local _ = {}
+
+		---@class guiFrame
+		---@field frame Frame Widget GUI parent frame
 
 	--[ Type ]
 
@@ -2258,7 +2260,7 @@ function wt.CreateCustomContainer(t, widget)
 	--| Returns
 
 	---@class customContainer : container
-	---@field frame Frame|BackdropTemplate
+	---@field frame Frame|BackdropTemplate Widget GUI customizable parent frame with BackdropTemplate
 	local _ = {}
 
 	--[ Type ]
@@ -2556,7 +2558,7 @@ function wt.CreateButton(t, action)
 
 	---@class actionButton : action
 	---@field label FontString|nil
-	---@field holder Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
+	---@field highlight Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
 	---@field frame Button
 	local _ = {}
 
@@ -3141,9 +3143,8 @@ function wt.CreateCheckbox(t, binary)
 
 	--| Returns
 
-	---@class checkbox: binary
-	---@field holder Frame Click target
-	---@field frame SettingsCheckbox Checkbox
+	---@class checkbox: binary, guiFrame
+	---@field template SettingsCheckbox Checkbox
 	---@field label FontString|nil
 	local _ = {}
 
@@ -3241,9 +3242,8 @@ function wt.CreateClassicCheckbox(t, binary)
 
 	--| Returns
 
-	---@class classicCheckbox : binary
-	---@field holder Frame Click target
-	---@field frame CheckButton|BackdropTemplate Checkbox
+	---@class classicCheckbox : binary, guiFrame
+	---@field template CheckButton|BackdropTemplate Checkbox
 	---@field label FontString|nil
 	---@field addListener classicCheckbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -3350,9 +3350,8 @@ function wt.CreateRadiobutton(t, binary)
 
 	--| Returns
 
-	---@class radiobutton: binary
-	---@field holder Frame Click target
-	---@field frame CheckButton Radio button
+	---@class radiobutton: binary, guiFrame
+	---@field template CheckButton Radio button
 	---@field label FontString|nil
 	---@field addListener radiobutton_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -4065,8 +4064,7 @@ function wt.CreateRadiogroup(t, selector)
 
 	--| Returns
 
-	---@class radiogroup : selector
-	---@field frame Frame|table
+	---@class radiogroup : selector, guiFrame
 	---@field label FontString|nil
 	---@field items selectorRadiobutton[] The list of radio button widgets linked together in this selector
 	---@field addListener radiogroup_addListener Hook a handler function as a listener for a widget event
@@ -4324,8 +4322,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	--| Returns
 
-	---@class specialRadiogroup : specialSelector
-	---@field frame Frame|table
+	---@class specialRadiogroup : specialSelector, guiFrame
 	---@field label FontString|nil
 	---@field items selectorRadiobutton[] The list of radio button widgets linked together in this selector
 	---@field addListener specialRadiogroup_addListener Hook a handler function as a listener for a widget event
@@ -4445,8 +4442,7 @@ function wt.CreateCheckgroup(t, selector)
 
 	--| Returns
 
-	---@class checkgroup : multiselector
-	---@field frame Frame|table
+	---@class checkgroup : multiselector, guiFrame
 	---@field label FontString|nil
 	---@field items selectorCheckbox[] The list of checkbox widgets linked together in this selector
 	---@field addListener checkgroup_addListener Hook a handler function as a listener for a widget event
@@ -4731,9 +4727,8 @@ function wt.CreateEditbox(t, textual)
 
 	--| Returns
 
-	---@class textualEditbox : textual
-	---@field frame Frame
-	---@field widget EditBox
+	---@class textualEditbox : textual, guiFrame
+	---@field template EditBox
 	---@field label FontString|nil
 	---@field addListener editbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -4827,9 +4822,8 @@ function wt.CreateCustomEditbox(t, textual)
 
 	--| Returns
 
-	---@class customEditbox : textual
-	---@field frame Frame
-	---@field widget EditBox|BackdropTemplate
+	---@class customEditbox : textual, guiFrame
+	---@field template EditBox|BackdropTemplate
 	---@field label FontString|nil
 	---@field addListener customEditbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -4927,10 +4921,9 @@ function wt.CreateMultilineEditbox(t, textual)
 
 	--| Returns
 
-	---@class multilineEditbox : textual
-	---@field frame Frame
+	---@class multilineEditbox : textual, guiFrame
 	---@field scrollframe InputScrollFrame
-	---@field widget EditBox
+	---@field template EditBox
 	---@field label FontString|nil
 	---@field addListener multilineEditbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -5007,8 +5000,7 @@ function wt.CreateCopybox(t)
 
 	--| Returns
 
-	---@class copybox
-	---@field frame Frame|nil
+	---@class copybox : guiFrame
 	---@field label FontString|nil
 	---@field textual customEditbox|textual|nil
 	local _ = {}
@@ -5338,9 +5330,8 @@ function wt.CreateSlider(t, numeric)
 
 	--| Return
 
-	---@class numericSlider : numeric
-	---@field frame Frame
-	---@field widget MinimalSliderWithSteppers
+	---@class numericSlider : numeric, guiFrame
+	---@field template MinimalSliderWithSteppers
 	---@field valuebox customEditbox|textual
 	---@field addListener slider_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
@@ -5468,9 +5459,8 @@ function wt.CreateClassicSlider(t, numeric)
 
 	--| Return
 
-	---@class classicSlider : numeric
-	---@field frame Frame
-	---@field widget Slider
+	---@class classicSlider : numeric, guiFrame
+	---@field template Slider
 	---@field label FontString|nil
 	---@field min FontString
 	---@field max FontString
@@ -5740,8 +5730,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	--| Returns
 
-	---@class colorpicker : colormanager
-	---@field frame Frame
+	---@class colorpicker : colormanager, guiFrame
 	---@field label FontString|nil
 	---@field button colorpickerButton|customButton|action
 	---@field hexBox customEditbox|textual
@@ -7154,16 +7143,12 @@ end
 --[[ CHAT COMMANDS ]]
 
 ---Register a list of chat keywords and related commands for use
----@param addon CreateChatmanager_param_addon
 ---@param keywords CreateChatmanager_param_keywords
 ---@param t? chatCommandManager_options Optional parameters
 ---@return CreateChatmanager_return_chatmanager chatmanager
-function wt.CreateChatmanager(addon, keywords, t)
+function wt.CreateChatmanager(keywords, t)
 
 	--| Parameters
-
-	---The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
-	---@alias CreateChatmanager_param_addon uiAddon
 
 	---List of addon-specific keywords to register to listen to when typed as slash commands
 	--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
@@ -7172,6 +7157,7 @@ function wt.CreateChatmanager(addon, keywords, t)
 	---Optional parameters
 	---@class chatCommandManager_options
 	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
+	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
 	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
 	---@field defaultHandler? fun(commandManager: chatmanager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
 	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
@@ -7248,6 +7234,8 @@ function wt.CreateChatmanager(addon, keywords, t)
 
 			--Print a welcome message with a hint about chat keywords
 			function _:welcome() end
+
+			--| Commands
 
 			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
 			function _:help() end
