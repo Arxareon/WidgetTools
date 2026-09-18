@@ -216,7 +216,7 @@ function wt.VerifyColor(color)
 	---***Default:*** `{ r = 1, g = 1, b = 1, a = 1 }`
 	---@alias VerifyColor_return color
 
-	return false
+	return { r = 1, g = 1, b = 1 }
 end
 
 --| Conversion
@@ -533,7 +533,7 @@ end
 ---Check if an object is a recognizable widget table and is optionally of a specific type
 ---@param o IsWidget_param_o Reference to the object to check
 ---@param typename IsWidget_param_typename Custom typename to not only check if `o` is a WidgetTools widget table or if it is also of the specific type | ***Default:*** *don't check type*
----@return IsWidget_return Return the `true` if the object is a widget (and optionally also of `typename`)
+---@return IsWidget_return # `true` if the object is a widget (and optionally also of `typename`)
 function wt.IsWidget(o, typename)
 
 	--| Parameters
@@ -2704,7 +2704,7 @@ end
 
 ---Create a non-GUI datamanager widget with generic data management logic
 ---@param t? datamanager_options Optional parameters
----@param widget? widget Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param widget? CreateDatamanager_param_widget Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a widget table
 function wt.CreateDatamanager(t, widget)
 
@@ -2713,42 +2713,10 @@ function wt.CreateDatamanager(t, widget)
 	---Optional parameters
 	---@class datamanager_options : widget_options
 	---@field listeners? datamanager_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field dataManagement? settingsData If set, register this widget to settings data management for batched data saving & loading and handling data changes
-	---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`<ul><li>***Note:*** Any unsaved data will be saved when <code><i>WidgetToolbox</i>.SaveOptionsData(...)</code> is executed.</li></ul>
-	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.read()` or `t.default` if invalid
+	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? any Default value of the widget | ***Default:*** `nil`
-	---@field data? datamanager_data 
-
-			---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
-			---@return any data ***Default:*** `nil`
-			local function read() end ---@cast reader +?
-
-			---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
-			---@param data? any ***Default:*** `nil`
-			local function write(data) end ---@cast writer +?
-
-		---@class datamanager_data
-		---@field read datamanager_data_read
-		---@field write datamanager_data_write
-		j = { read = read, write = write, }
-
-			---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
-			---@alias datamanager_data_read fun(): data: datamanager_data_read_return_data
-
-				---***Default:*** `nil`
-				---@alias datamanager_data_read_return_data any
-
-			---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
-			---@alias datamanager_data_write fun(data?: datamanager_data_write_param_data)
-
-				---***Default:*** `nil`
-				---@alias datamanager_data_write_param_data any
-
-		---@class settingsData
-		---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** `"WidgetTools"` *(register as a global rule)*
-		---@field key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
-		---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *last position*
-		---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings data management<ul><li><code>[<i>key</i>]</code>? string|integer ― A unique string appended to `category` to point to a newly defined function to be added to settings data management or just the index of the next function name | ***Default:*** *next assigned index*</li><li><code>[<i>value</i>]</code> function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings data management. Functions registered under duplicate keys are overwritten.</li></ul></ul>
+	---@field data? datamanager_storage If set, connect this widget to also manage storage data
+	---@field dataManagement? settingsData If set, register this widget to settings data management for batched data saving & loading and handling data changes
 
 		---@class datamanager_listeners : widget_listeners
 		---@field [1]? table<string, datamanager_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -2760,13 +2728,13 @@ function wt.CreateDatamanager(t, widget)
 			---@class datamanager_listener_loaded : indexedEventHandler
 			---@field handler datamanager_handler_loaded Handler function to register for call
 
-				---Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 				---@alias datamanager_handler_loaded fun(self: datamanager, success: boolean)
 
 			---@class datamanager_listener_saved : indexedEventHandler
 			---@field handler datamanager_handler_saved Handler function to register for call
 
-				---Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was committed successfully via `t.write(...)`</p>
+				---Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was committed successfully via `t.data.write(...)`</p>
 				---@alias datamanager_handler_saved fun(self: datamanager, success: boolean)
 
 			---@class datamanager_listener_changed : indexedEventHandler
@@ -2786,6 +2754,35 @@ function wt.CreateDatamanager(t, widget)
 
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
 				---@alias datamanager_handler fun(self: datamanager, ...: any)
+
+		---@class datamanager_storage
+		---@field read datamanager_storage_read
+		---@field write datamanager_storage_write
+		---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`
+
+			---Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
+			---@alias datamanager_storage_read datamanager_read|nil
+
+				---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
+				---@alias datamanager_read fun(): data: datamanager_data
+
+					---***Default:*** `nil`
+					---@alias datamanager_data any
+
+			---Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
+			---@alias datamanager_storage_write datamanager_writer|nil
+
+				---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
+				---@alias datamanager_writer fun(data: datamanager_data)
+
+		---@class settingsData
+		---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** `"WidgetTools"` *(register as a global rule)*
+		---@field key? string A unique string appended to `category` linking a subset of settings data rules to be handled together | ***Default:*** `""` *(category-wide rule)*
+		---@field index? integer Set when to place this widget in the execution order when saving or loading batched settings data | ***Default:*** *last position*
+		---@field onChange? table<string|integer, function|string> table<string|integer, function|string> List of new or already defined functions to call after the value of the widget was changed by the user or via settings data management<ul><li><code>[<i>key</i>]</code>? string|integer ― A unique string appended to `category` to point to a newly defined function to be added to settings data management or just the index of the next function name | ***Default:*** *next assigned index*</li><li><code>[<i>value</i>]</code> function|string ― The new function to register under its unique key, or the key of an already existing function</li><ul><li>***Note:*** Function definitions will be replaced by key references when they are registered to settings data management. Functions registered under duplicate keys are overwritten.</li></ul></ul>
+
+	---Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+	---@alias CreateDatamanager_param_widget widget
 
 	--| Returns
 
@@ -2830,15 +2827,37 @@ function wt.CreateDatamanager(t, widget)
 
 		--[ Data ]
 
+		--| Value
+
 		---Validate a value to be accepted by the widget
-		---@param value? any
-		---@return any # ***Default:*** `nil`
+		---@param value? any ***Default:*** *current value*
+		---@return any
 		function _:verify(value) end
 
 		---Turn a value into a formatted string
 		---@param value? any ***Default:*** *current value*
 		---@return string
 		function _:format(value) return "" end
+
+		---Returns the current value of the widget
+		---@return any
+		function _:getValue() end
+
+		---Verify and set the value of the widget
+		---@param value? any ***Default:*** `t.data.read()` or *current default value*
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
+		function _:setValue(value, user, silent) end
+
+		--| Storage
+
+		---Set the reader utility called to pull data from storage
+		---@param read datamanager_storage_read Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
+		function _:setReader(read) end
+
+		---Set the writer utility called to commit data to storage
+		---@param write datamanager_storage_write Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from writing storage data
+		function _:setWriter(write) end
 
 		---Read the data from storage then verify and load it to the widget
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
@@ -2850,20 +2869,6 @@ function wt.CreateDatamanager(t, widget)
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 		function _:save(data, silent) end
 
-		---Set the reader utility called to pull data from storage
-		---@param reader datamanager_setReader_param1
-		function _:setReader(reader)
-
-			--| Parameters
-
-			--- Utility called to read the data from storage (and convert, evaluate or modify it as needed)
-			---@alias datamanager_setReader_param1 (fun(): data: string)?
-		end
-
-		---Set the writer utility called to commit data to storage
-		---@param writer any
-		function _:setWriter(writer) end
-
 		---Get the currently stored data via the specified reader utility
 		---@return any # ***Default:*** *current value*
 		function _:getData() end
@@ -2873,6 +2878,12 @@ function wt.CreateDatamanager(t, widget)
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _:setData(data, handleChanges, silent) end
+
+		---Set whether to immediately commit the data to storage whenever it's changed via the widget
+		---@param instantSave boolean? ***Default:*** `true`
+		function _:setInstantSave(instantSave) end
+
+		--| Default
 
 		---Get the currently set default value
 		---@return any
@@ -2887,15 +2898,7 @@ function wt.CreateDatamanager(t, widget)
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
 		function _:reset(handleChanges, silent) end
 
-		---Returns the current value of the widget
-		---@return any
-		function _:getValue() end
-
-		---Verify and set the value of the widget
-		---@param value? any ***Default:*** `t.read()` or *current default value*
-		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(value, user, silent) end
+		--| Snapshot
 
 		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value
 		---@param stored? boolean If `true`, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
@@ -2914,28 +2917,16 @@ end
 ---Create a non-GUI binary datamanager widget with boolean data management logic
 ---@param t? binary_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into binary instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return binary binary Reference to the new binary widget, utility functions and more wrapped in a widget table
 function wt.CreateBinary(t, datamanager)
 
 	--| Parameters
 
-		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
-		---***
-		---@return boolean|nil state ***Default:*** `false`
-		local function reader() return false end ---@cast reader +?
-
-		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
-		---***
-		---@param state? boolean
-		local function writer(state) end ---@cast writer +?
-
 	---Optional parameters
 	---@class binary_options : datamanager_options
 	---@field listeners? binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field value? boolean The starting state of the widget to set during initialization | ***Default:*** `t.read()` or `t.default` if invalid
+	---@field value? boolean The starting state of the widget to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? boolean Default value of the widget | ***Default:*** `false`
-	t = { reader = reader, writer = writer, }
 
 		---@class binary_listeners : datamanager_listeners
 		---@field [1]? table<string, binary_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -2947,13 +2938,13 @@ function wt.CreateBinary(t, datamanager)
 			---@class binary_listener_loaded : indexedEventHandler
 			---@field handler binary_handler_loaded Handler function to register for call
 
-				---Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 				---@alias binary_handler_loaded fun(self: binary, success: boolean)
 
 			---@class binary_listener_saved : indexedEventHandler
 			---@field handler binary_handler_saved Handler function to register for call
 
-				---Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was committed successfully via `t.write(...)`</p>
+				---Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `success` ― `true` if data was committed successfully via `t.data.write(...)`</p>
 				---@alias binary_handler_saved fun(self: binary, success: boolean)
 
 			---@class binary_listener_changed : indexedEventHandler
@@ -2973,6 +2964,11 @@ function wt.CreateBinary(t, datamanager)
 
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
 				---@alias binary_handler fun(self: binary, ...: any)
+
+
+
+	---
+	---@alias binary_data boolean? ***Default:*** `false`
 
 	--| Returns
 
@@ -3019,55 +3015,55 @@ function wt.CreateBinary(t, datamanager)
 		---@param value? any
 		---***
 		---@return boolean # ***Default:*** `false`
-		function _.verify(value) return false end
+		function _:verify(value) return false end
 
 		---Turn a logical state into formatted string
 		---***
 		---@param state? boolean ***Default:*** *current value*
 		---@return string
-		function _.format(state) return "" end
+		function _:format(state) return "" end
 
 		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
 		---***
 		---@param state? boolean Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(state, silent) end
+		function _:saveData(state, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return boolean # ***Default:*** *current value*
-		function _.getData() return false end
+		function _:getData() return false end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param state? boolean Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(state, handleChanges, silent) end
+		function _:setData(state, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return boolean
-		function _.getDefault() return false end
+		function _:getDefault() return false end
 
 		---Set the default value
 		---@param state? boolean ***Default:*** `false`
-		function _.setDefault(state) end
+		function _:setDefault(state) end
 
 		---Returns the current logical state of the widget
 		---@return boolean
-		function _.getValue() return false end
+		function _:getValue() return false end
 
 		---Verify and set the logical state of the widget to the provided state
 		---***
 		---@param state? boolean ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _.setValue(state, user, silent) end
+		function _:setValue(state, user, silent) end
 
 		---Flip the current logical state of the widget
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _.flip(user, silent) end
+		function _:flip(user, silent) end
 
 	return _
 end
@@ -3077,7 +3073,6 @@ end
 ---Create a Blizzard checkbox GUI frame with enhanced widget functionality
 ---@param t? checkbox_options Optional parameters
 ---@param binary? binary Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return checkbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCheckbox(t, binary)
 
@@ -3115,13 +3110,13 @@ function wt.CreateCheckbox(t, binary)
 			---@field handler checkbox_handler_loaded Handler function to register for call
 
 				---@alias checkbox_handler_loaded
-				---| fun(self: checkbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: checkbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class checkbox_listener_saved : indexedEventHandler
 			---@field handler checkbox_handler_saved Handler function to register for call
 
 				---@alias checkbox_handler_saved
-				---| fun(self: checkbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: checkbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class checkbox_listener_changed : indexedEventHandler
 			---@field handler checkbox_handler_changed Handler function to register for call
@@ -3192,7 +3187,6 @@ end
 ---Create a classic Blizzard checkbox GUI frame with enhanced widget functionality
 ---@param t? classicCheckbox_options Optional parameters
 ---@param binary? binary Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return classicCheckbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateClassicCheckbox(t, binary)
 
@@ -3214,13 +3208,13 @@ function wt.CreateClassicCheckbox(t, binary)
 			---@field handler classicCheckbox_handler_loaded Handler function to register for call
 
 				---@alias classicCheckbox_handler_loaded
-				---| fun(self: classicCheckbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: classicCheckbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class classicCheckbox_listener_saved : indexedEventHandler
 			---@field handler classicCheckbox_handler_saved Handler function to register for call
 
 				---@alias classicCheckbox_handler_saved
-				---| fun(self: classicCheckbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: classicCheckbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class classicCheckbox_listener_changed : indexedEventHandler
 			---@field handler classicCheckbox_handler_changed Handler function to register for call
@@ -3290,7 +3284,6 @@ end
 ---Create a classic Blizzard radio button GUI frame with enhanced widget functionality
 ---@param t? radiobutton_options Optional parameters
 ---@param binary? binary Reference to an already existing binary datamanager instance to turn into a radio button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return radiobutton|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateRadiobutton(t, binary)
 
@@ -3322,13 +3315,13 @@ function wt.CreateRadiobutton(t, binary)
 			---@field handler radiobutton_handler_loaded Handler function to register for call
 
 				---@alias radiobutton_handler_loaded
-				---| fun(self: radiobutton, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: radiobutton, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class radiobutton_listener_saved : indexedEventHandler
 			---@field handler radiobutton_handler_saved Handler function to register for call
 
 				---@alias radiobutton_handler_saved
-				---| fun(self: radiobutton, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: radiobutton, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class radiobutton_listener_changed : indexedEventHandler
 			---@field handler radiobutton_handler_changed Handler function to register for call
@@ -3398,7 +3391,6 @@ end
 ---Create a non-GUI selector datamanager widget (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return selector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSelector(t, datamanager)
 
@@ -3420,9 +3412,8 @@ function wt.CreateSelector(t, datamanager)
 	---@field listeners? selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun() Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selected`? integer</p>
-	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** `t.read()` or `t.default` if invalid or 1 if `t.clearable` is `false`
+	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or 1 if `t.clearable` is `false`
 	---@field default? integer Default value of the widget | ***Default:*** `1 or nil` *(no selection)* if `t.clearable` is `true`
-	t = { reader = reader, writer = writer, }
 
 		---@class selector_options_base
 		---@field clearable? boolean If `true`, the value of the selector input should be clearable and allowed to be set to nil | ***Default:*** `false`
@@ -3454,13 +3445,13 @@ function wt.CreateSelector(t, datamanager)
 			---@field handler selector_handler_loaded Handler function to register for call
 
 				---@alias selector_handler_loaded
-				---| fun(self: selector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: selector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class selector_listener_saved : indexedEventHandler
 			---@field handler selector_handler_saved Handler function to register for call
 
 				---@alias selector_handler_saved
-				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class selector_listener_changed : indexedEventHandler
 			---@field handler selector_handler_changed Handler function to register for call
@@ -3554,7 +3545,7 @@ function wt.CreateSelector(t, datamanager)
 		---***
 		---@param newItems (selectorItemData|binary|selectorBinary)[] Table containing subtables with data used to update the binary widgets, or already existing binary widgets
 		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
-		function _.updateItems(newItems, silent) end
+		function _:updateItems(newItems, silent) end
 
 		--[ Data ]
 
@@ -3562,43 +3553,43 @@ function wt.CreateSelector(t, datamanager)
 		---@param value any
 		---***
 		---@return integer|nil ***Default:*** *current value*
-		function _.verify(value) end
+		function _:verify(value) end
 
 		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
 		---***
 		---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(data, silent) end
+		function _:saveData(data, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return integer|nil
-		function _.getData() end
+		function _:getData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(data, handleChanges, silent) end
+		function _:setData(data, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return integer|nil default
-		function _.getDefault() end
+		function _:getDefault() end
 
 		---Set the default value
 		---@param index integer|nil | ***Default:*** *no change*
-		function _.setDefault(index) end
+		function _:setDefault(index) end
 
 		---Returns the index of the currently selected item or nil if there is no selection
 		---@return integer|nil index
-		function _.getValue() end
+		function _:getValue() end
 
 		---Verify and set the specified item as selected
 		---***
 		---@param index? integer ***Default:*** `nil` *(no selection)*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
-		function _.setValue(index, user, silent) end
+		function _:setValue(index, user, silent) end
 
 	return _
 end
@@ -3607,7 +3598,6 @@ end
 ---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelector_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a special selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return specialSelector specialSelector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSpecialSelector(itemset, t, datamanager)
 
@@ -3638,7 +3628,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	---@field listeners? specialSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: specialSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
-	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
 	---@field default? integer|specialSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
 	t = { reader = reader, writer = writer, }
 
@@ -3659,13 +3649,13 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 			---@field handler specialSelector_handler_loaded Handler function to register for call
 
 				---@alias specialSelector_handler_loaded
-				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class specialSelector_listener_saved : indexedEventHandler
 			---@field handler specialSelector_handler_saved Handler function to register for call
 
 				---@alias specialSelector_handler_saved
-				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class specialSelector_listener_changed : indexedEventHandler
 			---@field handler specialSelector_handler_changed Handler function to register for call
@@ -3777,7 +3767,6 @@ end
 ---Create a non-GUI multiselector datamanager widget (managing a set of binary datamanager child widgets) with boolean mask data management logic
 ---@param t? multiselector_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a multiselector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return multiselector multiselector Reference to the new multiselector widget, utility functions and more wrapped in a widget table
 function wt.CreateMultiselector(t, datamanager)
 
@@ -3800,7 +3789,7 @@ function wt.CreateMultiselector(t, datamanager)
 	---@field listeners? multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selections: boolean[] Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selections` boolean[] | ***Default:*** *no selected items: `false[]`*</p>
 	---@field saveData? fun(selections?: boolean[]) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selections`? boolean[] | ***Default:*** *no selected items: `false[]`*</p>
-	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.read()` or `t.default` if invalid
+	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? boolean[] Default value of the widget | ***Default:*** *no selected items: `false[]`*
 	t = { reader = reader, writer = writer, }
 
@@ -3822,13 +3811,13 @@ function wt.CreateMultiselector(t, datamanager)
 			---@field handler multiselector_handler_loaded Handler function to register for call
 
 				---@alias multiselector_handler_loaded
-				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class multiselector_listener_saved : indexedEventHandler
 			---@field handler multiselector_handler_saved Handler function to register for call
 
 				---@alias multiselector_handler_saved
-				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class multiselector_listener_changed : indexedEventHandler
 			---@field handler multiselector_handler_changed Handler function to register for call
@@ -3985,7 +3974,6 @@ end
 ---Create a radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
 ---@param t? radiogroup_options Optional parameters
 ---@param selector? CreateRadiogroup_param2 Reference to an already existing selector instance to turn into a radio selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return radiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateRadiogroup(t, selector)
 
@@ -4018,13 +4006,13 @@ function wt.CreateRadiogroup(t, selector)
 			---@field handler radiogroup_handler_loaded Handler function to register for call
 
 				---@alias radiogroup_handler_loaded
-				---| fun(self: radiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: radiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class radiogroup_listener_saved : indexedEventHandler
 			---@field handler radiogroup_handler_saved Handler function to register for call
 
 				---@alias radiogroup_handler_saved
-				---| fun(self: radiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: radiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class radiogroup_listener_changed : indexedEventHandler
 			---@field handler radiogroup_handler_changed Handler function to register for call
@@ -4122,7 +4110,6 @@ end
 ---Create a dropdown radio button selector GUI frame to pick one out of multiple options with enhanced widget functionality
 ---@param t? dropdownRadiogroup_options Optional parameters
 ---@param selector? selector Reference to an already existing selector instance to turn into a radio selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return dropdownRadiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
 function wt.CreateDropdownRadiogroup(t, selector)
 
@@ -4155,13 +4142,13 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			---@field handler dropdownRadiogroup_handler_loaded Handler function to register for call
 
 				---@alias dropdownRadiogroup_handler_loaded
-				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class dropdownRadiogroup_listener_saved : indexedEventHandler
 			---@field handler dropdownRadiogroup_handler_saved Handler function to register for call
 
 				---@alias dropdownRadiogroup_handler_saved
-				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class dropdownRadiogroup_listener_changed : indexedEventHandler
 			---@field handler dropdownRadiogroup_handler_changed Handler function to register for call
@@ -4267,7 +4254,6 @@ end
 --- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroup_options Optional parameters
 ---@param selector? specialSelector Reference to an already existing special selector widget to turn into a special selector frame instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
@@ -4294,13 +4280,13 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 			---@field handler specialRadiogroup_handler_loaded Handler function to register for call
 
 				---@alias specialRadiogroup_handler_loaded
-				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class specialRadiogroup_listener_saved : indexedEventHandler
 			---@field handler specialRadiogroup_handler_saved Handler function to register for call
 
 				---@alias specialRadiogroup_handler_saved
-				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class specialRadiogroup_listener_changed : indexedEventHandler
 			---@field handler specialRadiogroup_handler_changed Handler function to register for call
@@ -4368,7 +4354,6 @@ end
 ---Create a checkbox selector GUI frame to pick multiple options out of a list with enhanced widget functionality
 ---@param t? checkgroup_options Optional parameters
 ---@param selector? multiselector Reference to an already existing selector instance to turn into a multiple selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return checkgroup|multiselector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateCheckgroup(t, selector)
 
@@ -4396,13 +4381,13 @@ function wt.CreateCheckgroup(t, selector)
 			---@field handler checkgroup_handler_loaded Handler function to register for call
 
 				---@alias checkgroup_handler_loaded
-				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class checkgroup_listener_saved : indexedEventHandler
 			---@field handler checkgroup_handler_saved Handler function to register for call
 
 				---@alias checkgroup_handler_saved
-				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class checkgroup_listener_changed : indexedEventHandler
 			---@field handler checkgroup_handler_changed Handler function to register for call
@@ -4507,7 +4492,6 @@ end
 ---Create a non-GUI textual datamanager widget with string data management logic
 ---@param t? textual_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into textual instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return textual textual Reference to the new textual datamanager, utility functions and more wrapped in a widget table
 function wt.CreateTextual(t, datamanager)
 
@@ -4527,7 +4511,7 @@ function wt.CreateTextual(t, datamanager)
 	---@class textual_options : datamanager_options
 	---@field color? color Apply the specified color to all text in the editbox (overriding all font objects set in `t.font`)
 	---@field listeners? textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field value? string The starting text to be set during initialization | ***Default:*** `t.read()` or `t.default` if invalid
+	---@field value? string The starting text to be set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? string Default value of the widget | ***Default:*** `""`
 	t = { reader = reader, writer = writer, }
 
@@ -4542,13 +4526,13 @@ function wt.CreateTextual(t, datamanager)
 			---@field handler textual_handler_loaded Handler function to register for call
 
 				---@alias textual_handler_loaded
-				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class textual_listener_saved : indexedEventHandler
 			---@field handler textual_handler_saved Handler function to register for call
 
 				---@alias textual_handler_saved
-				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class textual_listener_changed : indexedEventHandler
 			---@field handler textual_handler_changed Handler function to register for call
@@ -4653,7 +4637,6 @@ end
 ---Create a default single-line Blizzard editbox GUI frame with enhanced widget functionality
 ---@param t? editbox_options Optional parameters
 ---@param textual? textual Reference to an already existing textual datamanager instance to turn into an editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return textualEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateEditbox(t, textual)
 
@@ -4699,13 +4682,13 @@ function wt.CreateEditbox(t, textual)
 			---@field handler editbox_handler_loaded Handler function to register for call
 
 				---@alias editbox_handler_loaded
-				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class editbox_listener_saved : indexedEventHandler
 			---@field handler editbox_handler_saved Handler function to register for call
 
 				---@alias editbox_handler_saved
-				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class editbox_listener_changed : indexedEventHandler
 			---@field handler editbox_handler_changed Handler function to register for call
@@ -4773,7 +4756,6 @@ end
 ---Create a single-line Blizzard editbox GUI frame with customizable UI elements and enhanced widget functionality
 ---@param t? customEditbox_options Optional parameters
 ---@param textual? textual Reference to an already existing textual datamanager instance to turn into a customizable editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return customEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomEditbox(t, textual)
 
@@ -4794,13 +4776,13 @@ function wt.CreateCustomEditbox(t, textual)
 			---@field handler customEditbox_handler_loaded Handler function to register for call
 
 				---@alias customEditbox_handler_loaded
-				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: textual, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class customEditbox_listener_saved : indexedEventHandler
 			---@field handler customEditbox_handler_saved Handler function to register for call
 
 				---@alias customEditbox_handler_saved
-				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: textual, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class customEditbox_listener_changed : indexedEventHandler
 			---@field handler customEditbox_handler_changed Handler function to register for call
@@ -4868,7 +4850,6 @@ end
 ---Create a default multiline Blizzard editbox GUI frame with enhanced widget functionality
 ---@param t? multilineEditbox_options Optional parameters
 ---@param textual? textual Reference to an already existing textual datamanager instance to turn into a multiline editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return multilineEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateMultilineEditbox(t, textual)
 
@@ -4893,13 +4874,13 @@ function wt.CreateMultilineEditbox(t, textual)
 			---@field handler multilineEditbox_handler_loaded Handler function to register for call
 
 				---@alias multilineEditbox_handler_loaded
-				---| fun(self: multilineEditbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: multilineEditbox, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class multilineEditbox_listener_saved : indexedEventHandler
 			---@field handler multilineEditbox_handler_saved Handler function to register for call
 
 				---@alias multilineEditbox_handler_saved
-				---| fun(self: multilineEditbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: multilineEditbox, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class multilineEditbox_listener_changed : indexedEventHandler
 			---@field handler multilineEditbox_handler_changed Handler function to register for call
@@ -4980,7 +4961,6 @@ end
 
 ---Create a custom button with a toggled textline & editbox from which text can be copied
 ---@param t? copybox_options Optional parameters
----***
 ---@return copybox copybox References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), its child widgets & their custom values, utility functions and more wrapped in a widget table
 function wt.CreateCopybox(t)
 
@@ -5040,7 +5020,6 @@ end
 ---Create a non-GUI numeric datamanager widget with number data management logic
 ---@param t? numeric_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into numeric instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return numeric numeric Reference to the new numeric widget, utility functions and more wrapped in a widget table
 function wt.CreateNumeric(t, datamanager)
 
@@ -5067,7 +5046,7 @@ function wt.CreateNumeric(t, datamanager)
 	---@field listeners? numeric_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: number|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` number|nil | ***Default:*** `t.min`<p>
 	---@field saveData? fun(value: number) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value` number</p>
-	---@field value? number The starting value of the widget to set during initialization | ***Default:*** `t.read()` or `t.default` if invalid
+	---@field value? number The starting value of the widget to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? number Default value of the widget | ***Default:*** `t.min`
 	t = { reader = reader, writer = writer, }
 
@@ -5084,13 +5063,13 @@ function wt.CreateNumeric(t, datamanager)
 			---@field handler numeric_handler_loaded Handler function to register for call
 
 				---@alias numeric_handler_loaded
-				---| fun(self: numeric, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: numeric, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class numeric_listener_saved : indexedEventHandler
 			---@field handler numeric_handler_saved Handler function to register for call
 
 				---@alias numeric_handler_saved
-				---| fun(self: numeric, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: numeric, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class numeric_listener_changed : indexedEventHandler
 			---@field handler numeric_handler_changed Handler function to register for call
@@ -5264,7 +5243,6 @@ end
 ---Create a Blizzard slider GUI frame with enhanced widget functionality
 ---@param t? slider_options Optional parameters
 ---@param numeric? numeric Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return numericSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateSlider(t, numeric)
 
@@ -5290,13 +5268,13 @@ function wt.CreateSlider(t, numeric)
 			---@field handler slider_handler_loaded Handler function to register for call
 
 				---@alias slider_handler_loaded
-				---| fun(self: slider, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: slider, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class slider_listener_saved : indexedEventHandler
 			---@field handler slider_handler_saved Handler function to register for call
 
 				---@alias slider_handler_saved
-				---| fun(self: slider, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: slider, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class slider_listener_changed : indexedEventHandler
 			---@field handler slider_handler_changed Handler function to register for call
@@ -5395,7 +5373,6 @@ end
 ---Create a classic Blizzard slider GUI frame with enhanced widget functionality
 ---@param t? classicSlider_options Optional parameters
 ---@param numeric? numeric Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return classicSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateClassicSlider(t, numeric)
 
@@ -5419,13 +5396,13 @@ function wt.CreateClassicSlider(t, numeric)
 			---@field handler classicSlider_handler_loaded Handler function to register for call
 
 				---@alias classicSlider_handler_loaded
-				---| fun(self: slider, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: slider, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class classicSlider_listener_saved : indexedEventHandler
 			---@field handler classicSlider_handler_saved Handler function to register for call
 
 				---@alias classicSlider_handler_saved
-				---| fun(self: slider, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: slider, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class classicSlider_listener_changed : indexedEventHandler
 			---@field handler classicSlider_handler_changed Handler function to register for call
@@ -5522,7 +5499,6 @@ end
 ---Create a non-GUI colormanager datamanager widget with color data management logic
 ---@param t? colormanager_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a colormanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return colormanager colormanager Reference to the new color pick manager widget, utility functions and more wrapped in a widget table
 function wt.CreateColormanager(t, datamanager)
 
@@ -5544,7 +5520,7 @@ function wt.CreateColormanager(t, datamanager)
 	---@field onCancel? function The function to be called when the color change is cancelled (after calling `t.onColorUpdate`)
 	---@field getData? fun(): color: color|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `color` colorData|nil | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`</p>
 	---@field saveData? fun(color: color) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `color` colorData</p>
-	---@field value? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** `t.read()` or `t.default` if invalid<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
+	---@field value? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
 	---@field default? color Default value of the widget | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 	t = { reader = reader, writer = writer, }
 
@@ -5559,13 +5535,13 @@ function wt.CreateColormanager(t, datamanager)
 			---@field handler colormanager_handler_loaded Handler function to register for call
 
 				---@alias colormanager_handler_loaded
-				---| fun(self: colormanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: colormanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class colormanager_listener_saved : indexedEventHandler
 			---@field handler colormanager_handler_saved Handler function to register for call
 
 				---@alias colormanager_handler_saved
-				---| fun(self: colormanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: colormanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class colormanager_listener_changed : indexedEventHandler
 			---@field handler colormanager_handler_changed Handler function to register for call
@@ -5679,7 +5655,6 @@ end
 ---Create a color picker GUI frame with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---@param t? colorpicker_options Optional parameters
 ---@param colormanager? colormanager Reference to an already existing color datamanager instance to turn into a colorpicker instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateColorpicker(t, colormanager)
 
@@ -5702,13 +5677,13 @@ function wt.CreateColorpicker(t, colormanager)
 			---@field handler colorpicker_handler_loaded Handler function to register for call
 
 				---@alias colorpicker_handler_loaded
-				---| fun(self: colorpicker, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.read()` and it was loaded to the widget</p>
+				---| fun(self: colorpicker, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class colorpicker_listener_saved : indexedEventHandler
 			---@field handler colorpicker_handler_saved Handler function to register for call
 
 				---@alias colorpicker_handler_saved
-				---| fun(self: colorpicker, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.write(...)`</p>
+				---| fun(self: colorpicker, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class colorpicker_listener_changed : indexedEventHandler
 			---@field handler colorpicker_handler_changed Handler function to register for call
@@ -5784,7 +5759,6 @@ end
 ---Create a non-GUI position datamanager widget with frame positioning data management logic
 ---@param t positionmanager_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a positionmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return positionmanager positionmanager Reference to the new positionmanager widget, utility functions and more wrapped in a widget table
 function wt.CreatePositionmanager(t, datamanager)
 
@@ -5820,10 +5794,9 @@ end
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
 ---@param frame AnyFrameObject Reference to the frame to create the settings for
 ---@param getData fun(): table: positionPresetData|table Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
----@param defaultData positionPresetData|table Reference to the table containing the default values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.read()*.</li></ul>
+---@param defaultData positionPresetData|table Reference to the table containing the default values<ul><li>***Note:*** The defaults table should contain values under matching keys to the values within *t.data.read()*.</li></ul>
 ---@param settingsData positionOptionsSettingsData|table Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from<ul><li>***Note:*** A boolean value will be created under the key `keepInPlace` if it didn't already exist in this table.</li></ul>
 ---@param t positionManagement_options Optional parameters
----***
 ---@return positionPanel? table Components of the settings panel wrapped in a table | ***Default:*** `nil`
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t)
 
@@ -5943,7 +5916,6 @@ end
 ---Create a non-GUI font datamanager widget with font customization data management logic
 ---@param t fontmanager_options Optional parameters
 ---@param datamanager? datamanager Reference to an already existing datamanager instance to turn into a fontmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return fontmanager fontmanager Reference to the new fontmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateFontmanager(t, datamanager)
 
@@ -5981,7 +5953,6 @@ end
 ---@param getData fun(): table: fontOptionsData Return a reference to the table within a SavedVariables(PerCharacter) addon database where data is committed to
 ---@param defaultData fontOptionsData Reference to the table containing the default values
 ---@param t fontManagement_options Optional parameters
----***
 ---@return fontPanel? table Components of the settings panel wrapped in a table | ***Default:*** `nil`
 function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 
@@ -6044,7 +6015,6 @@ end
 ---Create a non-GUI settingsmanager widget
 ---@param t settingsmanager_options Optional parameters
 ---@param widget? widget Reference to an already existing widget instance to turn into a settingsmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return settingsmanager settingsmanager Reference to the new settingsmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateSettingsmanager(t, widget)
 
@@ -6230,7 +6200,6 @@ end
 ---Create an new Settings Panel frame and add it to the Options
 ---@param t? settingsPage_options Optional parameters
 ---@param settingsmanager? settingsmanager Reference to an already existing settings datamanager instance to turn into a settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return settingsPage|nil page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(t, settingsmanager)
 
@@ -6397,7 +6366,6 @@ end
 ---@param parent settingsPage_options|settingsPage Settings page creation parameters to create, or reference to an existing *unregistered* settings page to set as the parent page for the new category<ul><li>***Note:*** If the provided parent candidate page is already registered (containing a `category` value), it will be dismissed and no new category will be created at all.</li></ul>
 ---@param pages? settingsPage_options[]|settingsPage[] List of settings page creation parameters to create, or references to an existing *unregistered* settings pages to add as subcategories under `parent`<ul><li>***Note:*** Already registered pages (which contain a `category` value) will be skipped and won't be included in the new category.</li></ul>
 ---@param t? settingsCategory_options Optional parameters
----***
 ---@return settingsCategory|nil category Table containing references to settings pages and utility functions or nil if the specified `parent` was invalid
 function wt.CreateSettingsCategory(addon, parent, pages, t)
 
@@ -6445,7 +6413,6 @@ end
 ---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanager_options Optional parameters
 ---@param widget? widget Reference to an already existing widget instance to turn into a profilemanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return profilemanager? profilemanager Reference to the new profilemanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t, widget)
 
@@ -6707,7 +6674,6 @@ end
 --- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPage_options Optional parameters
 ---@param profilemanager? profilemanager Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return profilemanager|profilesPage? profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
 
@@ -6889,7 +6855,6 @@ end
 ---Create a non-GUI addonmanager widget providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---@param t? addonmanager_options Optional parameters
 ---@param widget? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return addonmanager? addonmanager Reference to the new addonmanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
 function wt.CreateAddonmanager(t, widget)
 
@@ -7069,7 +7034,6 @@ end
 ---Create and set up a new settings page with about into for an addon
 ---@param t? aboutPage_options Optional parameters
 ---@param addonmanager CreateAddonPage_param_addonmanager Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----***
 ---@return addonPage|nil aboutPage Table containing references to the canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions | ***Default:*** `nil`
 function wt.CreateAddonPage(t, addonmanager)
 
@@ -7143,10 +7107,12 @@ end
 --[[ CHAT COMMANDS ]]
 
 ---Register a list of chat keywords and related commands for use
----@param keywords CreateChatmanager_param_keywords
+---@param keywords CreateChatmanager_param_keywords List of addon-specific keywords to register to listen to when typed as slash commands
+--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
 ---@param t? chatCommandManager_options Optional parameters
----@return CreateChatmanager_return_chatmanager chatmanager
-function wt.CreateChatmanager(keywords, t)
+---@param widget CreateChatmanager_param_widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
+function wt.CreateChatmanager(keywords, t, widget)
 
 	--| Parameters
 
@@ -7154,8 +7120,11 @@ function wt.CreateChatmanager(keywords, t)
 	--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
 	---@alias CreateChatmanager_param_keywords string[]
 
+	---Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+	---@alias CreateChatmanager_param_widget widget?
+
 	---Optional parameters
-	---@class chatCommandManager_options
+	---@class chatCommandManager_options : widget_options
 	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
 	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
 	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages

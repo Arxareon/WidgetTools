@@ -976,8 +976,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						text = rs.strings.lite.enable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.enable.accept,
 						onAccept = function()
-							liteToggle.setValue(true)
-							liteToggle.saveData(nil, silentSave)
+							liteToggle:setValue(true)
+							liteToggle:saveData(nil, silentSave)
 
 							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
@@ -986,8 +986,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						text = rs.strings.lite.disable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.disable.accept,
 						onAccept = function()
-							liteToggle.setValue(false)
-							liteToggle.saveData(nil, silentSave)
+							liteToggle:setValue(false)
+							liteToggle:saveData(nil, silentSave)
 
 							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
@@ -1014,7 +1014,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 								if state then StaticPopup_Show(enableLitePopup) else StaticPopup_Show(disableLitePopup) end
 
-								liteToggle.setValue(not state, false) --Wait for popup response
+								liteToggle:setValue(not state, false) --Wait for popup response
 							end }, },
 						},
 						events = { OnClick = function() silentSave = true end, },
@@ -1310,7 +1310,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											getData = function() return C_AddOns.GetAddOnEnableState(a) > 0 end,
 											saveData = function(state) toggleAddon(state) end,
 											instantSave = false,
-											listeners = { saved = { { handler = function(self) if not self.getValue() then wt.CreateReloadNotice() end end, }, }, },
+											listeners = { saved = { { handler = function(self) if not self:getValue() then wt.CreateReloadNotice() end end, }, }, },
 											events = { OnClick = function(_, state) toggleAddon(state) end, },
 											showDefault = false,
 											utilityMenu = false,
@@ -1487,13 +1487,13 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			{
 				command = rs.chat.commands.lite,
 				description = rs.strings.chat.lite.description,
-				handler = function() liteToggle.setValue(not WidgetToolsDB.lite, true) end,
+				handler = function() liteToggle:setValue(not WidgetToolsDB.lite, true) end,
 			},
 			{
 				command = rs.chat.commands.debug,
 				description = rs.strings.chat.debug.description,
 				handler = function()
-					debugToggle.setValue(not WidgetToolsDB.debugging, true)
+					debugToggle:setValue(not WidgetToolsDB.debugging, true)
 
 					wt.CreateReloadNotice()
 				end,
@@ -1512,7 +1512,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[[ ADDON COMPARTMENT ]]
 
 	wt.SetUpAddonCompartment(rs.addon, {
-		onClick = function() if WidgetToolsDB.lite then liteToggle.setValue(false, true) else wt.CreateContextMenu({
+		onClick = function() if WidgetToolsDB.lite then liteToggle:setValue(false, true) else wt.CreateContextMenu({
 			initialize = function(menu)
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {

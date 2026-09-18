@@ -2,6 +2,7 @@ local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "
 
 if not wt then return end
 
+local rs = WidgetTools.resources
 local us = WidgetTools.utilities
 local ds = WidgetTools.debugging
 
@@ -23,8 +24,8 @@ local widget_isIndependent ---@type table<widget, table<widget, boolean>>
 
 local widget_enabled ---@type table<widget, boolean>
 
-local invoke_enabled ---@type fun(self: widget, user: boolean)
-local handlers_enabled ---@type table<widget, widget_handler_enabled[]>
+local widget_invoke_enabled ---@type fun(self: widget, user: boolean)
+local widget_handlers_enabled ---@type table<widget, widget_handler_enabled[]>
 
 local widget_dependencies ---@type table<widget, dependencyType[]>
 local widget_dataDependency ---@type table<widget, table<dependencyType, true|function>>
@@ -176,28 +177,28 @@ local function buildWidget()
 
 		for i = 1, #children do if not widget_isIndependent[self][children[i]] then children[i]:setEnabled(state, true, false, user, silent) break end end
 
-		if not silent then invoke_enabled(self, user) end
+		if not silent then widget_invoke_enabled(self, user) end
 	end
 
 	--| Event
 
-	if not handlers_enabled then handlers_enabled = {} end
+	if not widget_handlers_enabled then widget_handlers_enabled = {} end
 
 	function widget:addListener_enabled(handler, callIndex)
 		if type(handler) ~= "function" then return end
 
-		local handlers = handlers_enabled[self]
+		local handlers = widget_handlers_enabled[self]
 
 		if not handlers then
 			handlers = {}
-			handlers_enabled[self] = handlers
+			widget_handlers_enabled[self] = handlers
 		end
 
 		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
-	if not invoke_enabled then invoke_enabled = function(self, user)
-		local handlers = handlers_enabled[self]
+	if not widget_invoke_enabled then widget_invoke_enabled = function(self, user)
+		local handlers = widget_handlers_enabled[self]
 
 		if not handlers then return end
 
@@ -548,10 +549,10 @@ end
 
 local action_base ---@type action
 
-local callAction ---@type table<action, fun(self: action, user?: boolean)>
+local action_call ---@type table<action, fun(self: action, user?: boolean)>
 
-local invoke_triggered ---@type fun(self: action, user: boolean)
-local handlers_triggered ---@type table<action, action_handler_triggered[]>
+local action_invoke_triggered ---@type fun(self: action, user: boolean)
+local action_handlers_triggered ---@type table<action, action_handler_triggered[]>
 
 local function buildAction()
 	local action = buildWidget() ---@cast action action
@@ -564,37 +565,37 @@ local function buildAction()
 
 	--[ Action ]
 
-	if not callAction then callAction = {} end
+	if not action_call then action_call = {} end
 
 	function action:trigger(user, silent)
-		local call = callAction[self]
+		local call = action_call[self]
 
 		if call and widget_enabled[action] then call(action, user) end
 
-		if not silent then invoke_triggered(self, user) end
+		if not silent then action_invoke_triggered(self, user) end
 	end
 
-	function action:setAction(call) if type(call) == "function" then callAction[self] = call end end
+	function action:setAction(call) if type(call) == "function" then action_call[self] = call end end
 
 	--| Event
 
-	if not handlers_triggered then handlers_triggered = {} end
+	if not action_handlers_triggered then action_handlers_triggered = {} end
 
 	function action:addListener_triggered(handler, callIndex)
 		if type(handler) ~= "function" then return end
 
-		local handlers = handlers_triggered[self]
+		local handlers = action_handlers_triggered[self]
 
 		if not handlers then
 			handlers = {}
-			handlers_triggered[self] = handlers
+			action_handlers_triggered[self] = handlers
 		end
 
 		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
-	if not invoke_triggered then invoke_triggered = function(self, user)
-		local handlers = handlers_triggered[self]
+	if not action_invoke_triggered then action_invoke_triggered = function(self, user)
+		local handlers = action_handlers_triggered[self]
 
 		if not handlers then return end
 
@@ -890,17 +891,14 @@ local data_snapshot ---@type table<datamanager, any>
 
 local datamanager_read ---@type table<datamanager, fun(): data: any>
 local datamanager_write ---@type table<datamanager, fun(data: any)>
-
 local datamanager_instantSave ---@type table<datamanager, boolean?>
 
-local invoke_loaded ---@type fun(self: datamanager, user: boolean)
-local handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
-
-local invoke_saved ---@type fun(self: datamanager, user: boolean)
-local handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
-
-local invoke_changed ---@type fun(self: datamanager, user: boolean)
-local handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
+local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
+local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
+local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
+local datamanager_handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
+local datamanager_handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
+local datamanager_handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
 
 local datamanagement
 
@@ -919,8 +917,8 @@ local function buildDatamanager()
 
 	if not data_value then data_value = {} end
 
-	function datamanager:verify(v) return us.Clone(v) end
-	function datamanager:format(v) return v == nil and us.ToString(data_value[self]) or us.ToString(v) end
+	function datamanager:verify(v) if v == nil then return us.Clone(data_value[self]) else return us.Clone(v) end end
+	function datamanager:format(v) if v == nil then return us.ToString(data_value[self]) else return us.ToString(v) end end
 
 	function datamanager:getValue() return data_value[self] end
 	function datamanager:setValue(newValue, user, silent)
@@ -935,49 +933,69 @@ local function buildDatamanager()
 			if datamanagement then wt.HandleWidgetChanges(datamanagement.index, datamanagement.category, datamanagement.key) end
 		end
 
-		if not silent then invoke_changed(self, user) end
+		if not silent then datamanager_invoke_changed(self, user) end
 	end
+
+	if not datamanager_invoke_changed then datamanager_invoke_changed = function(self, user)
+		local handlers = datamanager_handlers_changed[self]
+
+		if not handlers then return end
+
+		local value = data_value[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, value, user) end
+	end end
 
 	--| Storage
 
 	if not datamanager_read then datamanager_read = {} end
 	if not datamanager_write then datamanager_write = {} end
 
-	local defaultReader = function() return data_value[datamanager] end
-	local defaultWriter = function() return data_value[datamanager] end
-
-	datamanager_read[datamanager] = defaultReader
-
 	function datamanager:setReader(read)
-		datamanager_read[datamanager] = type(read) == "function" and read or defaultReader
+		datamanager_read[datamanager] = type(read) == "function" and read or nil
 
 		datamanager:load()
 	end
 	function datamanager:setWriter(write)
-		if type(write) == "function" then datamanager_write[datamanager] = write end
+		datamanager_write[datamanager] = type(write) == "function" and write or nil
 
 		datamanager:load()
 	end
 
 	function datamanager:load(handleChanges, silent)
-		datamanager:setValue(datamanager_read[datamanager](), handleChanges ~= false, silent)
+		local read = datamanager_read[datamanager]
 
-		if not silent then datamanager:invoke_loaded() end
+		if read then
+			datamanager:setValue(read(), handleChanges ~= false, silent)
+
+			if not silent then datamanager_invoke_loaded(self, true) end
+		elseif not silent then datamanager_invoke_loaded(self, false) end
 	end
 	function datamanager:save(data, silent)
-		datamanager_write[datamanager](datamanager:verify(data))
+		local write = datamanager_write[datamanager]
 
-		if not silent then datamanager:invoke_saved() end
+		if write then
+			write(datamanager:verify(data))
+
+			if not silent then datamanager_invoke_saved(self, true) end
+		elseif not silent then datamanager_invoke_saved(self, false) end
 	end
 
-	function datamanager:getData() return datamanager_read[datamanager]() end
+	function datamanager:getData()
+		local read = datamanager_read[datamanager]
+
+		if read then return read[datamanager]() end
+	end
 	function datamanager:setData(data, handleChanges, silent)
 		datamanager:save(data, silent)
 		datamanager:load(handleChanges, silent)
 	end
 
-	if not invoke_loaded then invoke_loaded= function(self, success)
-		local handlers = handlers_loaded[self]
+	function datamanager:setInstantSave(instantSave) datamanager_instantSave[datamanager] = instantSave ~= false and true or nil end
+
+	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
+		local handlers = datamanager_handlers_loaded[self]
 
 		if not handlers then return end
 
@@ -986,8 +1004,8 @@ local function buildDatamanager()
 		for i = 1, #handlers do handlers[i](self, success) end
 	end end
 
-	if not invoke_saved then invoke_saved = function(self, success)
-		local handlers = handlers_saved[self]
+	if not datamanager_invoke_saved then datamanager_invoke_saved = function(self, success)
+		local handlers = datamanager_handlers_saved[self]
 
 		if not handlers then return end
 
@@ -1003,17 +1021,6 @@ local function buildDatamanager()
 	function datamanager:getDefault() return data_default[self] end
 	function datamanager:setDefault(newDefault) data_default[self] = datamanager:verify(newDefault) end
 	function datamanager:reset(handleChanges, silent) datamanager:setData(data_default[self], handleChanges, silent) end
-
-	if not invoke_changed then invoke_changed = function(self, user)
-		local handlers = handlers_changed[self]
-
-		if not handlers then return end
-
-		local value = data_value[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, value, user) end
-	end end
 
 	--| Snapshot
 
@@ -1040,12 +1047,12 @@ function wt.CreateDatamanager(t, widget)
 
 	t = type(t) == "table" and t or {}
 
-	--| Storage
+	local data = type(t.data) == "table" and t.data or {}
 
-	datamanager:setReader(t.read)
-	datamanager:setWriter(t.write)
+	datamanager:setReader(data.read)
+	datamanager:setWriter(data.write)
 
-	if t.instantSave ~= false then datamanager_instantSave[datamanager] = true end
+	datamanager:setInstantSave(data.instantSave)
 
 	datamanager:setDefault(t.default)
 	datamanager:setValue(t.value)
@@ -1074,38 +1081,56 @@ end
 local binary_base ---@type binary
 
 local function buildBinary()
-	--TODO implement
-end
+	local binary = buildDatamanager() ---@cast binary binary
 
---[ Constructors ]
-
-function wt.CreateBinary(t, datamanager)
-	t = type(t) == "table" and t or {}
+	--[ Type ]
 
 	local typename = "Binary" ---@type typename_binary
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-	local binary = datamanager ---@cast binary binary
 
 	widget_types[binary][typename] = true
 
 	--[ Data ]
 
-	function binary.verify(value) return value == true end
-	function binary.format(state)
-		if type(state) ~= "boolean" then state = binary.getValue() end
+	--| Value
+
+	function binary:verify(value) return value == true end
+	function binary:format(state)
+		if type(state) ~= "boolean" then state = binary:getValue() end
 
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
-	function binary.flip(user, silent) binary.setValue(not binary.getValue(), user, silent) end
+	function binary:flip(user, silent) binary:setValue(not binary:getValue(), user, silent) end
 
-	binary.setDefault(t.default)
-	binary.setValue(t.value, false, true)
-	binary.snapshot()
+	return binary
+end
 
-	ds.Log(function() return "Datamanager instance mutated into Binary instance:" .. us.ToString(binary), wt.title .. ".CreateBinary" end)
+--[ Constructors ]
+
+function wt.CreateBinary(t, datamanager)
+	if not binary_base then binary_base = buildBinary() end
+
+	local typenameBase = "Datamanager" ---@type typename_datamanager
+
+	local binary = setmetatable(wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t), binary_base) ---@cast binary binary
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
+
+	local data = type(t.data) == "table" and t.data or {}
+
+	binary:setReader(data.read)
+	binary:setWriter(data.write)
+
+	binary:setDefault(t.default)
+	binary:setValue(t.value)
+	binary:snapshot()
+
+	ds.Log(function() return
+		"Datamanager instance mutated into Binary instance:" .. us.ToString(binary) .. " with base: " .. us.ToString(binary_base),
+		wt.title .. ".CreateBinary"
+	end)
 
 	return binary
 end
@@ -1639,16 +1664,19 @@ local itemsets = {
 	}
 }
 
---[ Constructors ]
+local selector_base ---@type selector
 
-function wt.CreateSelector(t, datamanager)
-	t = type(t) == "table" and t or {}
+local selector_items ---@type table<selector, (binary|selectorBinary|selectorItemData)[]>
 
-	local typenameBase = "Datamanager" ---@type typename_datamanager
+local selector_invoke_updated ---@type fun(self: selector)
+local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
+local selector_invoke_added ---@type fun(item: selectorBinary)
+local selector_handlers_updated ---@type table<selector, function[]>
+local selector_handlers_activated ---@type table<selector, function[]>
+local selector_handlers_added ---@type table<selector, function[]>
 
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-
-	local selector = datamanager ---@cast selector selector
+local function buildSelector()
+	local selector = buildDatamanager() ---@cast selector selector
 
 	--[ Type ]
 
@@ -1660,13 +1688,13 @@ function wt.CreateSelector(t, datamanager)
 
 	local typenameItem = "Binary" ---@type typename_binary
 
-	local items = t.items or {}
+	if not selector_items then selector_items = {} end
+
 	local inactive = {} ---@type selectorBinary[]
 
 	selector.items = {}
 
 	---Register, update or set up a new binary widget item
-	---***
 	---@param index integer
 	---@param silent? boolean ***Default:*** `false`
 	local function setItem(index, silent)
@@ -1692,69 +1720,102 @@ function wt.CreateSelector(t, datamanager)
 		item.addEvent("activated")
 		selector.items[index] = item
 
-		if new and not silent then selector.invoke.added(selector.items[index]) end
+		if new and not silent then selector_invoke_added(selector.items[index]) end
 	end
 
-	function selector.updateItems(newItems, silent)
+	function selector:updateItems(newItems, silent)
 		items = newItems
 
 		--Update the binary widgets
 		for i = 1, #newItems do
 			setItem(i, silent)
 
-			if not silent then selector.items[i].invoke.activated(true) end
+			if not silent then selector_invoke_activated(selector.items[i], true) end
 		end
 
 		--Deactivate extra binary widgets
 		while #newItems < #selector.items do
 			selector.items[#selector.items].setValue(false)
 
-			if not silent then selector.items[#selector.items].invoke.activated(false) end
+			if not silent then selector_invoke_activated(selector.items[#selector.items], false) end
 
 			table.insert(inactive, selector.items[#selector.items])
 			table.remove(selector.items, #selector.items)
 		end
 
-		if not silent then selector.invoke.updated() end
+		if not silent then selector_invoke_updated(self) end
 
-		selector.setValue(selector.getValue(), nil, silent)
+		selector.setValue(data_value[selector], nil, silent)
 	end
 
 	--Create events
 	selector.addEvent("updated")
 	selector.addEvent("added")
 
-	--Register starting items
-	for i = 1, #items do setItem(i) end
-
 	--[ Data ]
 
 	local clearable = t.clearable
 
-	function selector.verify(value)
+	--| Value
+
+	function selector:verify(value)
 		value = type(value) == "number" and Clamp(math.floor(value), 1, #items) or nil
 
 		return value and value or not clearable and value or nil
 	end
+	function selector:format(state)
+		if type(state) ~= "boolean" then state = selector:getValue() end
 
-	selector.setDefault(t.default)
-	selector.setValue(t.value, false, true)
-	selector.snapshot()
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
+	end
 
-	function selector.setValue(index, user, silent)
-		data_value[self] = selector.verify(index)
+	function selector:setValue(index, user, silent)
+		data_value[self] = selector:verify(index)
 
 		for i = 1, #selector.items do selector.items[i].setValue(i == data_value[self], user, silent) end
 
 		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
 
-		if not silent then selector.invoke.changed(user == true) end
+		if not silent then datamanager_invoke_changed(self, user == true) end
 
 		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
 	end
 
-	--Set starting value
-	selector.setValue(data_value[self], false, true)
+	return selector
+end
+
+--[ Constructors ]
+
+function wt.CreateSelector(t, datamanager)
+	if not selector_base then selector_base = buildSelector() end
+
+	local typenameBase = "Datamanager" ---@type typename_datamanager
+
+	local selector = setmetatable(wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t), selector_base) ---@cast selector selector
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
+
+	--[ Items ]
+
+	selector:updateItems(t.items)
+
+	--[ Data ]
+
+	local data = type(t.data) == "table" and t.data or {}
+
+	selector:setReader(data.read)
+	selector:setWriter(data.write)
+
+	selector:setDefault(t.default)
+	selector:setValue(t.value)
+	selector:snapshot()
+
+	ds.Log(function() return
+		"Datamanager instance mutated into Selector instance:" .. us.ToString(selector) .. " with base: " .. us.ToString(selector_base),
+		wt.title .. ".CreateSelector"
+	end)
 
 	return selector
 end
@@ -4108,7 +4169,6 @@ function wt.CreateSlider(t, numeric)
 	local scriptEvent = false
 
 	---Update the widget UI based on the number value
-	---***
 	---@param _ any
 	---@param number number
 	---@param user? boolean ***Default:*** `false`
@@ -4554,7 +4614,6 @@ function wt.CreateClassicSlider(t, numeric)
 	local scriptEvent = false
 
 	---Update the widget UI based on the number value
-	---***
 	---@param _ any
 	---@param number number
 	---@param user? boolean ***Default:*** `false`
@@ -6418,7 +6477,6 @@ local function buildProfilemanager()
 	end
 
 	---Find an unused profile name to be able to use it as an identifying display title
-	---***
 	---@param name? string ***Default:*** `"Profile"`
 	---@param number? integer ***Default:*** `2`
 	---@param skipFirst? boolean ***Default:*** `false`
@@ -7699,7 +7757,7 @@ local function buildChatmanager()
 			keyword = wt.strings.chat.welcome.keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
 		end
 
-		print(cr(logo .. wt.strings.chat.welcome.thanks:gsub("#ADDON", cr(addonTitle, colors.title)), colors.content))
+		print(cr(icon .. wt.strings.chat.welcome.thanks:gsub("#ADDON", cr(addonTitle, colors.title)), colors.content))
 		print(cr(wt.strings.chat.welcome.hint:gsub("#KEYWORD", keyword), colors.description))
 
 		if chatmanager_onWelcome[chatmanager] then chatmanager_onWelcome[chatmanager]() end
@@ -7712,7 +7770,7 @@ local function buildChatmanager()
 		local keywords = chatmanager_keywords[chatmanager]
 		local colors = chatmanager_colors[chatmanager]
 
-		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(logo .. addonTitle, colors.title)), colors.content))
+		print(cr(wt.strings.chat.help.list:gsub("#ADDON", cr(icon .. addonTitle, colors.title)), colors.content))
 
 		for i = 1, #commands do
 			if not commands[i].hidden then
@@ -7777,15 +7835,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 	t = type(t) == "table" and t or {}
 
-	local addon_type = type(addon)
-
-	if (addon_type ~= "string" or addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) or type(keywords) ~= "table" then return nil end
-
-	local addonTitle = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-	local logo = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-	logo = logo and (wt.Texture(logo, 11, 11) .. " ") or ""
-
-	local branding = logo .. addonTitle .. ": "
+	--| Color palette
 
 	t.colors = t.colors or {}
 
@@ -7800,25 +7850,48 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
 
-	addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+	--| Addon branding
 
-	--Register the keywords
-	for i = 1, #keywords do
-		keywords[i] = "/" .. keywords[i]
-		_G["SLASH_" .. addon .. i] = keywords[i]
+	local addon, title, icon
+
+	if wt.IsWidget(t.addon, "Addonmanager") then
+		addon = t.addon:getName()
+		title = t.addon:getTitle()
+		icon = t.addon:getLogo()
+	else
+		local addon_type = type(addon)
+
+		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
+			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+		end
 	end
 
-	local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+	icon = icon and (wt.Texture(icon, 11, 11) .. " ") or ""
+	local branding = icon .. title .. ": "
 
-	--Set global keyword handler
-	SlashCmdList[addon] = function(line)
-		local payload = { strsplit(" ", line) }
-		local command = payload[1]
+	--| Keywords
 
-		if not chatmanager:trigger(command, unpack(payload, 2)) then
-			if defaultHandler then defaultHandler(chatmanager, command, unpack(payload, 2)) end
+	if type(keywords) == "table" then
+		--Register the keywords
+		for i = 1, #keywords do
+			keywords[i] = "/" .. keywords[i]
+			_G["SLASH_" .. addon .. i] = keywords[i]
+		end
 
-			chatmanager:help()
+		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+
+		--Set global keyword handler
+		SlashCmdList[addon] = function(line)
+			local payload = { strsplit(" ", line) }
+			local command = payload[1]
+
+			if not chatmanager:trigger(command, unpack(payload, 2)) then
+				if defaultHandler then defaultHandler(chatmanager, command, unpack(payload, 2)) end
+
+				chatmanager:help()
+			end
 		end
 	end
 
