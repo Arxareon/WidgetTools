@@ -893,14 +893,14 @@ local datamanager_read ---@type table<datamanager, fun(): data: any>
 local datamanager_write ---@type table<datamanager, fun(data: any)>
 local datamanager_instantSave ---@type table<datamanager, boolean?>
 
+local datamanagement ---@type table<datamanager, settingsData>
+
 local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
 local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
 local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
 local datamanager_handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
 local datamanager_handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
 local datamanager_handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
-
-local datamanagement
 
 local function buildDatamanager()
 	local datamanager = buildWidget() ---@cast datamanager datamanager
@@ -912,6 +912,8 @@ local function buildDatamanager()
 	widget_types[datamanager][typename] = true
 
 	--[ Data ]
+
+	if not datamanagement then datamanagement = {} end
 
 	--| Value
 
@@ -930,7 +932,9 @@ local function buildDatamanager()
 		if user then
 			if datamanager_instantSave[self] then datamanager:save(nil, silent) end
 
-			if datamanagement then wt.HandleWidgetChanges(datamanagement.index, datamanagement.category, datamanagement.key) end
+			local management = datamanagement[datamanager]
+
+			if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 		end
 
 		if not silent then datamanager_invoke_changed(self, user) end
@@ -1060,11 +1064,8 @@ function wt.CreateDatamanager(t, widget)
 
 	--| Datamanagement
 
-	if not datamanagement then datamanagement = {} end
-
 	datamanagement[datamanager] = t.dataManagement or nil
 
-	--Register for datamanagement
 	if datamanagement[datamanager] then wt.AddSettingsDataManagementEntry(datamanager, datamanagement[datamanager]) end --TODO update
 
 	ds.Log(function() return
@@ -1666,14 +1667,14 @@ local itemsets = {
 
 local selector_base ---@type selector
 
-local selector_items ---@type table<selector, (binary|selectorBinary|selectorItemData)[]>
+local selector_clearable ---@type table<selector, boolean>
 
 local selector_invoke_updated ---@type fun(self: selector)
 local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
-local selector_invoke_added ---@type fun(item: selectorBinary)
-local selector_handlers_updated ---@type table<selector, function[]>
+local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
+local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
 local selector_handlers_activated ---@type table<selector, function[]>
-local selector_handlers_added ---@type table<selector, function[]>
+local selector_handlers_added ---@type table<selector, selector_handler_added[]>
 
 local function buildSelector()
 	local selector = buildDatamanager() ---@cast selector selector
@@ -1686,60 +1687,51 @@ local function buildSelector()
 
 	--[ Items ]
 
+	selector.items = {}
+	local inactive = {} ---@type selectorBinary[]
 	local typenameItem = "Binary" ---@type typename_binary
 
-	if not selector_items then selector_items = {} end
+	function selector:updateItems(items, silent)
+		--Update the items
+		for i = 1, #items do
+			local item = items[i]
+			local new = true
 
-	local inactive = {} ---@type selectorBinary[]
+			if wt.IsWidget(items[i], typenameItem) then item:setParent(selector)
+			elseif i > #selector.items then
+				if #inactive > 0 then
+					item = inactive[#inactive]
+					table.remove(inactive, #inactive)
 
-	selector.items = {}
+					new = false
+				else item = wt.CreateBinary({
+					parent = selector,
+					listeners = { changed = { { handler = function (_, state, user)
+						if state and user and type(items[item.index].onSelect) == "function" then items[item.index].onSelect() end
+					end, }, }, },
+				}) end
+			end
 
-	---Register, update or set up a new binary widget item
-	---@param index integer
-	---@param silent? boolean ***Default:*** `false`
-	local function setItem(index, silent)
-		local item = items[index]
-		local new = true
+			item.index = i
+			selector.items[i] = item
 
-		if wt.IsWidget(items[index], typenameItem) then item.setParent(selector)
-		elseif index > #selector.items then
-			if #inactive > 0 then
-				item = inactive[#inactive]
-				table.remove(inactive, #inactive)
+			item:addEvent("activated")
 
-				new = false
-			else item = wt.CreateBinary({
-				parent = selector,
-				listeners = { changed = { { handler = function (_, state, user)
-					if state and user and type(items[item.index].onSelect) == "function" then items[item.index].onSelect() end
-				end, }, }, },
-			}) end
+			if not silent then
+				if new then selector_invoke_added(self, selector.items[i]) end
+				selector.items[i]:invoke("activated", true)
+			end
 		end
 
-		item.index = index
-		item.addEvent("activated")
-		selector.items[index] = item
+		--Deactivate extra items
+		while #items < #selector.items do
+			local item = selector.items[#selector.items]
 
-		if new and not silent then selector_invoke_added(selector.items[index]) end
-	end
+			item:setValue(false)
 
-	function selector:updateItems(newItems, silent)
-		items = newItems
+			if not silent then item:invoke("activated", false) end
 
-		--Update the binary widgets
-		for i = 1, #newItems do
-			setItem(i, silent)
-
-			if not silent then selector_invoke_activated(selector.items[i], true) end
-		end
-
-		--Deactivate extra binary widgets
-		while #newItems < #selector.items do
-			selector.items[#selector.items].setValue(false)
-
-			if not silent then selector_invoke_activated(selector.items[#selector.items], false) end
-
-			table.insert(inactive, selector.items[#selector.items])
+			table.insert(inactive, item)
 			table.remove(selector.items, #selector.items)
 		end
 
@@ -1748,20 +1740,32 @@ local function buildSelector()
 		selector.setValue(data_value[selector], nil, silent)
 	end
 
-	--Create events
-	selector.addEvent("updated")
-	selector.addEvent("added")
+	if not selector_invoke_updated then selector_invoke_updated = function(self)
+		local handlers = selector_handlers_updated[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self) end
+	end end
+
+	if not selector_invoke_added then selector_invoke_added = function(self, item)
+		local handlers = selector_handlers_added[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, item) end
+	end end
 
 	--[ Data ]
 
-	local clearable = t.clearable
+	if not selector_clearable then selector_clearable = {} end
 
 	--| Value
 
 	function selector:verify(value)
-		value = type(value) == "number" and Clamp(math.floor(value), 1, #items) or nil
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
 
-		return value and value or not clearable and value or nil
+		return value and value or not selector_clearable[selector] and value or nil
 	end
 	function selector:format(state)
 		if type(state) ~= "boolean" then state = selector:getValue() end
@@ -1772,13 +1776,15 @@ local function buildSelector()
 	function selector:setValue(index, user, silent)
 		data_value[self] = selector:verify(index)
 
-		for i = 1, #selector.items do selector.items[i].setValue(i == data_value[self], user, silent) end
+		for i = 1, #selector.items do selector.items[i]:setValue(i == data_value[self], user, silent) end
 
-		if user and t.instantSave ~= false then selector.saveData(nil, silent) end
+		if user and datamanager_instantSave[selector] ~= false then selector:saveData(nil, silent) end
 
 		if not silent then datamanager_invoke_changed(self, user == true) end
 
-		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
+		local management = datamanagement[selector]
+
+		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 	end
 
 	return selector
@@ -1797,11 +1803,7 @@ function wt.CreateSelector(t, datamanager)
 
 	t = type(t) == "table" and t or {}
 
-	--[ Items ]
-
 	selector:updateItems(t.items)
-
-	--[ Data ]
 
 	local data = type(t.data) == "table" and t.data or {}
 
@@ -1811,6 +1813,8 @@ function wt.CreateSelector(t, datamanager)
 	selector:setDefault(t.default)
 	selector:setValue(t.value)
 	selector:snapshot()
+
+	selector_clearable[selector] = t.clearable
 
 	ds.Log(function() return
 		"Datamanager instance mutated into Selector instance:" .. us.ToString(selector) .. " with base: " .. us.ToString(selector_base),
@@ -3123,20 +3127,34 @@ end
 
 --[[ TEXT ]]
 
+local textual_base ---@type textual
 
+local function buildTextual()
+	local textual = buildDatamanager() ---@cast textual textual
+
+	--[ Type ]
+
+	local typename = "Textual" ---@type typename_textual
+
+	widget_types[textual][typename] = true
+
+	--[ Data ]
+
+	--| Value
+
+
+end
 
 --[ Constructors ]
 
 function wt.CreateTextual(t, datamanager)
 	t = type(t) == "table" and t or {}
 
-	local typename = "Textual" ---@type typename_textual
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
 	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 	local textual = datamanager ---@cast textual textual
 
-	widget_types[textual][typename] = true
 
 	--[ Data ]
 
