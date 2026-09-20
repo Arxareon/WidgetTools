@@ -5169,80 +5169,80 @@ function wt.CreateNumeric(t, datamanager)
 		---***
 		---@param number? number Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(number, silent) end
+		function _:saveData(number, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return number|nil
-		function _.getData() end
+		function _:getData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param number? number Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(number, handleChanges, silent) end
+		function _:setData(number, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return number default
-		function _.getDefault() return 0 end
+		function _:getDefault() return 0 end
 
 		---Set the default value
 		---@param number number | ***Default:*** *no change*
-		function _.setDefault(number) end
+		function _:setDefault(number) end
 
 		---Returns the current value of the widget
 		---@return number
-		function _.getValue() return 0 end
+		function _:getValue() return 0 end
 
 		---Set the value of the widget
 		---***
 		---@param number? number A valid number value within the specified `t.min`, `t.max` range | ***Default:*** `t.min`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.setValue(number, user, silent) end
+		function _:setValue(number, user, silent) end
 
 		---Decrease the value of the widget by the specified step or alt step amount
 		---@param alt? boolean If `true`, use alt step instead of step to decrease the value by | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _.decrease(alt, user, silent) end
+		function _:decrease(alt, user, silent) end
 
 		---Increase the value of the widget by the specified step or alt step amount
 		---@param alt? boolean If `true`, use alt step instead of step to increase the value by | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _.increase(alt, user, silent) end
+		function _:increase(alt, user, silent) end
 
 		--| Value limits
 
 		---Return the current lower value limit of the widget
 		---@return number
-		function _.getMin() return 0 end
+		function _:getMin() return 0 end
 
 		---Set the lower value limit of the widget
 		---***
 		---@param number number Updates the lower limit value | ***Range:*** (`any`, `numeric.getMax()`) *capped automatically*
 		---@param silent? boolean If `false`, invoke a "min" event and call registered listeners | ***Default:*** `false`
-		function _.setMin(number, silent) end
+		function _:setMin(number, silent) end
 
 		---Return the current upper value limit of the widget
 		---@return number
-		function _.getMax() return 0 end
+		function _:getMax() return 0 end
 
 		---Set the upper value limit of the widget
 		---***
 		---@param number number Updates the upper limit value | ***Range:*** (`numeric.getMin()`, `any`) *floored automatically*
 		---@param silent? boolean If `false`, invoke a "max" event and call registered listeners | ***Default:*** `false`
-		function _.setMax(number, silent) end
+		function _:setMax(number, silent) end
 
 		--| Value step
 
 		---Return the current value step of the widget
 		---@return number
-		function _.getStep() return 0 end
+		function _:getStep() return 0 end
 
 		---Return the current alternative value step of the widget
 		---@return number|nil
-		function _.getAltStep() end
+		function _:getAltStep() end
 
 	return _
 end

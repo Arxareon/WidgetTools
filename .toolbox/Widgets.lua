@@ -56,8 +56,8 @@ local function buildWidget()
 
 	widget_types[widget] = { [typename] = true }
 
-	function widget:getTypes() return us.Clone(widget_types[widget]) end
-	function widget:isType(s) return widget_types[widget][s] or false end
+	function widget:getTypes() return us.Clone(widget_types[self]) end
+	function widget:isType(s) return widget_types[self][s] or false end
 
 	--[ Meta ]
 
@@ -570,7 +570,7 @@ local function buildAction()
 	function action:trigger(user, silent)
 		local call = action_call[self]
 
-		if call and widget_enabled[action] then call(action, user) end
+		if call and widget_enabled[self] then call(action, user) end
 
 		if not silent then action_invoke_triggered(self, user) end
 	end
@@ -926,13 +926,13 @@ local function buildDatamanager()
 	function datamanager:setValue(value, user, silent)
 		data_value[self] = datamanager:verify(value)
 
-		if data_value[self] == nil and datamanager_read[datamanager] then data_value[self] = datamanager_read[datamanager]() end
+		if data_value[self] == nil and datamanager_read[self] then data_value[self] = datamanager_read[self]() end
 		if data_value[self] == nil then data_value[self] = data_default[self] end
 
 		if user then
 			if datamanager_instantSave[self] then datamanager:save(silent) end
 
-			local management = datamanagement[datamanager]
+			local management = datamanagement[self]
 
 			if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 		end
@@ -957,18 +957,18 @@ local function buildDatamanager()
 	if not datamanager_write then datamanager_write = {} end
 
 	function datamanager:setReader(read)
-		datamanager_read[datamanager] = type(read) == "function" and read or nil
+		datamanager_read[self] = type(read) == "function" and read or nil
 
 		datamanager:load()
 	end
 	function datamanager:setWriter(write)
-		datamanager_write[datamanager] = type(write) == "function" and write or nil
+		datamanager_write[self] = type(write) == "function" and write or nil
 
 		datamanager:load()
 	end
 
 	function datamanager:load(handleChanges, silent)
-		local read = datamanager_read[datamanager]
+		local read = datamanager_read[self]
 
 		if read then
 			datamanager:setValue(read(), handleChanges ~= false, silent)
@@ -977,7 +977,7 @@ local function buildDatamanager()
 		elseif not silent then datamanager_invoke_loaded(self, false) end
 	end
 	function datamanager:save(silent)
-		local write = datamanager_write[datamanager]
+		local write = datamanager_write[self]
 
 		if write then
 			write(data_value[self])
@@ -987,12 +987,12 @@ local function buildDatamanager()
 	end
 
 	function datamanager:getData()
-		local read = datamanager_read[datamanager]
+		local read = datamanager_read[self]
 
-		if read then return read[datamanager]() end
+		if read then return read[self]() end
 	end
 	function datamanager:setData(data, handleChanges, silent)
-		local write = datamanager_write[datamanager]
+		local write = datamanager_write[self]
 
 		if write then
 			write(datamanager:verify(data))
@@ -1003,7 +1003,7 @@ local function buildDatamanager()
 		datamanager:load(handleChanges, silent)
 	end
 
-	function datamanager:setInstantSave(instantSave) datamanager_instantSave[datamanager] = instantSave ~= false and true or nil end
+	function datamanager:setInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
 
 	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
 		local handlers = datamanager_handlers_loaded[self]
@@ -1098,8 +1098,6 @@ local function buildBinary()
 	widget_types[binary][typename] = true
 
 	--[ Data ]
-
-	--| Value
 
 	function binary:verify(value) return value == true end
 	function binary:format(state)
@@ -1237,7 +1235,7 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 	---@param state boolean
 	local function updateBinaryState(_, state) template:SetChecked(state) end
 
-	updateBinaryState(nil, checkbox.getValue())
+	updateBinaryState(nil, data_value[checkbox])
 
 	checkbox:addListener_changed(updateBinaryState, 1)
 
@@ -1248,7 +1246,7 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 
 		PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 
-		checkbox.setValue(state, true)
+		checkbox:setValue(state, true)
 	end)
 
 	--| Link mouse interactions
@@ -1287,7 +1285,7 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 			},
 		}, { triggers = { frame, }, })
 
-		wt.AddWidgetTooltipLines({ template }, t.showDefault ~= false and checkbox.format(checkbox.getDefault()), t.utilityMenu)
+		wt.AddWidgetTooltipLines({ template }, t.showDefault ~= false and checkbox:format(data_default[checkbox]), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -1305,10 +1303,10 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = checkbox.getValue() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = checkbox:getValue() end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() checkbox.setValue(wt.clipboard.binary, true) end
+				action = function() checkbox:setValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox:revert() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox:reset() end }) end
@@ -1382,7 +1380,7 @@ local function setUpClassicToggle(binary, template, frame, title, t)
 	---@param state boolean
 	local function updateBinaryState(_, state) template:SetChecked(state) end
 
-	updateBinaryState(nil, binary.getValue())
+	updateBinaryState(nil, data_value[binary])
 
 	binary:addListener_changed(updateBinaryState, 1)
 
@@ -1744,7 +1742,7 @@ local function buildSelector()
 
 		if not silent then selector_invoke_updated(self) end
 
-		selector.setValue(data_value[selector], nil, silent)
+		selector.setValue(data_value[self], nil, silent)
 	end
 
 	if not selector_invoke_updated then selector_invoke_updated = function(self)
@@ -1772,7 +1770,7 @@ local function buildSelector()
 	function selector:verify(value)
 		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
 
-		return value and value or not selector_clearable[selector] and value or nil
+		return value and value or not selector_clearable[self] and value or nil
 	end
 	function selector:format(state)
 		if type(state) ~= "boolean" then state = selector:getValue() end
@@ -1785,11 +1783,11 @@ local function buildSelector()
 
 		for i = 1, #selector.items do selector.items[i]:setValue(i == data_value[self], user, silent) end
 
-		if user and datamanager_instantSave[selector] ~= false then selector:saveData(nil, silent) end
+		if user and datamanager_instantSave[self] ~= false then selector:saveData(nil, silent) end
 
 		if not silent then datamanager_invoke_changed(self, user == true) end
 
-		local management = datamanagement[selector]
+		local management = datamanagement[self]
 
 		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 	end
@@ -3149,12 +3147,10 @@ local function buildTextual()
 
 	--[ Data ]
 
-	--| Value
-
 	function textual:verify(value) return type(value) == "string" and value or "" end
 	function textual:format(value)
-		value = value and textual:verify(value) or data_value[textual]
-		local color = textual_color[textual]
+		value = value and textual:verify(value) or data_value[self]
+		local color = textual_color[self]
 
 		return color and cr(value, color) or value
 	end
@@ -3843,20 +3839,76 @@ end
 
 --[[ NUMERIC ]]
 
+local numeric_base ---@type numeric
 
+local numeric_hardStep ---@type table<numeric, boolean>
+local numeric_limitMin ---@type table<numeric, number>
+local numeric_limitMax ---@type table<numeric, number>
+local numeric_step ---@type table<numeric, number>
+local numeric_altStep ---@type table<numeric, number>
+
+local function buildNumeric()
+	local numeric = buildDatamanager() ---@cast numeric numeric
+
+	--[ Type ]
+
+	local typename = "Numeric" ---@type typename_numeric
+
+	widget_types[numeric][typename] = true
+
+	--[ Data ]
+
+	--| Value
+
+	function numeric:verify(value)
+		if type(value) ~= "number" then return data_default[self] end
+
+		local limitMin = numeric_limitMin[self]
+		local step = numeric_step[self]
+
+		if numeric_hardStep[self] then value = limitMin + floor((value - limitMin) / step + 0.5) * step end
+
+		return Clamp(value, limitMin, numeric_limitMax[self])
+	end
+	function numeric:format(value) return crc(tostring(value), "FFDDDD55") end
+
+	function numeric:decrease(alt, user, silent) self:setValue(data_value[self] - (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
+	function numeric:increase(alt, user, silent) self:setValue(data_value[self] + (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
+
+	--| Value limits
+
+	function numeric:getMin() return numeric_limitMin[self] end
+	function numeric:setMin(number, silent)
+		numeric_limitMin[self] = min(number, numeric_limitMax[self])
+
+		if not silent then numeric_invoke_min() end
+	end
+
+	function numeric:getMax() return numeric_limitMax[self] end
+	function numeric:setMax(number, silent)
+		numeric_limitMax[self] = max(numeric_limitMin[self], number)
+
+		if not silent then numeric_invoke_max() end
+	end
+
+	--| Value step
+
+	function numeric:getStep() return numeric_step[self] end
+	function numeric:getAltStep() return numeric_altStep[self] end
+
+	return numeric
+end
 
 --[ Constructors ]
 
 function wt.CreateNumeric(t, datamanager)
 	t = type(t) == "table" and t or {}
 
-	local typename = "Numeric" ---@type typename_numeric
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
 	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 	local numeric = datamanager ---@cast numeric numeric
 
-	widget_types[numeric][typename] = true
 
 	--[ Data ]
 
@@ -3883,82 +3935,13 @@ function wt.CreateNumeric(t, datamanager)
 	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
 	local snapshot = value
 
-	function numeric.load(handleChanges, silent)
-		handleChanges = handleChanges ~= false
-
-		if type(t.getData) == "function" then
-			numeric.setValue(t.getData(), handleChanges, silent)
-
-			if not silent then numeric.invoke.loaded(true) end
-		else
-			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
-
-			if not silent then numeric.invoke.loaded(false) end
-		end
-	end
-
-	function numeric.saveData(number, silent)
-		if type(t.saveData) == "function" then
-			t.saveData(number and verify(number) or value)
-
-			if not silent then numeric.invoke.saved(true) end
-		elseif not silent then numeric.invoke.saved(false) end
-	end
-
-	function numeric.getData() return type(t.getData) == "function" and t.getData() or nil end
-	function numeric.setData(number, handleChanges, silent)
-		numeric.saveData(number, silent)
-		numeric.load(handleChanges, silent)
-	end
-
-	function numeric.getDefault() return default end
-	function numeric.setDefault(number) default = verify(number) end
-	function numeric.reset(handleChanges, silent) numeric.setData(default, handleChanges, silent) end
-
-	function numeric.snapshot(stored) snapshot = stored and numeric.getData() or value end
-	function numeric.revert(handleChanges, silent) numeric.setData(snapshot, handleChanges, silent) end
-
-	function numeric.getValue() return value end
-	function numeric.setValue(number, user, silent)
-		value = verify(number)
-
-		if not silent then numeric.invoke.changed(user == true) end
-
-		if user and t.instantSave ~= false then numeric.saveData(nil, silent) end
-
-		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
-	end
-
-	function numeric.decrease(alt, user, silent) numeric.setValue(value - (alt and altStep or step), user, silent) end
-	function numeric.increase(alt, user, silent) numeric.setValue(value + (alt and altStep or step), user, silent) end
 
 	--Set starting value
 	numeric.setValue(value, false, true)
 
-	--| Value limits
-
-	function numeric.getMin() return limitMin end
-	function numeric.setMin(number, silent)
-		limitMin = min(number, limitMax)
-
-		if not silent then numeric.invoke.min() end
-	end
-
-	function numeric.getMax() return limitMax end
-	function numeric.setMax(number, silent)
-		limitMax = max(limitMin, number)
-
-		if not silent then numeric.invoke.max() end
-	end
-
 	--Create events
 	addEvent(numeric, "min", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, limitMin) end end end)
 	addEvent(numeric, "max", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, limitMax) end end end)
-
-	--| Value step
-
-	function numeric.getStep() return step end
-	function numeric.getAltStep() return altStep end
 
 	return numeric
 end
