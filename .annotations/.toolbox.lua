@@ -2830,24 +2830,32 @@ function wt.CreateDatamanager(t, widget)
 		--| Value
 
 		---Validate a value to be accepted by the widget
-		---@param value? any ***Default:*** *current value*
-		---@return any
+		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
+		---@return datamanager_value
 		function _:verify(value) end
 
+			---***Default:*** *current value*
+			---@alias datamanager_value_currentDefault any?
+
+			---@alias datamanager_value any
+
 		---Turn a value into a formatted string
-		---@param value? any ***Default:*** *current value*
+		---@param value datamanager_value_currentDefault ***Default:*** *current value*
 		---@return string
 		function _:format(value) return "" end
 
 		---Returns the current value of the widget
-		---@return any
+		---@return datamanager_value
 		function _:getValue() end
 
 		---Verify and set the value of the widget
-		---@param value? any ***Default:*** `t.data.read()` or *current default value*
+		---@param value? datamanager_value_readDefault ***Default:*** `t.data.read()` or *current default value*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 		function _:setValue(value, user, silent) end
+
+			---***Default:*** `t.data.read()` or *current default value*
+			---@alias datamanager_value_readDefault any?
 
 		--| Storage
 
@@ -2859,25 +2867,24 @@ function wt.CreateDatamanager(t, widget)
 		---@param write datamanager_storage_write Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from writing storage data
 		function _:setWriter(write) end
 
-		---Read the data from storage then verify and load it to the widget
+		---Read the data from storage via the currently set reader utility then verify and load it to the widget
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
 		function _:load(handleChanges, silent) end
 
-		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
-		---@param data? any Data to be saved | ***Default:*** *current value *
+		---Save the current value of the widget to storage via the currently set writer utility
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:save(data, silent) end
+		function _:save(silent) end
 
 		---Get the currently stored data via the specified reader utility
-		---@return any # ***Default:*** *current value*
+		---@return datamanager_data # ***Default:*** `nil`
 		function _:getData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via the specified reader utility
-		---@param data? any Data to be saved | ***Default:*** *current value*
+		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(data, handleChanges, silent) end
+		function _:setData(value, handleChanges, silent) end
 
 		---Set whether to immediately commit the data to storage whenever it's changed via the widget
 		---@param instantSave boolean? ***Default:*** `true`
@@ -2886,12 +2893,15 @@ function wt.CreateDatamanager(t, widget)
 		--| Default
 
 		---Get the currently set default value
-		---@return any
+		---@return datamanager_value
 		function _:getDefault() end
 
 		---Set the default value
-		---@param value? boolean ***Default:*** *current default value*
+		---@param value datamanager_default ***Default:*** *current default value*
 		function _:setDefault(value) end
+
+			---***Default:*** *current default value*
+			---@alias datamanager_default any?
 
 		---Set and load the stored data managed by the widget to the currently set default value
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
@@ -4513,7 +4523,6 @@ function wt.CreateTextual(t, datamanager)
 	---@field listeners? textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field value? string The starting text to be set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? string Default value of the widget | ***Default:*** `""`
-	t = { reader = reader, writer = writer, }
 
 		---@class textual_listeners : datamanager_listeners
 		---@field [1]? table<string, textual_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -4597,37 +4606,37 @@ function wt.CreateTextual(t, datamanager)
 		---***
 		---@param text? string Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(text, silent) end
+		function _:saveData(text, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return string|nil
-		function _.getData() end
+		function _:getData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param text? string Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(text, handleChanges, silent) end
+		function _:setData(text, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return string default
-		function _.getDefault() return "" end
+		function _:getDefault() return "" end
 
 		---Set the default value
 		---@param text string | ***Default:*** `""`
-		function _.setDefault(text) end
+		function _:setDefault(text) end
 
 		---Returns the current text value of the widget
 		---@return string
-		function _.getValue() return "" end
+		function _:getValue() return "" end
 
 		---Set the text value of the widget
 		---***
 		---@param text? string ***Default:*** `""`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _.setValue(text, user, silent) end
+		function _:setValue(text, user, silent) end
 
 	return _
 end

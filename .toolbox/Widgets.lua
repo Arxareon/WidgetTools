@@ -919,18 +919,18 @@ local function buildDatamanager()
 
 	if not data_value then data_value = {} end
 
-	function datamanager:verify(v) if v == nil then return us.Clone(data_value[self]) else return us.Clone(v) end end
-	function datamanager:format(v) if v == nil then return us.ToString(data_value[self]) else return us.ToString(v) end end
+	function datamanager:verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
+	function datamanager:format(value) return us.ToString(datamanager:verify(value)) end
 
 	function datamanager:getValue() return data_value[self] end
-	function datamanager:setValue(newValue, user, silent)
-		data_value[self] = datamanager:verify(newValue)
+	function datamanager:setValue(value, user, silent)
+		data_value[self] = datamanager:verify(value)
 
 		if data_value[self] == nil and datamanager_read[datamanager] then data_value[self] = datamanager_read[datamanager]() end
 		if data_value[self] == nil then data_value[self] = data_default[self] end
 
 		if user then
-			if datamanager_instantSave[self] then datamanager:save(nil, silent) end
+			if datamanager_instantSave[self] then datamanager:save(silent) end
 
 			local management = datamanagement[datamanager]
 
@@ -976,11 +976,11 @@ local function buildDatamanager()
 			if not silent then datamanager_invoke_loaded(self, true) end
 		elseif not silent then datamanager_invoke_loaded(self, false) end
 	end
-	function datamanager:save(data, silent)
+	function datamanager:save(silent)
 		local write = datamanager_write[datamanager]
 
 		if write then
-			write(datamanager:verify(data))
+			write(data_value[self])
 
 			if not silent then datamanager_invoke_saved(self, true) end
 		elseif not silent then datamanager_invoke_saved(self, false) end
@@ -992,7 +992,14 @@ local function buildDatamanager()
 		if read then return read[datamanager]() end
 	end
 	function datamanager:setData(data, handleChanges, silent)
-		datamanager:save(data, silent)
+		local write = datamanager_write[datamanager]
+
+		if write then
+			write(datamanager:verify(data))
+
+			if not silent then datamanager_invoke_saved(self, true) end
+		elseif not silent then datamanager_invoke_saved(self, false) end
+
 		datamanager:load(handleChanges, silent)
 	end
 
@@ -3129,6 +3136,8 @@ end
 
 local textual_base ---@type textual
 
+local textual_color ---@type table<textual, color>
+
 local function buildTextual()
 	local textual = buildDatamanager() ---@cast textual textual
 
@@ -3142,75 +3151,40 @@ local function buildTextual()
 
 	--| Value
 
+	function textual:verify(value) return type(value) == "string" and value or "" end
+	function textual:format(value)
+		value = value and textual:verify(value) or data_value[textual]
+		local color = textual_color[textual]
 
+		return color and cr(value, color) or value
+	end
+
+	return textual
 end
 
 --[ Constructors ]
 
 function wt.CreateTextual(t, datamanager)
-	t = type(t) == "table" and t or {}
+	if not textual_base then textual_base = buildSelector() end
 
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-	local textual = datamanager ---@cast textual textual
+	local textual = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast textual textual
 
+	--[ Initialization ]
 
-	--[ Data ]
+	t = type(t) == "table" and t or {}
 
-	local default = type(t.default) == "string" and t.default or ""
-	local value = type(t.value) == "string" and t.value or type(t.getData) == "function" and t.getData() or nil
-	value = type(value) == "string" and value or default
-	local snapshot = value
+	local data = type(t.data) == "table" and t.data or {}
 
-	function textual.load(handleChanges, silent)
-		handleChanges = handleChanges ~= false
+	textual:setReader(data.read)
+	textual:setWriter(data.write)
 
-		if type(t.getData) == "function" then
-			textual.setValue(t.getData(), handleChanges, silent)
+	textual:setDefault(t.default)
+	textual:setValue(t.value)
+	textual:snapshot()
 
-			if not silent then textual.invoke.loaded(true) end
-		else
-			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
-
-			if not silent then textual.invoke.loaded(false) end
-		end
-	end
-
-	function textual.saveData(text, silent)
-		if type(t.saveData) == "function" then
-			t.saveData(type(text) == "string" and text or value)
-
-			if not silent then textual.invoke.saved(true) end
-		elseif not silent then textual.invoke.saved(false) end
-	end
-
-	function textual.getData() return type(t.getData) == "function" and t.getData() or nil end
-	function textual.setData(text, handleChanges, silent)
-		textual.saveData(text, silent)
-		textual.load(handleChanges, silent)
-	end
-
-	function textual.getDefault() return default end
-	function textual.setDefault(text) default = type(text) == "string" and text or "" end
-	function textual.reset(handleChanges, silent) textual.setData(default, handleChanges, silent) end
-
-	function textual.snapshot(stored) snapshot = stored and textual.getData() or value end
-	function textual.revert(handleChanges, silent) textual.setData(snapshot, handleChanges, silent) end
-
-	function textual.getValue() return value end
-	function textual.setValue(text, user, silent)
-		value = type(text) == "string" and text or ""
-
-		if not silent then textual.invoke.changed(user == true) end
-
-		if user and t.instantSave ~= false then textual.saveData(nil, silent) end
-
-		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
-	end
-
-	--Set starting value
-	textual.setValue(t.color and cr(value, t.color) or value, false, true)
+	if wt.IsColor(t.color) then textual_color = t.color end
 
 	return textual
 end
