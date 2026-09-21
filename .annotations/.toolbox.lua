@@ -5198,6 +5198,7 @@ function wt.CreateNumeric(t, datamanager)
 		---***
 		---@param number? number A valid number value within the specified `t.min`, `t.max` range | ***Default:*** `t.min`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
 		function _:setValue(number, user, silent) end
 
 		---Decrease the value of the widget by the specified step or alt step amount

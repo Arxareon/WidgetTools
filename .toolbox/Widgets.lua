@@ -915,8 +915,6 @@ local function buildDatamanager()
 
 	if not datamanagement then datamanagement = {} end
 
-	--| Value
-
 	if not data_value then data_value = {} end
 
 	function datamanager:verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
@@ -1764,8 +1762,6 @@ local function buildSelector()
 	--[ Data ]
 
 	if not selector_clearable then selector_clearable = {} end
-
-	--| Value
 
 	function selector:verify(value)
 		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
@@ -3847,6 +3843,11 @@ local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
 local numeric_hardStep ---@type table<numeric, boolean>
 
+local numeric_invoke_min ---@type fun(self: numeric)
+local numeric_invoke_max ---@type fun(self: numeric)
+local numeric_handlers_min ---@type table<numeric, numeric_handler_min[]>
+local numeric_handlers_max ---@type table<numeric, numeric_handler_max[]>
+
 local function buildNumeric()
 	local numeric = buildDatamanager() ---@cast numeric numeric
 
@@ -3857,8 +3858,6 @@ local function buildNumeric()
 	widget_types[numeric][typename] = true
 
 	--[ Data ]
-
-	--| Value
 
 	if not numeric_limitMin then numeric_limitMin = {} end
 	if not numeric_limitMax then numeric_limitMax = {} end
@@ -3887,19 +3886,31 @@ local function buildNumeric()
 	function numeric:setMin(number, silent)
 		numeric_limitMin[self] = min(number, numeric_limitMax[self])
 
-		if not silent then numeric_invoke_min() end
+		if not silent then numeric_invoke_min(self) end
 	end
 
 	function numeric:getMax() return numeric_limitMax[self] end
 	function numeric:setMax(number, silent)
 		numeric_limitMax[self] = max(numeric_limitMin[self], number)
 
-		if not silent then numeric_invoke_max() end
+		if not silent then numeric_invoke_max(self) end
 	end
 
-	--Create events
-	addEvent(numeric, "min", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, numeric_limitMin[self]) end end end)
-	addEvent(numeric, "max", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, numeric_limitMax[self]) end end end)
+	if not numeric_invoke_min then numeric_invoke_min = function(self)
+		local handlers = numeric_handlers_min[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, numeric_limitMin[self]) end
+	end end
+
+	if not numeric_invoke_max then numeric_invoke_max = function(self)
+		local handlers = numeric_handlers_max[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, numeric_limitMax[self]) end
+	end end
 
 	--| Value step
 
@@ -3965,8 +3976,11 @@ function wt.CreateSlider(t, numeric)
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
-	slider.frame = CreateFrame("Frame", name, t.parentFrame, BackdropTemplateMixin and "BackdropTemplate")
-	slider.template = CreateFrame("Slider", name .. "Frame", slider.frame, "MinimalSliderWithSteppersTemplate")
+	local frame = CreateFrame("Frame", name, t.parentFrame, BackdropTemplateMixin and "BackdropTemplate")
+	local template = CreateFrame("Slider", name .. "Frame", frame, "MinimalSliderWithSteppersTemplate")
+
+	slider.frame = frame
+	slider.template = template
 
 	--| Position & dimensions
 
@@ -3974,88 +3988,105 @@ function wt.CreateSlider(t, numeric)
 
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
-	if not t.arrange and t.position then wt.SetPosition(slider.frame, t.position) end
-	wt.SetArrangementDirective(slider.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+	if not t.arrange and t.position then wt.SetPosition(frame, t.position) end
+	wt.SetArrangementDirective(frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	slider.template:SetPoint("TOP", 0, -8)
+	template:SetPoint("TOP", 0, -8)
 
-	slider.frame:SetSize(t.width, t.valuebox ~= false and 64 or 52)
-	slider.template:SetWidth(t.width)
+	frame:SetSize(t.width, t.valuebox ~= false and 64 or 52)
+	template:SetWidth(t.width)
 
 	--| Visibility
 
-	wt.SetVisibility(slider.frame, t.visible ~= false)
+	wt.SetVisibility(frame, t.visible ~= false)
 
-	if t.frameStrata then slider.frame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then slider.frame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then slider.frame:SetToplevel(t.keepOnTop) end
+	if t.frameStrata then frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then frame:SetToplevel(t.keepOnTop) end
 
 	--| Label
 
 	if t.label ~= false then
-		slider.template.TopText:SetPoint("TOP", slider.frame, "TOP", 0, 4)
-		slider.template.TopText:SetText(title)
-		slider.template.TopText:Show()
+		template.TopText:SetPoint("TOP", frame, "TOP", 0, 4)
+		template.TopText:SetText(title)
+		template.TopText:Show()
 	end
 
-	slider.template.MinText:Show()
-	slider.template.MaxText:Show()
+	--| Limits
+
+	local limitMin, limitMax = numeric_limitMin[slider], numeric_limitMax[slider]
+
+	template.MinText:Show()
+	template.MaxText:Show()
+
+	---Update the min/max limits of the slider
+	---@param lMin? number
+	---@param lMax? number
+	local function updateLimits(lMin, lMax)
+		if lMin then template.MinText:SetText(tostring(lMin)) else lMin = numeric_limitMin[slider] end
+		if lMax then template.MaxText:SetText(tostring(lMax)) else lMax = numeric_limitMax[slider] end
+
+		template.Slider:SetMinMaxValues(lMin, lMax)
+	end
+
+	updateLimits(limitMin, limitMax)
+
+	slider:addListener_min(function(_, lMin) updateLimits(lMin) end, 1)
+	slider:addListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
 
 	--| Value step
 
-	if t.hardStep ~= false then
-		slider.template.Slider:SetValueStep(slider.getStep())
-		slider.template.Slider:SetObeyStepOnDrag(true)
+	local step = numeric_step[slider]
+	local altStep = numeric_altStep[slider]
+
+	if numeric_hardStep[slider] ~= false then
+		template.Slider:SetValueStep(numeric_step[slider])
+		template.Slider:SetObeyStepOnDrag(true)
 	end
 
 	--| Decrease button
 
-	wt.AddTooltip(slider.template.Back, {
+	wt.AddTooltip(template.Back, {
 		title = wt.strings.slider.decrease.label,
 		lines = {
-			{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-			slider.getAltStep() and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+			{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", step), },
+			altStep and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", altStep), } or nil,
 		},
 		anchor = "ANCHOR_TOPLEFT",
 	})
 
-	slider.template.Back:HookScript("OnClick", function() slider.decrease(IsAltKeyDown(), true) end)
+	template.Back:HookScript("OnClick", function() slider:decrease(IsAltKeyDown(), true) end)
 
 	--| Increase button
 
-	wt.AddTooltip(slider.template.Forward, {
+	wt.AddTooltip(template.Forward, {
 		title = wt.strings.slider.increase.label,
 		lines = {
-			{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-			slider.getAltStep() and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+			{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", step), },
+			altStep and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", altStep), } or nil,
 		},
 		anchor = "ANCHOR_TOPLEFT",
 	})
 
-	slider.template.Forward:HookScript("OnClick", function() slider.increase(IsAltKeyDown(), true) end)
+	template.Forward:HookScript("OnClick", function() slider:increase(IsAltKeyDown(), true) end)
 
-	--| Valuebox
-
-	local minValue, maxValue = numeric.getMin(), numeric.getMax() --REPLACE with prototype values
+	--[ Valuebox ]
 
 	if t.valuebox ~= false then
-
-		--| Calculate the required number of fractal digits, assemble string patterns for value validation
-
 		local decimals = type(t.fractional) == "number" and floor(t.fractional + 0.5) or max(
-			(tostring(minValue):match("%.(%d+)") or ""):len(),
-			(tostring(maxValue):match("%.(%d+)") or ""):len(),
-			(tostring(slider.getStep()):match("%.(%d+)") or ""):len()
+			(tostring(limitMin):match("%.(%d+)") or ""):len(),
+			(tostring(limitMax):match("%.(%d+)") or ""):len(),
+			(tostring(step):match("%.(%d+)") or ""):len()
 		)
+
 		local decimalPattern = ""
 		for _ = 1, decimals do decimalPattern = decimalPattern .. "[%d]?" end
-		local matchPattern = "(" .. (minValue < 0 and "-?" or "") .. "[%d]*)" .. (decimals > 0 and "([%.]?" .. decimalPattern .. ")" or "") .. ".*"
+
+		local matchPattern = "(" .. (limitMin < 0 and "-?" or "") .. "[%d]*)" .. (decimals > 0 and "([%.]?" .. decimalPattern .. ")" or "") .. ".*"
 		local replacePattern = "%1" .. (decimals > 0 and "%2" or "")
 
-		--| Frame setup
-
 		slider.valuebox = wt.CreateCustomEditbox({
-			parentFrame = slider.frame,
+			parentFrame = frame,
 			name = "Valuebox",
 			label = false,
 			tooltip = {
@@ -4065,7 +4096,7 @@ function wt.CreateSlider(t, numeric)
 			position = {
 				anchor = "TOP",
 				offset = { y = 6 },
-				relativeTo = slider.template.Slider,
+				relativeTo = template.Slider,
 				relativePoint = "BOTTOM",
 			},
 			size = { w = 80, h = 20 },
@@ -4075,7 +4106,7 @@ function wt.CreateSlider(t, numeric)
 				disabled = "GameFontDisableSmall2",
 			},
 			justify = { h = "CENTER", },
-			charLimit = max(tostring(math.floor(slider.getStep())):len(), tostring(math.floor(minValue)):len(), tostring(math.floor(maxValue)):len()) + (decimals > 0 and decimals + 1 or 0),
+			charLimit = max(tostring(math.floor(step)):len(), tostring(math.floor(limitMin)):len(), tostring(math.floor(limitMax)):len()) + (decimals > 0 and decimals + 1 or 0),
 			backdrop = {
 				background = {
 					texture = {
@@ -4090,49 +4121,29 @@ function wt.CreateSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(frame) return frame:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+				OnEnter = function(valuebox) return valuebox:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
 				OnLeave = "",
 			}, }, },
 			events = {
-				OnChar = function(frame, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(frame) slider.setValue(frame:GetNumber(), true) end,
-				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(valuebox) slider:setValue(valuebox:GetNumber(), true) end,
+				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
-			value = tostring(slider.getValue()):gsub(matchPattern, replacePattern),
+			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
 			showDefault = false,
 			utilityMenu = false,
 		})
 
-		--| UX
-
-		--Handle widget updates
-		slider.addListener.changed(function(_, number) slider.valuebox.setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider:addListener_changed(function(_, number) slider.valuebox:setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then slider.template.Slider:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else slider.template.Slider:HookScript(key, value) end
+		if key == "attribute" then template.Slider:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else template.Slider:HookScript(key, value) end
 	end end
-
-	--[ Limit Update ]
-
-	---Update the min/max limits of the slider
-	---@param limitMin? number
-	---@param limitMax? number
-	local function updateLimits(limitMin, limitMax)
-		if limitMin then slider.template.MinText:SetText(tostring(limitMin)) else limitMin = slider.getMin() end
-		if limitMax then slider.template.MaxText:SetText(tostring(limitMax)) else limitMax = slider.getMax() end
-
-		slider.template.Slider:SetMinMaxValues(limitMin, limitMax)
-	end
-
-	updateLimits(minValue, maxValue)
-
-	slider:addListener_min(function(_, limitMin) updateLimits(limitMin) end, 1)
-	slider:addListener_max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
 
 	--[ Value Update ]
 
@@ -4142,30 +4153,30 @@ function wt.CreateSlider(t, numeric)
 	---@param _ any
 	---@param number number
 	---@param user? boolean ***Default:*** `false`
-	local function updateNumber(_, number, user) if not scriptEvent then slider.template.Slider:SetValue(number, user) else scriptEvent = false end end
+	local function updateNumber(_, number, user) if not scriptEvent then template.Slider:SetValue(number, user) else scriptEvent = false end end
 
-	updateNumber(nil, slider.getValue(), false)
+	updateNumber(nil, data_value[slider], false)
 
 	slider:addListener_changed(updateNumber, 1)
 
 	--Link value changes
-	slider.template.Slider:HookScript("OnValueChanged", function(_, number, user)
-		if not IsMouseButtonDown("LeftButton") then slider.template.Slider:SetValue(slider.getValue()) return end
+	template.Slider:HookScript("OnValueChanged", function(_, number, user)
+		if not IsMouseButtonDown("LeftButton") then template.Slider:SetValue(data_value[slider]) return end
 
 		scriptEvent = true
 
-		slider.setValue(number, user)
+		slider:setValue(number, user)
 	end)
 
 	--[ UX ]
 
 	--| Backdrop
 
-	wt.SetBackdrop(slider.frame, { background = {
+	wt.SetBackdrop(frame, { background = {
 		texture = { size = 5, },
 		color = { r = 1, g = 1, b = 1, a = 0 }
 	}, }, { {
-		triggers = { slider.frame, slider.template.Slider, slider.template.Forward, slider.template.Back, t.valuebox ~= false and slider.valuebox.template or nil },
+		triggers = { frame, template.Slider, template.Forward, template.Back, t.valuebox ~= false and slider.valuebox.template or nil },
 		rules = {
 			OnEnter = function() return widget_enabled[slider] and { background = { color = { a = 0.1 } } } or {} end,
 			OnLeave = "",
@@ -4175,16 +4186,16 @@ function wt.CreateSlider(t, numeric)
 	--| Tooltip
 
 	if type(t.tooltip) == "table" then
-		wt.AddTooltip(slider.template.Slider, {
+		wt.AddTooltip(template.Slider, {
 			title = t.tooltip.title or title,
 			lines = t.tooltip.lines,
 			anchor = "ANCHOR_RIGHT",
-		}, { triggers = { slider.frame } })
+		}, { triggers = { frame } })
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(tostring(slider.getDefault()), "FFDDDD55") end
+		if t.showDefault ~= false then defaultValue = crc(tostring(data_default[slider]), "FFDDDD55") end
 
-		wt.AddWidgetTooltipLines({ slider.frame, slider.template.Slider, slider.template.Back, slider.template.Forward, slider.valuebox.template }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ frame, template.Slider, template.Back, template.Forward, slider.valuebox.template }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -4192,19 +4203,19 @@ function wt.CreateSlider(t, numeric)
 	if t.utilityMenu ~= false then wt.CreateContextMenu({
 		triggers = {
 			{
-				frame = slider.frame,
+				frame = frame,
 				condition = slider.isEnabled,
 			},
 			{
-				frame = slider.template.Slider,
+				frame = template.Slider,
 				condition = slider.isEnabled,
 			},
 			{
-				frame = slider.template.Back,
+				frame = template.Back,
 				condition = slider.isEnabled,
 			},
 			{
-				frame = slider.template.Forward,
+				frame = template.Forward,
 				condition = slider.isEnabled,
 			},
 			t.valuebox ~= false and {
@@ -4214,10 +4225,10 @@ function wt.CreateSlider(t, numeric)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = slider.getValue() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() slider.setValue(wt.clipboard.numeric, true) end
+				action = function() slider:setValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:revert() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:reset() end }) end
@@ -4230,21 +4241,21 @@ function wt.CreateSlider(t, numeric)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		slider.template.Slider:SetEnabled(state)
+		template.Slider:SetEnabled(state)
 
-		slider.template.TopText:SetFontObject(state and "GameFontNormal" or "GameFontDisable")
-		slider.template.MinText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
-		slider.template.MaxText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
+		template.TopText:SetFontObject(state and "GameFontNormal" or "GameFontDisable")
+		template.MinText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
+		template.MaxText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
 
 		if t.valuebox ~= false then slider.valuebox:setEnabled(state) end
 
-		slider.template.Back:SetEnabled(state and wt.CheckDependencies({ {
-			dependency = slider.template.Slider,
-			evaluate = function(value) return value > slider.getMin() end,
+		template.Back:SetEnabled(state and wt.CheckDependencies({ {
+			dependency = template.Slider,
+			evaluate = function(value) return value > numeric_limitMin[slider] end,
 		}, }))
-		slider.template.Forward:SetEnabled(state and wt.CheckDependencies({ {
-			dependency = slider.template.Slider,
-			evaluate = function(value) return value < slider.getMax() end,
+		template.Forward:SetEnabled(state and wt.CheckDependencies({ {
+			dependency = template.Slider,
+			evaluate = function(value) return value < numeric_limitMax[slider] end,
 		}, }))
 	end
 
@@ -4277,146 +4288,99 @@ function wt.CreateClassicSlider(t, numeric)
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or typename)
 	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
 
-	slider.frame = CreateFrame("Frame", name, t.parentFrame)
-	slider.template = CreateFrame("Slider", name .. "Frame", slider.frame, "OptionsSliderTemplate")
+	local frame = CreateFrame("Frame", name, t.parentFrame)
+	local template = CreateFrame("Slider", name .. "Frame", frame, "OptionsSliderTemplate")
 
-	slider.min = _G[name .. "FrameLow"]
-	slider.max = _G[name .. "FrameHigh"]
+	slider.frame = frame
+	slider.template = template
 
 	--| Position & dimensions
 
-	local arrange = type(t.arrange) == "table" and t.arrange or {}
-
 	t.width = t.width or 160
 
-	if not t.arrange and t.position then wt.SetPosition(slider.frame, t.position) end
-	wt.SetArrangementDirective(slider.frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
+	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
-	slider.template:SetPoint("TOP", 0, -15)
-	slider.min:SetPoint("TOPLEFT", slider.template, "BOTTOMLEFT")
-	slider.max:SetPoint("TOPRIGHT", slider.template, "BOTTOMRIGHT")
+	if not t.arrange and t.position then wt.SetPosition(frame, t.position) end
+	wt.SetArrangementDirective(frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
-	slider.frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
-	slider.template:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
+	template:SetPoint("TOP", 0, -15)
+	slider.min:SetPoint("TOPLEFT", template, "BOTTOMLEFT")
+	slider.max:SetPoint("TOPRIGHT", template, "BOTTOMRIGHT")
+
+	frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
+	template:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
 
 	--| Visibility
 
-	wt.SetVisibility(slider.frame, t.visible ~= false)
+	wt.SetVisibility(frame, t.visible ~= false)
 
-	if t.frameStrata then slider.frame:SetFrameStrata(t.frameStrata) end
-	if t.frameLevel then slider.frame:SetFrameLevel(t.frameLevel) end
-	if t.keepOnTop then slider.frame:SetToplevel(t.keepOnTop) end
+	if t.frameStrata then frame:SetFrameStrata(t.frameStrata) end
+	if t.frameLevel then frame:SetFrameLevel(t.frameLevel) end
+	if t.keepOnTop then frame:SetToplevel(t.keepOnTop) end
 
 	--| Label
 
 	if t.label ~= false then
 		slider.label = _G[name .. "FrameText"]
 
-		slider.label:SetPoint("TOP", slider.frame, "TOP", 0, 2)
+		slider.label:SetPoint("TOP", frame, "TOP", 0, 2)
 		slider.label:SetFontObject("GameFontNormal")
 
 		slider.label:SetText(title)
 	else _G[name .. "FrameText"]:Hide() end
 
+	--| Limits
+
+	local limitMin, limitMax = numeric_limitMin[slider], numeric_limitMax[slider]
+
+	slider.min = _G[name .. "FrameLow"]
+	slider.max = _G[name .. "FrameHigh"]
+
+	---Update the min/max limits of the slider
+	---@param lMin? number
+	---@param lMax? number
+	local function updateLimits(lMin, lMax)
+		if lMin then slider.min:SetText(tostring(lMin)) else lMin = numeric_limitMin[slider] end
+		if lMax then slider.max:SetText(tostring(lMax)) else lMax = numeric_limitMax[slider] end
+
+		template:SetMinMaxValues(lMin, lMax)
+	end
+
+	updateLimits(limitMin, limitMax)
+
+	slider:addListener_min(function(_, lMin) updateLimits(lMin) end, 1)
+	slider:addListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
+
 	--| Value step
 
-	if t.hardStep ~= false then
-		slider.template:SetValueStep(slider.getStep())
-		slider.template:SetObeyStepOnDrag(true)
+	local step = numeric_step[slider]
+	local altStep = numeric_altStep[slider]
+
+	if numeric_hardStep[slider] ~= false then
+		template:SetValueStep(step)
+		template:SetObeyStepOnDrag(true)
 	end
 
-	--| Valuebox
-
-	local minValue, maxValue = numeric.getMin(), numeric.getMax() --REPLACE with prototype values
-
-	if t.valuebox ~= false then
-
-		--| Calculate the required number of fractal digits, assemble string patterns for value validation
-		local decimals = type(t.fractional) == "number" and floor(t.fractional + 0.5) or max(
-			(tostring(minValue):match("%.(%d+)") or ""):len(),
-			(tostring(maxValue):match("%.(%d+)") or ""):len(),
-			(tostring(slider.getStep()):match("%.(%d+)") or ""):len()
-		)
-		local decimalPattern = ""
-		for _ = 1, decimals do decimalPattern = decimalPattern .. "[%d]?" end
-		local matchPattern = "(" .. (minValue < 0 and "-?" or "") .. "[%d]*)" .. (decimals > 0 and "([%.]?" .. decimalPattern .. ")" or "") .. ".*"
-		local replacePattern = "%1" .. (decimals > 0 and "%2" or "")
-
-		--| Frame setup
-
-		slider.valuebox = wt.CreateCustomEditbox({
-			parentFrame = slider.frame,
-			name = "Valuebox",
-			label = false,
-			tooltip = {
-				title = wt.strings.slider.value.label,
-				lines = { { text = wt.strings.slider.value.tooltip, }, }
-			},
-			position = {
-				anchor = "TOP",
-				relativeTo = slider.template,
-				relativePoint = "BOTTOM",
-			},
-			size = { w = 64, },
-			font = {
-				normal = "GameFontHighlightSmall",
-				disabled = "GameFontDisableSmall",
-			},
-			justify = { h = "CENTER", },
-			charLimit = max(tostring(math.floor(slider.getStep())):len(), tostring(math.floor(minValue)):len(), tostring(math.floor(maxValue)):len()) + (decimals > 0 and decimals + 1 or 0),
-			backdrop = {
-				background = {
-					texture = {
-						size = 5,
-						insets = { l = 3, r = 3, t = 3, b = 3 },
-					},
-					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
-				},
-				border = {
-					texture = { width = 12, },
-					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
-				}
-			},
-			backdropUpdates = { { rules = {
-				OnEnter = function(frame) return frame:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
-				OnLeave = "",
-			}, }, },
-			events = {
-				OnChar = function(frame, _, text) frame:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(frame) slider.setValue(frame:GetNumber(), true) end,
-				OnEscapePressed = function(frame) frame:SetText(tostring(us.Round(slider.template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
-			},
-			value = tostring(slider.getValue()):gsub(matchPattern, replacePattern),
-			showDefault = false,
-			utilityMenu = false,
-		})
-
-		--| UX
-
-		--Handle widget updates
-		slider:addListener_changed(function(_, number) slider.valuebox.setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
-	end
-
-	--| Side buttons
+	--[ Side Buttons ]
 
 	if t.sideButtons ~= false then
 
 		--| Decrease
 
 		slider.decreaseButton = wt.CreateCustomButton({
-			parentFrame = slider.frame,
+			parentFrame = frame,
 			name = "SelectPrevious",
 			title = "-",
 			tooltip = {
 				title = wt.strings.slider.decrease.label,
 				lines = {
-					{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-					slider.getAltStep() and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+					{ text = wt.strings.slider.decrease.tooltip[1]:gsub("#VALUE", step), },
+					altStep and { text = wt.strings.slider.decrease.tooltip[2]:gsub("#VALUE", altStep), } or nil,
 				}
 			},
 			position = {
 				anchor = "LEFT",
-				relativeTo = slider.template,
+				relativeTo = template,
 				relativePoint = "LEFT",
 				offset = { x = -21, }
 			},
@@ -4440,8 +4404,8 @@ function wt.CreateClassicSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnEnter = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return IsMouseButtonDown() and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
@@ -4451,21 +4415,21 @@ function wt.CreateClassicSlider(t, numeric)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnLeave = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return {}, true
 				end,
-				OnMouseDown = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnMouseDown = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					}
 				end,
-				OnMouseUp = function(frame, self)
-					if not frame:IsEnabled() then return {} end
+				OnMouseUp = function(button, self)
+					if not button:IsEnabled() then return {} end
 
 					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
@@ -4473,26 +4437,26 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider.decrease(IsAltKeyDown(), true) end,
-			dependencies = { { dependency = slider.template, evaluate = function(value) return value > slider.getMin() end, }, }
+			action = function() slider:decrease(IsAltKeyDown(), true) end,
+			dependencies = { { dependency = template, evaluate = function(value) return value > numeric_limitMin[slider] end, }, }
 		})
 
 		--| Increase
 
 		slider.increaseButton = wt.CreateCustomButton({
-			parentFrame = slider.frame,
+			parentFrame = frame,
 			name = "SelectNext",
 			title = "+",
 			tooltip = {
 				title = wt.strings.slider.increase.label,
 				lines = {
-					{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", slider.getStep()), },
-					slider.getAltStep() and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", slider.getAltStep()), } or nil,
+					{ text = wt.strings.slider.increase.tooltip[1]:gsub("#VALUE", step), },
+					altStep and { text = wt.strings.slider.increase.tooltip[2]:gsub("#VALUE", altStep), } or nil,
 				}
 			},
 			position = {
 				anchor = "RIGHT",
-				relativeTo = slider.template,
+				relativeTo = template,
 				relativePoint = "RIGHT",
 				offset = { x = 21, }
 			},
@@ -4516,8 +4480,8 @@ function wt.CreateClassicSlider(t, numeric)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnEnter = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return IsMouseButtonDown() and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
@@ -4527,21 +4491,21 @@ function wt.CreateClassicSlider(t, numeric)
 						border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } }
 					}
 				end,
-				OnLeave = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnLeave = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return {}, true
 				end,
-				OnMouseDown = function(frame)
-					if not frame:IsEnabled() then return {} end
+				OnMouseDown = function(button)
+					if not button:IsEnabled() then return {} end
 
 					return {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(frame, self)
-					if not frame:IsEnabled() then return {} end
+				OnMouseUp = function(button, self)
+					if not button:IsEnabled() then return {} end
 
 					return self:IsMouseOver() and {
 						background = { color = { r = 0.15, g = 0.15, b = 0.15, a = 0.9 } },
@@ -4549,35 +4513,85 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider.increase(IsAltKeyDown(), true) end,
-			dependencies = { { dependency = slider.template, evaluate = function(value) return value < slider.getMax() end }, }
+			action = function() slider:increase(IsAltKeyDown(), true) end,
+			dependencies = { { dependency = template, evaluate = function(value) return value < numeric_limitMax[slider] end }, }
 		})
+	end
+
+	--[ Valuebox ]
+
+	if t.valuebox ~= false then
+		local decimals = type(t.fractional) == "number" and floor(t.fractional + 0.5) or max(
+			(tostring(limitMin):match("%.(%d+)") or ""):len(),
+			(tostring(limitMax):match("%.(%d+)") or ""):len(),
+			(tostring(step):match("%.(%d+)") or ""):len()
+		)
+
+		local decimalPattern = ""
+		for _ = 1, decimals do decimalPattern = decimalPattern .. "[%d]?" end
+
+		local matchPattern = "(" .. (limitMin < 0 and "-?" or "") .. "[%d]*)" .. (decimals > 0 and "([%.]?" .. decimalPattern .. ")" or "") .. ".*"
+		local replacePattern = "%1" .. (decimals > 0 and "%2" or "")
+
+		slider.valuebox = wt.CreateCustomEditbox({
+			parentFrame = frame,
+			name = "Valuebox",
+			label = false,
+			tooltip = {
+				title = wt.strings.slider.value.label,
+				lines = { { text = wt.strings.slider.value.tooltip, }, }
+			},
+			position = {
+				anchor = "TOP",
+				relativeTo = template,
+				relativePoint = "BOTTOM",
+			},
+			size = { w = 64, },
+			font = {
+				normal = "GameFontHighlightSmall",
+				disabled = "GameFontDisableSmall",
+			},
+			justify = { h = "CENTER", },
+			charLimit = max(tostring(math.floor(step)):len(), tostring(math.floor(limitMin)):len(), tostring(math.floor(limitMax)):len()) + (decimals > 0 and decimals + 1 or 0),
+			backdrop = {
+				background = {
+					texture = {
+						size = 5,
+						insets = { l = 3, r = 3, t = 3, b = 3 },
+					},
+					color = { r = 0.1, g = 0.1, b = 0.1, a = 0.9 }
+				},
+				border = {
+					texture = { width = 12, },
+					color = { r = 0.5, g = 0.5, b = 0.5, a = 0.9 }
+				}
+			},
+			backdropUpdates = { { rules = {
+				OnEnter = function(valuebox) return valuebox:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+				OnLeave = "",
+			}, }, },
+			events = {
+				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(valuebox) slider:setValue(valuebox:GetNumber(), true) end,
+				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+			},
+			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
+			showDefault = false,
+			utilityMenu = false,
+		})
+
+		--| UX
+
+		slider:addListener_changed(function(_, number) slider.valuebox:setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then slider.template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		else slider.template:HookScript(key, value) end
+		if key == "attribute" then template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
+		else template:HookScript(key, value) end
 	end end
-
-	--[ Limit Update ]
-
-	---Update the min/max limits of the slider
-	---@param limitMin? number
-	---@param limitMax? number
-	local function updateLimits(limitMin, limitMax)
-		if limitMin then slider.min:SetText(tostring(limitMin)) else limitMin = slider.getMin() end
-		if limitMax then slider.max:SetText(tostring(limitMax)) else limitMax = slider.getMax() end
-
-		slider.template:SetMinMaxValues(limitMin, limitMax)
-	end
-
-	updateLimits(minValue, maxValue)
-
-	slider:addListener_min(function(_, limitMin) updateLimits(limitMin) end, 1)
-	slider:addListener_max(function(_, limitMax) updateLimits(nil, limitMax) end, 1)
 
 	--[ Value Update ]
 
@@ -4587,17 +4601,17 @@ function wt.CreateClassicSlider(t, numeric)
 	---@param _ any
 	---@param number number
 	---@param user? boolean ***Default:*** `false`
-	local function updateNumber(_, number, user) if not scriptEvent then slider.template:SetValue(number, user) else scriptEvent = false end end
+	local function updateNumber(_, number, user) if not scriptEvent then template:SetValue(number, user) else scriptEvent = false end end
 
-	updateNumber(nil, slider.getValue(), false)
+	updateNumber(nil, data_value[slider], false)
 
 	slider:addListener_changed(updateNumber, 1)
 
 	--Link value changes
-	slider.template:HookScript("OnValueChanged", function(_, number, user)
+	template:HookScript("OnValueChanged", function(_, number, user)
 		scriptEvent = true
 
-		slider.setValue(number, user)
+		slider:setValue(number, user)
 
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 	end)
@@ -4607,31 +4621,31 @@ function wt.CreateClassicSlider(t, numeric)
 	--| Tooltip
 
 	if type(t.tooltip) == "table" then
-		wt.AddTooltip(slider.template, {
+		wt.AddTooltip(template, {
 			title = t.tooltip.title or title,
 			lines = t.tooltip.lines,
 			anchor = "ANCHOR_RIGHT",
-		}, { triggers = { slider.frame } })
+		}, { triggers = { frame } })
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(tostring(slider.getDefault()), "FFDDDD55") end
+		if t.showDefault ~= false then defaultValue = crc(tostring(data_default[slider]), "FFDDDD55") end
 
-		wt.AddWidgetTooltipLines({ slider.template }, defaultValue, t.utilityMenu)
+		wt.AddWidgetTooltipLines({ template }, defaultValue, t.utilityMenu)
 	end
 
 	--| Utility menu
 
 	if t.utilityMenu ~= false then wt.CreateContextMenu({
 		triggers = { {
-			frame = slider.frame,
+			frame = frame,
 			condition = slider.isEnabled,
 		}, },
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = slider.getValue() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() slider.setValue(wt.clipboard.numeric, true) end
+				action = function() slider:setValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:revert() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:reset() end }) end
@@ -4644,7 +4658,7 @@ function wt.CreateClassicSlider(t, numeric)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		slider.template:SetEnabled(state)
+		template:SetEnabled(state)
 
 		if slider.label then slider.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
@@ -4652,12 +4666,12 @@ function wt.CreateClassicSlider(t, numeric)
 
 		if t.sideButtons ~= false then
 			slider.decreaseButton:setEnabled(state and wt.CheckDependencies({ {
-				dependency = slider.template,
-				evaluate = function(value) return value > slider.getMin() end,
+				dependency = template,
+				evaluate = function(value) return value > numeric_limitMin[slider] end,
 			}, }))
 			slider.increaseButton:setEnabled(state and wt.CheckDependencies({ {
-				dependency = slider.template,
-				evaluate = function(value) return value < slider.getMax() end,
+				dependency = template,
+				evaluate = function(value) return value < numeric_limitMax[slider] end,
 			}, }))
 		end
 	end
@@ -4687,8 +4701,6 @@ local function buildColormanager()
 	widget_types[colormanager][typename] = true
 
 	--[ Data ]
-
-	--| Value
 
 	function colormanager:verify(color) wt.PackColor(wt.UnpackColor(color)) end
 
