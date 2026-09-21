@@ -5615,46 +5615,46 @@ function wt.CreateColormanager(t, datamanager)
 		---***
 		---@param color? color Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(color, silent) end
+		function _:saveData(color, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return color|nil
-		function _.getData() end
+		function _:getData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param color? color Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _.setData(color, handleChanges, silent) end
+		function _:setData(color, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return color default
-		function _.getDefault() return {} end
+		function _:getDefault() return {} end
 
 		---Set the default value
 		---@param color? color | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
-		function _.setDefault(color) end
+		function _:setDefault(color) end
 
 		---Returns the currently set channel values wrapped in a color table
 		---@return color
-		function _.getValue() return {} end
+		function _:getValue() return {} end
 
 		---Set the managed color values
 		---***
 		---@param color? color ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "colored" event and call registered listeners | ***Default:*** `false`
-		function _.setValue(color, user, silent) end
+		function _:setValue(color, user, silent) end
 
 		--[ Color Wheel ]
 
 		---Open the the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) for this color manager
-		function _.openColorPicker() end
+		function _:openColorPicker() end
 
 		---Return the active status of this color manager, whether the main color wheel window was opened for and is currently updating the color of this widget
 		---@return boolean active `true` if the color wheel has been opened for this color manager widget
-		function _.isActive() return false end
+		function _:isActive() return false end
 
 	return _
 end

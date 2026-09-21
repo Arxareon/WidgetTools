@@ -3161,7 +3161,7 @@ end
 --[ Constructors ]
 
 function wt.CreateTextual(t, datamanager)
-	if not textual_base then textual_base = buildSelector() end
+	if not textual_base then textual_base = buildTextual() end
 
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
@@ -3841,11 +3841,11 @@ end
 
 local numeric_base ---@type numeric
 
-local numeric_hardStep ---@type table<numeric, boolean>
 local numeric_limitMin ---@type table<numeric, number>
 local numeric_limitMax ---@type table<numeric, number>
 local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
+local numeric_hardStep ---@type table<numeric, boolean>
 
 local function buildNumeric()
 	local numeric = buildDatamanager() ---@cast numeric numeric
@@ -3859,6 +3859,12 @@ local function buildNumeric()
 	--[ Data ]
 
 	--| Value
+
+	if not numeric_limitMin then numeric_limitMin = {} end
+	if not numeric_limitMax then numeric_limitMax = {} end
+	if not numeric_step then numeric_step = {} end
+	if not numeric_altStep then numeric_altStep = {} end
+	if not numeric_hardStep then numeric_hardStep = {} end
 
 	function numeric:verify(value)
 		if type(value) ~= "number" then return data_default[self] end
@@ -3891,6 +3897,10 @@ local function buildNumeric()
 		if not silent then numeric_invoke_max() end
 	end
 
+	--Create events
+	addEvent(numeric, "min", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, numeric_limitMin[self]) end end end)
+	addEvent(numeric, "max", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, numeric_limitMax[self]) end end end)
+
 	--| Value step
 
 	function numeric:getStep() return numeric_step[self] end
@@ -3902,46 +3912,31 @@ end
 --[ Constructors ]
 
 function wt.CreateNumeric(t, datamanager)
-	t = type(t) == "table" and t or {}
+	if not numeric_base then numeric_base = buildNumeric() end
 
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-	local numeric = datamanager ---@cast numeric numeric
+	local numeric = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast numeric numeric
 
+	--[ Initialization ]
 
-	--[ Data ]
+	t = type(t) == "table" and t or {}
 
-	local limitMin = type(t.min) == "number" and t.min or 0
-	local limitMax = type(t.max) == "number" and t.max or 100
-	local step = max(type(t.step) == "number" and t.step or ((limitMin - limitMax) / 10), 0)
-	local altStep = type(t.altStep) == "number" and max(t.altStep, 0) or nil
-	local hardStep = t.hardStep ~= false
+	numeric_limitMin[numeric] = type(t.min) == "number" and t.min or 0
+	numeric_limitMax[numeric] = type(t.max) == "number" and t.max or 100
+	numeric_step[numeric] = max(type(t.step) == "number" and t.step or ((numeric_limitMin[numeric] - numeric_limitMax[numeric]) / 10), 0)
+	numeric_altStep[numeric] = type(t.altStep) == "number" and max(t.altStep, 0) or nil
+	numeric_hardStep[numeric] = t.hardStep ~= false
 
-	local default = limitMin
+	local data = type(t.data) == "table" and t.data or {}
 
-	---Data verification utility
-	---@param v any
-	---@return number
-	local function verify(v)
-		v = type(v) == "number" and v or default
+	numeric:setReader(data.read)
+	numeric:setWriter(data.write)
 
-		if hardStep then v = limitMin + floor((v - limitMin) / step + 0.5) * step end
-
-		return Clamp(v, limitMin, limitMax)
-	end
-
-	default = verify(t.default)
-	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
-	local snapshot = value
-
-
-	--Set starting value
-	numeric.setValue(value, false, true)
-
-	--Create events
-	addEvent(numeric, "min", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, limitMin) end end end)
-	addEvent(numeric, "max", function(handlers) return function() for i = 1, #handlers do handlers[i](numeric, limitMax) end end end)
+	data_default[numeric] = numeric_limitMin[numeric] --CHECK if needed -> robust replacement
+	numeric:setDefault(t.default)
+	numeric:setValue(t.value)
+	numeric:snapshot()
 
 	return numeric
 end
@@ -4677,96 +4672,53 @@ end
 
 --[[ COLOR ]]
 
+local colormanager_base ---@type colormanager
 
+local colormanager_active ---@type table<colormanager, boolean>
+local colormanager_onCancel ---@type table<colormanager, function>
 
---[ Constructors ]
+local function buildColormanager()
+	local colormanager = buildDatamanager() ---@cast colormanager colormanager
 
-function wt.CreateColormanager(t, datamanager)
-	t = type(t) == "table" and t or {}
+	--[ Type ]
 
 	local typename = "Colormanager" ---@type typename_colormanager
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-	local colormanager = datamanager ---@cast colormanager colormanager
 
 	widget_types[colormanager][typename] = true
 
 	--[ Data ]
 
-	local default = wt.PackColor(wt.UnpackColor(t.default))
-	local value = t.value or type(t.getData) == "function" and t.getData() or nil
-	value = wt.PackColor(wt.UnpackColor(value))
-	local snapshot = value
+	--| Value
 
-	function colormanager.load(handleChanges, silent)
-		handleChanges = handleChanges ~= false
+	function colormanager:verify(color) wt.PackColor(wt.UnpackColor(color)) end
 
-		if type(t.getData) == "function" then
-			colormanager.setValue(t.getData(), handleChanges, silent)
+	function colormanager:getValue() return us.Clone(data_value[self]) end
 
-			if not silent then colormanager.invoke.loaded(true) end
-		else
-			if handleChanges and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
+	--| Default
 
-			if not silent then colormanager.invoke.loaded(false) end
-		end
-	end
+	function colormanager:getDefault() return us.Clone(data_default[self]) end
+	function colormanager:setDefault(color) data_default[self] = us.Clone(color) end
 
-	function colormanager.saveData(color, silent)
-		if type(t.saveData) == "function" then
-			t.saveData(color and wt.PackColor(wt.UnpackColor(color)) or value)
+	--| Snapshot
 
-			if not silent then colormanager.invoke.saved(true) end
-		elseif not silent then colormanager.invoke.saved(false) end
-	end
-
-	function colormanager.getData() return type(t.getData) == "function" and t.getData() or nil end
-	function colormanager.setData(color, handleChanges, silent)
-		colormanager.saveData(color, silent)
-		colormanager.load(handleChanges, silent)
-	end
-
-	function colormanager.getDefault() return us.Clone(default) end
-	function colormanager.setDefault(color) default = wt.PackColor(wt.UnpackColor(color)) end
-	function colormanager.reset(handleChanges, silent) colormanager.setData(default, handleChanges, silent) end
-
-	function colormanager.snapshot(stored) us.CopyValues(snapshot, stored and colormanager.getData() or value) end
-	function colormanager.revert(handleChanges, silent) colormanager.setData(snapshot, handleChanges, silent) end
-
-	function colormanager.getValue() return us.Clone(value) end
-	function colormanager.setValue(color, user, silent)
-		value = wt.PackColor(wt.UnpackColor(color))
-
-		if not silent then colormanager.invoke.changed(user == true) end
-
-		if user and t.instantSave ~= false then colormanager.saveData(nil, silent) end
-
-		if user and type(t.dataManagement) == "table" then wt.HandleWidgetChanges(t.dataManagement.index, t.dataManagement.category, t.dataManagement.key) end
-	end
-
-	--Set starting value
-	colormanager.setValue(value, false, true)
+	function colormanager:snapshot(stored) us.CopyValues(data_snapshot[self], stored and colormanager:getData() or data_value[self]) end
 
 	--[ Color Wheel ]
 
-	local active = false
-	local onCancel = t.onCancel
+	if not colormanager_active then colormanager_active = {} end
 
-	--Color wheel value update utility
-	local function colorUpdate()
-		if not colormanager.isEnabled() then return end
+	local function colorUpdate(self)
+		if not widget_enabled[self] then return end
 
 		local r, g, b = ColorPickerFrame:GetColorRGB()
 
-		colormanager.setValue(wt.PackColor(r, g, b, ColorPickerFrame:GetColorAlpha()), true)
+		colormanager:setValue(wt.PackColor(r, g, b, ColorPickerFrame:GetColorAlpha()), true)
 	end
 
-	function colormanager.openColorPicker()
-		local r, g, b, a = wt.UnpackColor(value)
+	function colormanager:openColorPicker()
+		local r, g, b, a = wt.UnpackColor(data_value[self])
 
-		--Set this color picker as the active one
-		active = true
+		colormanager_active[self] = true
 
 		ColorPickerFrame:SetupColorPickerAndShow({
 			r = r,
@@ -4777,20 +4729,47 @@ function wt.CreateColormanager(t, datamanager)
 			swatchFunc = colorUpdate,
 			opacityFunc = colorUpdate,
 			cancelFunc = function()
-				colormanager.setValue(wt.PackColor(r, g, b, a), true)
+				colormanager:setValue(wt.PackColor(r, g, b, a), true)
+
+				local onCancel = colormanager_onCancel[self]
 
 				if onCancel then onCancel() end
 			end
 		})
 	end
 
-	function colormanager.isActive() return active end
+	function colormanager:isActive() return colormanager_active[self] end
 
-	--Update the color when re-enabled
-	colormanager.addListener.enabled(function() if active then colorUpdate() end end, 1)
+	colormanager:addListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
 
-	--Deactivate on close
-	ColorPickerFrame:HookScript("OnHide", function() active = false end)
+	return colormanager
+end
+
+--[ Constructors ]
+
+function wt.CreateColormanager(t, datamanager)
+	if not colormanager_base then colormanager_base = buildColormanager() end
+
+	local typenameBase = "Datamanager" ---@type typename_datamanager
+
+	local colormanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast colormanager colormanager
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
+
+	local data = type(t.data) == "table" and t.data or {}
+
+	colormanager:setReader(data.read)
+	colormanager:setWriter(data.write)
+
+	colormanager:setDefault(t.default)
+	colormanager:setValue(t.value)
+	colormanager:snapshot()
+
+	colormanager_active[colormanager] = false
+
+	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[colormanager] = false end)
 
 	return colormanager
 end
@@ -4866,7 +4845,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 		--| Fade inactive color pickers
 
-		local opacity = (unlocked or colorpicker.isActive()) and 1 or 0.4
+		local opacity = (unlocked or colormanager_active[colorpicker]) and 1 or 0.4
 
 		colorpicker.label:SetAlpha(opacity)
 		colorpicker.hexBox.template:SetAlpha(opacity)
@@ -4989,8 +4968,8 @@ function wt.CreateColorpicker(t, colormanager)
 		}, }, },
 		events = {
 			OnChar = function(f, _, text) f:SetText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
-			OnEnterPressed = function(_, text) colorpicker.setValue(wt.PackColor(wt.HexToColor(text)), true) end,
-			OnEscapePressed = function(self) self.setText(wt.ColorToHex(colorpicker.getValue())) end,
+			OnEnterPressed = function(_, text) colorpicker:setValue(wt.PackColor(wt.HexToColor(text)), true) end,
+			OnEscapePressed = function(self) self.setText(wt.ColorToHex(data_value[colorpicker])) end,
 		},
 		showDefault = false,
 		utilityMenu = false,
@@ -5013,7 +4992,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 		local defaultValue
 		if t.showDefault ~= false then
-			local default = colorpicker.getDefault()
+			local default = data_default[colorpicker]
 			local r, g, b = wt.UnpackColor(default)
 
 			local texture = "|TInterface/ChatFrame/ChatFrameBackground:12:12:0:0:16:16:0:16:0:16:" .. (r * 255) .. ":" .. (g * 255) .. ":" .. (b * 255) .. "|t "
@@ -5046,10 +5025,10 @@ function wt.CreateColorpicker(t, colormanager)
 		},
 		initialize = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.color = colorpicker.getValue() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.color = data_value[colorpicker] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() colorpicker.setValue(wt.clipboard.color, true) end
+				action = function() colorpicker:setValue(wt.clipboard.color, true) end
 			}):SetEnabled(wt.clipboard.color ~= nil)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker:revert() end })
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker:reset() end }) end
@@ -5063,10 +5042,10 @@ function wt.CreateColorpicker(t, colormanager)
 	local function updateColor(color)
 		colorpicker.button.frame:SetBackdropColor(color.r, color.g, color.b, color.a)
 		colorpicker.button.gradient:SetVertexColor(color.r, color.g, color.b, 1)
-		colorpicker.hexBox.setValue(wt.ColorToHex(color))
+		colorpicker.hexBox:setValue(wt.ColorToHex(color))
 	end
 
-	updateColor(colorpicker.getValue())
+	updateColor(data_value[colorpicker])
 
 	colorpicker:addListener_colored(function(_, color) updateColor(color) end)
 
