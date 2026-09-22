@@ -2466,8 +2466,7 @@ function wt.CreateAction(t, widget)
 		--[ Events ]
 
 		---Register a listener for a custom event to call the specified handler on trigger
-		---***
-		---@param event string Unique event identifier tag
+		---@param event eventTag Unique event identifier tag
 		---@param handler action_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:addListener(event, handler, callIndex) end
@@ -2573,8 +2572,7 @@ function wt.CreateButton(t, action)
 		--[ Events ]
 
 		---Register a listener for a custom event to call the specified handler on trigger
-		---***
-		---@param event string Unique event identifier tag
+		---@param event eventTag Unique event identifier tag
 		---@param handler button_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:addListener(event, handler, callIndex) end
@@ -2668,8 +2666,7 @@ function wt.CreateCustomButton(t, action)
 		--[ Events ]
 
 		---Register a listener for a custom event to call the specified handler on trigger
-		---***
-		---@param event string Unique event identifier tag
+		---@param event eventTag Unique event identifier tag
 		---@param handler customButton_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:addListener(event, handler, callIndex) end
@@ -2800,7 +2797,7 @@ function wt.CreateDatamanager(t, widget)
 		--[ Events ]
 
 		---Register a listener for a custom event to call the specified handler on trigger
-		---@param event eventTag
+		---@param event eventTag Unique event identifier tag
 		---@param handler datamanager_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:addListener(event, handler, callIndex) end
@@ -3161,35 +3158,37 @@ function wt.CreateCheckbox(t, binary)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
-		function _.getTypes() return {} end
+		function _:getTypes() return {} end
 
 			---@alias typename_checkbox "Checkbox"
 
 		--[ Events ]
 
-		---@class checkbox_addListener : binary_addListener
-		---@field [string] fun(handler: checkbox_handler, callIndex?: integer) Register a listener for a custom widget event
-		local addListener = {}
+		---Register a listener for a custom event to call the specified handler on trigger
+		---@param event eventTag Unique event identifier tag
+		---@param handler datamanager_handler Called when a custom event is invoked
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener(event, handler, callIndex) end
 
-			---Register a listener for a "loaded" widget event
-			---@param handler checkbox_handler_loaded Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.loaded(handler, callIndex) end
+		---Register a listener for an "enabled" event to call the specified handler on trigger
+		---@param handler checkbox_handler_enabled Called when an "enabled" event is invoked after `checkbox:setEnabled(...)` was called
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_enabled(handler, callIndex) end
 
-			---Register a listener for a "saved" widget event
-			---@param handler checkbox_handler_saved Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.saved(handler, callIndex) end
+		---Register a listener for a "loaded" widget event to call the specified handler on trigger
+		---@param handler checkbox_handler_loaded Called when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_loaded(handler, callIndex) end
 
-			---Register a listener for a "changed" widget event
-			---@param handler checkbox_handler_changed Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.changed(handler, callIndex) end
+		---Register a listener for a "saved" widget event to call the specified handler on trigger
+		---@param handler checkbox_handler_saved Called when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_saved(handler, callIndex) end
 
-			---Register a listener for an "enabled" widget event
-			---@param handler checkbox_handler_enabled Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function addListener.enabled(handler, callIndex) end
+		---Register a listener for a "changed" widget event to call the specified handler on trigger
+		---@param handler checkbox_handler_changed Called when a "changed" event is invoked after `checkbox:setValue(...)` was called
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:addListener_changed(handler, callIndex) end
 
 	return _
 end
@@ -7186,7 +7185,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 			--[ Events ]
 
 			---Register a listener for a custom event to call the specified handler on trigger
-			---@param event eventTag
+			---@param event eventTag Unique event identifier tag
 			---@param handler chatmanager_handler Called when a custom event is invoked
 			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 			function _:addListener(event, handler, callIndex) end

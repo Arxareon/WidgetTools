@@ -24,8 +24,8 @@ local widget_isIndependent ---@type table<widget, table<widget, boolean>>
 
 local widget_enabled ---@type table<widget, boolean>
 
-local widget_invoke_enabled ---@type fun(self: widget, user: boolean)
 local widget_handlers_enabled ---@type table<widget, widget_handler_enabled[]>
+local widget_invoke_enabled ---@type fun(self: widget, user: boolean)
 
 local widget_dependencies ---@type table<widget, dependencyType[]>
 local widget_dataDependency ---@type table<widget, table<dependencyType, true|function>>
@@ -183,6 +183,16 @@ local function buildWidget()
 	--| Event
 
 	if not widget_handlers_enabled then widget_handlers_enabled = {} end
+	if not widget_invoke_enabled then widget_invoke_enabled = function(self, user)
+		local handlers = widget_handlers_enabled[self]
+
+		if not handlers then return end
+
+		local enabled = widget_enabled[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, enabled, user) end
+	end end
 
 	function widget:addListener_enabled(handler, callIndex)
 		if type(handler) ~= "function" then return end
@@ -196,17 +206,6 @@ local function buildWidget()
 
 		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
-
-	if not widget_invoke_enabled then widget_invoke_enabled = function(self, user)
-		local handlers = widget_handlers_enabled[self]
-
-		if not handlers then return end
-
-		local enabled = widget_enabled[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, enabled, user) end
-	end end
 
 	--| Dependencies
 
@@ -551,8 +550,8 @@ local action_base ---@type action
 
 local action_call ---@type table<action, fun(self: action, user?: boolean)>
 
-local action_invoke_triggered ---@type fun(self: action, user: boolean)
 local action_handlers_triggered ---@type table<action, action_handler_triggered[]>
+local action_invoke_triggered ---@type fun(self: action, user: boolean)
 
 local function buildAction()
 	local action = buildWidget() ---@cast action action
@@ -567,6 +566,17 @@ local function buildAction()
 
 	if not action_call then action_call = {} end
 
+	if not action_handlers_triggered then action_handlers_triggered = {} end
+	if not action_invoke_triggered then action_invoke_triggered = function(self, user)
+		local handlers = action_handlers_triggered[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end end
+
 	function action:trigger(user, silent)
 		local call = action_call[self]
 
@@ -576,10 +586,6 @@ local function buildAction()
 	end
 
 	function action:setAction(call) if type(call) == "function" then action_call[self] = call end end
-
-	--| Event
-
-	if not action_handlers_triggered then action_handlers_triggered = {} end
 
 	function action:addListener_triggered(handler, callIndex)
 		if type(handler) ~= "function" then return end
@@ -593,16 +599,6 @@ local function buildAction()
 
 		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
-
-	if not action_invoke_triggered then action_invoke_triggered = function(self, user)
-		local handlers = action_handlers_triggered[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end end
 
 	ds.Log(function() return "Widget base mutated into Action base: " .. us.ToString(action), wt.title .. ".buildAction" end)
 
@@ -895,12 +891,12 @@ local datamanager_instantSave ---@type table<datamanager, boolean?>
 
 local datamanagement ---@type table<datamanager, settingsData>
 
-local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
-local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
-local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
 local datamanager_handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
 local datamanager_handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
 local datamanager_handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
+local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
+local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
+local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
 
 local function buildDatamanager()
 	local datamanager = buildWidget() ---@cast datamanager datamanager
@@ -913,9 +909,19 @@ local function buildDatamanager()
 
 	--[ Data ]
 
-	if not datamanagement then datamanagement = {} end
-
 	if not data_value then data_value = {} end
+
+	if not datamanager_handlers_changed then datamanager_handlers_changed = {} end
+	if not datamanager_invoke_changed then datamanager_invoke_changed = function(self, user)
+		local handlers = datamanager_handlers_changed[self]
+
+		if not handlers then return end
+
+		local value = data_value[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, value, user) end
+	end end
 
 	function datamanager:verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
 	function datamanager:format(value) return us.ToString(datamanager:verify(value)) end
@@ -938,21 +944,33 @@ local function buildDatamanager()
 		if not silent then datamanager_invoke_changed(self, user) end
 	end
 
-	if not datamanager_invoke_changed then datamanager_invoke_changed = function(self, user)
-		local handlers = datamanager_handlers_changed[self]
-
-		if not handlers then return end
-
-		local value = data_value[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, value, user) end
-	end end
-
 	--| Storage
 
 	if not datamanager_read then datamanager_read = {} end
 	if not datamanager_write then datamanager_write = {} end
+	if not datamanager_instantSave then datamanager_instantSave = {} end
+
+	if not datamanager_handlers_loaded then datamanager_handlers_loaded = {} end
+	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
+		local handlers = datamanager_handlers_loaded[self]
+
+		if not handlers then return end
+
+		success = success == true
+
+		for i = 1, #handlers do handlers[i](self, success) end
+	end end
+
+	if not datamanager_handlers_saved then datamanager_handlers_saved = {} end
+	if not datamanager_invoke_saved then datamanager_invoke_saved = function(self, success)
+		local handlers = datamanager_handlers_saved[self]
+
+		if not handlers then return end
+
+		success = success == true
+
+		for i = 1, #handlers do handlers[i](self, success) end
+	end end
 
 	function datamanager:setReader(read)
 		datamanager_read[self] = type(read) == "function" and read or nil
@@ -1003,26 +1021,6 @@ local function buildDatamanager()
 
 	function datamanager:setInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
 
-	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
-		local handlers = datamanager_handlers_loaded[self]
-
-		if not handlers then return end
-
-		success = success == true
-
-		for i = 1, #handlers do handlers[i](self, success) end
-	end end
-
-	if not datamanager_invoke_saved then datamanager_invoke_saved = function(self, success)
-		local handlers = datamanager_handlers_saved[self]
-
-		if not handlers then return end
-
-		success = success == true
-
-		for i = 1, #handlers do handlers[i](self, success) end
-	end end
-
 	--| Default
 
 	if not data_default then data_default = {} end
@@ -1037,6 +1035,10 @@ local function buildDatamanager()
 
 	function datamanager:snapshot(stored) if stored == true then data_snapshot[self] = datamanager:getData() else data_snapshot[self] = data_value[self] end end
 	function datamanager:revert(handleChanges, silent) datamanager:setData(data_snapshot[self], handleChanges, silent) end
+
+	--| Datamanagement
+
+	if not datamanagement then datamanagement = {} end
 
 	ds.Log(function() return "Widget base mutated into Datamanager base: " .. us.ToString(datamanager), wt.title .. ".buildDatamanager" end)
 
@@ -1168,6 +1170,13 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 	checkbox.frame = frame
 	checkbox.template = template
 
+	--| State
+
+	local enabled = widget_enabled[checkbox]
+
+	template:SetEnabled(enabled)
+	template:EnableMouse(enabled)
+
 	--| Position & dimensions
 
 	t.size = t.size or {}
@@ -1210,7 +1219,7 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 		offset = { x = t.size.h * (30 / 29) + 6, },
 		text = title,
 		anchor = "LEFT",
-		font = fontNormal,
+		font = enabled and fontNormal or fontDisabled,
 	}) or nil
 
 	--| Texture
@@ -1228,16 +1237,25 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 
 	--[ Value Update ]
 
-	---Update the widget UI based on the logical state
-	---@param _ any
-	---@param state boolean
-	local function updateBinaryState(_, state) template:SetChecked(state) end
+	template:SetChecked(data_value[checkbox])
 
-	updateBinaryState(nil, data_value[checkbox])
-
-	checkbox:addListener_changed(updateBinaryState, 1)
+	checkbox:addListener_changed(function(self, state) self.template:SetChecked(state) end, 1)
 
 	--[ UX ]
+
+	--| Update state
+
+	checkbox:addListener_enabled(function(self, state)
+		local temp = self.template
+		local label = self.label
+
+		temp:SetEnabled(state)
+		temp:EnableMouse(state)
+
+		if label then label:SetFontObject(state and fontNormal or fontDisabled) end
+	end, 1)
+
+	--| Update value
 
 	template:HookScript("OnClick", function(self)
 		local state = self:GetChecked()
@@ -1310,22 +1328,6 @@ function wt.CreateCheckbox(t, binary) --Lite GUI
 			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox:reset() end }) end
 		end
 	}) end
-
-	--[ State Update ]
-
-	---Update the widget UI based on its enabled state
-	---@param _ any
-	---@param state boolean
-	local function updateState(_, state)
-		template:SetEnabled(state)
-		template:EnableMouse(state)
-
-		if checkbox.label then checkbox.label:SetFontObject(state and fontNormal or fontDisabled) end
-	end
-
-	updateState(nil, widget_enabled[checkbox])
-
-	checkbox:addListener_enabled(updateState, 1)
 
 	return checkbox
 end
@@ -1672,12 +1674,12 @@ local selector_base ---@type selector
 
 local selector_clearable ---@type table<selector, boolean>
 
-local selector_invoke_updated ---@type fun(self: selector)
-local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
-local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
 local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
 local selector_handlers_activated ---@type table<selector, function[]>
 local selector_handlers_added ---@type table<selector, selector_handler_added[]>
+local selector_invoke_updated ---@type fun(self: selector)
+local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
+local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
 
 local function buildSelector()
 	local selector = buildDatamanager() ---@cast selector selector
@@ -1693,6 +1695,24 @@ local function buildSelector()
 	selector.items = {}
 	local inactive = {} ---@type selectorBinary[]
 	local typenameItem = "Binary" ---@type typename_binary
+
+	if not selector_handlers_updated then selector_handlers_updated = {} end
+	if not selector_invoke_updated then selector_invoke_updated = function(self)
+		local handlers = selector_handlers_updated[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self) end
+	end end
+
+	if not selector_handlers_added then selector_handlers_added = {} end
+	if not selector_invoke_added then selector_invoke_added = function(self, item)
+		local handlers = selector_handlers_added[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, item) end
+	end end
 
 	function selector:updateItems(items, silent)
 		--Update the items
@@ -1742,22 +1762,6 @@ local function buildSelector()
 
 		selector.setValue(data_value[self], nil, silent)
 	end
-
-	if not selector_invoke_updated then selector_invoke_updated = function(self)
-		local handlers = selector_handlers_updated[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self) end
-	end end
-
-	if not selector_invoke_added then selector_invoke_added = function(self, item)
-		local handlers = selector_handlers_added[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, item) end
-	end end
 
 	--[ Data ]
 
@@ -3143,6 +3147,8 @@ local function buildTextual()
 
 	--[ Data ]
 
+	if not textual_color then textual_color = {} end
+
 	function textual:verify(value) return type(value) == "string" and value or "" end
 	function textual:format(value)
 		value = value and textual:verify(value) or data_value[self]
@@ -3843,10 +3849,10 @@ local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
 local numeric_hardStep ---@type table<numeric, boolean>
 
-local numeric_invoke_min ---@type fun(self: numeric)
-local numeric_invoke_max ---@type fun(self: numeric)
 local numeric_handlers_min ---@type table<numeric, numeric_handler_min[]>
 local numeric_handlers_max ---@type table<numeric, numeric_handler_max[]>
+local numeric_invoke_min ---@type fun(self: numeric)
+local numeric_invoke_max ---@type fun(self: numeric)
 
 local function buildNumeric()
 	local numeric = buildDatamanager() ---@cast numeric numeric
@@ -3866,7 +3872,7 @@ local function buildNumeric()
 	if not numeric_hardStep then numeric_hardStep = {} end
 
 	function numeric:verify(value)
-		if type(value) ~= "number" then return data_default[self] end
+		if type(value) ~= "number" then return data_value[self] end
 
 		local limitMin = numeric_limitMin[self]
 		local step = numeric_step[self]
@@ -3882,6 +3888,24 @@ local function buildNumeric()
 
 	--| Value limits
 
+	if not numeric_handlers_min then numeric_handlers_min = {} end
+	if not numeric_invoke_min then numeric_invoke_min = function(self)
+		local handlers = numeric_handlers_min[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, numeric_limitMin[self]) end
+	end end
+
+	if not numeric_handlers_max then numeric_handlers_max = {} end
+	if not numeric_invoke_max then numeric_invoke_max = function(self)
+		local handlers = numeric_handlers_max[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, numeric_limitMax[self]) end
+	end end
+
 	function numeric:getMin() return numeric_limitMin[self] end
 	function numeric:setMin(number, silent)
 		numeric_limitMin[self] = min(number, numeric_limitMax[self])
@@ -3895,22 +3919,6 @@ local function buildNumeric()
 
 		if not silent then numeric_invoke_max(self) end
 	end
-
-	if not numeric_invoke_min then numeric_invoke_min = function(self)
-		local handlers = numeric_handlers_min[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, numeric_limitMin[self]) end
-	end end
-
-	if not numeric_invoke_max then numeric_invoke_max = function(self)
-		local handlers = numeric_handlers_max[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, numeric_limitMax[self]) end
-	end end
 
 	--| Value step
 
@@ -3944,8 +3952,7 @@ function wt.CreateNumeric(t, datamanager)
 	numeric:setReader(data.read)
 	numeric:setWriter(data.write)
 
-	data_default[numeric] = numeric_limitMin[numeric] --CHECK if needed -> robust replacement
-	numeric:setDefault(t.default)
+	numeric:setDefault(t.default or numeric_limitMin[numeric])
 	numeric:setValue(t.value)
 	numeric:snapshot()
 
@@ -3954,7 +3961,7 @@ end
 
 --| Slider
 
-function wt.CreateSlider(t, numeric)
+function wt.CreateSlider(t, numeric) --Lite GUI
 	t = type(t) == "table" and t or {}
 
 	local typenameBase = "Numeric" ---@type typename_numeric
@@ -4266,7 +4273,7 @@ function wt.CreateSlider(t, numeric)
 	return slider
 end
 
-function wt.CreateClassicSlider(t, numeric)
+function wt.CreateClassicSlider(t, numeric) --Lite GUI
 	t = type(t) == "table" and t or {}
 
 	local typenameBase = "Numeric" ---@type typename_numeric
@@ -4304,8 +4311,6 @@ function wt.CreateClassicSlider(t, numeric)
 	wt.SetArrangementDirective(frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
 	template:SetPoint("TOP", 0, -15)
-	slider.min:SetPoint("TOPLEFT", template, "BOTTOMLEFT")
-	slider.max:SetPoint("TOPRIGHT", template, "BOTTOMRIGHT")
 
 	frame:SetSize(t.width, t.valuebox ~= false and 48 or 31)
 	template:SetWidth(t.width - (t.sideButtons ~= false and 40 or 0))
@@ -4335,6 +4340,9 @@ function wt.CreateClassicSlider(t, numeric)
 
 	slider.min = _G[name .. "FrameLow"]
 	slider.max = _G[name .. "FrameHigh"]
+
+	slider.min:SetPoint("TOPLEFT", template, "BOTTOMLEFT")
+	slider.max:SetPoint("TOPRIGHT", template, "BOTTOMRIGHT")
 
 	---Update the min/max limits of the slider
 	---@param lMin? number
@@ -4718,6 +4726,7 @@ local function buildColormanager()
 	--[ Color Wheel ]
 
 	if not colormanager_active then colormanager_active = {} end
+	if not colormanager_onCancel then colormanager_onCancel = {} end
 
 	local function colorUpdate(self)
 		if not widget_enabled[self] then return end
@@ -4780,6 +4789,7 @@ function wt.CreateColormanager(t, datamanager)
 	colormanager:snapshot()
 
 	colormanager_active[colormanager] = false
+	if type(t.onCancel) == "function" then colormanager_onCancel[colormanager] = t.onCancel end
 
 	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[colormanager] = false end)
 
@@ -4788,7 +4798,7 @@ end
 
 --| Colorpicker
 
-function wt.CreateColorpicker(t, colormanager)
+function wt.CreateColorpicker(t, colormanager) --Lite GUI
 	t = type(t) == "table" and t or {}
 
 	local typenameBase = "Colormanager" ---@type typename_colormanager
