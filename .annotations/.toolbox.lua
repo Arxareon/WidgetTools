@@ -679,7 +679,8 @@ function wt.CreateFrame(t)
 	---@field parentFrame? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [`Region:SetParent(...)`](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the name of the new frame | ***Default:*** `nil` *(anonymous frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= `UIParent`
-	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
+	---@field width? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to `0` will result in the frame being invisible and not getting placed on the screen.</li></ul>
+	---@field height? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
 
 		---@class positionableScreenFrame : positionableFrame
 		---@field keepInBounds? boolean Whether to keep the frame within screen bounds whenever it's moved | ***Default:*** `false`
@@ -716,10 +717,6 @@ function wt.CreateFrame(t)
 				---@field t? number Space to leave at the top (doesn't need to be negated) | ***Default:*** 12
 				---@field b? number Space to leave at the bottom | ***Default:*** 12
 
-		---@class sizeData_zeroDefault
-		---@field w? number Width | ***Default:*** `0`
-		---@field h? number Height | ***Default:*** `0`
-
 		---@class eventFrame
 		---@field events? scriptEventList
 		---@field onEvent? globalEventList
@@ -746,19 +743,13 @@ function wt.CreateScrollframe(t)
 	---Optional parameters
 	---@class scrollframe_options : childFrame, positionableFrame, initializableContainerFrame, scrollSpeedData
 	---@field name? string Unique string used to append to the name of `t.parent` when setting the names of the name of the scroll parent and its scrollable child frame | ***Default:*** `"Scroller"` *(for the scrollable child frame)*<ul><li>***Note:*** Space characters will be removed when used for setting the frame names.</li></ul>
-	---@field size? sizeData_parentDefault|sizeData ***Default:*** `t.parent` and *size of the parent frame* or *no size*
-	---@field scrollSize? sizeData_scroll|sizeData ***Default:*** *size of the parent frame*
+	---@field width? number ***Default:*** `t.parentFrame` and *width of the parent frame* or `0`
+	---@field height? number ***Default:*** `t.parentFrame` and *height of the parent frame* or `0`
+	---@field scrollWidth? number Horizontal size of the scrollable child frame | ***Default:*** `t.width - 16`
+	---@field scrollHeight? number Vertical size of the scrollable child frame | ***Default:*** `0`
 
 		---@class scrollSpeedData
 		---@field scrollSpeed? number Percentage of one page of content to scroll at a time | ***Range:*** (`0`, `1`) | ***Default:*** `0.25`
-
-		---@class sizeData_parentDefault
-		---@field w? number Width | ***Default:*** *width of the parent frame*
-		---@field h? number Height | ***Default:*** *height of the parent frame*
-
-		---@class sizeData_scroll
-		---@field w? number Horizontal size of the scrollable child frame | ***Default:*** `t.size.width - 16`
-		---@field h? number Vertical size of the scrollable child frame | ***Default:*** `0` *(no height)*
 
 	return {}, {}
 end
@@ -1222,10 +1213,10 @@ function wt.CreateDescription(title, t)
 	---@field justify? JustifyHorizontal Set the horizontal text alignment (overriding `t.font`) | ***Default:*** `"LEFT"`
 
 		---@class descriptionColorData
-		---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.r
-		---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.g
-		---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** HIGHLIGHT_FONT_COLOR.b
-		---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.55
+		---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `HIGHLIGHT_FONT_COLOR.r`
+		---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `HIGHLIGHT_FONT_COLOR.g`
+		---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `HIGHLIGHT_FONT_COLOR.b`
+		---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `0.55`
 
 	--| Returns
 
@@ -1251,7 +1242,8 @@ function wt.CreateTexture(frame, t, updates)
 	---Optional parameters
 	---@class texture_options : positionableFrame, pathData_ChatFrameDefault
 	---@field name? string String appended to the name of `t.parent` used to set the name of the new texture | ***Default:*** `"Texture"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData ***Default:*** *size of* `parent`
+	---@field width? number ***Default:*** *width of parent*
+	---@field height? number ***Default:*** *height of parent*
 	---@field atlas? string Name of the texture atlas to use instead of creating a texture based on `t.path`<ul><li>***Note:*** Settings this will override whatever `t.path` is set to.</li></ul>
 	---@field layer? DrawLayer
 	---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (`-8`, `7`)
@@ -1266,10 +1258,6 @@ function wt.CreateTexture(frame, t, updates)
 
 		---@class pathData_ChatFrameDefault
 		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `"Interface/ChatFrame/ChatFrameBackground"`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
-
-		---@class sizeData
-		---@field w number Width
-		---@field h number Height
 
 		---@class tileData
 		---@field h? boolean Horizontal | ***Default:*** `false`
@@ -1327,7 +1315,8 @@ function wt.CreateTexture(frame, t, updates)
 
 		---@class textureUpdateData
 		---@field position? positionData Table of parameters to call [`Region:SetPoint(...)`](https://warcraft.wiki.gg/wiki/API_ScriptRegionResizing_SetPoint) with | ***Default:*** `t.position`
-		---@field size? sizeData | ***Default:*** `t.size`
+		---@field width? number ***Default:*** `t.width`
+		---@field height? number ***Default:*** `t.height`
 		---@field path? string Path to the specific texture file relative to the root directory of the specific WoW client | ***Default:*** `t.path`<ul><li>***Note:*** The use of `/` as separator is recommended (Example: Interface/AddOns/AddonNameKey/Textures/TextureImage.tga), otherwise use `\\`.</li><li>***Note:*** **File format:** Texture files must be in JPEG (no transparency, not recommended), PNG, TGA or BLP format.</li><li>***Note:*** **Size:** Texture files must have powers of 2 dimensions to be handled by the WoW client.</li></ul>
 		---@field layer? DrawLayer | ***Default:*** `t.layer`
 		---@field level? integer Sublevel to set within the specified draw layer | ***Range:*** (`-8`, `7`) | ***Default:*** `t.level`
@@ -1756,7 +1745,7 @@ function wt.CreateContextMenu(t)
 	---@field triggers? contextMenuTriggerData[] List of trigger frames and behavior to link to toggle the context menu | ***Default:*** *(no triggers)*
 
 		---@class contextMenu_options_base
-		---@field initialize? fun(menu: contextMenu|contextSubmenu) This function will be called while setting up the menu to perform specific tasks like creating menu content items right away<p>@*param* `menu` contextMenu|contextSubmenu ― Reference to the container of menu elements (such as titles, widgets, dividers or other frames) for menu items to be added to during initialization</p>
+		---@field load? fun(menu: contextMenu|contextSubmenu) This function will be called while setting up the menu to perform specific tasks like creating menu content items right away<p>@*param* `menu` contextMenu|contextSubmenu ― Reference to the container of menu elements (such as titles, widgets, dividers or other frames) for menu items to be added to during initialization</p>
 
 		---@class contextMenuTriggerData
 		---@field frame AnyFrameObject? Reference to the frame to set as a trigger | ***Default:*** `UIParent` *(opened at cursor position)*
@@ -1772,10 +1761,9 @@ function wt.CreateContextMenu(t)
 	local _ = {}
 
 		---Open the context menu
-		---***
-		---@param trigger? integer Index of the trigger to activate to have the menu opened defined in `t.triggers` | ***Default:*** `1`
+		---@param triggerIndex? integer Index of the trigger to activate to have the menu opened defined in `t.triggers` | ***Default:*** `1`
 		---@param action "click"|"hover"|nil The action that prompted the menu to be opened | ***Default:*** *no action:* `nil`
-		function _.open(trigger, action) end
+		function _:open(triggerIndex, action) end
 
 	return _
 end
@@ -1793,11 +1781,8 @@ function wt.CreatePopupMenu(t)
 	---@class popupMenu_options : labeledChildFrame, tooltipDescribableWidget, positionableScreenFrame, arrangeableFrame, visibleFrame, contextMenu_options_base, eventFrame
 	---@field parentFrame? AnyFrameObject Reference to the frame to set as the parent of the new frame | ***Default:*** `nil` *(parentless frame)*<ul><li>***Note:*** You may use [`Region:SetParent(...)`](https://warcraft.wiki.gg/wiki/API_ScriptRegion_SetParent) to set the parent frame later.</li></ul>
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"PopupMenu"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_menuButton|sizeData
-
-		---@class sizeData_menuButton
-		---@field w? number Width | ***Default:*** `18`0
-		---@field h? number Height | ***Default:*** `26`
+	---@field width? number ***Default:*** `180`
+	---@field height? number ***Default:*** `26`
 
 	return {}, {}
 end
@@ -2108,7 +2093,8 @@ function wt.CreateContainer(t, widget)
 	---@class container_options : widget_options, namedChildFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame, eventFrame, liteObject
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= `UIParent`
-	---@field size? sizeData_zeroDefault|sizeData ***Default:*** *no size*<ul><li>***Note:*** Omitting or setting either value to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
+	---@field width? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to `0` will result in the frame being invisible and not getting placed on the screen.</li></ul>
+	---@field height? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
 	---@field listeners? container_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field arrangement? arrangementRules_container If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field initialize? fun(container: container, canvas?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<p>@*param* `container` container ― Reference to the container to be set as the parent for child objects created during initialization</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
@@ -2188,7 +2174,8 @@ function wt.CreateCustomContainer(t, widget)
 	---Optional parameters
 	---@class customContainer_options : container_options, backdropData
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_customContainer|sizeData
+	---@field width? number ***Default:*** `t.parent` and *width of the parent frame* - 20 or `0`
+	---@field height? number ***Default:*** `0`<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
 	---@field background? backdropBackgroundData_customContainer Table containing the parameters used for the background
 	---@field border? backdropBorderData_customContainer Table containing the parameters used for the border
 	---@field listeners? customContainer_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -2211,10 +2198,6 @@ function wt.CreateCustomContainer(t, widget)
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
 				---@alias customContainer_handler fun(self: customContainer, ...: any)
 
-		---@class sizeData_customContainer
-		---@field w? number Width | ***Default:*** `t.parent` and *width of the parent frame* - 20 or 0
-		---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
-
 		---@class backdropBackgroundData_customContainer
 		---@field texture? backdropBackgroundTextureData_customContainer Parameters used for setting the background texture
 		---@field color? backgroundColorData_customContainer Apply the specified color to the background texture
@@ -2230,10 +2213,10 @@ function wt.CreateCustomContainer(t, widget)
 				---@field b? number Bottom | ***Default:*** 4
 
 			---@class backgroundColorData_customContainer
-			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.65
+			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `0.65`
 
 		---@class backdropBorderData_customContainer
 		---@field texture? backdropBorderTextureData_customContainer Parameters used for setting the border texture
@@ -2246,7 +2229,7 @@ function wt.CreateCustomContainer(t, widget)
 			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
 			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
 			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
-			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.5
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `0.5`
 
 		---@class arrangementRules_customContainer : arrangementRules
 		---@field margins? spacingData_customContainer Inset the content inside the container frame by the specified amount on each side
@@ -2298,7 +2281,8 @@ function wt.CreatePanel(t, container)
 	---Optional parameters
 	---@class panel_options : widget_options, labeledChildFrame, describableFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, backdropData, eventFrame, liteObject
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Panel"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_panel|sizeData
+	---@field width? number ***Default:*** `t.parent` and *width of the parent frame* - 20 or `0`
+	---@field height? number ***Default:*** `0`<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
 	---@field background? backdropBackgroundData_panel Table containing the parameters used for the background
 	---@field border? backdropBorderData_panel Table containing the parameters used for the border
 	---@field listeners? panel_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -2337,10 +2321,6 @@ function wt.CreatePanel(t, container)
 		---@class liteObject
 		---@field lite? boolean If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 
-		---@class sizeData_panel
-		---@field w? number Width | ***Default:*** `t.parent` and *width of the parent frame* - 20 or 0
-		---@field h? number Height | ***Default:*** 0<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
-
 		---@class backdropBackgroundData_panel
 		---@field texture? backdropBackgroundTextureData_panel Parameters used for setting the background texture
 		---@field color? backgroundColorData_panel Apply the specified color to the background texture
@@ -2356,10 +2336,10 @@ function wt.CreatePanel(t, container)
 				---@field b? number Bottom | ***Default:*** 4
 
 			---@class backgroundColorData_panel
-			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** 0.175
-			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.65
+			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `0.175`
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `0.65`
 
 		---@class backdropBorderData_panel
 		---@field texture? backdropBorderTextureData_panel Parameters used for setting the border texture
@@ -2372,7 +2352,7 @@ function wt.CreatePanel(t, container)
 			---@field r? number Red | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
 			---@field g? number Green | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
 			---@field b? number Blue | ***Range:*** (`0`, `1`) | ***Default:*** `0.75`
-			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** 0.5
+			---@field a? number Opacity | ***Range:*** (`0`, `1`) | ***Default:*** `0.5`
 
 		---@class arrangementRules_panel : arrangementRules
 		---@field margins? spacingData_panel Inset the content inside the container frame by the specified amount on each side
@@ -2515,15 +2495,12 @@ function wt.CreateButton(t, action)
 	---@class actionButton_options : action_options, labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Button"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field titleOffset? offsetData Offset the position of the label of the button
-	---@field size? sizeData_button|sizeData
+	---@field width? number ***Default:*** `80`
+	---@field height? number ***Default:*** `22`
 	---@field font? labelFontOptions_highlight List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field action? fun(self: actionButton, user?: boolean) Function to call when the action is triggered<p>@*param* `self` actionButton — Reference to the widget table</p><p>@*param* `user`? boolean — Marking whether the call is due to a user interaction or not | ***Default:*** `false`</p>
 	---@field listeners? button_listeners|action_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptButton, fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Example:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" when the button is clicked.</li><li>***Note:*** `t.action` will automatically be called when an "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" widget events, there is no need to register it here as well.</li></ul>
-
-		---@class sizeData_button
-	---@field w? number Width | ***Default:*** 80
-	---@field h? number Height | ***Default:*** `22`
 
 		---@class labelFontOptions_highlight
 		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontNormal"`
@@ -2539,26 +2516,26 @@ function wt.CreateButton(t, action)
 			---@field handler button_handler_triggered Handler function to register for call
 
 				---Called when a "triggered" event is invoked after `button:trigger(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an button taken by the user</p>
-				---@alias button_handler_triggered fun(self: button)
+				---@alias button_handler_triggered fun(self: actionButton)
 
 			---@class button_listener_enabled : indexedEventHandler
 			---@field handler button_handler_enabled Handler function to register for call
 
 				---Called when an "enabled" event is invoked after `button:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
-				---@alias button_handler_enabled fun(self: button, state: boolean, user: boolean)
+				---@alias button_handler_enabled fun(self: actionButton, state: boolean, user: boolean)
 
 			---@class button_listener : indexedEventHandler
 			---@field handler button_handler Handler function to register for call
 
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
-				---@alias button_handler fun(self: button, ...: any)
+				---@alias button_handler fun(self: actionButton, ...: any)
 
 	--| Returns
 
 	---@class actionButton : action
 	---@field label FontString|nil
 	---@field highlight Frame Frame to catch mouse interactions and serve as a hover trigger to be able to show the tooltip or when the button is disabled
-	---@field frame Button
+	---@field template Button
 	local _ = {}
 
 		--[ Type ]
@@ -2652,7 +2629,7 @@ function wt.CreateCustomButton(t, action)
 	--| Returns
 
 	---@class customButton : actionButton
-	---@field frame Button|BackdropTemplate
+	---@field template Button|BackdropTemplate
 	local _ = {}
 
 		--[ Type ]
@@ -3088,7 +3065,8 @@ function wt.CreateCheckbox(t, binary)
 	---Optional parameters
 	---@class checkbox_options : binary_options, labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject, tooltipDescribableSettingsWidget
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Checkbox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_checkbox|sizeData
+	---@field width? number ***Default:*** `t.label and 190 or t.height`
+	---@field height? number ***Default:*** `26`
 	---@field font? labelFontOptions List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label | ***Default:*** *normal sized default Blizzard UI fonts*<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field listeners? checkbox_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptButton, fun(self: checkbox, state: boolean, button?: string, down?: boolean)|fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― The checked state of the checkbox widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
@@ -3096,10 +3074,6 @@ function wt.CreateCheckbox(t, binary)
 		---@class tooltipDescribableSettingsWidget
 		---@field showDefault? boolean If `true`, show the default value of the widget in its tooltip and display the reset button its the utility menu | ***Default:*** `true`
 		---@field utilityMenu? boolean If `true`, assign a context menu to the settings widget frame to allow for quickly resetting changes or the default value | ***Default:*** `true`
-
-		---@class sizeData_checkbox
-	---@field w? number Width | ***Default:*** `t.label and 180 or t.size.h`
-	---@field h? number Height | ***Default:*** `26`
 
 		---@class labelFontOptions
 		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontHighlight"`
@@ -3300,14 +3274,11 @@ function wt.CreateRadiobutton(t, binary)
 
 	---Optional parameters
 	---@class radiobutton_options : checkbox_options
-	---@field size? sizeData_radiobutton|sizeData
+	---@field width? number ***Default:***  `t.label and 180 or t.height`
+	---@field height? number ***Default:*** `18`
 	---@field clearable? boolean Whether this radio button should be clearable by right clicking on it or not | ***Default:*** `false`<ul><li>***Note:*** The radio button will be registered for `"RightButtonUp"` triggers to call "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" events with `button = "RightButton"`.</li></ul>
 	---@field listeners? radiobutton_listeners|binary_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptButton, fun(self: radiobutton, state: boolean, button?: string, down?: boolean)|fun(...: any)> Table of key, value pairs of button script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnClick](https://warcraft.wiki.gg/wiki/UIHANDLER_OnClick)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― The checked state of the radiobutton widget</p><p>@*param* `button`? string — Which button caused the click | ***Default:*** `"LeftButton"`</p><p>@*param* `down`? boolean — Whether the event happened on button press (down) or release (up) | ***Default:*** `false`</p></li></ul>
-
-		---@class sizeData_radiobutton
-	---@field w? number Width | ***Default:***  `t.label` and 180 or `t.size.h`
-	---@field h? number Height | ***Default:*** `18`
 
 		---@class labelFontOptions_small
 		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** `"GameFontHighlightSmall"`
@@ -3692,7 +3663,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 		---Return the itemset type specified for this special selector on creation
 		---@return SpecialSelectorItemset itemset
-		function _.getItemset() return "anchor" end
+		function _:getItemset() return "anchor" end
 
 		--[ Type ]
 
@@ -4127,7 +4098,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	---Optional parameters
 	---@class dropdownRadiogroup_options : radiogroup_options, widgetWidthValue, tooltipDescribableSettingsWidget
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Dropdown"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field width? number The width of the dropdown frame containing the toggle and (optionally) cycle buttons and the label (if `t.label` is `true`) | ***Default:*** `18`0
+	---@field width? number The width of the dropdown frame containing the toggle and (optionally) cycle buttons and the label (if `t.label` is `true`) | ***Default:*** `180`
 	---@field scrollThreshold? integer Number of items to show before changing the dropdown menu to be scrollable | ***Default:*** 15<ul><li>***Note:*** Scrollability does not change when the number of items change after the initial setup.</li></ul>
 	---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** `""`
 	---@field clearable? boolean If `true`, the selector input should be clearable by right clicking on its radio buttons, or, if `t.utilityMenu` is `false`, the dropdown toggle button itself (if `true`, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
@@ -4136,7 +4107,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	---@field listeners? dropdownRadiogroup_listeners|radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class widgetWidthValue
-		---@field width? number ***Default:*** `18`0
+		---@field width? number ***Default:*** `180`
 
 		---@class dropdownRadiogroup_listeners : radiogroup_listeners
 		---@field [1]? table<string, dropdownRadiogroup_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -4653,7 +4624,8 @@ function wt.CreateEditbox(t, textual)
 	---Optional parameters
 	---@class editbox_options : textual_options, labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject, tooltipDescribableSettingsWidget
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Textbox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_editbox|sizeData
+	---@field width? number ***Default:***  `180`
+	---@field height? number ***Default:*** `18`
 	---@field insets? insetData Table containing padding values by which to offset the position of the text in the editbox
 	---@field font? labelFontOptions_editbox List of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object names to be used for the label<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field justify? justifyData_left Set the justification of the text (overriding all font objects set in `t.font`)
@@ -4665,10 +4637,6 @@ function wt.CreateEditbox(t, textual)
 	---@field resetCursor? boolean If `true`, set the cursor position to the beginning of the string after setting the text via `textual.setText(...)` | ***Default:*** `true`
 	---@field listeners? editbox_listeners|textual_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field events? table<ScriptEditBox, fun(...: any)> Table of key, value pairs of editbox script event tags and the handler functions called on trigger<ul><li>***Note:*** "[OnChar](https://warcraft.wiki.gg/wiki/UIHANDLER_OnChar)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `char` string ― The UTF-8 character that was typed</p><p>@*param* `text` string ― The text typed into the editbox</p></li><li>***Note:*** "[OnTextChanged](https://warcraft.wiki.gg/wiki/UIHANDLER_OnTextChanged)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p><p>@*param* `user` string ― `true` if the value was changed by the user, `false` if it was done programmatically</p></li><li>***Note:*** "[OnEnterPressed](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEnterPressed)" will be called with custom parameters:<p>@*param* `self` AnyFrameObject ― Reference to the editbox frame</p><p>@*param* `text` string ― The text typed into the editbox</p></li></ul>
-
-		---@class sizeData_editbox
-		---@field w? number Width | ***Default:***  180
-		---@field h? number Height | ***Default:*** `18`
 
 		---@class labelFontOptions_editbox
 		---@field normal? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) to be used when the widget is in its regular state | ***Default:*** *default font based on the frame template*
@@ -4865,7 +4833,8 @@ function wt.CreateMultilineEditbox(t, textual)
 
 	---Optional parameters
 	---@class multilineEditbox_options : editbox_options, scrollSpeedData
-	---@field size? sizeData
+	---@field width? number
+	---@field height? number
 	---@field charCount? boolean Show or hide the remaining number of characters | ***Default:*** `t.charLimit` > 0
 	---@field scrollToTop? boolean Automatically scroll to the top when the text is loaded or changed while not being actively edited | ***Default:*** `false`
 	---@field scrollEvents? table<ScriptScrollFrame, fun(...: any)> Table of key, value pairs of scroll frame script event tags and the handler functions called on trigger
@@ -4977,7 +4946,8 @@ function wt.CreateCopybox(t)
 	---Optional parameters
 	---@class copybox_options : labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, liteObject
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Copybox"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field size? sizeData_editbox|sizeData
+	---@field width? number ***Default:***  `180`
+	---@field height? number ***Default:*** `18`
 	---@field layer? DrawLayer
 	---@field font? string Name of the [FontObject](https://warcraft.wiki.gg/wiki/UIOBJECT_Font#List_of_Font_Objects) object to be used for the [FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString) | ***Default:*** `"GameFontNormalSmall"`<ul><li>***Note:*** A new font object (or a modified copy of an existing one) can be created via <code><i>WidgetToolbox</i>.CreateFont(...)</code> (even within this table definition).</li></ul>
 	---@field color? color Apply the specified color to the text (overriding `t.font`)

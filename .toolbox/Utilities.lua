@@ -314,20 +314,19 @@ end
 ---@param frame Frame
 ---@param t frame_options
 local function setUpFrame(frame, t)
-	t.size = t.size or {}
-	t.size.w = t.size.w or 0
-	t.size.h = t.size.h or 0
 
 	--| Position & dimensions
 
+	local width = t.width or 0
+	local height = t.height or 0
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
+
+	if t.width or t.height then frame:SetSize(width, height) end
 
 	if not t.arrange and t.position then wt.SetPosition(frame, t.position) end
 	wt.SetArrangementDirective(frame, arrange.index, arrange.wrap ~= false, t.arrange == nil)
 
 	if t.keepInBounds then frame:SetClampedToScreen(true) end
-
-	if t.size then frame:SetSize(t.size.w, t.size.h) end
 
 	--| Visibility
 
@@ -345,11 +344,9 @@ local function setUpFrame(frame, t)
 
 	--[ Initialization ]
 
-	--Add content, performs tasks
 	if type(t.initialize) == "function" then
-		t.initialize(frame, t.size.w, t.size.h, t.name)
+		t.initialize(frame, width, height, t.name)
 
-		--Arrange content
 		if t.arrangement and frame then wt.ArrangeContent(frame, t.arrangement) end
 	end
 end
@@ -390,7 +387,6 @@ end
 
 function wt.CreateScrollframe(t)
 	t = type(t) == "table" and t or {}
-	t.scrollSize = type(t.scrollSize) == "table" and t.scrollSize or {}
 
 	--[ Frame Setup ]
 
@@ -401,43 +397,41 @@ function wt.CreateScrollframe(t)
 
 	--| Position & dimensions
 
-	t.size = t.size or t.parentFrame and { w = t.parentFrame:GetWidth(), h = t.parentFrame:GetHeight() } or { w = 0, h = 0 }
+	local width = t.width or t.parentFrame and t.parentFrame:GetWidth() or 0
+	local height = t.height or t.parentFrame and t.parentFrame:GetHeight() or 0
+
+	scrollframe:SetSize(width, height)
+	scrollframe.ScrollBar:SetHeight(height - 10)
 
 	wt.SetPosition(scrollframe, t.position)
-
-	scrollframe:SetSize(t.size.w, t.size.h)
-
-	--Scrollbar
 	wt.SetPosition(scrollframe.ScrollBar, {
 		anchor = "RIGHT",
 		relativeTo = scrollframe,
 		relativePoint = "RIGHT",
 		offset = { x = -4, y = 1 }
 	})
-	scrollframe.ScrollBar:SetHeight(t.size.h - 10)
 
 	--[ Scroll Child ]
+
+	local scrollSpeed = (t.scrollSpeed or 0.25)
 
 	--Create scrollable child frame
 	local scrollChild = wt.CreateFrame({
 		parentFrame = scrollframe,
 		name = parentName .. (name or "Scroller"),
 		append = false,
-		size = { w = t.scrollSize.w or scrollframe:GetWidth() - (wt.classic and 32 or 16), h = t.scrollSize.h },
+		width = t.scrollWidth or scrollframe:GetWidth() - (wt.classic and 32 or 16),
+		height = t.scrollHeight,
 		initialize = t.initialize,
 		arrangement = t.arrangement
 	})
 
-	--Register for scroll
 	scrollframe:SetScrollChild(scrollChild)
-
-	--Update scroll speed
-	t.scrollSpeed = (t.scrollSpeed or 0.25)
 
 	--Override the built-in update function
 	scrollframe.ScrollBar.SetPanExtentPercentage = function() --WATCH to change when Blizzard provides a better way to overriding the built-in update function
-		local height = scrollframe:GetHeight()
-		scrollframe.ScrollBar.panExtentPercentage = height * t.scrollSpeed / math.abs(scrollChild:GetHeight() - height)
+		local h = scrollframe:GetHeight()
+		scrollframe.ScrollBar.panExtentPercentage = h * scrollSpeed / math.abs(scrollChild:GetHeight() - h)
 	end
 
 	return scrollChild, scrollframe
@@ -578,8 +572,7 @@ function wt.ArrangeContent(container, t)
 
 	--| Scaffold the arrangement based on the directives set
 
-	---@type Frame[]
-	local frames = us.Reorder({ container:GetChildren() }, arrangementOrdering)
+	local frames = us.Reorder({ container:GetChildren() }, arrangementOrdering) ---@type Frame[]
 	local arrangement = { {} }
 
 	for i = 1, #frames do if not arrangementSkipping[frames[i]] then
@@ -1013,10 +1006,10 @@ function wt.CreateText(t)
 
 	--| Position & dimensions
 
-	wt.SetPosition(text, t.position)
-
 	if type(t.width) == "number" then text:SetWidth(t.width) end
 	if type(t.height) == "number" then text:SetHeight(t.height) end
+
+	wt.SetPosition(text, t.position)
 
 	--| Font & text
 
@@ -1118,9 +1111,9 @@ function wt.CreateTexture(frame, t, updates)
 
 		--| Position & dimensions
 
-		wt.SetPosition(texture, data.position)
+		texture:SetSize(data.width or t.width or frame:GetWidth(), data.height or t.height or frame:GetHeight())
 
-		texture:SetSize(data.size.w or t.size.w or frame:GetWidth(), data.size.h or t.size.h or frame:GetHeight())
+		wt.SetPosition(texture, data.position)
 
 		--| Asset & color
 
@@ -1158,7 +1151,6 @@ function wt.CreateTexture(frame, t, updates)
 	--| Set the base texture
 
 	t.path = type(t.path) == "string" and t.path or "Interface/ChatFrame/ChatFrameBackground"
-	t.size = type(t.size) == "table" and t.size or {}
 	t.wrap = type(t.wrap) == "table" and t.wrap or {}
 	t.tile = type(t.tile) == "table" and t.tile or {}
 
@@ -1400,8 +1392,7 @@ end
 function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 	if type(default) ~= "string" or utilityNote == false then return end
 
-	---@type tooltipData
-	local tooltip = { lines = { { text = " ", }, } }
+	local tooltip = { lines = { { text = " ", }, } } ---@type tooltipData
 
 	if type(default) == "string" then table.insert(tooltip.lines, { text = crc(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
 	if utilityNote ~= false then table.insert(tooltip.lines, { text = wt.strings.value.note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
@@ -1481,7 +1472,8 @@ function wt.CreateReloadNotice(t) --FIX lite
 			offset = { x = -300, y = -100 }
 		},
 		keepInBounds = true,
-		size = { w = 240, h = 102 },
+		width = 240,
+		height = 102,
 		frameStrata = "DIALOG",
 		keepOnTop = true,
 		background = { color = { a = 0.9 }, },
@@ -1519,7 +1511,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 			anchor = "BOTTOMLEFT",
 			offset = { x = 12, y = 12 }
 		},
-		size = { w = 120, },
+		width = 120,
 		action = function() ReloadUI() end,
 		ignoreLite = false,
 	})
@@ -1543,41 +1535,61 @@ end
 
 --[[ CONTEXT MENU ]]
 
+local contextMenu_base ---@type contextMenu
+
+local contextMenu_triggers ---@type table<contextMenu, contextMenuTriggerData[]>
+local contextMenu_load ---@type table<contextMenu, fun(menu: contextMenu|contextSubmenu)>
+
+local function buildContextMenu()
+	local menu = {} ---@type contextMenu
+
+	function menu:open(triggerIndex, action)
+		local triggers = contextMenu_triggers[self]
+
+		triggerIndex = type(triggerIndex) == "number" and Clamp(triggerIndex, 1, #triggers) or 1
+
+		if type(triggers[triggerIndex].condition) == "function" and not triggers[triggerIndex].condition(action) then return end
+
+		MenuUtil.CreateContextMenu(triggers[triggerIndex].frame, function(_, rootDescription)
+			menu.rootDescription = rootDescription
+
+			if contextMenu_load[self] then contextMenu_load[self](menu) end
+		end)
+	end
+
+	return menu
+end
+
 function wt.CreateContextMenu(t)
+	if not contextMenu_base then contextMenu_base = buildContextMenu() end
+
 	t = type(t) == "table" and t or {}
 
 	--[ Menu Setup ]
 
-	---@type contextMenu
-	local menu = {}
+	local menu = {} ---@type contextMenu
 
-	--| Utilities
+	--| Triggers
 
-	function menu.open(trigger, action)
-		trigger = type(trigger) == "number" and Clamp(trigger, 1, #t.triggers) or 1
+	contextMenu_triggers[menu] = type(t.triggers) == "table" and t.triggers or { { frame = UIParent, }, }
+	if type(t.load) == "function" then contextMenu_load[menu] = t.load end
 
-		if type(t.triggers[trigger].condition) == "function" and not t.triggers[trigger].condition(action) then return end
+	if contextMenu_triggers[menu] then for i = 1, #contextMenu_triggers[menu] do
+		local trigger = contextMenu_triggers[menu][i]
+		local frame = trigger.frame
 
-		MenuUtil.CreateContextMenu(t.triggers[trigger].frame, function(_, rootDescription)
-			menu.rootDescription = rootDescription
+		if not frame or not us.IsFrame(frame) then
+			frame = UIParent
+			trigger.frame = frame
+		end
 
-			--Adding items
-			if type(t.initialize) == "function" then t.initialize(menu) end
-		end)
-	end
+		if trigger.rightClick ~= false or trigger.leftClick then frame:HookScript("OnMouseUp", function(_, button, isInside)
+			if not isInside or (button == "RightButton" and trigger.rightClick == false) or (button == "LeftButton" and not trigger.leftClick) then return end
 
-	--| Trigger events
-
-	if type(t.triggers) ~= "table" then t.triggers = { { frame = UIParent, }, } else for i = 1, #t.triggers do
-		if not us.IsFrame(t.triggers[i].frame) then t.triggers[i].frame = UIParent end
-
-		if t.triggers[i].rightClick ~= false or t.triggers[i].leftClick then t.triggers[i].frame:HookScript("OnMouseUp", function(_, button, isInside)
-			if not isInside or (button == "RightButton" and t.triggers[i].rightClick == false) or (button == "LeftButton" and not t.triggers[i].leftClick) then return end
-
-			menu.open(i, "click")
+			menu:open(i, "click")
 		end) end
 
-		if t.triggers[i].hover then t.triggers[i].frame:HookScript("OnEnter", function() menu.open(i, "hover") end) end
+		if trigger.hover then frame:HookScript("OnEnter", function() menu:open(i, "hover") end) end
 	end end
 
 	return menu
@@ -1585,16 +1597,17 @@ end
 
 function wt.CreatePopupMenu(t)
 	t = type(t) == "table" and t or {}
-	t.size = t.size or {}
-	t.size.w = t.size.w or 180
-	t.size.h = t.size.h or 26
+
+	local width = t.width or 180
+	local height = t.height or 26
 
 	local trigger = wt.CreateCustomFrame({
 		parentFrame = t.parentFrame,
 		name = t.name or "PopupMenu",
 		position = t.position,
 		arrange = t.arrange,
-		size = t.size,
+		width = width,
+		height = height,
 		events = t.events,
 		onEvent = t.onEvent,
 		initialize = function(frame)
@@ -1604,7 +1617,7 @@ function wt.CreatePopupMenu(t)
 				text = t.title,
 				position = { anchor = "LEFT", offset = { x = 12, }, },
 				justify = { h = "LEFT", },
-				width = t.size.w - 48,
+				width = width - 48,
 				font = "GameFontNormal",
 			})
 
@@ -1675,7 +1688,7 @@ function wt.CreatePopupMenu(t)
 			leftClick = true,
 			rightClick = false,
 		}, },
-		initialize = t.initialize,
+		load = t.load,
 	})
 
 	return trigger, menu
@@ -1688,12 +1701,10 @@ function wt.CreateSubmenu(menu, t)
 
 	--[ Menu Setup ]
 
-	---@type contextSubmenu
 	---@diagnostic disable-next-line: missing-parameter --REMOVE when the annotations get fixed
-	local submenu = { rootDescription = menu.rootDescription:CreateButton(t.title or "Submenu") }
+	local submenu = { rootDescription = menu.rootDescription:CreateButton(t.title or "Submenu") } ---@type contextSubmenu
 
-	--Adding items
-	if type(t.initialize) == "function" then t.initialize(submenu) end
+	if type(t.load) == "function" then t.load(submenu) end
 
 	return submenu
 end

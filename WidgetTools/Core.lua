@@ -1165,7 +1165,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					name = "Toolbox" .. version:gsub("[^%w]", "_"),
 					title = title,
 					arrange = {},
-					size = { h = 32 },
+					height = 32,
 					arrangement = {
 						margins = { l = 30, },
 						gaps = 10,
@@ -1186,7 +1186,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									anchor = "TOPRIGHT",
 									offset = { x = -6, y = 30 }
 								},
-								size = { w = 120, },
+								width = 120,
 								action = function() if changelogFrame then changelogFrame:Show() else changelogFrame = wt.CreatePanel({
 									parentFrame = canvas:GetParent():GetParent(),
 									name = name .. "FullChangelog",
@@ -1194,7 +1194,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
 									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 									keepInBounds = true,
-									size = { w = 685, h = 615 },
+									width = 685,
+									height = 615,
 									frameStrata = "DIALOG",
 									keepOnTop = true,
 									background = { color = { a = 0.94 }, },
@@ -1210,7 +1211,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											label = false,
 											tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
 											arrange = {},
-											size = { w = windowPanel:GetWidth() - 32, h = windowPanel:GetHeight() - 58 },
+											width = windowPanel:GetWidth() - 32,
+											height = windowPanel:GetHeight() - 58,
 											font = { normal = "GameFontDisable", },
 											color = rs.colors.grey[1],
 											value = us.FormatChangelog(expose(entry.toolbox.changelog)),
@@ -1226,7 +1228,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												anchor = "TOPRIGHT",
 												offset = { x = -12, y = -12 },
 											},
-											size = { w = 96, },
+											width = 96,
 											action = function() windowPanel:Hide() end,
 										})
 
@@ -1268,7 +1270,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									name = a,
 									label = false,
 									arrange = {},
-									size = { w = width - 42, h = 84 },
+									width = width - 42,
+									height = 84,
 									background = { color = { r = 0.1, g = 0.1, b = 0.1, a = 0.6 } },
 									arrangement = {
 										margins = { l = 34, },
@@ -1283,7 +1286,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												relativePoint = "TOPLEFT",
 												offset = { x = 3, y = -3 }
 											},
-											size = { w = 38, h = 38 },
+											width = 38,
+											height = 38,
 											path = data.logo or rs.textures.missing,
 										})
 
@@ -1305,7 +1309,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
 											tooltip = { lines = { { text = rs.strings.about.toggle.tooltip, }, } },
 											arrange = {},
-											size = { w = 300, },
+											width = 300,
 											font = { normal = "GameFontNormalMed1", },
 											getData = function() return C_AddOns.GetAddOnEnableState(a) > 0 end,
 											saveData = function(state) toggleAddon(state) end,
@@ -1513,7 +1517,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	wt.SetUpAddonCompartment(rs.addon, {
 		onClick = function() if WidgetToolsDB.lite then liteToggle:setValue(false, true) else wt.CreateContextMenu({
-			initialize = function(menu)
+			load = function(menu)
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {
 					title = wt.strings.about.title,
@@ -1529,7 +1533,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				})
 			end,
 			rightClickMenu = false,
-		}).open() end end,
+		}):open() end end,
 	}, { lines = {
 		{ text = rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Version") or "?", "FFFFFFFF")), },
 		{ text = rs.strings.about.date:gsub(
