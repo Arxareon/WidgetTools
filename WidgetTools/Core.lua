@@ -976,20 +976,20 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						text = rs.strings.lite.enable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.enable.accept,
 						onAccept = function()
-							liteToggle:setValue(true)
-							liteToggle:saveData(nil, silentSave)
+							liteToggle:SetValue(true)
+							liteToggle:SaveData(nil, silentSave)
 
-							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+							chatCommands:Print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
 					local disableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_DISABLE_LITE_MODE", {
 						text = rs.strings.lite.disable.warning:gsub("#ADDON", rs.title),
 						accept = rs.strings.lite.disable.accept,
 						onAccept = function()
-							liteToggle:setValue(false)
-							liteToggle:saveData(nil, silentSave)
+							liteToggle:SetValue(false)
+							liteToggle:SaveData(nil, silentSave)
 
-							chatCommands:print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+							chatCommands:Print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
@@ -1014,7 +1014,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 								if state then StaticPopup_Show(enableLitePopup) else StaticPopup_Show(disableLitePopup) end
 
-								liteToggle:setValue(not state, false) --Wait for popup response
+								liteToggle:SetValue(not state, false) --Wait for popup response
 							end }, },
 						},
 						events = { OnClick = function() silentSave = true end, },
@@ -1063,7 +1063,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							changed = { { handler = function (self, state, user)
 								if not user then return end
 
-								chatCommands:print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
+								chatCommands:Print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
 							end, }, },
 						},
 						instantSave = false,
@@ -1314,7 +1314,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											getData = function() return C_AddOns.GetAddOnEnableState(a) > 0 end,
 											saveData = function(state) toggleAddon(state) end,
 											instantSave = false,
-											listeners = { saved = { { handler = function(self) if not self:getValue() then wt.CreateReloadNotice() end end, }, }, },
+											listeners = { saved = { { handler = function(self) if not self:GetValue() then wt.CreateReloadNotice() end end, }, }, },
 											events = { OnClick = function(_, state) toggleAddon(state) end, },
 											showDefault = false,
 											utilityMenu = false,
@@ -1486,18 +1486,18 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			{
 				command = rs.chat.commands.about,
 				description = rs.strings.chat.about.description,
-				handler = aboutPage.open,
+				handler = function() aboutPage:Open() end,
 			},
 			{
 				command = rs.chat.commands.lite,
 				description = rs.strings.chat.lite.description,
-				handler = function() liteToggle:setValue(not WidgetToolsDB.lite, true) end,
+				handler = function() liteToggle:SetValue(not WidgetToolsDB.lite, true) end,
 			},
 			{
 				command = rs.chat.commands.debug,
 				description = rs.strings.chat.debug.description,
 				handler = function()
-					debugToggle:setValue(not WidgetToolsDB.debugging, true)
+					debugToggle:SetValue(not WidgetToolsDB.debugging, true)
 
 					wt.CreateReloadNotice()
 				end,
@@ -1516,24 +1516,24 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	--[[ ADDON COMPARTMENT ]]
 
 	wt.SetUpAddonCompartment(rs.addon, {
-		onClick = function() if WidgetToolsDB.lite then liteToggle:setValue(false, true) else wt.CreateContextMenu({
+		onClick = function() if WidgetToolsDB.lite then liteToggle:SetValue(false, true) else wt.CreateContextMenu({
 			load = function(menu)
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {
 					title = wt.strings.about.title,
-					action = aboutPage.open
+					action = function() aboutPage:Open() end
 				})
 				wt.CreateMenuButton(menu, {
 					title = rs.strings.specifications.title,
-					action = specificationsPage.open
+					action = function() specificationsPage:Open() end
 				})
 				wt.CreateMenuButton(menu, {
 					title = rs.strings.toolboxes.title,
-					action = toolboxesPage.open
+					action =  function() toolboxesPage:Open() end
 				})
 			end,
 			rightClickMenu = false,
-		}):open() end end,
+		}):Open() end end,
 	}, { lines = {
 		{ text = rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Version") or "?", "FFFFFFFF")), },
 		{ text = rs.strings.about.date:gsub(

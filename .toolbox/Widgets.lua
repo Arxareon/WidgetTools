@@ -43,6 +43,10 @@ local dataObjectValueGetterKeys = {
 	Slider = "GetValue",
 }
 
+---`AddListener_eventTag` builder utility
+---@param widget widget
+---@param eventTag eventTag
+---@param handlerList table<widget, function[]>
 local function assignAddListener(widget, eventTag, handlerList)
 	widget["addListener_" .. eventTag] = function(self, handler, callIndex)
 		if type(handler) ~= "function" then return end
@@ -58,43 +62,44 @@ local function assignAddListener(widget, eventTag, handlerList)
 	end
 end
 
----Widget class builder
----@return widget
 local function buildWidget()
 	local widget = {}
-
-	--[ Type ]
-
-	if not widget_types then widget_types = {} end
-
-	local typename = "Widget" ---@type typename_widget
-
-	widget_types[widget] = { [typename] = true }
-
-	function widget:getTypes() return us.Clone(widget_types[self]) end
-	function widget:isType(s) return widget_types[self][s] or false end
-
-	--[ Meta ]
 
 	widget.__metatable = "Protected base class"
 	widget.__index = widget ---@cast widget widget
 
+	if not widget_types then widget_types = {} end
+
+	local typename = "Widget" ---@type typename_widget
+	widget_types[widget] = { [typename] = true }
+
+	if widget_base then
+		us.Fill(widget, widget_base)
+
+		return widget
+	end
+
+	--[ Type ]
+
+	function widget:GetTypes() return us.Clone(widget_types[self]) end
+	function widget:IsType(s) return widget_types[self][s] or false end
+
 	--[ Events ]
 
-	if not widget_handlers then widget_handlers = {} end
+	widget_handlers = {}
 
-	function widget:addEvent(event)
+	function widget:AddEvent(event)
 		if not widget_handlers[self] then widget_handlers[self] = {} end
 		if not widget_handlers[self][event] then widget_handlers[self][event] = {} end
 	end
 
-	function widget:invoke(event, ...)
+	function widget:Invoke(event, ...)
 		local handlers = widget_handlers[self][event]
 
 		for i = 1, #handlers do handlers[i](self, ...) end
 	end
 
-	function widget:addListener(event, handler, callIndex)
+	function widget:AddListener(event, handler, callIndex)
 		local handlers = widget_handlers[self][event]
 
 		if not handlers or type(handler) ~= "function" then return end
@@ -106,25 +111,25 @@ local function buildWidget()
 
 	--| Parent
 
-	if not widget_parent then widget_parent = {} end
+	widget_parent = {}
 
-	function widget:getParent() return widget_parent[self] end
-	function widget:setParent(newParent, independent, childIndex)
+	function widget:GetParent() return widget_parent[self] end
+	function widget:SetParent(newParent, independent, childIndex)
 		local parent = widget_parent[self]
 
-		if newParent == widget or newParent == parent then return false end
+		if newParent == self or newParent == parent then return false end
 
 		if newParent == nil then
 			widget_parent[self] = nil
 
-			if parent and parent.hasChild(widget) then parent:removeChild(widget) end
+			if parent and parent:HasChild(self) then parent:RemoveChild(self) end
 
 			return true
 		elseif wt.IsWidget(newParent) then
 			widget_parent[self] = newParent
 
-			if parent and parent:hasChild(widget) then parent:removeChild(widget) end
-			if not newParent:hasChild(widget) then newParent:addChild(widget, independent, childIndex) end
+			if parent and parent:HasChild(self) then parent:RemoveChild(self) end
+			if not newParent:HasChild(self) then newParent:AddChild(self, independent, childIndex) end
 
 			return true
 		end
@@ -134,12 +139,12 @@ local function buildWidget()
 
 	--| Children
 
-	if not widget_children then widget_children = {} end
-	if not widget_isIndependent then widget_isIndependent = {} end
+	widget_children = {}
+	widget_isIndependent = {}
 
-	function widget:hasChild(child) return widget_isIndependent[self][child] ~= nil end
-	function widget:getChild(index) return widget_children[self][index] end
-	function widget:getChildren()
+	function widget:HasChild(child) return widget_isIndependent[self][child] ~= nil end
+	function widget:GetChild(index) return widget_children[self][index] end
+	function widget:GetChildren()
 		local children = widget_children[self]
 		local c = {}
 
@@ -148,8 +153,8 @@ local function buildWidget()
 		return c
 	end
 
-	function widget:addChild(child, independent, index)
-		if child == widget or not wt.IsWidget(child) or widget_isIndependent[self][child] ~= nil then return nil end
+	function widget:AddChild(child, independent, index)
+		if child == self or not wt.IsWidget(child) or widget_isIndependent[self][child] ~= nil then return nil end
 
 		local children = widget_children[self]
 
@@ -158,12 +163,12 @@ local function buildWidget()
 		table.insert(children, index, child)
 		widget_isIndependent[self][child] = independent == true
 
-		if child:getParent() ~= widget then child:setParent(widget) end
+		if child:GetParent() ~= self then child:SetParent(self) end
 
 		return index
 	end
 
-	function widget:removeChild(child)
+	function widget:RemoveChild(child)
 		if widget_isIndependent[self][child] == nil then return end
 
 		local children = widget_children[self]
@@ -171,32 +176,19 @@ local function buildWidget()
 		for i = 1, #children do if children[i] == child then table.remove(children, i) break end end
 		widget_isIndependent[self][child] = nil
 
-		if child:getParent() == widget then child:setParent(nil) end
+		if child:GetParent() == self then child:SetParent(nil) end
 	end
 
-	function widget:isIndependent(child) return widget_isIndependent[self][child] end
-	function widget:setIndependent(child, independent) if widget_isIndependent[self][child] ~= nil then widget_isIndependent[self][child] = independent ~= false end end
+	function widget:IsIndependent(child) return widget_isIndependent[self][child] end
+	function widget:SetIndependent(child, independent) if widget_isIndependent[self][child] ~= nil then widget_isIndependent[self][child] = independent ~= false end end
 
 	--[ State ]
 
-	if not widget_enabled then widget_enabled = {} end
+	widget_enabled = {}
 
-	function widget:isEnabled() return widget_enabled[self] end
-	function widget:setEnabled(state, ignoreParent, ignoreDependencies, user, silent)
-		local parent = widget_parent[self]
-		local children = widget_children[self]
-
-		if ignoreParent ~= true and parent and not parent:isIndependent(widget) then state = parent:isEnabled() end
-
-		if ignoreDependencies then widget_enabled[self] = state ~= false else widget_enabled[self] = state ~= false and widget:checkDependencies() end
-
-		for i = 1, #children do if not widget_isIndependent[self][children[i]] then children[i]:setEnabled(state, true, false, user, silent) break end end
-
-		if not silent then widget_invoke_enabled(self, user) end
-	end
-
-	if not widget_handlers_enabled then widget_handlers_enabled = {} end
-	if not widget_invoke_enabled then widget_invoke_enabled = function(self, user)
+	widget_handlers_enabled = {}
+	assignAddListener(widget, "enabled", widget_handlers_enabled)
+	function widget_invoke_enabled(self, user)
 		local handlers = widget_handlers_enabled[self]
 
 		if not handlers then return end
@@ -205,17 +197,32 @@ local function buildWidget()
 		user = user == true
 
 		for i = 1, #handlers do handlers[i](self, enabled, user) end
-	end end
+	end
 
-	assignAddListener(widget, "enabled", widget_handlers_enabled)
+	function widget:IsEnabled() return widget_enabled[self] end
+	function widget:SetEnabled(state, ignoreParent, ignoreDependencies, user, silent)
+		local parent = widget_parent[self]
+		local children = widget_children[self]
+
+		if ignoreParent ~= true and parent and not widget_isIndependent[parent][self] then state = widget_enabled[parent] end
+		if ignoreDependencies then widget_enabled[self] = state ~= false else widget_enabled[self] = state ~= false and self:CheckDependencies() end
+
+		for i = 1, #children do
+			local child = children[i]
+
+			if not widget_isIndependent[self][child] then child:SetEnabled(state, true, false, user, silent) break end
+		end
+
+		if not silent then widget_invoke_enabled(self, user) end
+	end
 
 	--| Dependencies
 
-	if not widget_dependencies then widget_dependencies = {} end
-	if not widget_dataDependency then widget_dataDependency = {} end
-	if not widget_dependencyEvaluator then widget_dependencyEvaluator = {} end
+	widget_dependencies = {}
+	widget_dataDependency = {}
+	widget_dependencyEvaluator = {}
 
-	function widget:addDependency(rule)
+	function widget:AddDependency(rule)
 		if type(rule) ~= "table" then return false end
 
 		local dependencies = widget_dependencies[self]
@@ -241,12 +248,12 @@ local function buildWidget()
 		local index = type(rule.index) ~= "number" and #dependencies + 1 or Clamp(math.floor(rule.index), 1, #dependencies + 1)
 		local isData = rule.isData
 		local evaluator = type(rule.evaluate) == "function" and rule.evaluate
-		local setter = function() widget:setEnabled() end
+		local setter = function() self:SetEnabled() end
 
 		if wt.IsWidget(dependency) then
 			if isData then if wt.IsWidget(dependency, "Datamanager") and (wt.IsWidget(dependency, "Binary") or evaluator) then
-				dependency:addListener_loaded(function(_, success) if success then widget:setEnabled() end end)
-				dependency:addListener_changed(setter)
+				dependency:AddListener_loaded(function(_, success) if success then self:SetEnabled() end end)
+				dependency:AddListener_changed(setter)
 
 				table.insert(dependencies, index, dependency)
 				data[dependency] = true
@@ -254,7 +261,7 @@ local function buildWidget()
 
 				return true
 			end else
-				dependency:addListener_enabled(setter)
+				dependency:AddListener_enabled(setter)
 
 				table.insert(dependencies, index, dependency)
 				if evaluator then evaluate[dependency] = evaluator end
@@ -267,7 +274,7 @@ local function buildWidget()
 				local scriptType = dataObjectScriptType[objectType]
 
 				if scriptType then
-					dependency:HookScript(scriptType, widget.setEnabled)
+					dependency:HookScript(scriptType, setter)
 
 					table.insert(dependencies, index, dependency)
 					data[dependency] = dependency[dataObjectValueGetterKeys[objectType]]
@@ -276,8 +283,8 @@ local function buildWidget()
 					return true
 				end
 			elseif type(dependency.IsEnabled) == "function" and dependency:HasScript("OnEnable") and dependency:HasScript("OnDisable") then
-				dependency:HookScript("OnEnable", widget.setEnabled)
-				dependency:HookScript("OnDisable", widget.setEnabled)
+				dependency:HookScript("OnEnable", setter)
+				dependency:HookScript("OnDisable", setter)
 
 				table.insert(dependencies, index, dependency)
 				if evaluator then evaluate[dependency] = evaluator end
@@ -289,15 +296,15 @@ local function buildWidget()
 		return false
 	end
 
-	function widget:setDependencies(rules)
+	function widget:SetDependencies(rules)
 		widget_dependencies[self] = {}
 		widget_dataDependency[self] = {}
 		widget_dependencyEvaluator[self] = {}
 
-		for i = 1, #rules do widget:addDependency(rules[i]) end
+		for i = 1, #rules do widget:AddDependency(rules[i]) end
 	end
 
-	function widget:checkDependencies()
+	function widget:CheckDependencies()
 		local dependencies = widget_dependencies[self]
 
 		if not dependencies then return true end
@@ -312,11 +319,11 @@ local function buildWidget()
 			if data then
 				local value
 
-				if type(data) == "function" then value = data(dependency) else value = dependency:getValue() end
+				if type(data) == "function" then value = data(dependency) else value = dependency:GetValue() end
 
 				if evaluate then state = evaluate(value) else state = value end
 			else
-				if wt.IsWidget(dependency) then state = dependency:isEnabled() else state = dependency:IsEnabled() end
+				if wt.IsWidget(dependency) then state = dependency:IsEnabled() else state = dependency:IsEnabled() end
 
 				if evaluate then state = evaluate(state) end
 			end
@@ -327,15 +334,15 @@ local function buildWidget()
 		return state
 	end
 
+	widget_base = widget
+
 	ds.Log(function() return "Widget base constructed: " .. us.ToString(widget), wt.title .. ".buildWidget" end)
 
 	return widget
 end
 
 function wt.CreateWidget(t)
-	if not widget_base then widget_base = buildWidget() end
-
-	local widget = setmetatable({}, widget_base) ---@cast widget widget
+	local widget = setmetatable({}, widget_base or buildWidget()) ---@cast widget widget
 
 	--[ Initialization ]
 
@@ -349,21 +356,21 @@ function wt.CreateWidget(t)
 		if type(enabled) == "table" then for i = 1, #enabled do
 			local listener = enabled[i]
 
-			if type(listener) == "table" then widget:addListener_enabled(listener.handler, listener.callIndex) end
+			if type(listener) == "table" then widget:AddListener_enabled(listener.handler, listener.callIndex) end
 		end end
 
 		--Add custom events
 		if type(listeners[1]) == "table" then for k, v in pairs(listeners[1]) do
-			widget:addEvent(k)
+			widget:AddEvent(k)
 
-			if type(v) == "table" then for i = 1, #v do if type(v[i]) == "table" then widget:addListener(k, v[i].handler, v[i].callIndex) end end end
+			if type(v) == "table" then for i = 1, #v do if type(v[i]) == "table" then widget:AddListener(k, v[i].handler, v[i].callIndex) end end end
 		end end
 	end
 
-	if t.parent then widget:setParent(t.parent, t.independent, t.childIndex) end
+	if t.parent then widget:SetParent(t.parent, t.independent, t.childIndex) end
 
-	widget:setDependencies(t.dependencies)
-	widget:setEnabled(t.disabled ~= true)
+	widget:SetDependencies(t.dependencies)
+	widget:SetEnabled(t.disabled ~= true)
 
 	ds.Log(function() return "Widget instance constructed: " .. us.ToString(widget) .. " with base: " .. us.ToString(widget_base), wt.title .. ".CreateWidget" end)
 
@@ -565,7 +572,7 @@ local function buildAction()
 
 	if not action_call then action_call = {} end
 
-	function action:trigger(user, silent)
+	function action:Trigger(user, silent)
 		local call = action_call[self]
 
 		if call and widget_enabled[self] then call(action, user) end
@@ -573,7 +580,7 @@ local function buildAction()
 		if not silent then action_invoke_triggered(self, user) end
 	end
 
-	function action:setAction(call) if type(call) == "function" then action_call[self] = call end end
+	function action:SetAction(call) if type(call) == "function" then action_call[self] = call end end
 
 	if not action_handlers_triggered then action_handlers_triggered = {} end
 	if not action_invoke_triggered then action_invoke_triggered = function(self, user)
@@ -594,11 +601,10 @@ local function buildAction()
 end
 
 function wt.CreateAction(t, widget)
-	if not action_base then action_base = buildAction() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local action = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), action_base) ---@cast action action
+	local action = setmetatable(widget, action_base or buildAction()) ---@cast action action
 
 	--[ Initialization ]
 
@@ -612,11 +618,11 @@ function wt.CreateAction(t, widget)
 		if type(triggered) == "table" then for i = 1, #triggered do
 			local listener = triggered[i]
 
-			if type(listener) == "table" then action:addListener_triggered(listener.handler, listener.callIndex) end
+			if type(listener) == "table" then action:AddListener_triggered(listener.handler, listener.callIndex) end
 		end end
 	end
 
-	action:setAction(t.action)
+	action:SetAction(t.action)
 
 	ds.Log(function() return "Widget instance mutated into Action instance: " .. us.ToString(action) .. " with base: " .. action_base, wt.title .. ".CreateAction" end)
 
@@ -687,7 +693,7 @@ local function setUpButton(button, template, t, name, useHighlight)
 
 	template:SetEnabled(widget_enabled[button])
 
-	button:addListener_enabled(function(self, state)
+	button:AddListener_enabled(function(self, state)
 		template:SetEnabled(state)
 
 		if label then label:SetFontObject(state and (useHighlight and template:IsMouseOver() and fontHighlight or fontNormal) or fontDisabled) end
@@ -700,7 +706,7 @@ local function setUpButton(button, template, t, name, useHighlight)
 
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 
-		button:trigger(true)
+		button:Trigger(true)
 	end)
 
 	--[ Events ] --REPLACE script events
@@ -876,18 +882,18 @@ local function buildDatamanager()
 
 	if not data_value then data_value = {} end
 
-	function datamanager:verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
-	function datamanager:format(value) return us.ToString(datamanager:verify(value)) end
+	function datamanager:Verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
+	function datamanager:Format(value) return us.ToString(datamanager:Verify(value)) end
 
-	function datamanager:getValue() return data_value[self] end
-	function datamanager:setValue(value, user, silent)
-		data_value[self] = datamanager:verify(value)
+	function datamanager:GetValue() return data_value[self] end
+	function datamanager:SetValue(value, user, silent)
+		data_value[self] = datamanager:Verify(value)
 
 		if data_value[self] == nil and datamanager_read[self] then data_value[self] = datamanager_read[self]() end
 		if data_value[self] == nil then data_value[self] = data_default[self] end
 
 		if user then
-			if datamanager_instantSave[self] then datamanager:save(silent) end
+			if datamanager_instantSave[self] then datamanager:Save(silent) end
 
 			local management = datamanagement[self]
 
@@ -917,27 +923,27 @@ local function buildDatamanager()
 	if not datamanager_write then datamanager_write = {} end
 	if not datamanager_instantSave then datamanager_instantSave = {} end
 
-	function datamanager:setReader(read)
+	function datamanager:SetReader(read)
 		datamanager_read[self] = type(read) == "function" and read or nil
 
-		datamanager:load()
+		datamanager:Load()
 	end
-	function datamanager:setWriter(write)
+	function datamanager:SetWriter(write)
 		datamanager_write[self] = type(write) == "function" and write or nil
 
-		datamanager:load()
+		datamanager:Load()
 	end
 
-	function datamanager:load(handleChanges, silent)
+	function datamanager:Load(handleChanges, silent)
 		local read = datamanager_read[self]
 
 		if read then
-			datamanager:setValue(read(), handleChanges ~= false, silent)
+			datamanager:SetValue(read(), handleChanges ~= false, silent)
 
 			if not silent then datamanager_invoke_loaded(self, true) end
 		elseif not silent then datamanager_invoke_loaded(self, false) end
 	end
-	function datamanager:save(silent)
+	function datamanager:Save(silent)
 		local write = datamanager_write[self]
 
 		if write then
@@ -947,24 +953,24 @@ local function buildDatamanager()
 		elseif not silent then datamanager_invoke_saved(self, false) end
 	end
 
-	function datamanager:getData()
+	function datamanager:GetData()
 		local read = datamanager_read[self]
 
 		if read then return read[self]() end
 	end
-	function datamanager:setData(data, handleChanges, silent)
+	function datamanager:SetData(data, handleChanges, silent)
 		local write = datamanager_write[self]
 
 		if write then
-			write(datamanager:verify(data))
+			write(datamanager:Verify(data))
 
 			if not silent then datamanager_invoke_saved(self, true) end
 		elseif not silent then datamanager_invoke_saved(self, false) end
 
-		datamanager:load(handleChanges, silent)
+		datamanager:Load(handleChanges, silent)
 	end
 
-	function datamanager:setInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
+	function datamanager:SetInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
 
 	if not datamanager_handlers_loaded then datamanager_handlers_loaded = {} end
 	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
@@ -996,16 +1002,16 @@ local function buildDatamanager()
 
 	if not data_default then data_default = {} end
 
-	function datamanager:getDefault() return data_default[self] end
-	function datamanager:setDefault(newDefault) data_default[self] = datamanager:verify(newDefault) end
-	function datamanager:reset(handleChanges, silent) datamanager:setData(data_default[self], handleChanges, silent) end
+	function datamanager:GetDefault() return data_default[self] end
+	function datamanager:SetDefault(newDefault) data_default[self] = datamanager:Verify(newDefault) end
+	function datamanager:Reset(handleChanges, silent) datamanager:SetData(data_default[self], handleChanges, silent) end
 
 	--| Snapshot
 
 	if not data_snapshot then data_snapshot = {} end
 
-	function datamanager:snapshot(stored) if stored == true then data_snapshot[self] = datamanager:getData() else data_snapshot[self] = data_value[self] end end
-	function datamanager:revert(handleChanges, silent) datamanager:setData(data_snapshot[self], handleChanges, silent) end
+	function datamanager:Snapshot(stored) if stored == true then data_snapshot[self] = datamanager:GetData() else data_snapshot[self] = data_value[self] end end
+	function datamanager:Revert(handleChanges, silent) datamanager:SetData(data_snapshot[self], handleChanges, silent) end
 
 	--| Datamanagement
 
@@ -1017,11 +1023,10 @@ local function buildDatamanager()
 end
 
 function wt.CreateDatamanager(t, widget)
-	if not datamanager_base then datamanager_base = buildDatamanager() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local datamanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), datamanager_base) ---@cast datamanager datamanager
+	local datamanager = setmetatable(widget, datamanager_base or buildDatamanager()) ---@cast datamanager datamanager
 
 	--[ Initialization ]
 
@@ -1029,14 +1034,14 @@ function wt.CreateDatamanager(t, widget)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	datamanager:setReader(data.read)
-	datamanager:setWriter(data.write)
+	datamanager:SetReader(data.read)
+	datamanager:SetWriter(data.write)
 
-	datamanager:setInstantSave(data.instantSave)
+	datamanager:SetInstantSave(data.instantSave)
 
-	datamanager:setDefault(t.default)
-	datamanager:setValue(t.value)
-	datamanager:snapshot()
+	datamanager:SetDefault(t.default)
+	datamanager:SetValue(t.value)
+	datamanager:Snapshot()
 
 	--| Datamanagement
 
@@ -1068,24 +1073,23 @@ local function buildBinary()
 
 	--[ Data ]
 
-	function binary:verify(value) return value == true end
-	function binary:format(state)
-		if type(state) ~= "boolean" then state = binary:getValue() end
+	function binary:Verify(value) return value == true end
+	function binary:Format(state)
+		if type(state) ~= "boolean" then state = binary:GetValue() end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
-	function binary:flip(user, silent) binary:setValue(not binary:getValue(), user, silent) end
+	function binary:Flip(user, silent) binary:SetValue(not binary:GetValue(), user, silent) end
 
 	return binary
 end
 
 function wt.CreateBinary(t, datamanager)
-	if not binary_base then binary_base = buildBinary() end
-
 	local typenameBase = "Datamanager" ---@type typename_datamanager
+	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
-	local binary = setmetatable(wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t), binary_base) ---@cast binary binary
+	local binary = setmetatable(datamanager, binary_base or buildBinary()) ---@cast binary binary
 
 	--[ Initialization ]
 
@@ -1093,12 +1097,12 @@ function wt.CreateBinary(t, datamanager)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	binary:setReader(data.read)
-	binary:setWriter(data.write)
+	binary:SetReader(data.read)
+	binary:SetWriter(data.write)
 
-	binary:setDefault(t.default)
-	binary:setValue(t.value)
-	binary:snapshot()
+	binary:SetDefault(t.default)
+	binary:SetValue(t.value)
+	binary:Snapshot()
 
 	ds.Log(function() return
 		"Datamanager instance mutated into Binary instance:" .. us.ToString(binary) .. " with base: " .. us.ToString(binary_base),
@@ -1205,13 +1209,13 @@ function wt.CreateCheckbox(t, binary)
 
 	template:SetChecked(data_value[checkbox])
 
-	checkbox:addListener_changed(function(self, state) self.template:SetChecked(state) end, 1)
+	checkbox:AddListener_changed(function(self, state) self.template:SetChecked(state) end, 1)
 
 	--[ UX ]
 
 	--| Update state
 
-	checkbox:addListener_enabled(function(self, state)
+	checkbox:AddListener_enabled(function(self, state)
 		local temp = self.template
 		local label = self.label
 
@@ -1228,7 +1232,7 @@ function wt.CreateCheckbox(t, binary)
 
 		PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 
-		checkbox:setValue(state, true)
+		checkbox:SetValue(state, true)
 	end)
 
 	--| Link mouse interactions
@@ -1267,7 +1271,7 @@ function wt.CreateCheckbox(t, binary)
 			},
 		}, { triggers = { frame, }, })
 
-		wt.AddWidgetTooltipLines({ template }, t.showDefault ~= false and checkbox:format(data_default[checkbox]), t.utilityMenu)
+		wt.AddWidgetTooltipLines({ template }, t.showDefault ~= false and checkbox:Format(data_default[checkbox]), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -1287,13 +1291,13 @@ function wt.CreateCheckbox(t, binary)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = checkbox:getValue() end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = checkbox:GetValue() end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() checkbox:setValue(wt.clipboard.binary, true) end
+				action = function() checkbox:SetValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkbox:Reset() end }) end
 		end
 	}) end
 
@@ -1367,7 +1371,7 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 
 	updateBinaryState(nil, data_value[toggle])
 
-	toggle:addListener_changed(updateBinaryState, 1)
+	toggle:AddListener_changed(updateBinaryState, 1)
 
 	--[ UX ]
 
@@ -1385,7 +1389,7 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 			},
 		}, { triggers = { template, }, })
 
-		wt.AddWidgetTooltipLines({ frame }, t.showDefault ~= false and toggle.format(data_default[toggle]), t.utilityMenu)
+		wt.AddWidgetTooltipLines({ frame }, t.showDefault ~= false and toggle:Format(data_default[toggle]), t.utilityMenu)
 	end
 
 	--| Utility menu
@@ -1408,10 +1412,10 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.binary = data_value[toggle] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() toggle:setValue(wt.clipboard.binary, true) end
+				action = function() toggle:SetValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() toggle:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() toggle:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() toggle:Reset() end }) end
 		end
 	}) end
 
@@ -1419,7 +1423,7 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 
 	template:SetEnabled(widget_enabled[toggle])
 
-	toggle:addListener_enabled(function(self, state)
+	toggle:AddListener_enabled(function(self, state)
 		template:SetEnabled(state)
 
 		if self.label then self.label:SetFontObject(state and fontNormal or "GameFontDisable") end
@@ -1465,7 +1469,7 @@ function wt.CreateClassicCheckbox(t, binary)
 
 		PlaySound(state and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 
-		checkbox.setValue(state, true)
+		checkbox:SetValue(state, true)
 	end)
 
 	--| Link mouse interactions
@@ -1533,11 +1537,11 @@ function wt.CreateRadiobutton(t, binary)
 		if button == "LeftButton" then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 
-			radiobutton:setValue(true, true)
+			radiobutton:SetValue(true, true)
 		elseif clearable and button == "RightButton" then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 
-			radiobutton:setValue(false, true)
+			radiobutton:SetValue(false, true)
 		end
 	end)
 
@@ -1629,13 +1633,13 @@ local function buildSelector()
 	local inactive = {} ---@type selectorBinary[]
 	local typenameItem = "Binary" ---@type typename_binary
 
-	function selector:updateItems(items, silent)
+	function selector:UpdateItems(items, silent)
 		--Update the items
 		for i = 1, #items do
 			local item = items[i]
 			local new = true
 
-			if wt.IsWidget(items[i], typenameItem) then item:setParent(selector)
+			if wt.IsWidget(items[i], typenameItem) then item:SetParent(selector)
 			elseif i > #selector.items then
 				if #inactive > 0 then
 					item = inactive[#inactive]
@@ -1653,11 +1657,11 @@ local function buildSelector()
 			item.index = i
 			selector.items[i] = item
 
-			item:addEvent("activated")
+			item:AddEvent("activated")
 
 			if not silent then
 				if new then selector_invoke_added(self, selector.items[i]) end
-				selector.items[i]:invoke("activated", true)
+				selector.items[i]:Invoke("activated", true)
 			end
 		end
 
@@ -1665,9 +1669,9 @@ local function buildSelector()
 		while #items < #selector.items do
 			local item = selector.items[#selector.items]
 
-			item:setValue(false)
+			item:SetValue(false)
 
-			if not silent then item:invoke("activated", false) end
+			if not silent then item:Invoke("activated", false) end
 
 			table.insert(inactive, item)
 			table.remove(selector.items, #selector.items)
@@ -1675,7 +1679,7 @@ local function buildSelector()
 
 		if not silent then selector_invoke_updated(self) end
 
-		selector.setValue(data_value[self], nil, silent)
+		selector:SetValue(data_value[self], nil, silent)
 	end
 
 	if not selector_handlers_updated then selector_handlers_updated = {} end
@@ -1704,23 +1708,23 @@ local function buildSelector()
 
 	if not selector_clearable then selector_clearable = {} end
 
-	function selector:verify(value)
+	function selector:Verify(value)
 		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
 
 		return value and value or not selector_clearable[self] and value or nil
 	end
-	function selector:format(state)
-		if type(state) ~= "boolean" then state = selector:getValue() end
+	function selector:Format(state)
+		if type(state) ~= "boolean" then state = selector:GetValue() end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), state and "FFAAAAFF" or "FFFFAA66")
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
-	function selector:setValue(index, user, silent)
-		data_value[self] = selector:verify(index)
+	function selector:SetValue(index, user, silent)
+		data_value[self] = selector:Verify(index)
 
-		for i = 1, #selector.items do selector.items[i]:setValue(i == data_value[self], user, silent) end
+		for i = 1, #selector.items do selector.items[i]:SetValue(i == data_value[self], user, silent) end
 
-		if user and datamanager_instantSave[self] ~= false then selector:saveData(nil, silent) end
+		if user and datamanager_instantSave[self] ~= false then selector:SaveData(nil, silent) end
 
 		if not silent then datamanager_invoke_changed(self, user == true) end
 
@@ -1733,26 +1737,25 @@ local function buildSelector()
 end
 
 function wt.CreateSelector(t, datamanager)
-	if not selector_base then selector_base = buildSelector() end
-
 	local typenameBase = "Datamanager" ---@type typename_datamanager
+	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
-	local selector = setmetatable(wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t), selector_base) ---@cast selector selector
+	local selector = setmetatable(datamanager, selector_base or buildSelector()) ---@cast selector selector
 
 	--[ Initialization ]
 
 	t = type(t) == "table" and t or {}
 
-	selector:updateItems(t.items)
+	selector:UpdateItems(t.items)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	selector:setReader(data.read)
-	selector:setWriter(data.write)
+	selector:SetReader(data.read)
+	selector:SetWriter(data.write)
 
-	selector:setDefault(t.default)
-	selector:setValue(t.value)
-	selector:snapshot()
+	selector:SetDefault(t.default)
+	selector:SetValue(t.value)
+	selector:Snapshot()
 
 	selector_clearable[selector] = t.clearable
 
@@ -1787,7 +1790,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 		items[i].tooltip = { lines = { { text = "(" .. itemsets[itemset][i].value .. ")", }, } }
 	end
 
-	function specialSelector:getItemset() return itemset end
+	function specialSelector:GetItemset() return itemset end
 
 	--Register starting items
 	for i = 1, #items do if type(items[i]) == "table" then
@@ -1825,7 +1828,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
 	local snapshot = value
 
-	function specialSelector.load(handleChanges, silent)
+	function specialSelector:Load(handleChanges, silent)
 		handleChanges = handleChanges ~= false
 
 		if type(t.getData) == "function" then
@@ -1883,8 +1886,8 @@ function wt.CreateMultiselector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-
 	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+
 	local multiselector = datamanager ---@cast multiselector multiselector
 
 	--[ Type ]
@@ -1915,7 +1918,7 @@ function wt.CreateMultiselector(t, datamanager)
 
 		local new = true
 
-		if wt.IsWidget(item, typenameItem) then item.setParent(multiselector)
+		if wt.IsWidget(item, typenameItem) then item:SetParent(multiselector)
 		elseif #inactive > 0 then
 			item = inactive[#inactive]
 			table.remove(inactive, #inactive)
@@ -2147,7 +2150,7 @@ local function setUpSelector(selector, t, name, title)
 	---@param state boolean
 	local function updateState(_, state) if selector.label then selector.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end end
 
-	selector:addListener_enabled(updateState, 1)
+	selector:AddListener_enabled(updateState, 1)
 
 	updateState(nil, widget_enabled[selector])
 end
@@ -2155,12 +2158,15 @@ end
 function wt.CreateRadiogroup(t, selector)
 	t = type(t) == "table" and t or {}
 
-	local typename = "Radiogroup" ---@type typename_radiogroup
 	local typenameBase = "Selector" ---@type typename_selector
 	local typenameBaseAlternate = "SpecialSelector" ---@type typename_specialSelector
 
 	selector = (wt.IsWidget(selector, typenameBase) or wt.IsWidget(selector, typenameBaseAlternate)) and selector or wt.CreateSelector(t)
 	local radiogroup = selector ---@cast radiogroup radiogroup|specialRadiogroup
+
+	--[ Type ]
+
+	local typename = "Radiogroup" ---@type typename_radiogroup
 
 	widget_types[radiogroup][typename] = true
 
@@ -2222,8 +2228,8 @@ function wt.CreateRadiogroup(t, selector)
 				width = (width and columns == 1) and width or nil,
 				clearable = clearable,
 				events = { OnClick = function(_, _, button)
-					if button == "LeftButton" then radiogroup.setValue(index, true)
-					elseif clearable and button == "RightButton" and not radiogroup.getValue() then radiogroup.setValue(nil, true) end
+					if button == "LeftButton" then radiogroup:SetValue(index, true)
+					elseif clearable and button == "RightButton" and not data_value[radiogroup] then radiogroup:SetValue(nil, true) end
 				end, },
 				showDefault = false,
 				utilityMenu = false,
@@ -2234,15 +2240,15 @@ function wt.CreateRadiogroup(t, selector)
 	for i = 1, #radiogroup.items do
 		setRadioButton(radiogroup.items[i], true)
 
-		radiogroup.items[i]:addListener("activated", function(self, active) setRadioButton(self, active) end)
+		radiogroup.items[i]:AddListener("activated", function(self, active) setRadioButton(self, active) end)
 	end
 
-	if radiogroup.addListener.updated and radiogroup.addListener.added then
+	if radiogroup.addListener.updated and radiogroup.addListener.added then --CHECK
 		radiogroup.addListener.updated(function() radiogroup.frame:SetHeight(math.ceil((#radiogroup.items) / t.columns) * 18 + (t.label ~= false and 14 or 0)) end, 1)
 		radiogroup.addListener.added(function (_, binary)
 			setRadioButton(binary, true)
 
-			binary:addListener("activated", function(self, active) setRadioButton(self, active) end)
+			binary:AddListener("activated", function(self, active) setRadioButton(self, active) end)
 		end)
 	end
 
@@ -2259,7 +2265,7 @@ function wt.CreateRadiogroup(t, selector)
 
 		local defaultValue
 		if t.showDefault ~= false then
-			local default = radiogroup.getDefault()
+			local default = data_default[radiogroup]
 			defaultValue = crc(default and t.items[default].title or tostring(default), "FFFFFFFF")
 		end
 
@@ -2290,10 +2296,10 @@ function wt.CreateRadiogroup(t, selector)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = data_value[radiogroup] } end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() radiogroup:setValue(wt.clipboard.selection.index, true) end
+				action = function() radiogroup:SetValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() radiogroup:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() radiogroup:Reset() end }) end
 		end
 	}) end
 
@@ -2509,27 +2515,25 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			},
 		},
 		events = clearable and t.utilityMenu == false and { OnMouseUp = function(_, button, isInside)
-			if button == "RightButton" and isInside and dropdown.toggle.template:IsEnabled() then dropdown.setText(nil, true) end
+			if button == "RightButton" and isInside and dropdown.toggle.template:IsEnabled() then dropdown:SetText(nil, true) end
 		end, } or nil,
 		dependencies = t.dependencies
 	})
 
-	function dropdown.setText(text, silent)
-		local index = dropdown.getValue()
+	function dropdown:SetText(text, silent)
+		local index = data_value[dropdown]
 		local item = t.items[index] or {}
 		text = type(text) == "string" and text or item.title or "…"
 
 		dropdown.toggle.label:SetText(text)
 		wt.UpdateTooltipData(dropdown.toggle.highlight, { title = text, })
 
-		if not silent then dropdown:invoke_labeled(text) end
+		if not silent then dropdown:Invoke_labeled(text) end
 	end
 
-	--Create event
 	dropdown.addEvent("labeled")
 
-	--Set starting selection
-	dropdown.setText(t.text, true)
+	dropdown:SetText(t.text, true)
 
 	--[ Cycle Buttons ]
 
@@ -2621,9 +2625,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				end,
 			}, }, },
 			action = function()
-				local selected = dropdown.getValue()
+				local selected = data_value[dropdown]
 
-				dropdown.setValue(selected and selected - 1 or #dropdown.items, true)
+				dropdown:SetValue(selected and selected - 1 or #dropdown.items, true)
 			end,
 			dependencies = previousDependencies
 		})
@@ -2700,9 +2704,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				end,
 			}, }, },
 			action = function()
-				local selected = dropdown.getValue()
+				local selected = data_value[dropdown]
 
-				dropdown.setValue(selected and selected + 1 or 1, true)
+				dropdown:SetValue(selected and selected + 1 or 1, true)
 			end,
 			dependencies = nextDependencies
 		})
@@ -2710,14 +2714,14 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ Getters & Setters ]
 
-	function dropdown.toggleMenu(state)
+	function dropdown:ToggleMenu(state)
 		if state == nil then open = not menuFrame:IsVisible() else open = state end
 
 		wt.SetVisibility(menuFrame, open)
 
 		if open then menuFrame:RegisterEvent("GLOBAL_MOUSE_DOWN") else menuFrame:UnregisterEvent("GLOBAL_MOUSE_UP") end
 
-		dropdown:invoke_open(open)
+		dropdown:Invoke_open(open)
 	end
 
 	--Create event
@@ -2735,15 +2739,15 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	us.SetListener(dropdown.menu, "GLOBAL_MOUSE_UP", function(f, button)
 		if (button ~= "LeftButton" and button ~= "RightButton") or f:IsMouseOver() then return end
 
-		dropdown.toggleMenu(false)
+		dropdown:ToggleMenu(false)
 	end, false)
 
 	--Handle widget updates
-	dropdown.toggle:addListener_triggered(function() dropdown.toggleMenu() end)
+	dropdown.toggle:AddListener_triggered(function() dropdown:ToggleMenu() end)
 	dropdown.addListener.changed(function()
-		dropdown.setText()
+		dropdown:SetText()
 
-		if t.autoClose then dropdown.toggleMenu(false) end
+		if t.autoClose then dropdown:ToggleMenu(false) end
 	end, 1)
 	dropdown.addListener.open(function(state)
 		holder:SetAttribute("open", state)
@@ -2808,13 +2812,13 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selection = { index = data_value[dropdown] } end })
-			if clearable then wt.CreateMenuButton(menu, { title = wt.strings.dropdown.clear, action = function() dropdown.setText(nil, true) end }) end
+			if clearable then wt.CreateMenuButton(menu, { title = wt.strings.dropdown.clear, action = function() dropdown:SetText(nil, true) end }) end
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() dropdown:setValue(wt.clipboard.selection.index, true) end
+				action = function() dropdown:SetValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() dropdown:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() dropdown:Reset() end }) end
 		end
 	}) end
 
@@ -2826,11 +2830,11 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	local function updateState(_, state)
 		if dropdown.label then dropdown.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
-		dropdown.toggle.setEnabled(state)
+		dropdown.toggle:SetEnabled(state)
 
 		if t.cycleButtons ~= false then
-			dropdown.previous.setEnabled(state and wt.CheckDependencies(previousDependencies))
-			dropdown.next.setEnabled(state and wt.CheckDependencies(nextDependencies))
+			dropdown.previous:SetEnabled(state and wt.CheckDependencies(previousDependencies))
+			dropdown.next:SetEnabled(state and wt.CheckDependencies(nextDependencies))
 		end
 
 		menuFrame:Hide()
@@ -2850,7 +2854,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	local typename = "SpecialRadiogroup" ---@type typename_specialRadiogroup
 	local typenameBase = "SpecialSelector" ---@type typename_specialSelector
 
-	if wt.IsWidget(selector, typenameBase) then itemset = selector:getItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
+	if wt.IsWidget(selector, typenameBase) then itemset = selector:GetItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
 
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
@@ -2894,14 +2898,14 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 			wt.CreateMenuTextline(menu, { text = title })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.copy,
-				action = function() wt.clipboard[specialRadiogroup:getItemset()] = { value = specialRadiogroup.getValue() } end
+				action = function() wt.clipboard[specialRadiogroup:GetItemset()] = { value = data_value[specialRadiogroup] } end
 			})
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() specialRadiogroup.setValue(wt.clipboard[specialRadiogroup:getItemset()].value, true) end
-			}):SetEnabled(wt.clipboard[specialRadiogroup:getItemset()] ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup:revert() end })
-			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup:reset() end }) end
+				action = function() specialRadiogroup:SetValue(wt.clipboard[specialRadiogroup:GetItemset()].value, true) end
+			}):SetEnabled(wt.clipboard[specialRadiogroup:GetItemset()] ~= nil)
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() specialRadiogroup:Revert() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() specialRadiogroup:Reset() end }) end
 		end
 	}) end
 
@@ -2937,10 +2941,10 @@ function wt.CreateCheckgroup(t, selector)
 	---@param limited boolean
 	local function setLock(item, limited)
 		if limited then
-			item.setEnabled(false, true)
+			item:SetEnabled(false, true)
 			item.template:SetAlpha(0.4)
-		elseif checkgroup.isEnabled() then
-			item.setEnabled(true, true)
+		elseif widget_enabled[checkgroup] then
+			item:SetEnabled(true, true)
 			item.template:SetAlpha(1)
 		end
 	end
@@ -2981,7 +2985,7 @@ function wt.CreateCheckgroup(t, selector)
 				},
 				width = (t.width and t.columns == 1) and t.width or 160,
 				height = 16,
-				events = { OnClick = function(self) checkgroup.setSelected(item.index, self:GetChecked(), true) end, },
+				events = { OnClick = function(self) checkgroup:SetSelected(item.index, self:GetChecked(), true) end, },
 				showDefault = false,
 				utilityMenu = false,
 			}, item)
@@ -2990,7 +2994,7 @@ function wt.CreateCheckgroup(t, selector)
 
 			--Handle limit updates
 			checkgroup.addListener.limited(function(_, min, max)
-				local state = item.getValue()
+				local state = data_value[item]
 
 				setLock(item, (min and state) or (max and not state))
 			end, item.index)
@@ -3028,11 +3032,11 @@ function wt.CreateCheckgroup(t, selector)
 		local defaultValue
 		if t.showDefault ~= false then
 			defaultValue = ""
-			local default = checkgroup.getDefault()
+			local default = data_default[checkgroup]
 
 			for i = 1, #t.items do
 				defaultValue = defaultValue .. "\n" .. crc(t.items[i].title, "FFFFFFFF") .. crc(": ", "FF999999") .. crc(
-					(default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower(), default[i] and "FFAAAAFF" or "FFFFAA66"
+					(default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), default[i] and "FFAAAAFF" or "FFFFAA66"
 				)
 			end
 		end
@@ -3061,13 +3065,13 @@ function wt.CreateCheckgroup(t, selector)
 		triggers = openTriggers,
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selections = { states = checkgroup.getValue() } end })
+			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.selections = { states = data_value[checkgroup] } end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() checkgroup.setValue(wt.clipboard.selections.states, true) end
+				action = function() checkgroup:SetValue(wt.clipboard.selections.states, true) end
 			}):SetEnabled(wt.clipboard.selections ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup.revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup.reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() checkgroup:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() checkgroup:Reset() end }) end
 		end
 	}) end
 
@@ -3094,9 +3098,9 @@ local function buildTextual()
 
 	if not textual_color then textual_color = {} end
 
-	function textual:verify(value) return type(value) == "string" and value or "" end
-	function textual:format(value)
-		value = value and textual:verify(value) or data_value[self]
+	function textual:Verify(value) return type(value) == "string" and value or "" end
+	function textual:Format(value)
+		value = value and textual:Verify(value) or data_value[self]
 		local color = textual_color[self]
 
 		return color and cr(value, color) or value
@@ -3106,11 +3110,10 @@ local function buildTextual()
 end
 
 function wt.CreateTextual(t, datamanager)
-	if not textual_base then textual_base = buildTextual() end
-
 	local typenameBase = "Datamanager" ---@type typename_datamanager
+	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
-	local textual = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast textual textual
+	local textual = setmetatable(datamanager, textual_base or buildTextual()) ---@cast textual textual
 
 	--[ Initialization ]
 
@@ -3118,12 +3121,12 @@ function wt.CreateTextual(t, datamanager)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	textual:setReader(data.read)
-	textual:setWriter(data.write)
+	textual:SetReader(data.read)
+	textual:SetWriter(data.write)
 
-	textual:setDefault(t.default)
-	textual:setValue(t.value)
-	textual:snapshot()
+	textual:SetDefault(t.default)
+	textual:SetValue(t.value)
+	textual:Snapshot()
 
 	if wt.IsColor(t.color) then textual_color = t.color end
 
@@ -3181,7 +3184,7 @@ local function setUpEditbox(editbox, t)
 
 	local scriptEvent = false
 
-	editbox:addListener_changed(function(self, text)
+	editbox:AddListener_changed(function(self, text)
 		if not scriptEvent then
 			local template = self.template
 
@@ -3194,7 +3197,7 @@ local function setUpEditbox(editbox, t)
 	editbox.template:HookScript("OnTextChanged", function(self, user)
 		scriptEvent = true
 
-		editbox.setValue(self:GetText(), user)
+		editbox:SetValue(self:GetText(), user)
 	end)
 
 	--[ UX ]
@@ -3235,7 +3238,7 @@ local function setUpEditbox(editbox, t)
 
 	updateState(nil, widget_enabled[editbox])
 
-	editbox:addListener_enabled(updateState, 1)
+	editbox:AddListener_enabled(updateState, 1)
 end
 
 ---Set the parameters of a single-line GUI textual widget frame
@@ -3287,10 +3290,10 @@ local function setUpSinglelineEditbox(editbox, title, t)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = data_value[editbox] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() editbox:setValue(wt.clipboard.textual, true) end
+				action = function() editbox:SetValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox:Reset() end }) end
 		end
 	}) end
 end
@@ -3545,10 +3548,10 @@ function wt.CreateMultilineEditbox(t, textual)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.textual = data_value[editbox] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() editbox:setValue(wt.clipboard.textual, true) end
+				action = function() editbox:SetValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() editbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() editbox:Reset() end }) end
 		end
 	}) end
 
@@ -3676,7 +3679,7 @@ function wt.CreatePopupInputbox(t) --FIX lite
 		wt.SetPosition(customPopupInputBoxFrame.panel.frame, t.position)
 
 		--Update the textual data manager
-		customPopupInputBoxFrame.textual:setValue(t.text)
+		customPopupInputBoxFrame.textual:SetValue(t.text)
 		if t.title then
 			if customPopupInputBoxFrame.textual.label then customPopupInputBoxFrame.textual.label:SetText(t.title) else
 				customPopupInputBoxFrame.textual.label = wt.CreateTitle(customPopupInputBoxFrame.textual.frame, {
@@ -3813,7 +3816,7 @@ local function buildNumeric()
 	if not numeric_altStep then numeric_altStep = {} end
 	if not numeric_hardStep then numeric_hardStep = {} end
 
-	function numeric:verify(value)
+	function numeric:Verify(value)
 		if type(value) ~= "number" then return data_value[self] end
 
 		local limitMin = numeric_limitMin[self]
@@ -3823,22 +3826,22 @@ local function buildNumeric()
 
 		return Clamp(value, limitMin, numeric_limitMax[self])
 	end
-	function numeric:format(value) return crc(tostring(value), "FFDDDD55") end
+	function numeric:Format(value) return crc(tostring(value), "FFDDDD55") end
 
-	function numeric:decrease(alt, user, silent) self:setValue(data_value[self] - (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
-	function numeric:increase(alt, user, silent) self:setValue(data_value[self] + (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
+	function numeric:Decrease(alt, user, silent) self:SetValue(data_value[self] - (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
+	function numeric:Increase(alt, user, silent) self:SetValue(data_value[self] + (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
 
 	--| Limits
 
-	function numeric:getMin() return numeric_limitMin[self] end
-	function numeric:setMin(number, silent)
+	function numeric:GetMin() return numeric_limitMin[self] end
+	function numeric:SetMin(number, silent)
 		numeric_limitMin[self] = min(number, numeric_limitMax[self])
 
 		if not silent then numeric_invoke_min(self) end
 	end
 
-	function numeric:getMax() return numeric_limitMax[self] end
-	function numeric:setMax(number, silent)
+	function numeric:GetMax() return numeric_limitMax[self] end
+	function numeric:SetMax(number, silent)
 		numeric_limitMax[self] = max(numeric_limitMin[self], number)
 
 		if not silent then numeric_invoke_max(self) end
@@ -3868,18 +3871,17 @@ local function buildNumeric()
 
 	--| Step
 
-	function numeric:getStep() return numeric_step[self] end
-	function numeric:getAltStep() return numeric_altStep[self] end
+	function numeric:GetStep() return numeric_step[self] end
+	function numeric:GetAltStep() return numeric_altStep[self] end
 
 	return numeric
 end
 
 function wt.CreateNumeric(t, datamanager)
-	if not numeric_base then numeric_base = buildNumeric() end
-
 	local typenameBase = "Datamanager" ---@type typename_datamanager
+	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
-	local numeric = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast numeric numeric
+	local numeric = setmetatable(datamanager, numeric_base or buildNumeric()) ---@cast numeric numeric
 
 	--[ Initialization ]
 
@@ -3893,12 +3895,12 @@ function wt.CreateNumeric(t, datamanager)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	numeric:setReader(data.read)
-	numeric:setWriter(data.write)
+	numeric:SetReader(data.read)
+	numeric:SetWriter(data.write)
 
-	numeric:setDefault(t.default or numeric_limitMin[numeric])
-	numeric:setValue(t.value)
-	numeric:snapshot()
+	numeric:SetDefault(t.default or numeric_limitMin[numeric])
+	numeric:SetValue(t.value)
+	numeric:Snapshot()
 
 	return numeric
 end
@@ -3982,8 +3984,8 @@ function wt.CreateSlider(t, numeric)
 
 	updateLimits(limitMin, limitMax)
 
-	slider:addListener_min(function(_, lMin) updateLimits(lMin) end, 1)
-	slider:addListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
+	slider:AddListener_min(function(_, lMin) updateLimits(lMin) end, 1)
+	slider:AddListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
 
 	--| Value step
 
@@ -4006,7 +4008,7 @@ function wt.CreateSlider(t, numeric)
 		anchor = "ANCHOR_TOPLEFT",
 	})
 
-	template.Back:HookScript("OnClick", function() slider:decrease(IsAltKeyDown(), true) end)
+	template.Back:HookScript("OnClick", function() slider:Decrease(IsAltKeyDown(), true) end)
 
 	--| Increase button
 
@@ -4019,7 +4021,7 @@ function wt.CreateSlider(t, numeric)
 		anchor = "ANCHOR_TOPLEFT",
 	})
 
-	template.Forward:HookScript("OnClick", function() slider:increase(IsAltKeyDown(), true) end)
+	template.Forward:HookScript("OnClick", function() slider:Increase(IsAltKeyDown(), true) end)
 
 	--[ Valuebox ]
 
@@ -4078,7 +4080,7 @@ function wt.CreateSlider(t, numeric)
 			}, }, },
 			events = {
 				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(valuebox) slider:setValue(valuebox:GetNumber(), true) end,
+				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
 				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
@@ -4086,7 +4088,7 @@ function wt.CreateSlider(t, numeric)
 			utilityMenu = false,
 		})
 
-		slider:addListener_changed(function(_, number) slider.valuebox:setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
@@ -4109,7 +4111,7 @@ function wt.CreateSlider(t, numeric)
 
 	updateNumber(nil, data_value[slider], false)
 
-	slider:addListener_changed(updateNumber, 1)
+	slider:AddListener_changed(updateNumber, 1)
 
 	--Link value changes
 	template.Slider:HookScript("OnValueChanged", function(_, number, user)
@@ -4117,7 +4119,7 @@ function wt.CreateSlider(t, numeric)
 
 		scriptEvent = true
 
-		slider:setValue(number, user)
+		slider:SetValue(number, user)
 	end)
 
 	--[ UX ]
@@ -4182,10 +4184,10 @@ function wt.CreateSlider(t, numeric)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() slider:setValue(wt.clipboard.numeric, true) end
+				action = function() slider:SetValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:Reset() end }) end
 		end
 	}) end
 
@@ -4201,7 +4203,7 @@ function wt.CreateSlider(t, numeric)
 		template.MinText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
 		template.MaxText:SetFontObject(state and "GameFontNormalSmall" or "GameFontDisableSmall")
 
-		if t.valuebox ~= false then slider.valuebox:setEnabled(state) end
+		if t.valuebox ~= false then slider.valuebox:SetEnabled(state) end
 
 		template.Back:SetEnabled(state and wt.CheckDependencies({ {
 			dependency = template.Slider,
@@ -4215,7 +4217,7 @@ function wt.CreateSlider(t, numeric)
 
 	updateState(nil, widget_enabled[slider])
 
-	slider:addListener_enabled(updateState, 1)
+	slider:AddListener_enabled(updateState, 1)
 
 	return slider
 end
@@ -4303,8 +4305,8 @@ function wt.CreateClassicSlider(t, numeric)
 
 	updateLimits(limitMin, limitMax)
 
-	slider:addListener_min(function(_, lMin) updateLimits(lMin) end, 1)
-	slider:addListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
+	slider:AddListener_min(function(_, lMin) updateLimits(lMin) end, 1)
+	slider:AddListener_max(function(_, lMax) updateLimits(nil, lMax) end, 1)
 
 	--| Value step
 
@@ -4393,7 +4395,7 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider:decrease(IsAltKeyDown(), true) end,
+			action = function() slider:Decrease(IsAltKeyDown(), true) end,
 			dependencies = { { dependency = template, evaluate = function(value) return value > numeric_limitMin[slider] end, }, }
 		})
 
@@ -4470,7 +4472,7 @@ function wt.CreateClassicSlider(t, numeric)
 					} or {}
 				end,
 			}, }, },
-			action = function() slider:increase(IsAltKeyDown(), true) end,
+			action = function() slider:Increase(IsAltKeyDown(), true) end,
 			dependencies = { { dependency = template, evaluate = function(value) return value < numeric_limitMax[slider] end }, }
 		})
 	end
@@ -4529,7 +4531,7 @@ function wt.CreateClassicSlider(t, numeric)
 			}, }, },
 			events = {
 				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(valuebox) slider:setValue(valuebox:GetNumber(), true) end,
+				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
 				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
@@ -4539,7 +4541,7 @@ function wt.CreateClassicSlider(t, numeric)
 
 		--| UX
 
-		slider:addListener_changed(function(_, number) slider.valuebox:setValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
@@ -4562,13 +4564,13 @@ function wt.CreateClassicSlider(t, numeric)
 
 	updateNumber(nil, data_value[slider], false)
 
-	slider:addListener_changed(updateNumber, 1)
+	slider:AddListener_changed(updateNumber, 1)
 
 	--Link value changes
 	template:HookScript("OnValueChanged", function(_, number, user)
 		scriptEvent = true
 
-		slider:setValue(number, user)
+		slider:SetValue(number, user)
 
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 	end)
@@ -4602,10 +4604,10 @@ function wt.CreateClassicSlider(t, numeric)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() slider:setValue(wt.clipboard.numeric, true) end
+				action = function() slider:SetValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() slider:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() slider:Reset() end }) end
 		end
 	}) end
 
@@ -4619,14 +4621,14 @@ function wt.CreateClassicSlider(t, numeric)
 
 		if slider.label then slider.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
-		if t.valuebox ~= false then slider.valuebox:setEnabled(state) end
+		if t.valuebox ~= false then slider.valuebox:SetEnabled(state) end
 
 		if t.sideButtons ~= false then
-			slider.decreaseButton:setEnabled(state and wt.CheckDependencies({ {
+			slider.decreaseButton:SetEnabled(state and wt.CheckDependencies({ {
 				dependency = template,
 				evaluate = function(value) return value > numeric_limitMin[slider] end,
 			}, }))
-			slider.increaseButton:setEnabled(state and wt.CheckDependencies({ {
+			slider.increaseButton:SetEnabled(state and wt.CheckDependencies({ {
 				dependency = template,
 				evaluate = function(value) return value < numeric_limitMax[slider] end,
 			}, }))
@@ -4635,7 +4637,7 @@ function wt.CreateClassicSlider(t, numeric)
 
 	updateState(nil, widget_enabled[slider])
 
-	slider:addListener_enabled(updateState, 1)
+	slider:AddListener_enabled(updateState, 1)
 
 	return slider
 end
@@ -4659,18 +4661,18 @@ local function buildColormanager()
 
 	--[ Data ]
 
-	function colormanager:verify(color) wt.PackColor(wt.UnpackColor(color)) end
+	function colormanager:Verify(color) wt.PackColor(wt.UnpackColor(color)) end
 
-	function colormanager:getValue() return us.Clone(data_value[self]) end
+	function colormanager:GetValue() return us.Clone(data_value[self]) end
 
 	--| Default
 
-	function colormanager:getDefault() return us.Clone(data_default[self]) end
-	function colormanager:setDefault(color) data_default[self] = us.Clone(color) end
+	function colormanager:GetDefault() return us.Clone(data_default[self]) end
+	function colormanager:SetDefault(color) data_default[self] = us.Clone(color) end
 
 	--| Snapshot
 
-	function colormanager:snapshot(stored) us.CopyValues(data_snapshot[self], stored and colormanager:getData() or data_value[self]) end
+	function colormanager:Snapshot(stored) us.CopyValues(data_snapshot[self], stored and colormanager:GetData() or data_value[self]) end
 
 	--[ Color Wheel ]
 
@@ -4682,10 +4684,10 @@ local function buildColormanager()
 
 		local r, g, b = ColorPickerFrame:GetColorRGB()
 
-		colormanager:setValue(wt.PackColor(r, g, b, ColorPickerFrame:GetColorAlpha()), true)
+		colormanager:SetValue(wt.PackColor(r, g, b, ColorPickerFrame:GetColorAlpha()), true)
 	end
 
-	function colormanager:openColorPicker()
+	function colormanager:OpenColorPicker()
 		local r, g, b, a = wt.UnpackColor(data_value[self])
 
 		colormanager_active[self] = true
@@ -4699,7 +4701,7 @@ local function buildColormanager()
 			swatchFunc = colorUpdate,
 			opacityFunc = colorUpdate,
 			cancelFunc = function()
-				colormanager:setValue(wt.PackColor(r, g, b, a), true)
+				colormanager:SetValue(wt.PackColor(r, g, b, a), true)
 
 				local onCancel = colormanager_onCancel[self]
 
@@ -4708,19 +4710,18 @@ local function buildColormanager()
 		})
 	end
 
-	function colormanager:isActive() return colormanager_active[self] end
+	function colormanager:IsActive() return colormanager_active[self] end
 
-	colormanager:addListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
+	colormanager:AddListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
 
 	return colormanager
 end
 
 function wt.CreateColormanager(t, datamanager)
-	if not colormanager_base then colormanager_base = buildColormanager() end
-
 	local typenameBase = "Datamanager" ---@type typename_datamanager
+	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
-	local colormanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t) ---@cast colormanager colormanager
+	local colormanager = setmetatable(datamanager, colormanager_base or buildColormanager()) ---@cast colormanager colormanager
 
 	--[ Initialization ]
 
@@ -4728,12 +4729,12 @@ function wt.CreateColormanager(t, datamanager)
 
 	local data = type(t.data) == "table" and t.data or {}
 
-	colormanager:setReader(data.read)
-	colormanager:setWriter(data.write)
+	colormanager:SetReader(data.read)
+	colormanager:SetWriter(data.write)
 
-	colormanager:setDefault(t.default)
-	colormanager:setValue(t.value)
-	colormanager:snapshot()
+	colormanager:SetDefault(t.default)
+	colormanager:SetValue(t.value)
+	colormanager:Snapshot()
 
 	colormanager_active[colormanager] = false
 	if type(t.onCancel) == "function" then colormanager_onCancel[colormanager] = t.onCancel end
@@ -4820,7 +4821,7 @@ function wt.CreateColorpicker(t, colormanager)
 		colorpicker.hexBox.template:SetAlpha(opacity)
 	end
 
-	if not t.value and t.getData then t.value = us.Clone(t.getData()) else t.value = {} end
+	if not t.value and t.read then t.value = us.Clone(t.read()) else t.value = {} end
 
 	colorpicker.button = wt.CreateCustomButton({
 		parentFrame = frame,
@@ -4941,8 +4942,8 @@ function wt.CreateColorpicker(t, colormanager)
 		}, }, },
 		events = {
 			OnChar = function(f, _, text) f:SetText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
-			OnEnterPressed = function(_, text) colorpicker:setValue(wt.PackColor(wt.HexToColor(text)), true) end,
-			OnEscapePressed = function(self) self.setText(wt.ColorToHex(data_value[colorpicker])) end,
+			OnEnterPressed = function(_, text) colorpicker:SetValue(wt.PackColor(wt.HexToColor(text)), true) end,
+			OnEscapePressed = function(self) self:SetText(wt.ColorToHex(data_value[colorpicker])) end,
 		},
 		showDefault = false,
 		utilityMenu = false,
@@ -4999,10 +5000,10 @@ function wt.CreateColorpicker(t, colormanager)
 			wt.CreateMenuButton(menu, { title = wt.strings.value.copy, action = function() wt.clipboard.color = data_value[colorpicker] end })
 			wt.CreateMenuButton(menu, {
 				title = wt.strings.value.paste,
-				action = function() colorpicker:setValue(wt.clipboard.color, true) end
+				action = function() colorpicker:SetValue(wt.clipboard.color, true) end
 			}):SetEnabled(wt.clipboard.color ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker:revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker:reset() end }) end
+			wt.CreateMenuButton(menu, { title = wt.strings.value.revert, action = function() colorpicker:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value.restore, action = function() colorpicker:Reset() end }) end
 		end
 	}) end
 
@@ -5013,12 +5014,12 @@ function wt.CreateColorpicker(t, colormanager)
 	local function updateColor(color)
 		colorpicker.button.template:SetBackdropColor(color.r, color.g, color.b, color.a)
 		colorpicker.button.gradient:SetVertexColor(color.r, color.g, color.b, 1)
-		colorpicker.hexBox:setValue(wt.ColorToHex(color))
+		colorpicker.hexBox:SetValue(wt.ColorToHex(color))
 	end
 
 	updateColor(data_value[colorpicker])
 
-	colorpicker:addListener_changed(function(_, color) updateColor(color) end)
+	colorpicker:AddListener_changed(function(_, color) updateColor(color) end)
 
 	--Color wheel toggle updates
 	ColorPickerFrame:HookScript("OnShow", function() setLock(false) end)
@@ -5030,8 +5031,8 @@ function wt.CreateColorpicker(t, colormanager)
 	---@param _ any
 	---@param state boolean
 	local function updateState(_, state)
-		colorpicker.button:setEnabled(state)
-		colorpicker.hexBox:setEnabled(state)
+		colorpicker.button:SetEnabled(state)
+		colorpicker.hexBox:SetEnabled(state)
 
 		if colorpicker.label then colorpicker.label:SetFontObject(state and "GameFontNormal" or "GameFontDisable") end
 
@@ -5040,7 +5041,7 @@ function wt.CreateColorpicker(t, colormanager)
 
 	updateState(nil, widget_enabled[colorpicker])
 
-	colorpicker:addListener_enabled(updateState, 1)
+	colorpicker:AddListener_enabled(updateState, 1)
 
 	return colorpicker
 end
@@ -5206,18 +5207,18 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						us.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
 
 						--Update the settings widgets
-						panel.widgets.position.anchor.load(false)
-						panel.widgets.position.relativePoint.load(false)
-						-- panel.widgets.position.relativeTo.loadData(false)
-						panel.widgets.position.offset.x.load(false)
-						panel.widgets.position.offset.y.load(false)
+						panel.widgets.position.anchor:Load(false)
+						panel.widgets.position.relativePoint:Load(false)
+						-- panel.widgets.position.relativeTo:Load(false)
+						panel.widgets.position.offset.x:Load(false)
+						panel.widgets.position.offset.y:Load(false)
 					end
 
 					--Keep in bounds
 					if panel.presets[i].data.keepInBounds ~= nil then
 						frame:SetClampedToScreen(panel.presets[i].data.keepInBounds) --Update the frame
 						getData().keepInBounds = panel.presets[i].data.keepInBounds --Update the storage
-						if panel.widgets.position.keepInBounds then panel.widgets.position.keepInBounds.load(false) end --Update the settings widget
+						if panel.widgets.position.keepInBounds then panel.widgets.position.keepInBounds:Load(false) end --Update the settings widget
 					end
 
 					--Screen Layer
@@ -5226,21 +5227,21 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						if panel.presets[i].data.layer.strata then
 							frame:SetFrameStrata(panel.presets[i].data.layer.strata) --Update the frame
 							getData().layer.strata = panel.presets[i].data.layer.strata --Update the storage
-							if panel.widgets.layer.strata then panel.widgets.layer.strata.load(false) end --Update the settings widget
+							if panel.widgets.layer.strata then panel.widgets.layer.strata:Load(false) end --Update the settings widget
 						end
 
 						--Keep on top
 						if panel.presets[i].data.layer.keepOnTop ~= nil then
 							frame:SetToplevel(panel.presets[i].data.layer.keepOnTop) --Update the frame
 							getData().layer.keepOnTop = panel.presets[i].data.layer.keepOnTop --Update the storage
-							if panel.widgets.layer.keepOnTop then panel.widgets.layer.keepOnTop.load(false) end --Update the settings widget
+							if panel.widgets.layer.keepOnTop then panel.widgets.layer.keepOnTop:Load(false) end --Update the settings widget
 						end
 
 						--Frame level
 						if panel.presets[i].data.layer.level then
 							frame:SetFrameLevel(panel.presets[i].data.layer.level) --Update the frame
 							getData().layer.level = panel.presets[i].data.layer.level --Update the storage
-							if panel.widgets.layer.level then panel.widgets.layer.level.load(false) end --Update the settings widget
+							if panel.widgets.layer.level then panel.widgets.layer.level:Load(false) end --Update the settings widget
 						end
 					end
 
@@ -5251,7 +5252,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					if type(t.presets.onPreset) == "function" then t.presets.onPreset(panel.presets[i], i) end
 				end
 
-				function panel.applyPreset(i)
+				function panel:ApplyPreset(i)
 					if not i or i < 1 or i > #panel.presets then return false end
 
 					--Apply the preset data to the frame & update the settings widgets
@@ -5273,7 +5274,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 						for i = 1, #panel.presets do wt.CreateMenuButton(menu, {
 							title = panel.presets[i].title,
-							action = function() panel.applyPreset(i) end,
+							action = function() panel:ApplyPreset(i) end,
 						}) end
 					end,
 				})
@@ -5288,7 +5289,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 					--| Utilities
 
-					function panel.saveCustomPreset()
+					function panel:SaveCustomPreset()
 						--Update the custom preset
 						panel.presets[t.presets.custom.index].data.position = wt.PackPosition(frame:GetPoint())
 						if panel.presets[t.presets.custom.index].data.keepInBounds then
@@ -5304,27 +5305,21 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							panel.presets[t.presets.custom.index].data.layer.level = frame:GetFrameLevel()
 						end
 
-						--Save the custom preset
 						us.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
 						if t.presets.custom.getData() then us.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
-						--Call the specified handler
 						if t.presets.custom.onSave then t.presets.custom.onSave() end
 					end
 
-					function panel.resetCustomPreset()
-						--Reset the custom preset
+					function panel:ResetCustomPreset()
 						panel.presets[t.presets.custom.index].data = us.Clone(t.presets.custom.defaultsTable)
 
-						--Save the custom preset
 						us.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
 						if t.presets.custom.getData() then us.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
-						--Call the specified handler
 						if t.presets.custom.onReset then t.presets.custom.onReset() end
 
-						--Apply the custom preset
-						panel.applyPreset(t.presets.custom.index)
+						panel:ApplyPreset(t.presets.custom.index)
 					end
 
 					--| Widgets
@@ -5332,7 +5327,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					local savePopup = wt.RegisterPopupDialog(addon .. "_SAVE_PRESET", {
 						text = wt.strings.presets.save.warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = wt.strings.override,
-						onAccept = panel.saveCustomPreset,
+						onAccept = panel.SaveCustomPreset,
 					})
 
 					panel.widgets.presets.save = wt.CreateButton({
@@ -5352,7 +5347,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					local resetPopup = wt.RegisterPopupDialog(addon .. "_RESET_PRESET_" .. panelFrame:GetName(), {
 						text = wt.strings.presets.reset.warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = wt.strings.override,
-						onAccept = panel.resetCustomPreset,
+						onAccept = panel.ResetCustomPreset,
 					})
 
 					panel.widgets.presets.reset = wt.CreateButton({
@@ -5413,8 +5408,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 								local x, y = wt.SetAnchor(frame, getData().position.anchor)
 
 								--Update offsets
-								panel.widgets.position.offset.x.setData(x, false)
-								panel.widgets.position.offset.y.setData(y, false)
+								panel.widgets.position.offset.x:SetData(x, false)
+								panel.widgets.position.offset.y:SetData(y, false)
 							end end,
 							"UpdatePositioningVisualAids"
 						},
@@ -5597,11 +5592,11 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					us.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
 
 					--Update the settings widgets
-					panel.widgets.position.anchor.load(false)
-					panel.widgets.position.relativePoint.load(false)
-					-- panel.widgets.position.relativeTo.loadData(false)
-					panel.widgets.position.offset.x.load(false)
-					panel.widgets.position.offset.y.load(false)
+					panel.widgets.position.anchor:Load(false)
+					panel.widgets.position.relativePoint:Load(false)
+					-- panel.widgets.position.relativeTo:Load(false)
+					panel.widgets.position.offset.x:Load(false)
+					panel.widgets.position.offset.y:Load(false)
 
 					--Update the positioning visual aids
 					if WidgetToolsDB.positioningAids then positioningVisualAids.update(frame, getData().position) end
@@ -5745,7 +5740,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 								local label = fontPanel.widgets.path.toggle.label
 								local _, size, flags = label:GetFont()
 
-								pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getValue() or 1].path, size, flags)
+								pcall(label.SetFont, label, data_value[fonts[fontPanel.widgets.path] or 1].path, size, flags)
 							end or nil,
 						},
 					},
@@ -5754,7 +5749,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 						local label = fontPanel.widgets.path.toggle.label
 						local _, size, flags = label:GetFont()
 
-						pcall(label.SetFont, label, fonts[fontPanel.widgets.path.getValue() or 1].path, size, flags)
+						pcall(label.SetFont, label, data_value[fonts[fontPanel.widgets.path] or 1].path, size, flags)
 					end },
 				}),
 				size = wt.CreateSlider({
@@ -5844,7 +5839,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				fontPanel.widgets.colors = {}
 
 				for k, v in pairs(t.colors) do if type(v) == "table" then
-					local name = type(v.name) == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
+					local name = type(v.name) == "string" and v.name or (k:sub(1,1):Upper() .. k:sub(2))
 					local index = type(v.index) == "number" and math.floor(v.index) + 3 or nil
 
 					fontPanel.widgets.colors[k] = wt.CreateColorpicker({
@@ -5894,7 +5889,7 @@ local function buildSettingsmanager()
 
 	--[ Batched Datamanagement ]
 
-	function settingsmanager:load(handleChanges, user, silent)
+	function settingsmanager:Load(handleChanges, user, silent)
 		if autoLoad[self] then for i = 1, #datamanagementEntry[self].keys do
 			wt.LoadSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i], handleChanges)
 			wt.SnapshotSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i])
@@ -5903,25 +5898,25 @@ local function buildSettingsmanager()
 		if not silent then settingsmanager.invoke.loaded(user == true) end
 	end
 
-	function settingsmanager:save(user, silent)
+	function settingsmanager:Save(user, silent)
 		if autoSave[self] then for i = 1, #datamanagementEntry[self].keys do wt.SaveSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
 		if not silent then settingsmanager.invoke.saved(user == true) end
 	end
 
-	function settingsmanager:apply(user, silent)
+	function settingsmanager:Apply(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ApplySettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
 		if not silent then settingsmanager.invoke.applied(user == true) end
 	end
 
-	function settingsmanager:revert(user, silent)
+	function settingsmanager:Revert(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.RevertSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
 		if not silent then settingsmanager.invoke.reverted(user == true) end
 	end
 
-	function settingsmanager:reset(user, silent)
+	function settingsmanager:Reset(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ResetSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
 		if not silent then settingsmanager.invoke.reset(user == true) end
@@ -5933,11 +5928,10 @@ local function buildSettingsmanager()
 end
 
 function wt.CreateSettingsmanager(t, widget)
-	if not settingsmanager_base then settingsmanager_base = buildSettingsmanager() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local settingsmanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), settingsmanager_base) ---@cast settingsmanager settingsmanager
+	local settingsmanager = setmetatable(widget, settingsmanager_base or buildSettingsmanager()) ---@cast settingsmanager settingsmanager
 
 	--[ Initialization ]
 
@@ -5975,20 +5969,20 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 
 	--[ Getters & Setters ]
 
-	function category.getTypes() return "SettingsCategory" end
-	function category.isType(type) return type == "SettingsCategory" end
+	function category:GetTypes() return "SettingsCategory" end
+	function category:IsType(type) return type == "SettingsCategory" end
 
 	--[ Utilities ]
 
 	--| Batched settings data management
 
-	function category.load(handleChanges, user)
+	function category:Load(handleChanges, user)
 		for i = 1, #category.pages do category.pages[i].load(handleChanges, user) end
 
 		if t.onLoad then t.onLoad(user == true) end
 	end
 
-	function category.defaults(user, callListeners)
+	function category:Defaults(user, callListeners)
 		for i = 1, #category.pages do
 			local dataManagement = category.pages[i].categorySyncer.dataManagement --REPLACE
 			local onDefault = callListeners ~= false and category.pages[i].categorySyncer.onDefault or nil --REPLACE
@@ -6015,12 +6009,12 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 	wt.RegisterSettingsPage(parent)
 
 	--Override defaults warning and add all defaults option to dialog
-	wt.UpdatePopupDialog(parent.getResetPopupKey(), {
+	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
 		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
-		onAccept = function() category.defaults(true) end,
-		onAlt = function() parent.reset(true) end,
+		onAccept = function() category:Defaults(true) end,
+		onAlt = function() parent:Reset(true) end,
 	})
 
 	--| Subcategories
@@ -6033,14 +6027,14 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
-		wt.UpdatePopupDialog(pages[i].getResetPopupKey(), {
+		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
 			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
 				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
-			onAccept = function() category.defaults(true) end,
-			onAlt = function() pages[i].reset(true) end,
+			onAccept = function() category:Defaults(true) end,
+			onAlt = function() pages[i]:Reset(true) end,
 		})
 	end end end
 
@@ -6078,20 +6072,20 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	--[ Getters & Setters ]
 
-	function page.setStatic(state)
+	function page:SetStatic(state)
 		state = state == false
 
-		resetButton.setEnabled(state)
-		revertButton.setEnabled(state)
+		resetButton:SetEnabled(state)
+		revertButton:SetEnabled(state)
 
 		if state then saveNotice:Show() else saveNotice:Hide() end
 	end
 
-	function page.getResetPopupKey() return resetWarning end
+	function page:GetResetPopupKey() return resetWarning end
 
 	--| Utilities
 
-	function page.open()
+	function page:Open()
 		if WidgetToolsDB.lite or not page.category then
 			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
 				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
@@ -6182,7 +6176,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		resetWarning = wt.RegisterPopupDialog(addon .. "_" .. (t.name or "") .. "DEFAULT", {
 			text = wt.strings.settings.warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
 			accept = ACCEPT,
-			onAccept = function() page.reset(true) end,
+			onAccept = function() page:Reset(true) end,
 		})
 
 		resetButton = wt.CreateButton({
@@ -6211,7 +6205,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 				offset = { x = -18, y = -31 }
 			},
 			width = 140,
-			action = function() page.revert(true) end,
+			action = function() page:Revert(true) end,
 			disabled = t.static,
 		})
 
@@ -6276,12 +6270,12 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	wt.RegisterSettingsPage(parent)
 
 	--Override defaults warning and add all defaults option to dialog
-	wt.UpdatePopupDialog(parent.getResetPopupKey(), {
+	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
 		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
-		onAccept = function() category.defaults(true) end,
-		onAlt = function() parent.reset(true) end,
+		onAccept = function() category:Gefaults(true) end,
+		onAlt = function() parent:Reset(true) end,
 	})
 
 	--| Subcategories
@@ -6295,14 +6289,14 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 		wt.RegisterSettingsPage(pages[i], parent, pages[i].categorySyncer.titleIcon) --REPLACE
 
 		--Override defaults warning and add all defaults option to dialog
-		wt.UpdatePopupDialog(pages[i].getResetPopupKey(), {
+		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
 			text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
 				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
-			onAccept = function() category.defaults(true) end,
-			onAlt = function() pages[i].reset(true) end,
+			onAccept = function() category:Defaults(true) end,
+			onAlt = function() pages[i]:Reset(true) end,
 		})
 	end end end
 
@@ -6368,7 +6362,7 @@ local function buildProfilemanager()
 		return index
 	end
 
-	function profilemanager:activate(index, user, silent)
+	function profilemanager:Activate(index, user, silent)
 		if type(index) ~= "number" then
 			if not silent then profilemanager_invoke_activated(self, false, user) end
 
@@ -6390,7 +6384,7 @@ local function buildProfilemanager()
 
 		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
 	end end
-	function profilemanager:addListener_activated(handler, callIndex)
+	function profilemanager:AddListener_activated(handler, callIndex)
 		if type(handler) ~= "function" then return end
 
 		local handlers = profilemanager_handlers_activated[self]
@@ -6403,7 +6397,7 @@ local function buildProfilemanager()
 		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
-	function profilemanager:findIndex(title, skipFirst)
+	function profilemanager:FindIndex(title, skipFirst)
 		local profiles = profiles_accountData[self]
 
 		for i = 1, #profiles do if profiles[i].title == title then if skipFirst then skipFirst = false else return i end end end
@@ -6419,11 +6413,11 @@ local function buildProfilemanager()
 		local title = name .. (number and (" " .. number) or "")
 
 		--Find an unused name for the new profile
-		if profilemanager:findIndex(title, skipFirst) then
+		if profilemanager:FindIndex(title, skipFirst) then
 			number = (number and number or 2)
 			title = name .. " " .. number
 
-			while profilemanager:findIndex(title) do
+			while profilemanager:FindIndex(title) do
 				number = number + 1
 				title = name .. " " .. number
 			end
@@ -6432,7 +6426,7 @@ local function buildProfilemanager()
 		return title
 	end
 
-	function profilemanager:create(name, number, duplicate, index, apply, user, silent)
+	function profilemanager:Create(name, number, duplicate, index, apply, user, silent)
 		index = Clamp(type(index) == "number" and math.floor(index) or #profiles_accountData[self].profiles + 1, 1, #profiles_accountData[self].profiles + 1)
 		local d = type(profiles_accountData[self].profiles[duplicate]) == "table" and profiles_accountData[self].profiles[duplicate] or nil
 
@@ -6445,7 +6439,7 @@ local function buildProfilemanager()
 		if not silent then profilemanager_invoke_created(self, user, index, profiles_accountData[self].profiles[index].title) end
 
 		--Activate the new profile
-		if apply ~= false then profilemanager:activate(index, user, silent) end
+		if apply ~= false then profilemanager:Activate(index, user, silent) end
 	end
 
 	if not profilemanager_invoke_created then profilemanager_invoke_created = function(self, success, user)
@@ -6456,7 +6450,7 @@ local function buildProfilemanager()
 		for i = 1, #handlers do	handlers[i](profilemanager, user, profiles_activeIndex[self], activeTitle) end
 	end end
 
-	function profilemanager:rename(index, name, number, user, silent)
+	function profilemanager:Rename(index, name, number, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
 			if not silent then profilemanager_invoke_renamed(self, false, user, index) end
 
@@ -6481,7 +6475,7 @@ local function buildProfilemanager()
 		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
 	end end
 
-	function profilemanager:delete(index, unsafe, user, silent)
+	function profilemanager:Delete(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
 			if not silent then profilemanager.invoke.deleted(false, user == true, index) end
 
@@ -6497,7 +6491,7 @@ local function buildProfilemanager()
 			if not silent then profilemanager.invoke.deleted(true, user == true, index, title) end
 
 			--Activate the replacement profile
-			if profiles_activeIndex[s] == index then profilemanager.activate(index, user, silent) end
+			if profiles_activeIndex[s] == index then profilemanager:Activate(index, user, silent) end
 		end
 
 		if unsafe then delete(self) else StaticPopup_Show(wt.UpdatePopupDialog(profiles_deletePopup[self], {
@@ -6516,7 +6510,7 @@ local function buildProfilemanager()
 		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
 	end end
 
-	function profilemanager:reset(index, unsafe, user, silent)
+	function profilemanager:Reset(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
 			if not silent then profilemanager_invoke_reset(self, false, user, index) end
 
@@ -6548,7 +6542,7 @@ local function buildProfilemanager()
 		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
 	end end
 
-	function profilemanager:validate(profileData, compareWith)
+	function profilemanager:Validate(profileData, compareWith)
 		if type(profileData) ~= "table" then return profileData end
 
 		compareWith = type(compareWith) == "table" and compareWith or profiles_defaultData[self]
@@ -6569,7 +6563,7 @@ local function buildProfilemanager()
 		for key, value in us.SortedPairs(list) do
 			if key == index and type(value) == "table" then
 				--Check profile data
-				if type(list[index].data) == "table" then profilemanager:validate(list[index].data) else list[index].data = us.Clone(profiles_defaultData[self]) end
+				if type(list[index].data) == "table" then profilemanager:Validate(list[index].data) else list[index].data = us.Clone(profiles_defaultData[self]) end
 			else
 				--Remove invalid entry
 				list[key] = nil
@@ -6585,7 +6579,7 @@ local function buildProfilemanager()
 		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
 
-	function profilemanager:load(p, activeProfile, user, silent)
+	function profilemanager:Load(p, activeProfile, user, silent)
 
 		--| Profile list
 
@@ -6624,9 +6618,9 @@ local function buildProfilemanager()
 			us.Pull(profilemanager.data, recovered)
 
 			--Validate active profile data
-			profilemanager:validate(profilemanager.data)
+			profilemanager:Validate(profilemanager.data)
 
-			ds.Log(function() return "Recovered misplaced data:" .. us.TableToString(recovered), wt.title .. " • Profilemanager (" .. profiles_category[self] .. "):load" end)
+			ds.Log(function() return "Recovered misplaced data:" .. us.TableToString(recovered), wt.title .. " • Profilemanager (" .. profiles_category[self] .. "):Load" end)
 		end
 
 		--| Call listeners
@@ -6655,11 +6649,10 @@ end
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t, widget)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
-	if not profilemanager_base then profilemanager_base = buildProfilemanager() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local profilemanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), profilemanager_base) ---@cast profilemanager profilemanager
+	local profilemanager = setmetatable(widget, profilemanager_base or buildProfilemanager()) ---@cast profilemanager profilemanager
 
 	--[ Initialization ]
 
@@ -6682,7 +6675,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 	profiles_activeIndex[profilemanager] = 1
 
-	profilemanager:load(nil, nil, false, true)
+	profilemanager:Load(nil, nil, false, true)
 
 	ds.Log(function() return
 		"Widget instance mutated into Profilemanager instance: " .. us.ToString(profilemanager) .. " with base: " .. action_base,
@@ -6730,12 +6723,12 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		onLoad = t.onLoad,
 		onCancel = t.onCancel,
 		onDefault = onDefault and function(user, category)
-			if not category then profilesPage.reset() end
+			if not category then profilesPage:Reset() end
 
 			onDefault(user, category)
-		end or function(_, category) if not category then profilesPage.reset() end end,
+		end or function(_, category) if not category then profilesPage:Reset() end end,
 		arrangement = {},
-		initialize = function(canvas, _, _, category, keys) if not WidgetToolsDB.lite or t.ignoreLite == false then
+		initialize = function(canvas, _, _, category, keys) if not WidgetToolsDB.lite or t.lite == false then
 
 			--[ Profiles ]
 
@@ -6755,7 +6748,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						width = 180,
 						items = accountData.profiles,
 						value = characterData.activeProfile,
-						listeners = { changed = { { handler = function(_, index, user) profilesPage.activate(index, user) end, }, }, },
+						listeners = { changed = { { handler = function(_, index, user) profilesPage:Activate(index, user) end, }, }, },
 					})
 
 					profilesPage.widgets = {
@@ -6771,7 +6764,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							},
 							width = 112,
 							height = 26,
-							action = function() profilesPage.create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
+							action = function() profilesPage:Create(nil, #accountData.profiles + 1, nil, nil, nil, true) end,
 						}),
 						duplicate = wt.CreateButton({
 							parentFrame = panel,
@@ -6784,7 +6777,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							},
 							width = 112,
 							height = 26,
-							action = function() profilesPage.create(nil, nil, characterData.activeProfile, nil, nil, true) end,
+							action = function() profilesPage:Create(nil, nil, characterData.activeProfile, nil, nil, true) end,
 						}),
 						rename = wt.CreateButton({
 							parentFrame = panel,
@@ -6808,7 +6801,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 										relativeTo = panel,
 									},
 									text = title,
-									accept = function(text) profilesPage.rename(nil, text, nil, true) end,
+									accept = function(text) profilesPage:Rename(nil, text, nil, true) end,
 								})
 							end,
 						}),
@@ -6823,20 +6816,19 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							},
 							width = 72,
 							height = 26,
-							action = function() profilesPage.delete(nil, nil, true) end,
+							action = function() profilesPage:Delete(nil, nil, true) end,
 							dependencies = { { dependency = activate, evaluate = function() return #accountData.profiles > 1 end }, }
 						}),
 					}
 
 					--| UX
 
-					--Update the activation widget UI based on profile data changes
-					profilesPage.addListener.activated(function(_, index) profilesPage.widgets.activate.setValue(index, false, true) end)
-					profilesPage.addListener.created(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.addListener.renamed(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.addListener.deleted(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.addListener.reset(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
-					profilesPage.addListener.loaded(function() profilesPage.widgets.activate.updateItems(accountData.profiles) end)
+					profilesPage:AddListener_activated(function(_, index) profilesPage.widgets.activate:SetValue(index, false, true) end)
+					profilesPage:AddListener_created(function() profilesPage.widgets.activate:UpdateItems(accountData.profiles) end)
+					profilesPage:AddListener_renamed(function() profilesPage.widgets.activate:UpdateItems(accountData.profiles) end)
+					profilesPage:AddListener_deleted(function() profilesPage.widgets.activate:UpdateItems(accountData.profiles) end)
+					profilesPage:AddListener_reset(function() profilesPage.widgets.activate:UpdateItems(accountData.profiles) end)
+					profilesPage:AddListener_loaded(function() profilesPage.widgets.activate:UpdateItems(accountData.profiles) end)
 				end,
 			})
 
@@ -6855,7 +6847,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					--[ Active Profile ]
 
 					local function refresh()
-						profilesPage.backup.box.setValue(us.TableToString(profilesPage.data, settingsData.compactBackup))
+						profilesPage.backup.box:SetValue(us.TableToString(profilesPage.data, settingsData.compactBackup))
 
 						--Set focus after text change to set the scroll to the top and refresh the position character counter
 						profilesPage.backup.box.scrollframe.EditBox:SetFocus()
@@ -6892,11 +6884,11 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						text = wt.strings.backup.warning,
 						accept = wt.strings.backup.import,
 						onAccept = function()
-							local success, load = pcall(loadstring("return " .. wt.Clear(profilesPage.backup.box.getValue())))
+							local success, load = pcall(loadstring("return " .. wt.Clear(data_value[profilesPage.backup.box])))
 							success = success and type(load) == "table"
 
 							if success then
-								profilesPage.validate(load, profilesPage.data)
+								profilesPage:Validate(load, profilesPage.data)
 								us.CopyValues(profilesPage.data, load)
 							end
 
@@ -6962,7 +6954,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 					--[ All Profiles ]
 
-					local allProfilesBackupFrame = wt.CreatePanel({
+					local allProfilesBackup = wt.CreatePanel({
 						parentFrame = canvas:GetParent(),
 						name = addon .. "AllProfilesBackup",
 						append = false,
@@ -6980,7 +6972,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						},
 						initialize = function(_, windowPanel)
 							local function refreshAll()
-								profilesPage.backupAll.box.setValue(us.TableToString({
+								profilesPage.backupAll.box:SetValue(us.TableToString({
 									activeProfile = characterData.activeProfile,
 									profiles = accountData.profiles
 								}, settingsData.compactBackup))
@@ -7021,10 +7013,10 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								text = wt.strings.backup.warning,
 								accept = wt.strings.backup.import,
 								onAccept = function()
-									local success, data = pcall(loadstring("return " .. wt.Clear(profilesPage.backupAll.box.getValue())))
+									local success, data = pcall(loadstring("return " .. wt.Clear(data_value[profilesPage.backupAll.box])))
 									data = type(data) == "table" and data or {}
 
-									if success then profilesPage.load(data.profiles, data.activeProfile, true) end
+									if success then profilesPage:Load(data.profiles, data.activeProfile, true) end
 
 									t.onImportAllProfiles(success and type(data) == "table", data)
 								end,
@@ -7058,7 +7050,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 									tooltip = { lines = { { text = wt.strings.backup.compact.tooltip, }, } },
 									arrange = {},
 									events = { OnClick = function()
-										profilesPage.backup.compact.flip(true)
+										profilesPage.backup.compact:Flip(true)
 										refreshAll()
 									end },
 									showDefault = false,
@@ -7119,11 +7111,11 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							highlight = "GameFontHighlightSmall",
 						},
 						action = function()
-							allProfilesBackupFrame:Show()
+							allProfilesBackup.frame:Show()
 
-							profilesPage.backupAll.compact.setValue(settingsData.compactBackup, nil, true)
+							profilesPage.backupAll.compact:SetValue(settingsData.compactBackup, nil, true)
 
-							profilesPage.backupAll.refresh()
+							profilesPage.backupAll:Refresh()
 						end,
 					})
 				end,
@@ -7157,25 +7149,25 @@ local function buildAddonmanager()
 
 	if not addonmanager_addonData then addonmanager_addonData = {} end
 
-	function addonmanager:getName() return addonmanager_addonData[self].name end
-	function addonmanager:getTitle() return addonmanager_addonData[self].title end
-	function addonmanager:getNotes() return addonmanager_addonData[self].notes end
-	function addonmanager:getLogo() return addonmanager_addonData[self].logo end
-	function addonmanager:getCategory() return addonmanager_addonData[self].category end
-	function addonmanager:getAuthor() return addonmanager_addonData[self].author end
-	function addonmanager:getVersion() return addonmanager_addonData[self].version end
-	function addonmanager:getDate()
+	function addonmanager:GetName() return addonmanager_addonData[self].name end
+	function addonmanager:GetTitle() return addonmanager_addonData[self].title end
+	function addonmanager:GetNotes() return addonmanager_addonData[self].notes end
+	function addonmanager:GetLogo() return addonmanager_addonData[self].logo end
+	function addonmanager:GetCategory() return addonmanager_addonData[self].category end
+	function addonmanager:GetAuthor() return addonmanager_addonData[self].author end
+	function addonmanager:GetVersion() return addonmanager_addonData[self].version end
+	function addonmanager:GetDate()
 		local data = addonmanager_addonData[self]
 
 		return data.date, data.day, data.month, data.year
 	end
-	function addonmanager:getLicense() return addonmanager_addonData[self].license end
-	function addonmanager:getCurseForgeLink() return addonmanager_addonData[self].curse end
-	function addonmanager:getWagoLink() return addonmanager_addonData[self].wago end
-	function addonmanager:getRepositoryLink() return addonmanager_addonData[self].repo end
-	function addonmanager:getIssuesLink() return addonmanager_addonData[self].issues end
-	function addonmanager:getSponsors() return addonmanager_addonData[self].sponsors end
-	function addonmanager:getChangelog()
+	function addonmanager:GetLicense() return addonmanager_addonData[self].license end
+	function addonmanager:GetCurseForgeLink() return addonmanager_addonData[self].curse end
+	function addonmanager:GetWagoLink() return addonmanager_addonData[self].wago end
+	function addonmanager:GetRepositoryLink() return addonmanager_addonData[self].repo end
+	function addonmanager:GetIssuesLink() return addonmanager_addonData[self].issues end
+	function addonmanager:GetSponsors() return addonmanager_addonData[self].sponsors end
+	function addonmanager:GetChangelog()
 		local data = addonmanager_addonData[self]
 
 		return data.changelog_latest, data.changelog_full
@@ -7183,7 +7175,7 @@ local function buildAddonmanager()
 
 	--| Rebind
 
-	function addonmanager:setAddon(newAddon, newChangelog, user, silent)
+	function addonmanager:SetAddon(newAddon, newChangelog, user, silent)
 		if newAddon == addonmanager_addonData then return true end
 
 		local addon_type = type(newAddon)
@@ -7247,17 +7239,16 @@ local function buildAddonmanager()
 end
 
 function wt.CreateAddonmanager(t, widget)
-	if not addonmanager_base then addonmanager_base = buildAddonmanager() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local addonmanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), addonmanager_base) ---@cast addonmanager addonmanager
+	local addonmanager = setmetatable(widget, addonmanager_base or buildAddonmanager()) ---@cast addonmanager addonmanager
 
 	--[ Initialization ]
 
 	t = type(t) == "table" and t or {}
 
-	addonmanager:setAddon(t.addon, t.changelog)
+	addonmanager:SetAddon(t.addon, t.changelog)
 
 	ds.Log(function() return
 		"Widget instance mutated into Addonmanager instance: " .. us.ToString(addonmanager) .. " with base: " .. action_base,
@@ -7606,7 +7597,7 @@ function wt.CreateAddonPage(t, addonmanager)
 
 			--[ Sponsors ]
 
-			local sponsors, topSponsors = data.sponsors:split("; ")
+			local sponsors, topSponsors = data.sponsors:Split("; ")
 
 			if sponsors then
 				local sponsorsPanel = wt.CreatePanel({
@@ -7692,7 +7683,7 @@ local function buildChatmanager()
 	if not chatmanager_icon then chatmanager_icon = {} end
 	if not chatmanager_branding then chatmanager_branding = {} end
 
-	function chatmanager:print(message, title, titleColor, contentColor)
+	function chatmanager:Print(message, title, titleColor, contentColor)
 		local colors = chatmanager_colors[self]
 
 		title = type(title) == "string" and title or chatmanager_branding[self]
@@ -7702,7 +7693,7 @@ local function buildChatmanager()
 		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
 	end
 
-	function chatmanager:welcome()
+	function chatmanager:Welcome()
 		local keywords = chatmanager_keywords[self]
 		local colors = chatmanager_colors[self]
 
@@ -7720,7 +7711,7 @@ local function buildChatmanager()
 
 	--| Commands
 
-	function chatmanager:help()
+	function chatmanager:Help()
 		local commands = chatmanager_commands[self]
 		local keywords = chatmanager_keywords[self]
 		local colors = chatmanager_colors[self]
@@ -7740,7 +7731,7 @@ local function buildChatmanager()
 		end
 	end
 
-	function chatmanager:trigger(commandName, ...)
+	function chatmanager:Trigger(commandName, ...)
 		local commands = chatmanager_commands[self]
 
 		for i = 1, #commands do
@@ -7753,19 +7744,19 @@ local function buildChatmanager()
 					if results[1] == true then
 						local message = type(command.success) == "function" and command.success(unpack(results, 2)) or command.success
 
-						if type(message) == "string" then chatmanager:print(message) end
+						if type(message) == "string" then chatmanager:Print(message) end
 
 						if type(command.onSuccess) == "function" then command.onSuccess(chatmanager, unpack(results, 2)) end
 					elseif results[1] == false then
 						local message = type(command.error) == "function" and command.error(unpack(results, 2)) or command.error
 
-						if type(message) == "string" then chatmanager:print(message) end
+						if type(message) == "string" then chatmanager:Print(message) end
 
 						if type(command.onError) == "function" then command.onError(chatmanager, unpack(results, 2)) end
 					end
 				end
 
-				if commands[i].help then chatmanager:help() end
+				if commands[i].help then chatmanager:Help() end
 
 				return true
 			end
@@ -7780,11 +7771,10 @@ local function buildChatmanager()
 end
 
 function wt.CreateChatmanager(keywords, t, widget)
-	if not chatmanager_base then chatmanager_base = buildChatmanager() end
-
 	local typenameBase = "Widget" ---@type typename_widget
+	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
-	local chatmanager = setmetatable(wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t), chatmanager_base) ---@cast chatmanager chatmanager
+	local chatmanager = setmetatable(widget, chatmanager_base or buildChatmanager()) ---@cast chatmanager chatmanager
 
 	--[ Initialization ]
 
@@ -7810,14 +7800,14 @@ function wt.CreateChatmanager(keywords, t, widget)
 	local addon, title, icon
 
 	if wt.IsWidget(t.addon, "Addonmanager") then
-		addon = t.addon:getName()
-		title = t.addon:getTitle()
-		icon = t.addon:getLogo()
+		addon = t.addon:GetName()
+		title = t.addon:GetTitle()
+		icon = t.addon:GetLogo()
 	else
 		local addon_type = type(addon)
 
 		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
-			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):Upper()
 			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
 			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
 		end
@@ -7848,10 +7838,10 @@ function wt.CreateChatmanager(keywords, t, widget)
 			local payload = { strsplit(" ", line) }
 			local command = payload[1]
 
-			if not chatmanager:trigger(command, unpack(payload, 2)) then
+			if not chatmanager:Trigger(command, unpack(payload, 2)) then
 				if defaultHandler then defaultHandler(chatmanager, command, unpack(payload, 2)) end
 
-				chatmanager:help()
+				chatmanager:Help()
 			end
 		end
 	end

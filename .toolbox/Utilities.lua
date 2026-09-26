@@ -912,8 +912,8 @@ function wt.AddDependencies(rules, setState)
 		local f = rules[i].dependency
 
 		if wt.IsWidget(f, "Datamanager") then
-			f:addListener_loaded(function(_, success) if success then setter() end end)
-			f:addListener_changed(setter)
+			f:AddListener_loaded(function(_, success) if success then setter() end end)
+			f:AddListener_changed(setter)
 		elseif us.IsFrame(f) then
 			local scriptType = dataObjectScriptType[f:GetObjectType()]
 
@@ -935,7 +935,7 @@ function wt.CheckDependencies(rules)
 		local evaluate = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
 		local value
 
-		if wt.IsWidget(widget, "Datamanager") then value = widget:getValue() elseif us.IsFrame(widget) then
+		if wt.IsWidget(widget, "Datamanager") then value = widget:GetValue() elseif us.IsFrame(widget) then
 			local getterKey = dataObjectValueGetterKeys[widget:GetObjectType()]
 
 			if getterKey then value = widget[getterKey](widget) end
@@ -1543,7 +1543,7 @@ local contextMenu_load ---@type table<contextMenu, fun(menu: contextMenu|context
 local function buildContextMenu()
 	local menu = {} ---@type contextMenu
 
-	function menu:open(triggerIndex, action)
+	function menu:Open(triggerIndex, action)
 		local triggers = contextMenu_triggers[self]
 
 		triggerIndex = type(triggerIndex) == "number" and Clamp(triggerIndex, 1, #triggers) or 1
@@ -1586,10 +1586,10 @@ function wt.CreateContextMenu(t)
 		if trigger.rightClick ~= false or trigger.leftClick then frame:HookScript("OnMouseUp", function(_, button, isInside)
 			if not isInside or (button == "RightButton" and trigger.rightClick == false) or (button == "LeftButton" and not trigger.leftClick) then return end
 
-			menu:open(i, "click")
+			menu:Open(i, "click")
 		end) end
 
-		if trigger.hover then frame:HookScript("OnEnter", function() menu:open(i, "hover") end) end
+		if trigger.hover then frame:HookScript("OnEnter", function() menu:Open(i, "hover") end) end
 	end end
 
 	return menu
@@ -1801,9 +1801,9 @@ function wt.RegisterSettingsPage(page, parent, icon)
 	local iconTexture = (icon and type(page.iconTexture) == "string" and (" |T" .. page.iconTexture .. ":14:14:3:-1|t") or "")
 	local title = (type(page.title) == "table" and type(page.title.GetText) == "function" and page.title:GetText() or "") .. iconTexture
 
-	page.canvas.OnCommit = function() page.save(true) end
-	page.canvas.OnRefresh = function() page.load(nil, true) end
-	page.canvas.OnDefault = function() page.reset(true) end
+	page.canvas.OnCommit = function() page:Save(true) end
+	page.canvas.OnRefresh = function() page:Load(nil, true) end
+	page.canvas.OnDefault = function() page:Reset(true) end
 
 	if parent and type(parent.category) == "table" then page.category = Settings.RegisterCanvasLayoutSubcategory(parent.category, page.canvas, title)
 	else page.category = Settings.RegisterCanvasLayoutCategory(page.canvas, title) end
@@ -1858,7 +1858,7 @@ function wt.LoadSettingsData(category, key, handleChanges)
 	local changeHandlers = handleChanges == true and {} or nil
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget:load(false)
+		settingsData.rules[key][i].widget:Load(false)
 
 		--Register onChange handlers for call
 		if changeHandlers and type(settingsData.rules[key][i].onChange) == "table" then
@@ -1875,7 +1875,7 @@ function wt.SaveSettingsData(category, key)
 
 	if not settingsData.rules[key] then return end
 
-	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:save() end
+	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:Save() end
 end
 
 function wt.ApplySettingsData(category, key)
@@ -1900,7 +1900,7 @@ function wt.SnapshotSettingsData(category, key)
 
 	if not settingsData.rules[key] then return end
 
-	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:snapshot() end
+	for i = 1, #settingsData.rules[key] do settingsData.rules[key][i].widget:Snapshot() end
 end
 
 function wt.RevertSettingsData(category, key)
@@ -1912,7 +1912,7 @@ function wt.RevertSettingsData(category, key)
 	local applyChanges = {}
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget:revert(false)
+		settingsData.rules[key][i].widget:Revert(false)
 
 		--Register onChange handlers for call
 		if type(settingsData.rules[key][i].onChange) == "table" then
@@ -1933,7 +1933,7 @@ function wt.ResetSettingsData(category, key)
 	local applyChanges = {}
 
 	for i = 1, #settingsData.rules[key] do
-		settingsData.rules[key][i].widget:reset(false)
+		settingsData.rules[key][i].widget:Reset(false)
 
 		--Register onChange handlers for call
 		if type(settingsData.rules[key][i].onChange) == "table" then

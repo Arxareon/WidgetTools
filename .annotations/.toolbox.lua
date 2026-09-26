@@ -1763,7 +1763,7 @@ function wt.CreateContextMenu(t)
 		---Open the context menu
 		---@param triggerIndex? integer Index of the trigger to activate to have the menu opened defined in `t.triggers` | ***Default:*** `1`
 		---@param action "click"|"hover"|nil The action that prompted the menu to be opened | ***Default:*** *no action:* `nil`
-		function _:open(triggerIndex, action) end
+		function _:Open(triggerIndex, action) end
 
 	return _
 end
@@ -1933,36 +1933,36 @@ function wt.CreateWidget(t)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_widget "Widget"
 
 		---Checks and returns if the type of this widget matches the string provided
 		---@param s typename|string
 		---@return boolean
-		function _:isType(s) return false end
+		function _:IsType(s) return false end
 
 		--[ Events ]
 
 		---Add a new custom event to register listeners for, and invoke manually to call registered handlers
 		---@param event eventTag Unique event identifier tag
-		function _:addEvent(event) end
+		function _:AddEvent(event) end
 
 		---Invoke a custom event to notify registered listeners and call handlers, passing arguments along
 		---@param event eventTag Unique event identifier tag
 		---@param ... any Leftover arguments to pass to event handlers as payload
-		function _:invoke(event, ...) end
+		function _:Invoke(event, ...) end
 
 		---Register a listener for a custom event to call the specified handler on trigger
 		---@param event eventTag Unique event identifier tag
 		---@param handler widget_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler widget_handler_enabled Called when an "enabled" event is invoked after `widget:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		--[ Hierarchy ]
 
@@ -1970,7 +1970,7 @@ function wt.CreateWidget(t)
 
 		---Return the parent of this widget
 		---@return anyWidget|nil parent Reference to widget set as the parent | ***Default:*** `nil` *no parent is set*
-		function _:getParent() end
+		function _:GetParent() end
 
 		---Set the parent of this widget (replacing the current parent if set)
 		---@param parent anyWidget|nil Reference to the widget to set as the new parent, or `nil` to remove the current parent | ***Default:*** `nil`
@@ -1978,23 +1978,23 @@ function wt.CreateWidget(t)
 		---@param independent? boolean If `true`, do not link the enabled state of this widget to the enabled state of `parent` | ***Default:*** `false`
 		---@param childIndex? integer If set, add this widget at the specified order index in the current list of children | ***Default:*** *last position*
 		---@return boolean # `true` on success, `false` if `parent` was invalid
-		function _:setParent(parent, independent, childIndex) return false end
+		function _:SetParent(parent, independent, childIndex) return false end
 
 		--| Children
 
 		---Check if the specified widget is a child of this widget
 		---@param child any
 		---@return boolean
-		function _:hasChild(child) return false end
+		function _:HasChild(child) return false end
 
 		---Return a child at the specified order index
 		---@param index integer
 		---@return anyWidget? child Reference to the child at `index` in the current list of children | ***Default:*** `nil` *no child found*
-		function _:getChild(index) end
+		function _:GetChild(index) end
 
 		---Get a copy of the current list of children
 		---@return anyWidget[] children Ordered array of child widget references
-		function _:getChildren() return {} end
+		function _:GetChildren() return {} end
 
 		---Assign a new child to this widget
 		---@param child anyWidget Reference to the widget to add
@@ -2003,27 +2003,27 @@ function wt.CreateWidget(t)
 		---@param index? integer If set, add `child` at the specified order index in the current list of children | ***Default:*** *last position*
 		--- - ***Note:*** Ordering indexes can shift as new children get injected or removed, but relative order is always preserved.
 		---@return integer|nil index The current order index `child` was placed at | ***Default:*** `nil` *child was not added*
-		function _:addChild(child, independent, index) end
+		function _:AddChild(child, independent, index) end
 
 		---Remove a child from this widget
 		---@param child anyWidget Reference to the child widget to unassign
-		function _:removeChild(child) end
+		function _:RemoveChild(child) end
 
 		---Check if a child is set as independent (whether the enabled state of a child is unlinked from the enabled state of this widget)
 		---@param child anyWidget Reference to the child widget
 		---@return boolean? # ***Default:*** `nil` *not a child*
-		function _:isIndependent(child) end
+		function _:IsIndependent(child) end
 
 		---Set the independence relationship of a child of this widget (whether the enabled state of a child is unlinked from the enabled state of this widget)
 		---@param child anyWidget Reference to the child widget
-		---@param independent? boolean ***Default:*** `true` *independent*
-		function _:setIndependent(child, independent) end
+		---@param independent? boolean ***Default:*** `true`
+		function _:SetIndependent(child, independent) end
 
 		--[ State ]
 
 		---Return the current enabled state of the widget
 		---@return widget_isEnabled_return_enabled enabled `true` if the widget is enabled
-		function _:isEnabled()
+		function _:IsEnabled()
 
 			--| Returns
 
@@ -2040,7 +2040,7 @@ function wt.CreateWidget(t)
 		---@param ignoreDependencies widget_setEnabled_param_ignoreDependencies If `true`, force the state change ignoring and overruling all dependencies | ***Default:*** `false`
 		---@param user widget_setEnabled_param_user If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent widget_setEnabled_param_silent If `false`, invoke an "enabled" event and call registered listeners | ***Default:*** `false`
-		function _:setEnabled(state, ignoreParent, ignoreDependencies, user, silent)
+		function _:SetEnabled(state, ignoreParent, ignoreDependencies, user, silent)
 
 			--| Parameters
 
@@ -2066,15 +2066,15 @@ function wt.CreateWidget(t)
 		---Add a new dependency tying the enabled state of the widget to specified dependency based on the specified rules
 		---@param rule dependencyRule
 		---@return boolean success `true` if the provided `rule` passed verification and the dependency was registered
-		function _:addDependency(rule) return false end
+		function _:AddDependency(rule) return false end
 
 		---Replace all registered dependencies of this widget with the provided dependency rule list
 		---@param rules? dependencyRule[] ***Default:*** `nil` *clear all current dependencies*
-		function _:setDependencies(rules) end
+		function _:SetDependencies(rules) end
 
 		---Check and evaluate all dependencies of this widget
 		---@return boolean # `false` if any of the currently set dependencies evaluate to `false`, `true` if none do
-		function _:checkDependencies() return false end
+		function _:CheckDependencies() return false end
 
 	return _
 end
@@ -2439,7 +2439,7 @@ function wt.CreateAction(t, widget)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_action "Action"
 
@@ -2449,28 +2449,28 @@ function wt.CreateAction(t, widget)
 		---@param event eventTag Unique event identifier tag
 		---@param handler action_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler action_handler_enabled Called when an "enabled" event is invoked after `action:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		---Register a listener for a "triggered" event to call the specified handler on trigger
 		---@param handler action_handler_triggered Called when a "triggered" event is invoked after `action:trigger(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_triggered(handler, callIndex) end
+		function _:AddListener_triggered(handler, callIndex) end
 
 		--[ Action ]
 
 		---Trigger the registered action (if the widget is enabled)
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "trigger" event and call registered listeners | ***Default:*** `false`
-		function _:trigger(user, silent) end
+		function _:Trigger(user, silent) end
 
 		---Set the function to call on trigger
 		---@param call action_setAction_param1
-		function _:setAction(call)
+		function _:SetAction(call)
 
 			--| Parameters
 
@@ -2542,7 +2542,7 @@ function wt.CreateButton(t, action)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_button "Button"
 
@@ -2552,23 +2552,23 @@ function wt.CreateButton(t, action)
 		---@param event eventTag Unique event identifier tag
 		---@param handler button_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler button_handler_enabled Called when an "enabled" event is invoked after `button:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		---Register a listener for a "triggered" event to call the specified handler on trigger
 		---@param handler button_handler_triggered Called when a "triggered" event is invoked after `button:trigger(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_triggered(handler, callIndex) end
+		function _:AddListener_triggered(handler, callIndex) end
 
 		--[ Action ]
 
 		---Set the function to call on trigger
 		---@param call button_setAction_param1
-		function _:setAction(call)
+		function _:SetAction(call)
 
 			--| Parameters
 
@@ -2636,7 +2636,7 @@ function wt.CreateCustomButton(t, action)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_customButton "CustomButton"
 
@@ -2646,23 +2646,23 @@ function wt.CreateCustomButton(t, action)
 		---@param event eventTag Unique event identifier tag
 		---@param handler customButton_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler customButton_handler_enabled Called when an "enabled" event is invoked after `button:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		---Register a listener for a "triggered" event to call the specified handler on trigger
 		---@param handler customButton_handler_triggered Called when a "triggered" event is invoked after `button:trigger(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_triggered(handler, callIndex) end
+		function _:AddListener_triggered(handler, callIndex) end
 
 		--[ Action ]
 
 		---Set the function to call on trigger
 		---@param call customButton_setAction_param1
-		function _:setAction(call)
+		function _:SetAction(call)
 
 			--| Parameters
 
@@ -2767,7 +2767,7 @@ function wt.CreateDatamanager(t, widget)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_datamanager "Datamanager"
 
@@ -2777,27 +2777,27 @@ function wt.CreateDatamanager(t, widget)
 		---@param event eventTag Unique event identifier tag
 		---@param handler datamanager_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler datamanager_handler_enabled Called when an "enabled" event is invoked after `datamanager:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		---Register a listener for a "loaded" widget event to call the specified handler on trigger
 		---@param handler datamanager_handler_loaded Called when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_loaded(handler, callIndex) end
+		function _:AddListener_loaded(handler, callIndex) end
 
 		---Register a listener for a "saved" widget event to call the specified handler on trigger
 		---@param handler datamanager_handler_saved Called when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_saved(handler, callIndex) end
+		function _:AddListener_saved(handler, callIndex) end
 
 		---Register a listener for a "changed" widget event to call the specified handler on trigger
 		---@param handler datamanager_handler_changed Called when a "changed" event is invoked after `datamanager:setValue(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_changed(handler, callIndex) end
+		function _:AddListener_changed(handler, callIndex) end
 
 		--[ Data ]
 
@@ -2806,7 +2806,7 @@ function wt.CreateDatamanager(t, widget)
 		---Validate a value to be accepted by the widget
 		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
 		---@return datamanager_value
-		function _:verify(value) end
+		function _:Verify(value) end
 
 			---***Default:*** *current value*
 			---@alias datamanager_value_currentDefault any?
@@ -2816,17 +2816,17 @@ function wt.CreateDatamanager(t, widget)
 		---Turn a value into a formatted string
 		---@param value datamanager_value_currentDefault ***Default:*** *current value*
 		---@return string
-		function _:format(value) return "" end
+		function _:Format(value) return "" end
 
 		---Returns the current value of the widget
 		---@return datamanager_value
-		function _:getValue() end
+		function _:GetValue() end
 
 		---Verify and set the value of the widget
 		---@param value? datamanager_value_readDefault ***Default:*** `t.data.read()` or *current default value*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(value, user, silent) end
+		function _:SetValue(value, user, silent) end
 
 			---***Default:*** `t.data.read()` or *current default value*
 			---@alias datamanager_value_readDefault any?
@@ -2835,44 +2835,44 @@ function wt.CreateDatamanager(t, widget)
 
 		---Set the reader utility called to pull data from storage
 		---@param read datamanager_storage_read Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-		function _:setReader(read) end
+		function _:SetReader(read) end
 
 		---Set the writer utility called to commit data to storage
 		---@param write datamanager_storage_write Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from writing storage data
-		function _:setWriter(write) end
+		function _:SetWriter(write) end
 
 		---Read the data from storage via the currently set reader utility then verify and load it to the widget
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:load(handleChanges, silent) end
+		function _:Load(handleChanges, silent) end
 
 		---Save the current value of the widget to storage via the currently set writer utility
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:save(silent) end
+		function _:Save(silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return datamanager_data # ***Default:*** `nil`
-		function _:getData() end
+		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via the specified reader utility
 		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(value, handleChanges, silent) end
+		function _:SetData(value, handleChanges, silent) end
 
 		---Set whether to immediately commit the data to storage whenever it's changed via the widget
 		---@param instantSave boolean? ***Default:*** `true`
-		function _:setInstantSave(instantSave) end
+		function _:SetInstantSave(instantSave) end
 
 		--| Default
 
 		---Get the currently set default value
 		---@return datamanager_value
-		function _:getDefault() end
+		function _:GetDefault() end
 
 		---Set the default value
 		---@param value datamanager_default ***Default:*** *current default value*
-		function _:setDefault(value) end
+		function _:SetDefault(value) end
 
 			---***Default:*** *current default value*
 			---@alias datamanager_default any?
@@ -2880,18 +2880,18 @@ function wt.CreateDatamanager(t, widget)
 		---Set and load the stored data managed by the widget to the currently set default value
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:reset(handleChanges, silent) end
+		function _:Reset(handleChanges, silent) end
 
 		--| Snapshot
 
 		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value
 		---@param stored? boolean If `true`, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
-		function _:snapshot(stored) end
+		function _:Snapshot(stored) end
 
 		---Set and load the stored data managed by the widget to the last saved data snapshot
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:revert(handleChanges, silent) end
+		function _:Revert(handleChanges, silent) end
 
 	return _
 end
@@ -2999,55 +2999,55 @@ function wt.CreateBinary(t, datamanager)
 		---@param value? any
 		---***
 		---@return boolean # ***Default:*** `false`
-		function _:verify(value) return false end
+		function _:Verify(value) return false end
 
 		---Turn a logical state into formatted string
 		---***
 		---@param state? boolean ***Default:*** *current value*
 		---@return string
-		function _:format(state) return "" end
+		function _:Format(state) return "" end
 
 		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
 		---***
 		---@param state? boolean Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(state, silent) end
+		function _:SaveData(state, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return boolean # ***Default:*** *current value*
-		function _:getData() return false end
+		function _:GetData() return false end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param state? boolean Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(state, handleChanges, silent) end
+		function _:SetData(state, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return boolean
-		function _:getDefault() return false end
+		function _:GetDefault() return false end
 
 		---Set the default value
 		---@param state? boolean ***Default:*** `false`
-		function _:setDefault(state) end
+		function _:SetDefault(state) end
 
 		---Returns the current logical state of the widget
 		---@return boolean
-		function _:getValue() return false end
+		function _:GetValue() return false end
 
 		---Verify and set the logical state of the widget to the provided state
 		---***
 		---@param state? boolean ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(state, user, silent) end
+		function _:SetValue(state, user, silent) end
 
 		---Flip the current logical state of the widget
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _:flip(user, silent) end
+		function _:Flip(user, silent) end
 
 	return _
 end
@@ -3132,7 +3132,7 @@ function wt.CreateCheckbox(t, binary)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_checkbox "Checkbox"
 
@@ -3142,27 +3142,27 @@ function wt.CreateCheckbox(t, binary)
 		---@param event eventTag Unique event identifier tag
 		---@param handler datamanager_handler Called when a custom event is invoked
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener(event, handler, callIndex) end
+		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
 		---@param handler checkbox_handler_enabled Called when an "enabled" event is invoked after `checkbox:setEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_enabled(handler, callIndex) end
+		function _:AddListener_enabled(handler, callIndex) end
 
 		---Register a listener for a "loaded" widget event to call the specified handler on trigger
 		---@param handler checkbox_handler_loaded Called when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_loaded(handler, callIndex) end
+		function _:AddListener_loaded(handler, callIndex) end
 
 		---Register a listener for a "saved" widget event to call the specified handler on trigger
 		---@param handler checkbox_handler_saved Called when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_saved(handler, callIndex) end
+		function _:AddListener_saved(handler, callIndex) end
 
 		---Register a listener for a "changed" widget event to call the specified handler on trigger
 		---@param handler checkbox_handler_changed Called when a "changed" event is invoked after `checkbox:setValue(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:addListener_changed(handler, callIndex) end
+		function _:AddListener_changed(handler, callIndex) end
 
 	return _
 end
@@ -3525,7 +3525,7 @@ function wt.CreateSelector(t, datamanager)
 		---***
 		---@param newItems (selectorItemData|binary|selectorBinary)[] Table containing subtables with data used to update the binary widgets, or already existing binary widgets
 		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
-		function _:updateItems(newItems, silent) end
+		function _:UpdateItems(newItems, silent) end
 
 		--[ Data ]
 
@@ -3533,43 +3533,43 @@ function wt.CreateSelector(t, datamanager)
 		---@param value any
 		---***
 		---@return integer|nil ***Default:*** *current value*
-		function _:verify(value) end
+		function _:Verify(value) end
 
 		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
 		---***
 		---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(data, silent) end
+		function _:SaveData(data, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return integer|nil
-		function _:getData() end
+		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param data? wrappedInteger If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(data, handleChanges, silent) end
+		function _:SetData(data, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return integer|nil default
-		function _:getDefault() end
+		function _:GetDefault() end
 
 		---Set the default value
 		---@param index integer|nil | ***Default:*** *no change*
-		function _:setDefault(index) end
+		function _:SetDefault(index) end
 
 		---Returns the index of the currently selected item or nil if there is no selection
 		---@return integer|nil index
-		function _:getValue() end
+		function _:GetValue() end
 
 		---Verify and set the specified item as selected
 		---***
 		---@param index? integer ***Default:*** `nil` *(no selection)*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(index, user, silent) end
+		function _:SetValue(index, user, silent) end
 
 	return _
 end
@@ -3663,7 +3663,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 
 		---Return the itemset type specified for this special selector on creation
 		---@return SpecialSelectorItemset itemset
-		function _:getItemset() return "anchor" end
+		function _:GetItemset() return "anchor" end
 
 		--[ Type ]
 
@@ -3944,7 +3944,7 @@ function wt.CreateMultiselector(t, datamanager)
 		---@param selected? boolean If `true`, set the item at this index as selected | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
-		function _.setSelected(index, selected, user, silent) end
+		function _:SetSelected(index, selected, user, silent) end
 
 	return _
 end
@@ -4576,37 +4576,37 @@ function wt.CreateTextual(t, datamanager)
 		---***
 		---@param text? string Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(text, silent) end
+		function _:SaveData(text, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return string|nil
-		function _:getData() end
+		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param text? string Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(text, handleChanges, silent) end
+		function _:SetData(text, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return string default
-		function _:getDefault() return "" end
+		function _:GetDefault() return "" end
 
 		---Set the default value
 		---@param text string | ***Default:*** `""`
-		function _:setDefault(text) end
+		function _:SetDefault(text) end
 
 		---Returns the current text value of the widget
 		---@return string
-		function _:getValue() return "" end
+		function _:GetValue() return "" end
 
 		---Set the text value of the widget
 		---***
 		---@param text? string ***Default:*** `""`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(text, user, silent) end
+		function _:SetValue(text, user, silent) end
 
 	return _
 end
@@ -5138,81 +5138,81 @@ function wt.CreateNumeric(t, datamanager)
 		---***
 		---@param number? number Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(number, silent) end
+		function _:SaveData(number, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return number|nil
-		function _:getData() end
+		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param number? number Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(number, handleChanges, silent) end
+		function _:SetData(number, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return number default
-		function _:getDefault() return 0 end
+		function _:GetDefault() return 0 end
 
 		---Set the default value
 		---@param number number | ***Default:*** *no change*
-		function _:setDefault(number) end
+		function _:SetDefault(number) end
 
 		---Returns the current value of the widget
 		---@return number
-		function _:getValue() return 0 end
+		function _:GetValue() return 0 end
 
 		---Set the value of the widget
 		---***
 		---@param number? number A valid number value within the specified `t.min`, `t.max` range | ***Default:*** `t.min`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(number, user, silent) end
+		function _:SetValue(number, user, silent) end
 
 		---Decrease the value of the widget by the specified step or alt step amount
 		---@param alt? boolean If `true`, use alt step instead of step to decrease the value by | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:decrease(alt, user, silent) end
+		function _:Decrease(alt, user, silent) end
 
 		---Increase the value of the widget by the specified step or alt step amount
 		---@param alt? boolean If `true`, use alt step instead of step to increase the value by | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:increase(alt, user, silent) end
+		function _:Increase(alt, user, silent) end
 
 		--| Value limits
 
 		---Return the current lower value limit of the widget
 		---@return number
-		function _:getMin() return 0 end
+		function _:GetMin() return 0 end
 
 		---Set the lower value limit of the widget
 		---***
 		---@param number number Updates the lower limit value | ***Range:*** (`any`, `numeric.getMax()`) *capped automatically*
 		---@param silent? boolean If `false`, invoke a "min" event and call registered listeners | ***Default:*** `false`
-		function _:setMin(number, silent) end
+		function _:SetMin(number, silent) end
 
 		---Return the current upper value limit of the widget
 		---@return number
-		function _:getMax() return 0 end
+		function _:GetMax() return 0 end
 
 		---Set the upper value limit of the widget
 		---***
 		---@param number number Updates the upper limit value | ***Range:*** (`numeric.getMin()`, `any`) *floored automatically*
 		---@param silent? boolean If `false`, invoke a "max" event and call registered listeners | ***Default:*** `false`
-		function _:setMax(number, silent) end
+		function _:SetMax(number, silent) end
 
 		--| Value step
 
 		---Return the current value step of the widget
 		---@return number
-		function _:getStep() return 0 end
+		function _:GetStep() return 0 end
 
 		---Return the current alternative value step of the widget
 		---@return number|nil
-		function _:getAltStep() end
+		function _:GetAltStep() end
 
 	return _
 end
@@ -5501,7 +5501,6 @@ function wt.CreateColormanager(t, datamanager)
 	---@field saveData? fun(color: color) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `color` colorData</p>
 	---@field value? colorData_whiteDefault Values to use as the starting color set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid<ul><li>***Note:*** If the alpha start value was not set, configure the color picker to handle RBG values exclusively instead of the full RGBA.</li></ul>
 	---@field default? color Default value of the widget | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
-	t = { reader = reader, writer = writer, }
 
 		---@class colormanager_listeners : datamanager_listeners
 		---@field [1]? table<string, colormanager_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -5585,46 +5584,46 @@ function wt.CreateColormanager(t, datamanager)
 		---***
 		---@param color? color Data to be saved | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:saveData(color, silent) end
+		function _:SaveData(color, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return color|nil
-		function _:getData() end
+		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
 		---***
 		---@param color? color Data to be saved | ***Default:*** *current value*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:setData(color, handleChanges, silent) end
+		function _:SetData(color, handleChanges, silent) end
 
 		---Get the currently set default value
 		---@return color default
-		function _:getDefault() return {} end
+		function _:GetDefault() return {} end
 
 		---Set the default value
 		---@param color? color | ***Default:*** *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
-		function _:setDefault(color) end
+		function _:SetDefault(color) end
 
 		---Returns the currently set channel values wrapped in a color table
 		---@return color
-		function _:getValue() return {} end
+		function _:GetValue() return {} end
 
 		---Set the managed color values
 		---***
 		---@param color? color ***Default:*** { r = 1, g = 1, b = 1, a = 1 } *opaque white:* `{ r = 1, g = 1, b = 1, a = 1 }`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "colored" event and call registered listeners | ***Default:*** `false`
-		function _:setValue(color, user, silent) end
+		function _:SetValue(color, user, silent) end
 
 		--[ Color Wheel ]
 
 		---Open the the default Blizzard Color Picker wheel ([ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame)) for this color manager
-		function _:openColorPicker() end
+		function _:OpenColorPicker() end
 
 		---Return the active status of this color manager, whether the main color wheel window was opened for and is currently updating the color of this widget
 		---@return boolean active `true` if the color wheel has been opened for this color manager widget
-		function _:isActive() return false end
+		function _:IsActive() return false end
 
 	return _
 end
@@ -5871,14 +5870,14 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 		---@param i integer Index of the preset to be applied
 		---***
 		---@return boolean success Whether or not the preset under the specified index exists and it could be applied
-		function _.applyPreset(i) return false end
+		function _:ApplyPreset(i) return false end
 
 		---Save the current position & visibility to the custom preset
 		--- - ***Note:*** If the custom preset position data doesn't contain relative frame and point key, value pairs, the position will be converted to absolute position when saved.
-		function _.saveCustomPreset() end
+		function _:SaveCustomPreset() end
 
 		--Reset the custom preset to its default state
-		function _.resetCustomPreset() end
+		function _:ResetCustomPreset() end
 
 		--[ Type ]
 
@@ -6006,7 +6005,7 @@ function wt.CreateSettingsmanager(t, widget)
 	---@field autoLoad? boolean If `true`, automatically load all data to the widgets registered for settings data management under settings keys listed in `t.dataManagement.keys` from storage via <code><i>WidgetToolbox</i>.LoadOptionsData(...)</code> | ***Default:*** `true` if `t.dataManagement.keys` ~= nil<ul><li>***Note:*** If `t.dataManagement.keys` is not set, the automatic load will not be executed even if this is set to `true`.</li></ul>
 	---@field listeners? settingsmanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
-		---@class settingsmanager_options_base
+		---@class settingsmanager_options_base : widget_options
 		---@field register? boolean|settingsPage If `true`, register the new page to the Settings panel as a parent category or a subcategory of an already registered parent category if a reference to an existing settings category parent page provided | ***Default:*** `false`<ul><li>***Note:*** The page can be registered later via <code><i>WidgetToolbox</i>.RegisterSettingsPage(...)</code>.</li></ul>
 		---@field name? string Unique string used to set the name of the canvas frame | ***Default:*** `addon`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 		---@field title? string Text to be shown as the title of the settings page | ***Default:*** [`GetAddOnMetadata(addon, "title")`](https://warcraft.wiki.gg/wiki/API_C_AddOns.GetAddOnMetadata)
@@ -6145,31 +6144,31 @@ function wt.CreateSettingsmanager(t, widget)
 		---@param handleChanges? boolean If `true`, also call all registered change handlers | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.load(handleChanges, user, silent) end
+		function _:Load(handleChanges, user, silent) end
 
 		---Force save all settings data of this category page from all linked widgets
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _.save(user, silent) end
+		function _:Save(user, silent) end
 
 		---Apply settings data of this category page by calling all registered `onChange` handlers of all linked widgets
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke an "applied" event and call registered listeners | ***Default:*** `false`
-		function _.apply(user, silent) end
+		function _:Apply(user, silent) end
 
 		---Revert any changes made in this category page and reload all linked widget data
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "reverted" event and call registered listeners | ***Default:*** `false`
-		function _.revert(user, silent) end
+		function _:Revert(user, silent) end
 
 		---Reset all settings data of this category page to default values
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "reset" event and call registered listeners | ***Default:*** `false`
-		function _.reset(user, silent) end
+		function _:Reset(user, silent) end
 
 	return _
 end
@@ -6282,18 +6281,18 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 		---Returns the unique identifier key representing the reset defaults warning popup dialog in the global `StaticPopupDialogs` table, and used as the parameter when calling [`StaticPopup_Show()`](https://warcraft.wiki.gg/wiki/API_StaticPopup_Show) or [`StaticPopup_Hide()`](https://warcraft.wiki.gg/wiki/API_StaticPopup_Hide)
 		---@return string
-		function _.getResetPopupKey() return "" end
+		function _:SetResetPopupKey() return "" end
 
 		---Toggle the availability of the reset defaults and revert changes cancel buttons for this page
 		---***
 		---@param state boolean? ***Default:*** `true`
-		function _.setStatic(state) end
+		function _:SetStatic(state) end
 
 		--[ Type ]
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
-		function _.getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_settingsPage "SettingsPage"
 
@@ -6337,7 +6336,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 		---Open the Settings window to this category page
 		--- - ***Note:*** No category page will be opened if `WidgetToolsDB.lite` is `true`.
-		function _.open() end
+		function _:Open() end
 end
 
 ---Create an new Settings category with a parent page, its child pages, and set up shared settings data management for them
@@ -6365,19 +6364,19 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		---***
 		---@param handleChanges? boolean If `true`, also call all registered change handlers | ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
-		function _.load(handleChanges, user) end
+		function _:Load(handleChanges, user) end
 
 		---Reset all settings data to their default values for all pages in this category
 		---***
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param callListeners? boolean If `true`, call the `onDefault` listeners (if set) of each individual category page separately | ***Default:*** `true`
-		function _.defaults(user, callListeners) end
+		function _:Defaults(user, callListeners) end
 
 		--[ Type ]
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_settingsCategory]: true, }
-		function _.getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_settingsCategory "SettingsCategory"
 end
@@ -6510,7 +6509,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_profilemanager]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_profilemanager "Profilemanager"
 
@@ -6572,14 +6571,14 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "applied" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return integer? index The index of the active profile | ***Default:*** `nil`
-		function _:activate(index, user, silent) end
+		function _:Activate(index, user, silent) end
 
 		---Find a profile by its display title and return its index
 		---***
 		---@param title string Name of the profile to find
 		---@param skipFirst? boolean Set to `true` to find duplicate `title` | ***Default:*** `false`
 		---@return integer? index
-		function _:findIndex(title, skipFirst) end
+		function _:FindIndex(title, skipFirst) end
 
 		---Create a new settings profile
 		---***
@@ -6590,7 +6589,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param index? integer Place the new profile under this specified index in `accountData.profile` instead of the end of the list | ***Range:*** (`1`, `#accountData.profiles + 1`)
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke an "created" event and call registered listeners | ***Default:*** `false`
-		function _:create(name, number, duplicate, index, apply, user, silent) end
+		function _:Create(name, number, duplicate, index, apply, user, silent) end
 
 		---Rename the specified profile
 		---@param index? integer Index of the profile to rename | ***Default:*** *currently active profile index*
@@ -6600,7 +6599,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "renamed" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _:rename(index, name, number, user, silent) return false end
+		function _:Rename(index, name, number, user, silent) return false end
 
 		---Delete the specified profile
 		---***
@@ -6610,7 +6609,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "deleted" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _:delete(index, unsafe, user, silent) return false end
+		function _:Delete(index, unsafe, user, silent) return false end
 
 		---Reset the specified profile data to default values
 		---***
@@ -6620,7 +6619,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param silent? boolean If `false`, invoke an "reset" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` on success, `false` if the operation failed
-		function _:reset(index, unsafe, user, silent) return false end
+		function _:Reset(index, unsafe, user, silent) return false end
 
 		---Check & fix a profile data table based on the specified sample profile
 		---***
@@ -6628,7 +6627,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param compareWith? table  Profile data table to sample | ***Default:*** `defaultData`
 		---***
 		---@return table profileData Reference to `profileData` (it was already updated during the operation, no need for setting it again)
-		function _:validate(profileData, compareWith) return {} end
+		function _:Validate(profileData, compareWith) return {} end
 
 		---Load profiles data
 		---***
@@ -6636,7 +6635,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 		---@param activeProfile? integer Index of the active profile to set | ***Default:*** *currently active profile index*
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke an "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:load(p, activeProfile, user, silent) end
+		function _:Load(p, activeProfile, user, silent) end
 
 	return _
 end
@@ -6876,7 +6875,7 @@ function wt.CreateAddonmanager(t, widget)
 
 		---Returns the type list of this widget
 		---@return { [typename_widget]: true, [typename_addonmanager]: true, }
-		function _:getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_addonmanager "Addonmanager"
 
@@ -6903,67 +6902,67 @@ function wt.CreateAddonmanager(t, widget)
 
 		---Namespace name of the addon
 		---@return string | ***Default:*** `""`
-		function _:getName() return "" end
+		function _:GetName() return "" end
 
 		---Displayed title
 		---@return string | ***Default:*** `""`
-		function _:getTitle() return "" end
+		function _:GetTitle() return "" end
 
 		---Description notes
 		---@return string? ***Default:*** `nil`
-		function _:getNotes() end
+		function _:GetNotes() end
 
 		---Logo texture file path
 		---@return string? ***Default:*** `nil`
-		function _:getLogo() end
+		function _:GetLogo() end
 
 		---Addon list category name
 		---@return string? ***Default:*** `nil`
-		function _:getCategory() end
+		function _:GetCategory() end
 
 		---Author name
 		---@return string? ***Default:*** `nil`
-		function _:getAuthor() end
+		function _:GetAuthor() end
 
 		---Latest version number text
 		---@return string? ***Default:*** `nil`
-		function _:getVersion() end
+		function _:GetVersion() end
 
 		---Date of the latest release
 		---@return string? date Formatted date text
 		---@return integer? day Day of the month
 		---@return integer? month Month number
 		---@return integer? year
-		function _:getDate() end
+		function _:GetDate() end
 
 		---License description
 		---@return string? ***Default:*** `nil`
-		function _:getLicense() end
+		function _:GetLicense() end
 
 		---CurseForge link
 		---@return string? ***Default:*** `nil`
-		function _:getCurseForgeLink() end
+		function _:GetCurseForgeLink() end
 
 		---Wago link
 		---@return string? ***Default:*** `nil`
-		function _:getWagoLink() end
+		function _:GetWagoLink() end
 
 		---Repository link
 		---@return string? ***Default:*** `nil`
-		function _:getRepositoryLink() end
+		function _:GetRepositoryLink() end
 
 		---Contact link for feedback & bug reports
 		---@return string? ***Default:*** `nil`
-		function _:getIssuesLink() end
+		function _:GetIssuesLink() end
 
 		---Sponsor names
 		---@return string? # Semicolon separated tiers of comma separated lists of sponsor names | ***Default:*** `nil`
-		function _:getSponsors() end
+		function _:GetSponsors() end
 
 		---Formatted changelog text of the latest release & the entire version history
 		---@return string? latest ***Default:*** `nil`
 		---@return string? full ***Default:*** `nil`
-		function _:getChangelog() end
+		function _:GetChangelog() end
 
 		--[ Rebind ]
 
@@ -6984,7 +6983,7 @@ function wt.CreateAddonmanager(t, widget)
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
 		---***
 		---@return boolean # `true` if the operation was successful
-		function _:setAddon(addon, changelog, user, silent)
+		function _:SetAddon(addon, changelog, user, silent)
 
 			---| Parameters
 
@@ -7141,7 +7140,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 			---Returns the type list of this widget
 			---@return { [typename_widget]: true, [typename_chatmanager]: true, }
-			function _:getTypes() return {} end
+			function _:GetTypes() return {} end
 
 				---@alias typename_chatmanager "Chatmanager"
 
@@ -7150,7 +7149,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 			---@param s typename|string
 			---@return boolean
 			---<p></p>
-			function _:isType(s) return false end
+			function _:IsType(s) return false end
 
 			--[ Events ]
 
@@ -7158,12 +7157,12 @@ function wt.CreateChatmanager(keywords, t, widget)
 			---@param event eventTag Unique event identifier tag
 			---@param handler chatmanager_handler Called when a custom event is invoked
 			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:addListener(event, handler, callIndex) end
+			function _:AddListener(event, handler, callIndex) end
 
 			---Register a listener for an "enabled" event to call the specified handler on trigger
 			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
 			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:addListener_enabled(handler, callIndex) end
+			function _:AddListener_enabled(handler, callIndex) end
 
 			--[ Print ]
 
@@ -7172,7 +7171,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
 			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
 			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
-			function _:print(message, title, titleColor, contentColor) end
+			function _:Print(message, title, titleColor, contentColor) end
 
 				---@alias chatCommandColorNames
 				---| "title"
@@ -7181,12 +7180,12 @@ function wt.CreateChatmanager(keywords, t, widget)
 				---| "description"
 
 			--Print a welcome message with a hint about chat keywords
-			function _:welcome() end
+			function _:Welcome() end
 
 			--| Commands
 
 			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
-			function _:help() end
+			function _:Help() end
 
 			---Find and a specific command by its name and call its handler script
 			---***
@@ -7194,5 +7193,5 @@ function wt.CreateChatmanager(keywords, t, widget)
 			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
 			---***
 			---@return boolean # Whether the command was found and the handler called successfully
-			function _:trigger(command, ...) return false end
+			function _:Trigger(command, ...) return false end
 end
