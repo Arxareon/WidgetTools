@@ -66,15 +66,17 @@ local function buildWidget()
 	local widget = {}
 
 	widget.__metatable = "Protected base class"
-	widget.__index = widget ---@cast widget widget
+	widget.__index = widget
 
 	if not widget_types then widget_types = {} end
 
 	local typename = "Widget" ---@type typename_widget
-	widget_types[widget] = { [typename] = true }
+	widget_types[widget] = { [typename] = true } ---@cast widget widget
 
 	if widget_base then
 		us.Fill(widget, widget_base)
+
+		ds.Log(function() return "A new Widget base was constructed: " .. us.ToString(widget), wt.title .. "buildWidget" end)
 
 		return widget
 	end
@@ -186,19 +188,6 @@ local function buildWidget()
 
 	widget_enabled = {}
 
-	widget_handlers_enabled = {}
-	assignAddListener(widget, "enabled", widget_handlers_enabled)
-	function widget_invoke_enabled(self, user)
-		local handlers = widget_handlers_enabled[self]
-
-		if not handlers then return end
-
-		local enabled = widget_enabled[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, enabled, user) end
-	end
-
 	function widget:IsEnabled() return widget_enabled[self] end
 	function widget:SetEnabled(state, ignoreParent, ignoreDependencies, user, silent)
 		local parent = widget_parent[self]
@@ -214,6 +203,19 @@ local function buildWidget()
 		end
 
 		if not silent then widget_invoke_enabled(self, user) end
+	end
+
+	widget_handlers_enabled = {}
+	assignAddListener(widget, "enabled", widget_handlers_enabled)
+	function widget_invoke_enabled(self, user)
+		local handlers = widget_handlers_enabled[self]
+
+		if not handlers then return end
+
+		local enabled = widget_enabled[self]
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, enabled, user) end
 	end
 
 	--| Dependencies
@@ -336,13 +338,13 @@ local function buildWidget()
 
 	widget_base = widget
 
-	ds.Log(function() return "Widget base constructed: " .. us.ToString(widget), wt.title .. ".buildWidget" end)
+	ds.Log(function() return "The main Widget base was constructed: " .. us.ToString(widget), wt.title .. "buildWidget" end)
 
 	return widget
 end
 
 function wt.CreateWidget(t)
-	local widget = setmetatable({}, widget_base or buildWidget()) ---@cast widget widget
+	local widget = setmetatable({}, widget_base or buildWidget()) ---@type widget
 
 	--[ Initialization ]
 
@@ -379,6 +381,51 @@ end
 
 
 --[[ CONTAINER ]]
+
+local container_base ---@type container
+local customContainer_base ---@type customContainer
+
+local function buildContainer()
+	local container = buildWidget()
+
+	local typename = "Container" ---@type typename_container
+	widget_types[container][typename] = true ---@cast container container
+
+	if container_base then
+		us.Fill(container, container_base)
+
+		ds.Log(function() return "Widget base mutated into a new Container base: " .. us.ToString(container), wt.title .. "buildContainer" end)
+
+		return container
+	end
+
+	container_base = container
+
+	ds.Log(function() return "Widget base mutated into the main Container base: " .. us.ToString(container), wt.title .. "buildContainer" end)
+
+	return container
+end
+
+local function buildCustomContainer()
+	local container = buildWidget()
+
+	local typename = "CustomContainer" ---@type typename_customContainer
+	widget_types[container][typename] = true ---@cast container customContainer
+
+	if customContainer_base then
+		us.Fill(container, customContainer_base)
+
+		ds.Log(function() return "Widget base mutated into a new CustomContainer base: " .. us.ToString(container), wt.title .. "buildCustomContainer" end)
+
+		return container
+	end
+
+	customContainer_base = container
+
+	ds.Log(function() return "Widget base mutated into the main CustomContainer base: " .. us.ToString(container), wt.title .. "buildCustomContainer" end)
+
+	return container
+end
 
 ---Set the parameters of a GUI container frame
 ---@param container container|customContainer
@@ -424,26 +471,19 @@ local function setUpContainer(container, frame, t)
 	end
 end
 
-function wt.CreateContainer(t, widget)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateContainer(t, ancestor, lite)
 	local typenameBase = "Widget" ---@type typename_widget
+	local container = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
-	widget = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
+	if WidgetToolsDB.lite and lite ~= false then return container end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return widget end
-
-	local container = widget ---@cast container container
-
-	--[ Type ]
-
-	local typename = "Container" ---@type typename_container
-
-	widget_types[container][typename] = true
+	setmetatable(container, container_base or buildContainer()) ---@cast container container
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Container" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local frame = CreateFrame("Frame", name, t.parentFrame)
@@ -459,26 +499,19 @@ function wt.CreateContainer(t, widget)
 	return container
 end
 
-function wt.CreateCustomContainer(t, widget)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateCustomContainer(t, ancestor, lite)
 	local typenameBase = "Widget" ---@type typename_widget
+	local container = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
-	widget = wt.IsWidget(widget, typenameBase) and widget or wt.CreateWidget(t)
+	if WidgetToolsDB.lite and lite ~= false then return container end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return widget end
-
-	local container = widget ---@cast container customContainer
-
-	--[ Type ]
-
-	local typename = "CustomContainer" ---@type typename_customContainer
-
-	widget_types[container][typename] = true
+	setmetatable(container, customContainer_base or buildCustomContainer()) ---@cast container customContainer
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Container" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local frame = CreateFrame("Frame", name, t.parentFrame, BackdropTemplateMixin and "BackdropTemplate")
@@ -496,24 +529,40 @@ end
 
 --| Panel
 
-function wt.CreatePanel(t, container)
-	t = type(t) == "table" and t or {}
+local panel_base ---@type panel
 
-	local typenameBase = "CustomContainer" ---@type typename_customContainer
-
-	container = wt.IsWidget(container, typenameBase) and container or wt.CreateCustomContainer(t)
-
-	if WidgetToolsDB.lite and t.lite ~= false then return container end
-
-	local panel = container ---@cast panel panel
-
-	--[ Type ]
+local function buildPanel()
+	local panel = buildCustomContainer()
 
 	local typename = "Panel" ---@type typename_panel
+	widget_types[panel][typename] = true ---@cast panel panel
 
-	widget_types[panel][typename] = true
+	if panel_base then
+		us.Fill(panel, panel_base)
+
+		ds.Log(function() return "Widget base mutated into a new Panel base: " .. us.ToString(panel), wt.title .. "buildPanel" end)
+
+		return panel
+	end
+
+	panel_base = panel
+
+	ds.Log(function() return "Widget base mutated into the main Panel base: " .. us.ToString(panel), wt.title .. "buildPanel" end)
+
+	return panel
+end
+
+function wt.CreatePanel(t, ancestor, lite)
+	local typenameBase = "CustomContainer" ---@type typename_customContainer
+	local panel = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateCustomContainer(t, ancestor)
+
+	if WidgetToolsDB.lite and lite ~= false then return panel end
+
+	setmetatable(panel, panel_base or buildPanel()) ---@cast panel panel
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	--| Title & description
 
@@ -560,17 +609,22 @@ local action_handlers_triggered ---@type table<action, action_handler_triggered[
 local action_invoke_triggered ---@type fun(self: action, user: boolean)
 
 local function buildAction()
-	local action = buildWidget() ---@cast action action
-
-	--[ Type ]
+	local action = buildWidget()
 
 	local typename = "Action" ---@type typename_action
+	widget_types[action][typename] = true ---@cast action action
 
-	widget_types[action][typename] = true
+	if action_base then
+		us.Fill(action, action_base)
+
+		ds.Log(function() return "Widget base mutated into a new Action base: " .. us.ToString(action), wt.title .. "buildAction" end)
+
+		return action
+	end
 
 	--[ Action ]
 
-	if not action_call then action_call = {} end
+	action_call = {}
 
 	function action:Trigger(user, silent)
 		local call = action_call[self]
@@ -582,8 +636,9 @@ local function buildAction()
 
 	function action:SetAction(call) if type(call) == "function" then action_call[self] = call end end
 
-	if not action_handlers_triggered then action_handlers_triggered = {} end
-	if not action_invoke_triggered then action_invoke_triggered = function(self, user)
+	action_handlers_triggered = {}
+	assignAddListener(action, "triggered", action_handlers_triggered)
+	action_invoke_triggered = function(self, user)
 		local handlers = action_handlers_triggered[self]
 
 		if not handlers then return end
@@ -591,20 +646,20 @@ local function buildAction()
 		user = user == true
 
 		for i = 1, #handlers do handlers[i](self, user) end
-	end end
+	end
 
-	assignAddListener(action, "triggered", action_handlers_triggered)
+	action_base = action
 
-	ds.Log(function() return "Widget base mutated into Action base: " .. us.ToString(action), wt.title .. ".buildAction" end)
+	ds.Log(function() return "Widget base mutated into the main Action base: " .. us.ToString(action), wt.title .. "buildAction" end)
 
 	return action
 end
 
-function wt.CreateAction(t, widget)
+function wt.CreateAction(t, ancestor)
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	local action = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
-	local action = setmetatable(widget, action_base or buildAction()) ---@cast action action
+	setmetatable(action, action_base or buildAction()) ---@cast action action
 
 	--[ Initialization ]
 
@@ -630,6 +685,51 @@ function wt.CreateAction(t, widget)
 end
 
 --| Button
+
+local button_base ---@type actionButton
+local customButton_base ---@type customButton
+
+local function buildButton()
+	local button = buildAction()
+
+	local typename = "Button" ---@type typename_button
+	widget_types[button][typename] = true ---@cast button actionButton
+
+	if button_base then
+		us.Fill(button, button_base)
+
+		ds.Log(function() return "Widget base mutated into a new Button base: " .. us.ToString(button), wt.title .. "buildButton" end)
+
+		return button
+	end
+
+	button_base = button
+
+	ds.Log(function() return "Widget base mutated into the main Button base: " .. us.ToString(button), wt.title .. "buildButton" end)
+
+	return button
+end
+
+local function buildCustomButton()
+	local button = buildAction()
+
+	local typename = "CustomButton" ---@type typename_customButton
+	widget_types[button][typename] = true ---@cast button customButton
+
+	if customButton_base then
+		us.Fill(button, customButton_base)
+
+		ds.Log(function() return "Widget base mutated into a new CustomButton base: " .. us.ToString(button), wt.title .. "buildCustomButton" end)
+
+		return button
+	end
+
+	customButton_base = button
+
+	ds.Log(function() return "Widget base mutated into the main CustomButton base: " .. us.ToString(button), wt.title .. "buildCustomButton" end)
+
+	return button
+end
 
 ---Set the parameters of a GUI button widget frame
 ---@param button actionButton|customButton
@@ -760,26 +860,19 @@ local function setUpButton(button, template, t, name, useHighlight)
 	end end)
 end
 
-function wt.CreateButton(t, action)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateButton(t, ancestor, lite)
 	local typenameBase = "Action" ---@type typename_action
+	local button = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
 
-	action = wt.IsWidget(action, typenameBase) and action or wt.CreateAction(t)
+	if WidgetToolsDB.lite and lite ~= false then return button end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return action end
-
-	local button = action ---@cast button actionButton
-
-	--[ Type ]
-
-	local typename = "Button" ---@type typename_button
-
-	widget_types[button][typename] = true
+	setmetatable(button, button_base or buildButton()) ---@cast button actionButton
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Button" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local template = CreateFrame("Button", name, t.parentFrame, "UIPanelButtonTemplate")
@@ -801,26 +894,19 @@ function wt.CreateButton(t, action)
 	return button
 end
 
-function wt.CreateCustomButton(t, action)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateCustomButton(t, ancestor, lite)
 	local typenameBase = "Action" ---@type typename_action
+	local button = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
 
-	action = wt.IsWidget(action, typenameBase) and action or wt.CreateAction(t)
+	if WidgetToolsDB.lite and lite ~= false then return button end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return action end
-
-	local button = action ---@cast button customButton
-
-	--[ Type ]
-
-	local typename = "CustomButton" ---@type typename_customButton
-
-	widget_types[button][typename] = true
+	setmetatable(button, customButton_base or buildCustomButton()) ---@cast button customButton
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Button" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local template = CreateFrame("Button", name, t.parentFrame, BackdropTemplateMixin and "BackdropTemplate")
@@ -848,8 +934,6 @@ end
 
 --[[ DATAMANAGER ]]
 
-wt.clipboard = {}
-
 local datamanager_base ---@type datamanager
 
 local data_default ---@type table<datamanager, any>
@@ -870,17 +954,22 @@ local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
 local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
 
 local function buildDatamanager()
-	local datamanager = buildWidget() ---@cast datamanager datamanager
-
-	--[ Type ]
+	local datamanager = buildWidget()
 
 	local typename = "Datamanager" ---@type typename_datamanager
+	widget_types[datamanager][typename] = true ---@cast datamanager datamanager
 
-	widget_types[datamanager][typename] = true
+	if datamanager_base then
+		us.Fill(datamanager, datamanager_base)
+
+		ds.Log(function() return "Widget base mutated into a new Datamanager base: " .. us.ToString(datamanager), wt.title .. "buildDatamanager" end)
+
+		return datamanager
+	end
 
 	--[ Data ]
 
-	if not data_value then data_value = {} end
+	data_value = {}
 
 	function datamanager:Verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
 	function datamanager:Format(value) return us.ToString(datamanager:Verify(value)) end
@@ -903,8 +992,9 @@ local function buildDatamanager()
 		if not silent then datamanager_invoke_changed(self, user) end
 	end
 
-	if not datamanager_handlers_changed then datamanager_handlers_changed = {} end
-	if not datamanager_invoke_changed then datamanager_invoke_changed = function(self, user)
+	datamanager_handlers_changed = {}
+	assignAddListener(datamanager, "changed", datamanager_handlers_changed)
+	datamanager_invoke_changed = function(self, user)
 		local handlers = datamanager_handlers_changed[self]
 
 		if not handlers then return end
@@ -913,15 +1003,13 @@ local function buildDatamanager()
 		user = user == true
 
 		for i = 1, #handlers do handlers[i](self, value, user) end
-	end end
-
-	assignAddListener(datamanager, "changed", datamanager_handlers_changed)
+	end
 
 	--| Storage
 
-	if not datamanager_read then datamanager_read = {} end
-	if not datamanager_write then datamanager_write = {} end
-	if not datamanager_instantSave then datamanager_instantSave = {} end
+	datamanager_read = {}
+	datamanager_write = {}
+	datamanager_instantSave = {}
 
 	function datamanager:SetReader(read)
 		datamanager_read[self] = type(read) == "function" and read or nil
@@ -972,8 +1060,9 @@ local function buildDatamanager()
 
 	function datamanager:SetInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
 
-	if not datamanager_handlers_loaded then datamanager_handlers_loaded = {} end
-	if not datamanager_invoke_loaded then datamanager_invoke_loaded = function(self, success)
+	datamanager_handlers_loaded = {}
+	assignAddListener(datamanager, "loaded", datamanager_handlers_loaded)
+	datamanager_invoke_loaded = function(self, success)
 		local handlers = datamanager_handlers_loaded[self]
 
 		if not handlers then return end
@@ -981,12 +1070,11 @@ local function buildDatamanager()
 		success = success == true
 
 		for i = 1, #handlers do handlers[i](self, success) end
-	end end
+	end
 
-	assignAddListener(datamanager, "loaded", datamanager_handlers_loaded)
-
-	if not datamanager_handlers_saved then datamanager_handlers_saved = {} end
-	if not datamanager_invoke_saved then datamanager_invoke_saved = function(self, success)
+	datamanager_handlers_saved = {}
+	assignAddListener(datamanager, "saved", datamanager_handlers_saved)
+	datamanager_invoke_saved = function(self, success)
 		local handlers = datamanager_handlers_saved[self]
 
 		if not handlers then return end
@@ -994,13 +1082,11 @@ local function buildDatamanager()
 		success = success == true
 
 		for i = 1, #handlers do handlers[i](self, success) end
-	end end
-
-	assignAddListener(datamanager, "saved", datamanager_handlers_saved)
+	end
 
 	--| Default
 
-	if not data_default then data_default = {} end
+	data_default = {}
 
 	function datamanager:GetDefault() return data_default[self] end
 	function datamanager:SetDefault(newDefault) data_default[self] = datamanager:Verify(newDefault) end
@@ -1008,25 +1094,27 @@ local function buildDatamanager()
 
 	--| Snapshot
 
-	if not data_snapshot then data_snapshot = {} end
+	data_snapshot = {}
 
 	function datamanager:Snapshot(stored) if stored == true then data_snapshot[self] = datamanager:GetData() else data_snapshot[self] = data_value[self] end end
 	function datamanager:Revert(handleChanges, silent) datamanager:SetData(data_snapshot[self], handleChanges, silent) end
 
 	--| Datamanagement
 
-	if not datamanagement then datamanagement = {} end
+	datamanagement = {}
 
-	ds.Log(function() return "Widget base mutated into Datamanager base: " .. us.ToString(datamanager), wt.title .. ".buildDatamanager" end)
+	datamanager_base = datamanager
+
+	ds.Log(function() return "Widget base mutated into the main Datamanager base: " .. us.ToString(datamanager), wt.title .. "buildDatamanager" end)
 
 	return datamanager
 end
 
-function wt.CreateDatamanager(t, widget)
+function wt.CreateDatamanager(t, ancestor)
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	local datamanager = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
-	local datamanager = setmetatable(widget, datamanager_base or buildDatamanager()) ---@cast datamanager datamanager
+	setmetatable(datamanager, datamanager_base or buildDatamanager()) ---@cast datamanager datamanager
 
 	--[ Initialization ]
 
@@ -1063,13 +1151,18 @@ end
 local binary_base ---@type binary
 
 local function buildBinary()
-	local binary = buildDatamanager() ---@cast binary binary
-
-	--[ Type ]
+	local binary = buildDatamanager()
 
 	local typename = "Binary" ---@type typename_binary
+	widget_types[binary][typename] = true ---@cast binary binary
 
-	widget_types[binary][typename] = true
+	if binary_base then
+		us.Fill(binary, binary_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Binary base: " .. us.ToString(binary), wt.title .. "buildBinary" end)
+
+		return binary
+	end
 
 	--[ Data ]
 
@@ -1082,14 +1175,18 @@ local function buildBinary()
 
 	function binary:Flip(user, silent) binary:SetValue(not binary:GetValue(), user, silent) end
 
+	binary_base = binary
+
+	ds.Log(function() return "Datamanager base mutated into the main Binary base: " .. us.ToString(binary), wt.title .. "buildBinary" end)
+
 	return binary
 end
 
-function wt.CreateBinary(t, datamanager)
+function wt.CreateBinary(t, ancestor)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
+	local binary = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
 
-	local binary = setmetatable(datamanager, binary_base or buildBinary()) ---@cast binary binary
+	setmetatable(binary, binary_base or buildBinary()) ---@cast binary binary
 
 	--[ Initialization ]
 
@@ -1114,30 +1211,90 @@ end
 
 --| Toggle button
 
-function wt.CreateCheckbox(t, binary)
-	t = type(t) == "table" and t or {}
+local checkbox_base ---@type checkbox
+local classicCheckbox_base ---@type classicCheckbox
+local radiobutton_base ---@type radiobutton
 
-	local typenameBase = "Binary" ---@type typename_binary
-
-	binary = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
-
-	if WidgetToolsDB.lite and t.lite ~= false then return binary end
-
-	local checkbox = binary ---@cast checkbox checkbox
-
-	--[ Type ]
+local function buildCheckbox()
+	local checkbox = buildBinary()
 
 	local typename = "Checkbox" ---@type typename_checkbox
+	widget_types[checkbox][typename] = true ---@cast checkbox checkbox
 
-	widget_types[checkbox][typename] = true
+	if checkbox_base then
+		us.Fill(checkbox, checkbox_base)
+
+		ds.Log(function() return "Widget base mutated into a new Checkbox base: " .. us.ToString(checkbox), wt.title .. "buildCheckbox" end)
+
+		return checkbox
+	end
+
+	checkbox_base = checkbox
+
+	ds.Log(function() return "Widget base mutated into the main Checkbox base: " .. us.ToString(checkbox), wt.title .. "buildCheckbox" end)
+
+	return checkbox
+end
+
+local function buildClassicCheckbox()
+	local checkbox = buildBinary()
+
+	local typename = "ClassicCheckbox" ---@type typename_classicCheckbox
+	widget_types[checkbox][typename] = true ---@cast checkbox classicCheckbox
+
+	if classicCheckbox_base then
+		us.Fill(checkbox, classicCheckbox_base)
+
+		ds.Log(function() return "Widget base mutated into a new ClassicCheckbox base: " .. us.ToString(checkbox), wt.title .. "buildClassicCheckbox" end)
+
+		return checkbox
+	end
+
+	classicCheckbox_base = checkbox
+
+	ds.Log(function() return "Widget base mutated into the main ClassicCheckbox base: " .. us.ToString(checkbox), wt.title .. "buildClassicCheckbox" end)
+
+	return checkbox
+end
+
+local function buildRadiobutton()
+	local radiobutton = buildBinary()
+
+	local typename = "Radiobutton" ---@type typename_radiobutton
+	widget_types[radiobutton][typename] = true ---@cast radiobutton radiobutton
+
+	if radiobutton_base then
+		us.Fill(radiobutton, radiobutton_base)
+
+		ds.Log(function() return "Widget base mutated into a new Radiobutton base: " .. us.ToString(radiobutton), wt.title .. "buildRadiobutton" end)
+
+		return radiobutton
+	end
+
+	radiobutton_base = radiobutton
+
+	ds.Log(function() return "Widget base mutated into the main Radiobutton base: " .. us.ToString(radiobutton), wt.title .. "buildRadiobutton" end)
+
+	return radiobutton
+end
+
+function wt.CreateCheckbox(t, ancestor, lite)
+	local typenameBase = "Binary" ---@type typename_binary
+	local checkbox = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
+
+	if WidgetToolsDB.lite and lite ~= false then return checkbox end
+
+	setmetatable(checkbox, checkbox_base or buildCheckbox()) ---@cast checkbox checkbox
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Checkbox" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local frame = CreateFrame("Frame", name, t.parentFrame)
-	local template = CreateFrame("CheckButton", name .. typename, frame, "SettingsCheckboxTemplate")
+	local template = CreateFrame("CheckButton", name .. "Frame", frame, "SettingsCheckboxTemplate")
 
 	checkbox.frame = frame
 	checkbox.template = template
@@ -1309,12 +1466,12 @@ end
 ---@param template CheckButton|SettingsCheckbox
 ---@param frame Frame
 ---@param height number
----@param typename typename_classicCheckbox|typename_radiobutton
+---@param typeTag "Checkbox"|"Radio"
 ---@param label FontString
 ---@param fontNormal FontObject
 ---@param fontOffsetX number
 ---@param t checkbox_options
-local function setUpClassicToggle(toggle, template, frame, height, typename, label, fontNormal, fontOffsetX, t)
+local function setUpClassicToggle(toggle, template, frame, height, typeTag, label, fontNormal, fontOffsetX, t)
 
 	--| Position & dimensions
 
@@ -1342,7 +1499,7 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 
 	--| Label
 
-	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typeTag
 
 	if t.label ~= false then
 		toggle.label = label
@@ -1430,37 +1587,30 @@ local function setUpClassicToggle(toggle, template, frame, height, typename, lab
 	end, 1)
 end
 
-function wt.CreateClassicCheckbox(t, binary)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateClassicCheckbox(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
+	local checkbox = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
 
-	binary = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
+	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return binary end
-
-	local checkbox = binary ---@cast checkbox classicCheckbox
-
-	--[ Type ]
-
-	local typename = "ClassicCheckbox" ---@type typename_classicCheckbox
-
-	widget_types[checkbox][typename] = true
+	setmetatable(checkbox, classicCheckbox_base or buildClassicCheckbox()) ---@cast checkbox classicCheckbox
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Checkbox" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local frame = CreateFrame("Frame", name, t.parentFrame)
-	local template = CreateFrame("CheckButton", name .. typename, frame, "InterfaceOptionsCheckButtonTemplate")
+	local template = CreateFrame("CheckButton", name .. "Frame", frame, "InterfaceOptionsCheckButtonTemplate")
 
 	checkbox.frame = frame
 	checkbox.template = template
 
 	--| Shared setup
 
-	setUpClassicToggle(checkbox, template, frame, t.height or 26, typename, _G[name .. "CheckboxText"], "GameFontHighlight", 2, t)
+	setUpClassicToggle(checkbox, template, frame, t.height or 26, "Checkbox", _G[name .. "CheckboxText"], "GameFontHighlight", 2, t)
 
 	--[ UX ]
 
@@ -1497,37 +1647,30 @@ function wt.CreateClassicCheckbox(t, binary)
 	return checkbox
 end
 
-function wt.CreateRadiobutton(t, binary)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateRadiobutton(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
+	local radiobutton = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor) ---@type binary
 
-	binary = wt.IsWidget(binary, typenameBase) and binary or wt.CreateBinary(t)
+	if WidgetToolsDB.lite and lite ~= false then return radiobutton end
 
-	if WidgetToolsDB.lite and t.lite ~= false then return binary end
-
-	local radiobutton = binary ---@cast radiobutton radiobutton
-
-	--[ Type ]
-
-	local typename = "Radiobutton" ---@type typename_radiobutton
-
-	widget_types[radiobutton][typename] = true
+	setmetatable(radiobutton, radiobutton_base or buildRadiobutton()) ---@cast radiobutton radiobutton
 
 	--[ Frame ]
 
-	if type(t.name) ~= "string" then t.name = typename end
+	t = type(t) == "table" and t or {}
+
+	if type(t.name) ~= "string" then t.name = "Radio" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
 	local frame = CreateFrame("Frame", name, t.parentFrame)
-	local template = CreateFrame("CheckButton", name .. typename, frame, "UIRadioButtonTemplate")
+	local template = CreateFrame("CheckButton", name .. "Frame", frame, "UIRadioButtonTemplate")
 
 	radiobutton.frame = frame
 	radiobutton.template = template
 
 	--| Shared setup
 
-	setUpClassicToggle(radiobutton, template, frame, t.height or 18, typename, _G[name .. "RadioButtonText"], "GameFontNormal", 3, t)
+	setUpClassicToggle(radiobutton, template, frame, t.height or 18, "Radio", _G[name .. "RadioButtonText"], "GameFontNormal", 3, t)
 
 	--[ UX ]
 
@@ -1573,6 +1716,17 @@ end
 
 --[[ SELECTOR ]]
 
+local selector_base ---@type selector
+
+local selector_clearable ---@type table<selector, boolean>
+
+local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
+local selector_handlers_activated ---@type table<selector, function[]>
+local selector_handlers_added ---@type table<selector, selector_handler_added[]>
+local selector_invoke_updated ---@type fun(self: selector)
+local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
+local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
+
 local itemsets = {
 	anchor = {
 		{ name = wt.strings.points.top.left, value = "TOPLEFT" },
@@ -1607,25 +1761,19 @@ local itemsets = {
 	}
 }
 
-local selector_base ---@type selector
-
-local selector_clearable ---@type table<selector, boolean>
-
-local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
-local selector_handlers_activated ---@type table<selector, function[]>
-local selector_handlers_added ---@type table<selector, selector_handler_added[]>
-local selector_invoke_updated ---@type fun(self: selector)
-local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
-local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
-
 local function buildSelector()
 	local selector = buildDatamanager() ---@cast selector selector
 
-	--[ Type ]
-
 	local typename = "Selector" ---@type typename_selector
-
 	widget_types[selector][typename] = true
+
+	if selector_base then
+		us.Fill(selector, selector_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Selector base: " .. us.ToString(selector), wt.title .. "buildSelector" end)
+
+		return selector
+	end
 
 	--[ Items ]
 
@@ -1682,31 +1830,29 @@ local function buildSelector()
 		selector:SetValue(data_value[self], nil, silent)
 	end
 
-	if not selector_handlers_updated then selector_handlers_updated = {} end
-	if not selector_invoke_updated then selector_invoke_updated = function(self)
+	selector_handlers_updated = {}
+	assignAddListener(selector, "updated", selector_handlers_updated)
+	selector_invoke_updated = function(self)
 		local handlers = selector_handlers_updated[self]
 
 		if not handlers then return end
 
 		for i = 1, #handlers do handlers[i](self) end
-	end end
+	end
 
-	assignAddListener(selector, "updated", selector_handlers_updated)
-
-	if not selector_handlers_added then selector_handlers_added = {} end
-	if not selector_invoke_added then selector_invoke_added = function(self, item)
+	selector_handlers_added = {}
+	assignAddListener(selector, "added", selector_handlers_added)
+	selector_invoke_added = function(self, item)
 		local handlers = selector_handlers_added[self]
 
 		if not handlers then return end
 
 		for i = 1, #handlers do handlers[i](self, item) end
-	end end
-
-	assignAddListener(selector, "added", selector_handlers_added)
+	end
 
 	--[ Data ]
 
-	if not selector_clearable then selector_clearable = {} end
+	selector_clearable = {}
 
 	function selector:Verify(value)
 		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
@@ -1732,6 +1878,10 @@ local function buildSelector()
 
 		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 	end
+
+	selector_base = selector
+
+	ds.Log(function() return "Datamanager base mutated into the main Selector base: " .. us.ToString(selector), wt.title .. "buildSelector" end)
 
 	return selector
 end
@@ -3088,15 +3238,20 @@ local textual_color ---@type table<textual, color>
 local function buildTextual()
 	local textual = buildDatamanager() ---@cast textual textual
 
-	--[ Type ]
-
 	local typename = "Textual" ---@type typename_textual
-
 	widget_types[textual][typename] = true
+
+	if textual_base then
+		us.Fill(textual, textual_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Textual base: " .. us.ToString(textual), wt.title .. "buildTextual" end)
+
+		return textual
+	end
 
 	--[ Data ]
 
-	if not textual_color then textual_color = {} end
+	textual_color = {}
 
 	function textual:Verify(value) return type(value) == "string" and value or "" end
 	function textual:Format(value)
@@ -3105,6 +3260,10 @@ local function buildTextual()
 
 		return color and cr(value, color) or value
 	end
+
+	textual_base = textual
+
+	ds.Log(function() return "Datamanager base mutated into the main Textual base: " .. us.ToString(textual), wt.title .. "buildTextual" end)
 
 	return textual
 end
@@ -3298,24 +3457,20 @@ local function setUpSinglelineEditbox(editbox, title, t)
 	}) end
 end
 
-function wt.CreateEditbox(t, textual)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-
 	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return textual end
+	if WidgetToolsDB.lite and lite ~= false then return textual end
 
 	local editbox = textual ---@cast editbox textualEditbox
 
-	--[ Type ]
-
 	local typename = "Editbox" ---@type typename_editbox
-
 	widget_types[editbox][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -3346,24 +3501,20 @@ function wt.CreateEditbox(t, textual)
 	return editbox
 end
 
-function wt.CreateCustomEditbox(t, textual)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateCustomEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-
 	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return textual end
+	if WidgetToolsDB.lite and lite ~= false then return textual end
 
 	local editbox = textual ---@cast editbox customEditbox
 
-	--[ Type ]
-
 	local typename = "CustomEditbox" ---@type typename_customEditbox
-
 	widget_types[editbox][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -3403,24 +3554,20 @@ function wt.CreateCustomEditbox(t, textual)
 	return editbox
 end
 
-function wt.CreateMultilineEditbox(t, textual)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateMultilineEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-
 	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return textual end
+	if WidgetToolsDB.lite and lite ~= false then return textual end
 
 	local editbox = textual ---@cast editbox multilineEditbox
 
-	--[ Type ]
-
 	local typename = "MultilineEditbox" ---@type typename_multilineEditbox
-
 	widget_types[editbox][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -3802,19 +3949,24 @@ local numeric_invoke_max ---@type fun(self: numeric)
 local function buildNumeric()
 	local numeric = buildDatamanager() ---@cast numeric numeric
 
-	--[ Type ]
-
 	local typename = "Numeric" ---@type typename_numeric
-
 	widget_types[numeric][typename] = true
+
+	if numeric_base then
+		us.Fill(numeric, numeric_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Numeric base: " .. us.ToString(numeric), wt.title .. "buildNumeric" end)
+
+		return numeric
+	end
 
 	--[ Data ]
 
-	if not numeric_limitMin then numeric_limitMin = {} end
-	if not numeric_limitMax then numeric_limitMax = {} end
-	if not numeric_step then numeric_step = {} end
-	if not numeric_altStep then numeric_altStep = {} end
-	if not numeric_hardStep then numeric_hardStep = {} end
+	numeric_limitMin = {}
+	numeric_limitMax = {}
+	numeric_step = {}
+	numeric_altStep = {}
+	numeric_hardStep = {}
 
 	function numeric:Verify(value)
 		if type(value) ~= "number" then return data_value[self] end
@@ -3847,32 +3999,34 @@ local function buildNumeric()
 		if not silent then numeric_invoke_max(self) end
 	end
 
-	if not numeric_handlers_min then numeric_handlers_min = {} end
-	if not numeric_invoke_min then numeric_invoke_min = function(self)
+	numeric_handlers_min = {}
+	assignAddListener(numeric, "min", numeric_handlers_min)
+	numeric_invoke_min = function(self)
 		local handlers = numeric_handlers_min[self]
 
 		if not handlers then return end
 
 		for i = 1, #handlers do handlers[i](self, numeric_limitMin[self]) end
-	end end
+	end
 
-	assignAddListener(numeric, "min", numeric_handlers_min)
-
-	if not numeric_handlers_max then numeric_handlers_max = {} end
-	if not numeric_invoke_max then numeric_invoke_max = function(self)
+	numeric_handlers_max = {}
+	assignAddListener(numeric, "max", numeric_handlers_max)
+	numeric_invoke_max = function(self)
 		local handlers = numeric_handlers_max[self]
 
 		if not handlers then return end
 
 		for i = 1, #handlers do handlers[i](self, numeric_limitMax[self]) end
-	end end
-
-	assignAddListener(numeric, "max", numeric_handlers_max)
+	end
 
 	--| Step
 
 	function numeric:GetStep() return numeric_step[self] end
 	function numeric:GetAltStep() return numeric_altStep[self] end
+
+	numeric_base = numeric
+
+	ds.Log(function() return "Datamanager base mutated into the main Numeric base: " .. us.ToString(numeric), wt.title .. "buildNumeric" end)
 
 	return numeric
 end
@@ -3907,24 +4061,20 @@ end
 
 --| Slider
 
-function wt.CreateSlider(t, numeric)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateSlider(t, numeric, lite)
 	local typenameBase = "Numeric" ---@type typename_numeric
-
 	numeric = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return numeric end
+	if WidgetToolsDB.lite and lite ~= false then return numeric end
 
 	local slider = numeric ---@cast slider numericSlider
 
-	--[ Type ]
-
 	local typename = "Slider" ---@type typename_slider
-
 	widget_types[slider][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4222,24 +4372,20 @@ function wt.CreateSlider(t, numeric)
 	return slider
 end
 
-function wt.CreateClassicSlider(t, numeric)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateClassicSlider(t, numeric, lite)
 	local typenameBase = "Numeric" ---@type typename_numeric
-
 	numeric = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return numeric end
+	if WidgetToolsDB.lite and lite ~= false then return numeric end
 
 	local slider = numeric ---@cast slider classicSlider
 
-	--[ Type ]
-
 	local typename = "ClassicSlider" ---@type typename_classicSlider
-
 	widget_types[slider][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4653,11 +4799,16 @@ local colormanager_onCancel ---@type table<colormanager, function>
 local function buildColormanager()
 	local colormanager = buildDatamanager() ---@cast colormanager colormanager
 
-	--[ Type ]
-
 	local typename = "Colormanager" ---@type typename_colormanager
-
 	widget_types[colormanager][typename] = true
+
+	if colormanager_base then
+		us.Fill(colormanager, colormanager_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Colormanager base: " .. us.ToString(colormanager), wt.title .. "buildColormanager" end)
+
+		return colormanager
+	end
 
 	--[ Data ]
 
@@ -4676,8 +4827,8 @@ local function buildColormanager()
 
 	--[ Color Wheel ]
 
-	if not colormanager_active then colormanager_active = {} end
-	if not colormanager_onCancel then colormanager_onCancel = {} end
+	colormanager_active = {}
+	colormanager_onCancel = {}
 
 	local function colorUpdate(self)
 		if not widget_enabled[self] then return end
@@ -4714,6 +4865,10 @@ local function buildColormanager()
 
 	colormanager:AddListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
 
+	colormanager_base = colormanager
+
+	ds.Log(function() return "Datamanager base mutated into the main Colormanager base: " .. us.ToString(colormanager), wt.title .. "buildColormanager" end)
+
 	return colormanager
 end
 
@@ -4746,24 +4901,20 @@ end
 
 --| Colorpicker
 
-function wt.CreateColorpicker(t, colormanager)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateColorpicker(t, colormanager, lite)
 	local typenameBase = "Colormanager" ---@type typename_colormanager
-
 	colormanager = wt.IsWidget(colormanager, typenameBase) and colormanager or wt.CreateColormanager(t)
 
-	if WidgetToolsDB.lite and t.lite ~= false then return colormanager end
+	if WidgetToolsDB.lite and lite ~= false then return colormanager end
 
 	local colorpicker = colormanager ---@cast colorpicker colorpicker
 
-	--[ Type ]
-
 	local typename = "Colorpicker" ---@type typename_colorpicker
-
 	widget_types[colorpicker][typename] = true
 
 	--[ Frame ]
+
+	t = type(t) == "table" and t or {}
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4834,7 +4985,7 @@ function wt.CreateColorpicker(t, colormanager)
 		position = { offset = { y = -14 } },
 		width = 34,
 		height = 22,
-		action = colormanager.openColorPicker,
+		action = function() colorpicker:OpenColorPicker() end,
 		backdrop = {
 			background = {
 				texture = {
@@ -5875,54 +6026,135 @@ end
 local settingsmanager_base ---@type settingsmanager
 
 local datamanagementEntry ---
-local autoLoad ---@type table<settingsmanager, true>
-local autoSave ---@type table<settingsmanager, true>
+local settingsmanager_autoLoad ---@type table<settingsmanager, true>
+local settingsmanager_autoSave ---@type table<settingsmanager, true>
+
+local settingsmanager_handlers_loaded ---@type table<settingsmanager, settingsmanager_handler_loaded>
+local settingsmanager_handlers_saved ---@type table<settingsmanager, settingsmanager_handler_saved>
+local settingsmanager_handlers_applied ---@type table<settingsmanager, settingsmanager_handler_applied>
+local settingsmanager_handlers_reverted ---@type table<settingsmanager, settingsmanager_handler_reverted>
+local settingsmanager_handlers_reset ---@type table<settingsmanager, settingsmanager_handler_reset>
+local settingsmanager_invoke_loaded ---@type fun(self: settingsmanager, user: boolean)
+local settingsmanager_invoke_saved ---@type fun(self: settingsmanager, user: boolean)
+local settingsmanager_invoke_applied ---@type fun(self: settingsmanager, user: boolean)
+local settingsmanager_invoke_reverted ---@type fun(self: settingsmanager, user: boolean)
+local settingsmanager_invoke_reset ---@type fun(self: settingsmanager, user: boolean)
 
 local function buildSettingsmanager()
 	local settingsmanager = buildWidget() ---@cast settingsmanager settingsmanager
 
-	--[ Type ]
-
 	local typename = "Settingsmanager" ---@type typename_settingsmanager
-
 	widget_types[settingsmanager][typename] = true
+
+	if settingsmanager_base then
+		us.Fill(settingsmanager, settingsmanager_base)
+
+		ds.Log(function() return "Datamanager base mutated into a new Settingsmanager base: " .. us.ToString(settingsmanager), wt.title .. "buildSettingsmanager" end)
+
+		return settingsmanager
+	end
 
 	--[ Batched Datamanagement ]
 
+	settingsmanager_autoLoad = {}
+	settingsmanager_autoSave = {}
+
 	function settingsmanager:Load(handleChanges, user, silent)
-		if autoLoad[self] then for i = 1, #datamanagementEntry[self].keys do
+		if settingsmanager_autoLoad[self] then for i = 1, #datamanagementEntry[self].keys do
 			wt.LoadSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i], handleChanges)
 			wt.SnapshotSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i])
 		end end
 
-		if not silent then settingsmanager.invoke.loaded(user == true) end
+		if not silent then settingsmanager_invoke_loaded(self, user == true) end
 	end
 
 	function settingsmanager:Save(user, silent)
-		if autoSave[self] then for i = 1, #datamanagementEntry[self].keys do wt.SaveSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
+		if settingsmanager_autoSave[self] then for i = 1, #datamanagementEntry[self].keys do wt.SaveSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager.invoke.saved(user == true) end
+		if not silent then settingsmanager_invoke_saved(self, user == true) end
 	end
 
 	function settingsmanager:Apply(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ApplySettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager.invoke.applied(user == true) end
+		if not silent then settingsmanager_invoke_applied(self, user == true) end
 	end
 
 	function settingsmanager:Revert(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.RevertSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager.invoke.reverted(user == true) end
+		if not silent then settingsmanager_invoke_reverted(self, user == true) end
 	end
 
 	function settingsmanager:Reset(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ResetSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager.invoke.reset(user == true) end
+		if not silent then settingsmanager_invoke_reset(self, user == true) end
 	end
 
-	ds.Log(function() return "Widget base mutated into Settingsmanager base: " .. us.ToString(settingsmanager), wt.title .. ".buildSettingsmanager" end)
+	settingsmanager_handlers_loaded = {}
+	assignAddListener(settingsmanager, "loaded", settingsmanager_handlers_loaded)
+	settingsmanager_invoke_loaded = function(self, user)
+		local handlers = settingsmanager_handlers_loaded[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end
+
+	settingsmanager_handlers_saved = {}
+	assignAddListener(settingsmanager, "saved", settingsmanager_handlers_saved)
+	settingsmanager_invoke_saved = function(self, user)
+		local handlers = settingsmanager_handlers_saved[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end
+
+	settingsmanager_handlers_applied = {}
+	assignAddListener(settingsmanager, "", settingsmanager_handlers_applied)
+	settingsmanager_invoke_applied = function(self, user)
+		local handlers = settingsmanager_handlers_applied[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end
+
+	settingsmanager_handlers_reverted = {}
+	assignAddListener(settingsmanager, "reverted", settingsmanager_handlers_reverted)
+	settingsmanager_invoke_reverted = function(self, user)
+		local handlers = settingsmanager_handlers_reverted[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end
+
+	settingsmanager_handlers_reset = {}
+	assignAddListener(settingsmanager, "reset", settingsmanager_handlers_reset)
+	settingsmanager_invoke_reset = function(self, user)
+		local handlers = settingsmanager_handlers_reset[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do handlers[i](self, user) end
+	end
+
+	settingsmanager_base = settingsmanager
+
+	ds.Log(function() return "Widget base mutated into the main Settingsmanager base: " .. us.ToString(settingsmanager), wt.title .. "buildSettingsmanager" end)
 
 	return settingsmanager
 end
@@ -5939,8 +6171,8 @@ function wt.CreateSettingsmanager(t, widget)
 
 	if type(t.dataManagement) == "table" then
 		datamanagementEntry[settingsmanager] = t.dataManagement
-		autoLoad[settingsmanager] = t.autoLoad ~= false
-		autoSave[settingsmanager] = t.autoSave ~= false
+		settingsmanager_autoLoad[settingsmanager] = t.autoLoad ~= false
+		settingsmanager_autoSave[settingsmanager] = t.autoSave ~= false
 
 		if type(datamanagementEntry[settingsmanager].category) ~= "string" then
 			datamanagementEntry[settingsmanager].category = type(t.name) == "string" and t.name:gsub("%s+", "") or tostring(datamanagementEntry[settingsmanager])
@@ -6328,7 +6560,7 @@ local profilemanager_handlers_renamed ---@type table<profilemanager, profilemana
 local profilemanager_handlers_deleted ---@type table<profilemanager, profilemanager_handler_deleted[]>
 local profilemanager_handlers_reset ---@type table<profilemanager, profilemanager_handler_reset[]>
 local profilemanager_handlers_loaded ---@type table<profilemanager, profilemanager_handler_loaded[]>
-local profilemanager_invoke_activated ---@type fun(self: profilemanager, success: boolean, user?: boolean)
+local profilemanager_invoke_activated ---@type fun(self: profilemanager, success: boolean, user?: boolean, index?: integer)
 local profilemanager_invoke_created ---@type fun(self: profilemanager, user?: boolean, index: integer, title: string)
 local profilemanager_invoke_renamed ---@type fun(self: profilemanager, success: boolean, user?: boolean, index: any, title?: string)
 local profilemanager_invoke_deleted ---@type fun(self: profilemanager, success: boolean, user?: boolean, index: any, title?: string)
@@ -6338,11 +6570,16 @@ local profilemanager_invoke_loaded ---@type fun(self: profilemanager, user?: boo
 local function buildProfilemanager()
 	local profilemanager = buildWidget() ---@cast profilemanager profilemanager
 
-	--[ Type ]
-
 	local typename = "Profilemanager" ---@type typename_profilemanager
-
 	widget_types[profilemanager][typename] = true
+
+	if profilemanager_base then
+		us.Fill(profilemanager, profilemanager_base)
+
+		ds.Log(function() return "Widget base mutated into a new Profilemanager base: " .. us.ToString(profilemanager), wt.title .. "buildProfilemanager" end)
+
+		return profilemanager
+	end
 
 	--[ Profile ]
 
@@ -6354,9 +6591,8 @@ local function buildProfilemanager()
 		index = Clamp(type(index) == "number" and type(profile) == "table" and math.floor(index) or profiles_activeIndex[self], 1, #profiles)
 
 		profiles_activeIndex[self] = index
-		profilemanager.data = profile.data
+		self.data = profile.data
 
-		--Update selected profile in the character-specific data
 		profiles_characterData[self].activeProfile = index
 
 		return index
@@ -6371,30 +6607,9 @@ local function buildProfilemanager()
 
 		index = setActiveProfile(self, index)
 
-		if not silent then profilemanager_invoke_activated(self, true, user) end
+		if not silent then profilemanager_invoke_activated(self, true, user, index) end
 
 		return index
-	end
-
-	if not profilemanager_handlers_activated then profilemanager_handlers_activated = {} end
-	if not profilemanager_invoke_activated then profilemanager_invoke_activated = function(self, success, user)
-		local handlers = profilemanager_handlers_activated[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
-	end end
-	function profilemanager:AddListener_activated(handler, callIndex)
-		if type(handler) ~= "function" then return end
-
-		local handlers = profilemanager_handlers_activated[self]
-
-		if not handlers then
-			handlers = {}
-			profilemanager_handlers_activated[self] = handlers
-		end
-
-		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
 	end
 
 	function profilemanager:FindIndex(title, skipFirst)
@@ -6412,7 +6627,6 @@ local function buildProfilemanager()
 		name = name or wt.strings.profiles.select.profile
 		local title = name .. (number and (" " .. number) or "")
 
-		--Find an unused name for the new profile
 		if profilemanager:FindIndex(title, skipFirst) then
 			number = (number and number or 2)
 			title = name .. " " .. number
@@ -6429,26 +6643,17 @@ local function buildProfilemanager()
 	function profilemanager:Create(name, number, duplicate, index, apply, user, silent)
 		index = Clamp(type(index) == "number" and math.floor(index) or #profiles_accountData[self].profiles + 1, 1, #profiles_accountData[self].profiles + 1)
 		local d = type(profiles_accountData[self].profiles[duplicate]) == "table" and profiles_accountData[self].profiles[duplicate] or nil
+		local title = checkName(d and d.title or name, number)
 
-		--Create profile data
 		table.insert(profiles_accountData[self].profiles, index, {
-			title = checkName(d and d.title or name, number),
+			title = title,
 			data = us.Clone(d and d.data or profiles_defaultData[self])
 		})
 
-		if not silent then profilemanager_invoke_created(self, user, index, profiles_accountData[self].profiles[index].title) end
+		if not silent then profilemanager_invoke_created(self, user, index, title) end
 
-		--Activate the new profile
 		if apply ~= false then profilemanager:Activate(index, user, silent) end
 	end
-
-	if not profilemanager_invoke_created then profilemanager_invoke_created = function(self, success, user)
-		local handlers = profilemanager_handlers_created[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, user, profiles_activeIndex[self], activeTitle) end
-	end end
 
 	function profilemanager:Rename(index, name, number, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
@@ -6467,17 +6672,9 @@ local function buildProfilemanager()
 		return true
 	end
 
-	if not profilemanager_invoke_renamed then profilemanager_invoke_renamed = function(self, success, user)
-		local handlers = profilemanager_handlers_renamed[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
-	end end
-
 	function profilemanager:Delete(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not silent then profilemanager.invoke.deleted(false, user == true, index) end
+			if not silent then profilemanager_invoke_deleted(self, false, user, index) end
 
 			return false
 		end
@@ -6485,30 +6682,21 @@ local function buildProfilemanager()
 		index = index or profiles_activeIndex[self]
 		local title = profiles_accountData[self].profiles[index].title
 
-		local function delete(s)
-			table.remove(profiles_accountData[s].profiles, index)
+		local function delete()
+			table.remove(profiles_accountData[self].profiles, index)
 
-			if not silent then profilemanager.invoke.deleted(true, user == true, index, title) end
+			if not silent then profilemanager_invoke_deleted(self, true, user, index, title) end
 
-			--Activate the replacement profile
-			if profiles_activeIndex[s] == index then profilemanager:Activate(index, user, silent) end
+			if profiles_activeIndex[self] == index then profilemanager:Activate(index, user, silent) end
 		end
 
-		if unsafe then delete(self) else StaticPopup_Show(wt.UpdatePopupDialog(profiles_deletePopup[self], {
-			text = wt.strings.profiles.delete.warning:gsub("#PROFILE", cr(profiles_accountData[self].profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
-			onAccept = function() delete(self) end,
+		if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_deletePopup[self], {
+			text = wt.strings.profiles.delete.warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+			onAccept = function() delete() end,
 		})) end
 
 		return true
 	end
-
-	if not profilemanager_invoke_deleted then profilemanager_invoke_deleted = function(self, success, user)
-		local handlers = profilemanager_handlers_deleted[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
-	end end
 
 	function profilemanager:Reset(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
@@ -6518,29 +6706,21 @@ local function buildProfilemanager()
 		end
 
 		index = index or profiles_activeIndex[self]
+		local title = profiles_accountData[self].profiles[index].title
 
 		local function reset()
-			--Update the profile in storage (without breaking table references)
-			us.CopyValues(profiles_accountData[self].profiles[index].data, profiles_defaultData[self])
+			us.CopyValues(self.data, profiles_defaultData[self])
 
-			if not silent then profilemanager_invoke_reset(self, true, user, index, profiles_accountData[self].profiles[index].title) end
+			if not silent then profilemanager_invoke_reset(self, true, user, index, title) end
 		end
 
-		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(resetProfilePopup, {
-			text = wt.strings.profiles.reset.warning:gsub("#PROFILE", cr(profiles_accountData[self].profiles[index].title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_resetPopup[self], {
+			text = wt.strings.profiles.reset.warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
 			onAccept = reset,
-		}))end
+		})) end
 
 		return true
 	end
-
-	if not profilemanager_invoke_reset then profilemanager_invoke_reset = function(self, success, user)
-		local handlers = profilemanager_handlers_reset[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, profiles_activeIndex[self], activeTitle) end
-	end end
 
 	function profilemanager:Validate(profileData, compareWith)
 		if type(profileData) ~= "table" then return profileData end
@@ -6555,27 +6735,22 @@ local function buildProfilemanager()
 	end
 
 	---Clean up a profile list table
+	---@param self profilemanager
 	---@param list profile[]
-	local function validateProfiles(list)
+	local function validateProfiles(self, list)
 		local index = 1
 
 		--Check profile list
 		for key, value in us.SortedPairs(list) do
 			if key == index and type(value) == "table" then
-				--Check profile data
 				if type(list[index].data) == "table" then profilemanager:Validate(list[index].data) else list[index].data = us.Clone(profiles_defaultData[self]) end
-			else
-				--Remove invalid entry
-				list[key] = nil
-			end
+			else list[key] = nil end
 
 			index = index + 1
 		end
 
-		--Fill with default profile
 		if not list[1] then list[1] = { title = wt.strings.profiles.select.main, data = us.Clone(profiles_defaultData[self]) } end
 
-		--Check profile names
 		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
 
@@ -6586,7 +6761,7 @@ local function buildProfilemanager()
 		if type(p) == "table" then
 			p.profiles = type(p.profiles) == "table" and p.profiles or {}
 
-			validateProfiles(p.profiles)
+			validateProfiles(self, p.profiles)
 
 			--Update the profile list in storage (without breaking table references)
 			for i = 1, #p.profiles do
@@ -6596,7 +6771,7 @@ local function buildProfilemanager()
 		else
 			profiles_accountData[self].profiles = type(profiles_accountData[self].profiles) == "table" and profiles_accountData[self].profiles or {}
 
-			validateProfiles(profiles_accountData[self].profiles)
+			validateProfiles(self, profiles_accountData[self].profiles)
 		end
 
 		--| Activate profile
@@ -6614,11 +6789,9 @@ local function buildProfilemanager()
 		end end
 
 		if next(recovered) then
-			--Pack recovered data into the active profile data table (to be removed later if found irrelevant or invalid during validation)
-			us.Pull(profilemanager.data, recovered)
+			us.Pull(self.data, recovered)
 
-			--Validate active profile data
-			profilemanager:Validate(profilemanager.data)
+			profilemanager:Validate(self.data)
 
 			ds.Log(function() return "Recovered misplaced data:" .. us.TableToString(recovered), wt.title .. " • Profilemanager (" .. profiles_category[self] .. "):Load" end)
 		end
@@ -6629,19 +6802,86 @@ local function buildProfilemanager()
 			user = user == true
 
 			profilemanager_invoke_loaded(self, user)
-			profilemanager_invoke_activated(self, true, user)
+			profilemanager_invoke_activated(self, true, user, activeProfile)
 		end
 	end
 
-	if not profilemanager_invoke_loaded then profilemanager_invoke_loaded = function(self, success, user)
-		local handlers = profilemanager_handlers_loaded[self]
-		local activeTitle = profiles_accountData[self].profiles[profiles_activeIndex[self]].title
+	profilemanager_handlers_activated = {}
+	assignAddListener(profilemanager, "activated", profilemanager_handlers_activated)
+	profilemanager_invoke_activated = function(self, success, user, index)
+		local handlers = profilemanager_handlers_activated[self]
+
+		if not handlers then return end
+
+		user = user == true
+		local title = index and profiles_accountData[self].profiles[index].title or nil
+
+		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
+	end
+
+	profilemanager_handlers_created = {}
+	assignAddListener(profilemanager, "created", profilemanager_handlers_created)
+	profilemanager_invoke_created = function(self, user, index, title)
+		local handlers = profilemanager_handlers_created[self]
+
+		if not handlers then return end
+
 		user = user == true
 
-		for i = 1, #handlers do	handlers[i](self, success, user, profiles_activeIndex[self], activeTitle) end
+		for i = 1, #handlers do	handlers[i](profilemanager, user, index, title) end
+	end
+
+	profilemanager_handlers_renamed = {}
+	assignAddListener(profilemanager, "renamed", profilemanager_handlers_renamed)
+	profilemanager_invoke_renamed = function(self, success, user, index, title)
+		local handlers = profilemanager_handlers_renamed[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
+	end
+
+	profilemanager_handlers_deleted = {}
+	assignAddListener(profilemanager, "deleted", profilemanager_handlers_deleted)
+	if not profilemanager_invoke_deleted then profilemanager_invoke_deleted = function(self, success, user, index, title)
+		local handlers = profilemanager_handlers_deleted[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
 	end end
 
-	ds.Log(function() return "Widget base mutated into Profilemanager base: " .. us.ToString(profilemanager), wt.title .. ".buildProfilemanager" end)
+	profilemanager_handlers_reset = {}
+	assignAddListener(profilemanager, "reset", profilemanager_handlers_reset)
+	if not profilemanager_invoke_reset then profilemanager_invoke_reset = function(self, success, user, index, title)
+		local handlers = profilemanager_handlers_reset[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
+	end end
+
+	profilemanager_handlers_loaded = {}
+	assignAddListener(profilemanager, "loaded", profilemanager_handlers_loaded)
+	profilemanager_invoke_loaded = function(self, user)
+		local handlers = profilemanager_handlers_loaded[self]
+
+		if not handlers then return end
+
+		user = user == true
+
+		for i = 1, #handlers do	handlers[i](self, user) end
+	end
+
+	profilemanager_base = profilemanager
+
+	ds.Log(function() return "Widget base mutated into the main Profilemanager base: " .. us.ToString(profilemanager), wt.title .. "buildProfilemanager" end)
 
 	return profilemanager
 end
@@ -6662,13 +6902,17 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	profilemanager.firstLoad = type(accountData.profiles) ~= "table"
 	profilemanager.newCharacter = type(characterData.activeProfile) ~= "number"
 
-	profiles_valueChecker[profilemanager] = t.valueChecker
-	profiles_onRecovery[profilemanager] = t.onRecovery
-	profiles_recoveryMap[profilemanager] = t.recoveryMap
+	profiles_accountData[profilemanager] = accountData
+	profiles_characterData[profilemanager] = characterData
+	profiles_defaultData[profilemanager] = defaultData
 
 	t.category = type(t.category) == "string" and t.category or ""
 	local category = t.category:len() > 0 and t.category or "Addon"
 	profiles_category[profilemanager] = category
+
+	profiles_valueChecker[profilemanager] = t.valueChecker
+	profiles_onRecovery[profilemanager] = t.onRecovery
+	profiles_recoveryMap[profilemanager] = t.recoveryMap
 
 	profiles_deletePopup[profilemanager] = wt.RegisterPopupDialog(category .. "_DELETE_PROFILE", { accept = DELETE, })
 	profiles_resetPopup[profilemanager] = wt.RegisterPopupDialog(category .. "RESET_PROFILE")
@@ -6687,26 +6931,22 @@ end
 
 --| Settings page
 
-function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager)
+function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager, lite)
 	if type(settingsData) ~= "table" then return nil end
 
-	t = type(t) == "table" and t or {}
-
 	local typenameBase = "Profilemanager" ---@type typename_profilemanager
+	if not wt.IsWidget(profilemanager, typenameBase) then profilemanager = wt.CreateProfilemanager(accountData, characterData, defaultData, t) end
 
-	profilemanager = wt.IsWidget(profilemanager, typenameBase) and profilemanager or wt.CreateProfilemanager(accountData, characterData, defaultData, t)
-
-	if not profilemanager then return nil elseif WidgetToolsDB.lite and t.lite ~= false then return profilemanager end
+	if not profilemanager then return nil elseif WidgetToolsDB.lite and lite ~= false then return profilemanager end
 
 	local profilesPage = profilemanager ---@cast profilesPage profilesPage
 
-	--[ Type ]
-
 	local typename = "ProfilesPage" ---@type typename_profilesPage
-
 	widget_types[profilesPage][typename] = true
 
 	--[ Settings Page ]
+
+	t = type(t) == "table" and t or {}
 
 	local onDefault = type(t.onDefault) == "function" and t.onDefault or nil
 
@@ -7139,15 +7379,20 @@ local addonmanager_handlers_changed ---@type table<addonmanager, addonmanager_ha
 local function buildAddonmanager()
 	local addonmanager = buildWidget() ---@cast addonmanager addonmanager
 
-	--[ Type ]
-
 	local typename = "Addonmanager" ---@type typename_addonmanager
-
 	widget_types[addonmanager][typename] = true
+
+	if addonmanager_base then
+		us.Fill(addonmanager, addonmanager_base)
+
+		ds.Log(function() return "Widget base mutated into a new Addonmanager base: " .. us.ToString(addonmanager), wt.title .. "buildAddonmanager" end)
+
+		return addonmanager
+	end
 
 	--[ Metadata ]
 
-	if not addonmanager_addonData then addonmanager_addonData = {} end
+	addonmanager_addonData = {}
 
 	function addonmanager:GetName() return addonmanager_addonData[self].name end
 	function addonmanager:GetTitle() return addonmanager_addonData[self].title end
@@ -7219,8 +7464,9 @@ local function buildAddonmanager()
 		return true
 	end
 
-	if not addonmanager_handlers_changed then addonmanager_handlers_changed = {} end
-	if not addonmanager_invoke_changed then addonmanager_invoke_changed = function(self, user)
+	addonmanager_handlers_changed = {}
+	assignAddListener(addonmanager, "", addonmanager_handlers_changed)
+	addonmanager_invoke_changed = function(self, user)
 		local handlers = addonmanager_handlers_changed[self]
 
 		if not handlers then return end
@@ -7229,11 +7475,11 @@ local function buildAddonmanager()
 		user = user == true
 
 		for i = 1, #handlers do handlers[i](self, name, user) end
-	end end
+	end
 
-	assignAddListener(addonmanager, "", addonmanager_handlers_changed)
+	addonmanager_base = addonmanager
 
-	ds.Log(function() return "Widget base mutated into Addonmanager base: " .. us.ToString(addonmanager), wt.title .. ".buildAddonmanager" end)
+	ds.Log(function() return "Widget base mutated into the main Addonmanager base: " .. us.ToString(addonmanager), wt.title .. "buildAddonmanager" end)
 
 	return addonmanager
 end
@@ -7260,28 +7506,26 @@ end
 
 --| Settings page
 
-function wt.CreateAddonPage(t, addonmanager)
-	t = type(t) == "table" and t or {}
-
+function wt.CreateAddonPage(t, addonmanager, lite)
 	local typenameBase = "Addonmanager" ---@type typename_addonmanager
+	if not wt.IsWidget(addonmanager, typenameBase) then addonmanager = wt.CreateAddonmanager(t) end
 
-	local addonPage = wt.IsWidget(addonmanager, typenameBase) and addonmanager or wt.CreateAddonmanager(t) ---@cast addonPage addonPage
+	local data = addonmanager_addonData[addonmanager]
 
-	local data = addonmanager_addonData[addonPage]
+	if not data or WidgetToolsDB.lite and lite ~= false then return addonmanager end
 
-	if not data then return nil end
+	local addonPage = addonmanager ---@cast addonPage addonPage
+
+	local typename = "AddonPage" ---@type typename_addonPage
+	widget_types[addonPage][typename] = true
 
 	--| Make read-only
 
-	addonPage.setAddon = nil
-
-	--[ Type ]
-
-	local typename = "AddonPage" ---@type typename_addonPage
-
-	widget_types[addonPage][typename] = true
+	addonPage.SetAddon = nil
 
 	--[ Settings Page ]
+
+	t = type(t) == "table" and t or {}
 
 	addonPage.settings = wt.CreateSettingsPage({
 		register = t.register,
@@ -7597,7 +7841,7 @@ function wt.CreateAddonPage(t, addonmanager)
 
 			--[ Sponsors ]
 
-			local sponsors, topSponsors = data.sponsors:Split("; ")
+			local sponsors, topSponsors = data.sponsors:split("; ")
 
 			if sponsors then
 				local sponsorsPanel = wt.CreatePanel({
@@ -7848,3 +8092,8 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 	return chatmanager
 end
+
+
+--[[ CLIPBOARD ]]
+
+wt.clipboard = {}
