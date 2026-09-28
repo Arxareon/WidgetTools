@@ -10,11 +10,109 @@ local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
 
 
+--[[ CONSTRUCT ]]
+
+local bases ---@type table<typename, anyWidget>
+local types ---@type table<anyWidget, table<typename, true>>
+local build
+
+---@type table<typename, typename>
+local progenitors = {
+	Action = "Widget",
+
+}
+
+---Build a root construct prototype
+---@return construct
+local function buildRoot()
+	local base = {}
+
+	base.__metatable = "Protected base class"
+	base.__index = base
+
+	if not types then types = {} end
+	local typename = "Construct" ---@type typename_root
+	types[base] = { [typename] = true }
+
+	if not bases then bases = {} end
+	local main = bases[typename]
+	if main then
+		us.Fill(base, main)
+
+		ds.Log(function() return "Created a new root " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildRoot" end)
+
+		return base
+	end
+
+	function base:GetTypes() return us.Clone(types[base]) end
+	function base:IsType(t) return types[base][t] == true end
+
+	bases[typename] = base
+
+	ds.Log(function() return "Created the main root " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildRoot" end)
+
+	return base
+end
+
+---Mutate a construct prototype into a new variant
+---@param typename typename
+---@return anyWidget
+local function buildBase(typename)
+	local progenitor = progenitors[typename]
+	local base = progenitor and buildBase(progenitor) or buildRoot()
+
+	types[base][typename] = true
+
+	local main = bases[typename]
+	if main then
+		us.Fill(base, main)
+
+		ds.Log(function() return (progenitor or "Construct") .. " base mutated into a new " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildBase" end)
+
+		return base
+	end
+
+	build[typename](base)
+	build[typename] = nil
+	if not next(build) then build = nil end
+
+	bases[typename] = base
+
+	ds.Log(function() return (progenitor or "Construct") .. " base mutated into the main " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildBase" end)
+
+	return base
+end
+
+---`AddListener_eventTag` builder utility
+---@param widget widget
+---@param eventTag eventTag
+---@param handlerList table<widget, function[]>
+local function assignAddListener(widget, eventTag, handlerList)
+	widget["addListener_" .. eventTag] = function(self, handler, callIndex)
+		if type(handler) ~= "function" then return end
+
+		local handlers = handlerList[self]
+
+		if not handlers then
+			handlers = {}
+			handlerList[self] = handlers
+		end
+
+		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
+	end
+end
+
+--| Management
+
+function wt.IsType(object, typename)
+	if type(object) ~= "table" or type(object.IsType) ~= "function" then return false end
+	return object:IsType(typename)
+end
+
+
 --[[ WIDGET ]]
 
-local widget_base ---@type widget
-
-local widget_types ---@type table<widget, table<typename_widget, true>>
+build = {} ---@type table<typename, function>
 
 local widget_handlers ---@type table<widget, table<string, fun(self: widget, ...: any)[]>>
 
@@ -43,48 +141,8 @@ local dataObjectValueGetterKeys = {
 	Slider = "GetValue",
 }
 
----`AddListener_eventTag` builder utility
 ---@param widget widget
----@param eventTag eventTag
----@param handlerList table<widget, function[]>
-local function assignAddListener(widget, eventTag, handlerList)
-	widget["addListener_" .. eventTag] = function(self, handler, callIndex)
-		if type(handler) ~= "function" then return end
-
-		local handlers = handlerList[self]
-
-		if not handlers then
-			handlers = {}
-			handlerList[self] = handlers
-		end
-
-		if type(callIndex) ~= "number" then table.insert(handlers, handler) else table.insert(handlers, Clamp(math.floor(callIndex), 1, #handlers + 1), handler) end
-	end
-end
-
-local function buildWidget()
-	local widget = {}
-
-	widget.__metatable = "Protected base class"
-	widget.__index = widget
-
-	if not widget_types then widget_types = {} end
-
-	local typename = "Widget" ---@type typename_widget
-	widget_types[widget] = { [typename] = true } ---@cast widget widget
-
-	if widget_base then
-		us.Fill(widget, widget_base)
-
-		ds.Log(function() return "A new Widget base was constructed: " .. us.ToString(widget), wt.title .. "buildWidget" end)
-
-		return widget
-	end
-
-	--[ Type ]
-
-	function widget:GetTypes() return us.Clone(widget_types[self]) end
-	function widget:IsType(s) return widget_types[self][s] or false end
+function build.Widget(widget)
 
 	--[ Events ]
 
@@ -127,7 +185,7 @@ local function buildWidget()
 			if parent and parent:HasChild(self) then parent:RemoveChild(self) end
 
 			return true
-		elseif wt.IsWidget(newParent) then
+		elseif wt.IsType(newParent, "Widget") then
 			widget_parent[self] = newParent
 
 			if parent and parent:HasChild(self) then parent:RemoveChild(self) end
@@ -156,7 +214,7 @@ local function buildWidget()
 	end
 
 	function widget:AddChild(child, independent, index)
-		if child == self or not wt.IsWidget(child) or widget_isIndependent[self][child] ~= nil then return nil end
+		if child == self or not wt.IsType(child, "Widget") or widget_isIndependent[self][child] ~= nil then return nil end
 
 		local children = widget_children[self]
 
@@ -252,8 +310,8 @@ local function buildWidget()
 		local evaluator = type(rule.evaluate) == "function" and rule.evaluate
 		local setter = function() self:SetEnabled() end
 
-		if wt.IsWidget(dependency) then
-			if isData then if wt.IsWidget(dependency, "Datamanager") and (wt.IsWidget(dependency, "Binary") or evaluator) then
+		if wt.IsType(dependency, "Widget") then
+			if isData then if wt.IsType(dependency, "Datamanager") and (wt.IsType(dependency, "Binary") or evaluator) then
 				dependency:AddListener_loaded(function(_, success) if success then self:SetEnabled() end end)
 				dependency:AddListener_changed(setter)
 
@@ -325,7 +383,7 @@ local function buildWidget()
 
 				if evaluate then state = evaluate(value) else state = value end
 			else
-				if wt.IsWidget(dependency) then state = dependency:IsEnabled() else state = dependency:IsEnabled() end
+				if wt.IsType(dependency, "Widget") then state = dependency:IsEnabled() else state = dependency:IsEnabled() end
 
 				if evaluate then state = evaluate(state) end
 			end
@@ -335,16 +393,11 @@ local function buildWidget()
 
 		return state
 	end
-
-	widget_base = widget
-
-	ds.Log(function() return "The main Widget base was constructed: " .. us.ToString(widget), wt.title .. "buildWidget" end)
-
-	return widget
 end
 
 function wt.CreateWidget(t)
-	local widget = setmetatable({}, widget_base or buildWidget()) ---@type widget
+	local typename = "Widget" ---@type typename_widget
+	local widget = setmetatable({}, buildBase(typename)) ---@type widget
 
 	--[ Initialization ]
 
@@ -382,49 +435,14 @@ end
 
 --[[ CONTAINER ]]
 
-local container_base ---@type container
-local customContainer_base ---@type customContainer
-
-local function buildContainer()
-	local container = buildWidget()
-
-	local typename = "Container" ---@type typename_container
-	widget_types[container][typename] = true ---@cast container container
-
-	if container_base then
-		us.Fill(container, container_base)
-
-		ds.Log(function() return "Widget base mutated into a new Container base: " .. us.ToString(container), wt.title .. "buildContainer" end)
-
-		return container
-	end
-
-	container_base = container
-
-	ds.Log(function() return "Widget base mutated into the main Container base: " .. us.ToString(container), wt.title .. "buildContainer" end)
-
-	return container
+---@param container container
+function build.Container(container)
+	--TODO implement container prototype
 end
 
-local function buildCustomContainer()
-	local container = buildWidget()
-
-	local typename = "CustomContainer" ---@type typename_customContainer
-	widget_types[container][typename] = true ---@cast container customContainer
-
-	if customContainer_base then
-		us.Fill(container, customContainer_base)
-
-		ds.Log(function() return "Widget base mutated into a new CustomContainer base: " .. us.ToString(container), wt.title .. "buildCustomContainer" end)
-
-		return container
-	end
-
-	customContainer_base = container
-
-	ds.Log(function() return "Widget base mutated into the main CustomContainer base: " .. us.ToString(container), wt.title .. "buildCustomContainer" end)
-
-	return container
+---@param container customContainer
+function build.CustomContainer(container)
+	--TODO implement custom container prototype
 end
 
 ---Set the parameters of a GUI container frame
@@ -473,11 +491,12 @@ end
 
 function wt.CreateContainer(t, ancestor, lite)
 	local typenameBase = "Widget" ---@type typename_widget
-	local container = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local container = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
-	setmetatable(container, container_base or buildContainer()) ---@cast container container
+	local typename = "Container" ---@type typename_container
+	setmetatable(container, buildBase(typename, typenameBase)) ---@cast container container
 
 	--[ Frame ]
 
@@ -501,7 +520,7 @@ end
 
 function wt.CreateCustomContainer(t, ancestor, lite)
 	local typenameBase = "Widget" ---@type typename_widget
-	local container = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local container = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
@@ -554,7 +573,7 @@ end
 
 function wt.CreatePanel(t, ancestor, lite)
 	local typenameBase = "CustomContainer" ---@type typename_customContainer
-	local panel = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateCustomContainer(t, ancestor)
+	local panel = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateCustomContainer(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return panel end
 
@@ -657,7 +676,7 @@ end
 
 function wt.CreateAction(t, ancestor)
 	local typenameBase = "Widget" ---@type typename_widget
-	local action = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local action = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
 	setmetatable(action, action_base or buildAction()) ---@cast action action
 
@@ -862,7 +881,7 @@ end
 
 function wt.CreateButton(t, ancestor, lite)
 	local typenameBase = "Action" ---@type typename_action
-	local button = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
+	local button = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
@@ -896,7 +915,7 @@ end
 
 function wt.CreateCustomButton(t, ancestor, lite)
 	local typenameBase = "Action" ---@type typename_action
-	local button = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
+	local button = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
@@ -1112,7 +1131,7 @@ end
 
 function wt.CreateDatamanager(t, ancestor)
 	local typenameBase = "Widget" ---@type typename_widget
-	local datamanager = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local datamanager = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
 
 	setmetatable(datamanager, datamanager_base or buildDatamanager()) ---@cast datamanager datamanager
 
@@ -1184,7 +1203,7 @@ end
 
 function wt.CreateBinary(t, ancestor)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	local binary = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
+	local binary = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
 
 	setmetatable(binary, binary_base or buildBinary()) ---@cast binary binary
 
@@ -1280,7 +1299,7 @@ end
 
 function wt.CreateCheckbox(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
-	local checkbox = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
+	local checkbox = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
@@ -1589,7 +1608,7 @@ end
 
 function wt.CreateClassicCheckbox(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
-	local checkbox = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
+	local checkbox = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
@@ -1649,7 +1668,7 @@ end
 
 function wt.CreateRadiobutton(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
-	local radiobutton = wt.IsWidget(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor) ---@type binary
+	local radiobutton = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor) ---@type binary
 
 	if WidgetToolsDB.lite and lite ~= false then return radiobutton end
 
@@ -1717,6 +1736,8 @@ end
 --[[ SELECTOR ]]
 
 local selector_base ---@type selector
+local specialSelector_base ---@type specialSelector
+local multiselector_base ---@type multiselector
 
 local selector_clearable ---@type table<selector, boolean>
 
@@ -1762,10 +1783,10 @@ local itemsets = {
 }
 
 local function buildSelector()
-	local selector = buildDatamanager() ---@cast selector selector
+	local selector = buildDatamanager()
 
 	local typename = "Selector" ---@type typename_selector
-	widget_types[selector][typename] = true
+	widget_types[selector][typename] = true ---@cast selector selector
 
 	if selector_base then
 		us.Fill(selector, selector_base)
@@ -1787,7 +1808,7 @@ local function buildSelector()
 			local item = items[i]
 			local new = true
 
-			if wt.IsWidget(items[i], typenameItem) then item:SetParent(selector)
+			if wt.IsType(items[i], typenameItem) then item:SetParent(selector)
 			elseif i > #selector.items then
 				if #inactive > 0 then
 					item = inactive[#inactive]
@@ -1886,11 +1907,11 @@ local function buildSelector()
 	return selector
 end
 
-function wt.CreateSelector(t, datamanager)
+function wt.CreateSelector(t, ancestor)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
+	local selector = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
 
-	local selector = setmetatable(datamanager, selector_base or buildSelector()) ---@cast selector selector
+	setmetatable(selector, selector_base or buildSelector()) ---@cast selector selector
 
 	--[ Initialization ]
 
@@ -1923,7 +1944,7 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	local typename = "SpecialSelector" ---@type typename_specialSelector
 	local typenameBase = "Datamanager" ---@type typename_datamanager
 
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+	datamanager = wt.IsType(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 	local specialSelector = datamanager ---@cast specialSelector specialSelector
 
 	widget_types[specialSelector][typename] = true
@@ -2036,7 +2057,7 @@ function wt.CreateMultiselector(t, datamanager)
 	t = type(t) == "table" and t or {}
 
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	datamanager = wt.IsWidget(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
+	datamanager = wt.IsType(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
 
 	local multiselector = datamanager ---@cast multiselector multiselector
 
@@ -2068,7 +2089,7 @@ function wt.CreateMultiselector(t, datamanager)
 
 		local new = true
 
-		if wt.IsWidget(item, typenameItem) then item:SetParent(multiselector)
+		if wt.IsType(item, typenameItem) then item:SetParent(multiselector)
 		elseif #inactive > 0 then
 			item = inactive[#inactive]
 			table.remove(inactive, #inactive)
@@ -2311,7 +2332,7 @@ function wt.CreateRadiogroup(t, selector)
 	local typenameBase = "Selector" ---@type typename_selector
 	local typenameBaseAlternate = "SpecialSelector" ---@type typename_specialSelector
 
-	selector = (wt.IsWidget(selector, typenameBase) or wt.IsWidget(selector, typenameBaseAlternate)) and selector or wt.CreateSelector(t)
+	selector = (wt.IsType(selector, typenameBase) or wt.IsType(selector, typenameBaseAlternate)) and selector or wt.CreateSelector(t)
 	local radiogroup = selector ---@cast radiogroup radiogroup|specialRadiogroup
 
 	--[ Type ]
@@ -2344,7 +2365,7 @@ function wt.CreateRadiogroup(t, selector)
 		local itemData = items[index]
 		local itemTooltip = itemData.tooltip
 
-		if not active then wt.SetVisibility(item.template, false) elseif wt.IsWidget(item, "Radiobutton") then
+		if not active then wt.SetVisibility(item.template, false) elseif wt.IsType(item, "Radiobutton") then
 			--Update label
 			if item.label then item.label:SetText(title) end
 
@@ -2484,7 +2505,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		instantSave = t.instantSave,
 		dataManagement = t.dataManagement,
 		utilityMenu = false,
-	}, wt.IsWidget(selector, typenameBase) and selector or wt.CreateSelector(t)) ---@cast dropdown dropdownRadiogroup
+	}, wt.IsType(selector, typenameBase) and selector or wt.CreateSelector(t)) ---@cast dropdown dropdownRadiogroup
 
 	widget_types[dropdown][typename] = true
 
@@ -3004,7 +3025,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	local typename = "SpecialRadiogroup" ---@type typename_specialRadiogroup
 	local typenameBase = "SpecialSelector" ---@type typename_specialSelector
 
-	if wt.IsWidget(selector, typenameBase) then itemset = selector:GetItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
+	if wt.IsType(selector, typenameBase) then itemset = selector:GetItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
 
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
@@ -3071,7 +3092,7 @@ function wt.CreateCheckgroup(t, selector)
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
 
-	selector = wt.IsWidget(selector, typenameBase) and selector or wt.CreateMultiselector(t)
+	selector = wt.IsType(selector, typenameBase) and selector or wt.CreateMultiselector(t)
 	local checkgroup = selector ---@cast checkgroup checkgroup
 
 	widget_types[checkgroup][typename] = true
@@ -3270,7 +3291,7 @@ end
 
 function wt.CreateTextual(t, datamanager)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
+	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
 	local textual = setmetatable(datamanager, textual_base or buildTextual()) ---@cast textual textual
 
@@ -3459,7 +3480,7 @@ end
 
 function wt.CreateEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
+	textual = wt.IsType(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return textual end
 
@@ -3503,7 +3524,7 @@ end
 
 function wt.CreateCustomEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
+	textual = wt.IsType(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return textual end
 
@@ -3556,7 +3577,7 @@ end
 
 function wt.CreateMultilineEditbox(t, textual, lite)
 	local typenameBase = "Textual" ---@type typename_textual
-	textual = wt.IsWidget(textual, typenameBase) and textual or wt.CreateTextual(t)
+	textual = wt.IsType(textual, typenameBase) and textual or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return textual end
 
@@ -4033,7 +4054,7 @@ end
 
 function wt.CreateNumeric(t, datamanager)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
+	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
 	local numeric = setmetatable(datamanager, numeric_base or buildNumeric()) ---@cast numeric numeric
 
@@ -4063,7 +4084,7 @@ end
 
 function wt.CreateSlider(t, numeric, lite)
 	local typenameBase = "Numeric" ---@type typename_numeric
-	numeric = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
+	numeric = wt.IsType(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return numeric end
 
@@ -4374,7 +4395,7 @@ end
 
 function wt.CreateClassicSlider(t, numeric, lite)
 	local typenameBase = "Numeric" ---@type typename_numeric
-	numeric = wt.IsWidget(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
+	numeric = wt.IsType(numeric, typenameBase) and numeric or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return numeric end
 
@@ -4874,7 +4895,7 @@ end
 
 function wt.CreateColormanager(t, datamanager)
 	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsWidget(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
+	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
 
 	local colormanager = setmetatable(datamanager, colormanager_base or buildColormanager()) ---@cast colormanager colormanager
 
@@ -4903,7 +4924,7 @@ end
 
 function wt.CreateColorpicker(t, colormanager, lite)
 	local typenameBase = "Colormanager" ---@type typename_colormanager
-	colormanager = wt.IsWidget(colormanager, typenameBase) and colormanager or wt.CreateColormanager(t)
+	colormanager = wt.IsType(colormanager, typenameBase) and colormanager or wt.CreateColormanager(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return colormanager end
 
@@ -6161,7 +6182,7 @@ end
 
 function wt.CreateSettingsmanager(t, widget)
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
 	local settingsmanager = setmetatable(widget, settingsmanager_base or buildSettingsmanager()) ---@cast settingsmanager settingsmanager
 
@@ -6192,7 +6213,7 @@ function wt.CreateSettingsmanager(t, widget)
 end
 
 function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --FIX lite
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsType(parent) ~= "SettingsPage" and not parent.category then return nil end
 
 	t = type(t) == "table" and t or {}
 
@@ -6252,7 +6273,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 	--| Subcategories
 
 	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
-		if wt.IsWidget(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
+		if wt.IsType(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
 
 		table.insert(category.pages, pages[i])
 
@@ -6300,7 +6321,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	--[ Widget ]
 
 	---@type settingsPage|settingsmanager
-	local page = wt.IsWidget(settingsmanager, typenameBase) and settingsmanager or wt.CreateSettingsmanager(t)
+	local page = wt.IsType(settingsmanager, typenameBase) and settingsmanager or wt.CreateSettingsmanager(t)
 
 	--[ Getters & Setters ]
 
@@ -6466,7 +6487,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 	widget_types[page][typename] = true
 
 	--Register to the Settings panel
-	if t.register then wt.RegisterSettingsPage(page, wt.IsWidget(t.register) == "SettingsPage" and t.register or nil, t.titleIcon) end
+	if t.register then wt.RegisterSettingsPage(page, wt.IsType(t.register) == "SettingsPage" and t.register or nil, t.titleIcon) end
 
 	--Add content, performs tasks
 	if type(t.initialize) == "function" then
@@ -6484,7 +6505,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 end
 
 function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsWidget(parent) ~= "SettingsPage" and not parent.category then return nil end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsType(parent) ~= "SettingsPage" and not parent.category then return nil end
 
 	t = type(t) == "table" and t or {}
 
@@ -6506,14 +6527,14 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 		text = wt.strings.settings.warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
-		onAccept = function() category:Gefaults(true) end,
+		onAccept = function() category:Defaults(true) end,
 		onAlt = function() parent:Reset(true) end,
 	})
 
 	--| Subcategories
 
 	if type(pages) == "table" then for i = 1, #pages do if type(pages[i]) == "table" and not pages[i].category then
-		if wt.IsWidget(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
+		if wt.IsType(pages[i]) ~= "SettingsPage" then pages[i] = wt.CreateSettingsPage(addon, pages[i]) end
 
 		table.insert(category.pages, pages[i])
 
@@ -6890,7 +6911,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
 	local profilemanager = setmetatable(widget, profilemanager_base or buildProfilemanager()) ---@cast profilemanager profilemanager
 
@@ -6935,7 +6956,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 	if type(settingsData) ~= "table" then return nil end
 
 	local typenameBase = "Profilemanager" ---@type typename_profilemanager
-	if not wt.IsWidget(profilemanager, typenameBase) then profilemanager = wt.CreateProfilemanager(accountData, characterData, defaultData, t) end
+	if not wt.IsType(profilemanager, typenameBase) then profilemanager = wt.CreateProfilemanager(accountData, characterData, defaultData, t) end
 
 	if not profilemanager then return nil elseif WidgetToolsDB.lite and lite ~= false then return profilemanager end
 
@@ -7486,7 +7507,7 @@ end
 
 function wt.CreateAddonmanager(t, widget)
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
 	local addonmanager = setmetatable(widget, addonmanager_base or buildAddonmanager()) ---@cast addonmanager addonmanager
 
@@ -7508,7 +7529,7 @@ end
 
 function wt.CreateAddonPage(t, addonmanager, lite)
 	local typenameBase = "Addonmanager" ---@type typename_addonmanager
-	if not wt.IsWidget(addonmanager, typenameBase) then addonmanager = wt.CreateAddonmanager(t) end
+	if not wt.IsType(addonmanager, typenameBase) then addonmanager = wt.CreateAddonmanager(t) end
 
 	local data = addonmanager_addonData[addonmanager]
 
@@ -8009,14 +8030,14 @@ local function buildChatmanager()
 		return false
 	end
 
-	ds.Log(function() return "Widget base mutated into Addonmanager base: " .. us.ToString(chatmanager), wt.title .. ".buildAddonmanager" end)
+	ds.Log(function() return "Widget base mutated into Chatmanager base: " .. us.ToString(chatmanager), wt.title .. "buildChatmanager" end)
 
 	return chatmanager
 end
 
 function wt.CreateChatmanager(keywords, t, widget)
 	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsWidget(widget, typenameBase) then widget = wt.CreateWidget(t) end
+	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
 
 	local chatmanager = setmetatable(widget, chatmanager_base or buildChatmanager()) ---@cast chatmanager chatmanager
 
@@ -8043,7 +8064,7 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 	local addon, title, icon
 
-	if wt.IsWidget(t.addon, "Addonmanager") then
+	if wt.IsType(t.addon, "Addonmanager") then
 		addon = t.addon:GetName()
 		title = t.addon:GetTitle()
 		icon = t.addon:GetLogo()

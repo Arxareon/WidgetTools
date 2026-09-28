@@ -276,14 +276,6 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 end
 
 
---[[ WIDGET MANAGEMENT ]]
-
-function wt.IsWidget(o, typename)
-	if type(o) ~= "table" or type(o.isType) ~= "function" then return false end
-	if typename then return o.isType(typename) else return true end
-end
-
-
 --[[ FRAME MANAGEMENT ]]
 
 --[ Events ]
@@ -536,7 +528,7 @@ function wt.ConvertToAbsolutePosition(frame, keepAnchor)
 	wt.SetAnchor(frame, oldAnchor)
 end
 
---| Arrangement
+--| Arrangement ---REPLACE with widget functionality
 
 --List of container content element positioning arrangement ordering directives
 local arrangementOrdering = {} ---@type table<AnyFrameObject, integer>
@@ -889,7 +881,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 	end end
 end
 
---[ Dependencies ] --REPLACE
+--[ Dependencies ] --REMOVE replaced with widget functionality
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
@@ -911,7 +903,7 @@ function wt.AddDependencies(rules, setState)
 	for i = 1, #rules do
 		local f = rules[i].dependency
 
-		if wt.IsWidget(f, "Datamanager") then
+		if wt.IsType(f, "Datamanager") then
 			f:AddListener_loaded(function(_, success) if success then setter() end end)
 			f:AddListener_changed(setter)
 		elseif us.IsFrame(f) then
@@ -935,7 +927,7 @@ function wt.CheckDependencies(rules)
 		local evaluate = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
 		local value
 
-		if wt.IsWidget(widget, "Datamanager") then value = widget:GetValue() elseif us.IsFrame(widget) then
+		if wt.IsType(widget, "Datamanager") then value = widget:GetValue() elseif us.IsFrame(widget) then
 			local getterKey = dataObjectValueGetterKeys[widget:GetObjectType()]
 
 			if getterKey then value = widget[getterKey](widget) end
@@ -1793,9 +1785,9 @@ end
 --[[ SETTINGS ]]
 
 function wt.RegisterSettingsPage(page, parent, icon)
-	if WidgetToolsDB.lite or wt.IsWidget(page) ~= "SettingsPage" or page.category then return end
+	if WidgetToolsDB.lite or wt.IsType(page, "SettingsPage") or page.category then return end
 
-	parent = wt.IsWidget(parent) == "SettingsPage" and parent or nil
+	parent = wt.IsType(parent, "SettingsPage") and parent or nil
 	if icon == nil then icon = parent == nil end
 
 	local iconTexture = (icon and type(page.iconTexture) == "string" and (" |T" .. page.iconTexture .. ":14:14:3:-1|t") or "")
@@ -1816,7 +1808,7 @@ end
 local settingsData = { rules = {}, changeHandlers = {} } ---@type settingsRegistry
 
 function wt.AddSettingsDataManagementEntry(widget, t)
-	if not wt.IsWidget(widget, "Datamanager") or type(t) ~= "table" then return nil end
+	if not wt.IsType(widget, "Datamanager") or type(t) ~= "table" then return nil end
 
 	t.category = type(t.category) == "string" and t.category or "WidgetTools"
 	local key = t.category .. (type(t.key) == "string" and t.key or "")

@@ -490,107 +490,6 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 end
 
 
---[[ WIDGET MANAGEMENT ]]
-
----@alias anyWidget
----| widget
----| action
----| actionButton
----| customButton
----| datamanager
----| binary
----| radiobutton
----| checkbox
----| classicCheckbox
----| selector
----| radiogroup
----| dropdownRadiogroup
----| specialSelector
----| specialRadiogroup
----| multiselector
----| checkgroup
----| textual
----| textualEditbox
----| customEditbox
----| multilineEditbox
----| numeric
----| numericSlider
----| classicSlider
----| colormanager
----| colorpicker
----| positionmanager
----| positionPanel
----| fontmanager
----| fontPanel
----| settingsmanager
----| settingsPage
----| profilemanager
----| profilesPage
----| addonmanager
----| addonPage
----| settingsCategory
-
----Check if an object is a recognizable widget table and is optionally of a specific type
----@param o IsWidget_param_o Reference to the object to check
----@param typename IsWidget_param_typename Custom typename to not only check if `o` is a WidgetTools widget table or if it is also of the specific type | ***Default:*** *don't check type*
----@return IsWidget_return # `true` if the object is a widget (and optionally also of `typename`)
-function wt.IsWidget(o, typename)
-
-	--| Parameters
-
-	---Reference to the object to check
-	---@alias IsWidget_param_o any
-
-	---Custom typename to not only check if `o` is a WidgetTools widget table or if it is also of the specific type | ***Default:*** *don't check type*
-	---@alias IsWidget_param_typename typename|string?
-
-		---@alias typename
-		---| typename_widget
-		---| typename_action
-		---| typename_button
-		---| typename_customButton
-		---| typename_datamanager
-		---| typename_binary
-		---| typename_radiobutton
-		---| typename_checkbox
-		---| typename_classicCheckbox
-		---| typename_selector
-		---| typename_radiogroup
-		---| typename_dropdownRadiogroup
-		---| typename_specialSelector
-		---| typename_specialRadiogroup
-		---| typename_multiselector
-		---| typename_checkgroup
-		---| typename_textual
-		---| typename_editbox
-		---| typename_customEditbox
-		---| typename_multilineEditbox
-		---| typename_numeric
-		---| typename_slider
-		---| typename_classicSlider
-		---| typename_colormanager
-		---| typename_colorpicker
-		---| typename_positionmanager
-		---| typename_positionPanel
-		---| typename_fontmanager
-		---| typename_fontPanel
-		---| typename_settingsmanager
-		---| typename_settingsPage
-		---| typename_profilemanager
-		---| typename_profilesPage
-		---| typename_addonmanager
-		---| typename_addonPage
-		---| typename_settingsCategory
-
-	--| Returns
-
-	---Return the `true` if the object is a widget (and optionally also of `typename`)
-	---@alias IsWidget_return boolean
-
-	return false
-end
-
-
 --[[ FRAME MANAGEMENT ]]
 
 --[ Events ]
@@ -1856,6 +1755,237 @@ function wt.CreateMenuButton(menu, t)
 end
 
 
+--[[ CONSTRUCT ]]
+
+local c = {} ---@class construct
+
+	---Returns the type list of this widget
+	---@return { [typename_root]: true, }
+	function c:GetTypes() return {} end
+
+		---@alias typename_root "Construct"
+
+	---Checks and returns if the type of this contruct matches the name provided
+	---@param typename construct_IsType_typename WidgetTools typename to check if this instance is of this specific type
+	---@return boolean
+	function c:IsType(typename)
+
+		--| Parameters
+
+		---WidgetTools typename to check if this instance is of this specific type
+		---@alias construct_IsType_typename typename|typename_root
+
+		return false
+	end
+
+--| Management
+
+---@alias anyWidget
+---| widget
+---| action
+---| actionButton
+---| customButton
+---| datamanager
+---| binary
+---| radiobutton
+---| checkbox
+---| classicCheckbox
+---| selector
+---| radiogroup
+---| dropdownRadiogroup
+---| specialSelector
+---| specialRadiogroup
+---| multiselector
+---| checkgroup
+---| textual
+---| textualEditbox
+---| customEditbox
+---| multilineEditbox
+---| numeric
+---| numericSlider
+---| classicSlider
+---| colormanager
+---| colorpicker
+---| positionmanager
+---| positionPanel
+---| fontmanager
+---| fontPanel
+---| settingsmanager
+---| settingsPage
+---| profilemanager
+---| profilesPage
+---| addonmanager
+---| addonPage
+---| settingsCategory
+
+---Check if an object is a recognizable construct instance and it is of the specific type
+---@param object IsType_param_object Reference to the object to check
+---@param typename IsType_param_typename WidgetTools typename to check if `object` is an instance of this specific type
+---@return IsWidget_return # `true` if the object is a widget (and optionally also of `typename`)
+function wt.IsType(object, typename)
+
+	--| Parameters
+
+	---Reference to the object to check
+	---@alias IsType_param_object any
+
+	---WidgetTools typename to check if `object` is an instance of this specific type
+	---@alias IsType_param_typename typename|typename_root
+
+		---@alias typename
+		---| typename_widget
+		---| typename_chatmanager
+		---| typename_container
+		---| typename_customContainer
+		---| typename_action
+		---| typename_button
+		---| typename_customButton
+		---| typename_datamanager
+		---| typename_binary
+		---| typename_radiobutton
+		---| typename_checkbox
+		---| typename_classicCheckbox
+		---| typename_selector
+		---| typename_radiogroup
+		---| typename_dropdownRadiogroup
+		---| typename_specialSelector
+		---| typename_specialRadiogroup
+		---| typename_multiselector
+		---| typename_checkgroup
+		---| typename_textual
+		---| typename_editbox
+		---| typename_customEditbox
+		---| typename_multilineEditbox
+		---| typename_numeric
+		---| typename_slider
+		---| typename_classicSlider
+		---| typename_colormanager
+		---| typename_colorpicker
+		---| typename_positionmanager
+		---| typename_positionPanel
+		---| typename_fontmanager
+		---| typename_fontPanel
+		---| typename_settingsmanager
+		---| typename_settingsPage
+		---| typename_profilemanager
+		---| typename_profilesPage
+		---| typename_addonmanager
+		---| typename_addonPage
+		---| typename_settingsCategory
+
+	--| Returns
+
+	---Return the `true` if the object is a widget (and optionally also of `typename`)
+	---@alias IsWidget_return boolean
+
+	return false
+end
+
+--[ Chat Commands ]
+
+---Create a non-GUI chatmanager instance and register a list of chat keywords and related commands for use
+---@param keywords CreateChatmanager_param_keywords List of addon-specific keywords to register to listen to when typed as slash commands
+--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
+---@param t? chatCommandManager_options Optional parameters
+---@param ancestor? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
+function wt.CreateChatmanager(keywords, t, ancestor)
+
+	--| Parameters
+
+	---List of addon-specific keywords to register to listen to when typed as slash commands
+	--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
+	---@alias CreateChatmanager_param_keywords string[]
+
+	---Optional parameters
+	---@class chatCommandManager_options : widget_options
+	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
+	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
+	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
+	---@field defaultHandler? fun(commandManager: chatmanager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
+	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
+
+		---@class chatCommandData
+		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
+		---@field description? string|fun(): string Note to append to the first specified keyword and `command` in this command's line in the list printed out via the help command(s)
+		---@field handler? fun(manager: chatmanager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><p>@*return* `result`? boolean|nil ― Call <code>[<i>value</i>].onSuccess</code> if `true` or <code>[<i>value</i>].onError</code> if `false` (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
+		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after<code>commands[<i>value</i>].handler</code> returns with `true`<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
+		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil)<p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
+		---@field onSuccess? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `true` to handle a successful result (after `success` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field onError? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil) to handle a failed result (after `error` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If `onHelp` is specified, it will still be called even if the command is hidden.</li></ul>
+		---@field help? boolean If `true`, call `chatCommandManager.help()` on trigger | ***Default:*** `false`
+		---@field onHelp? function Function to call after a specified help command has been triggered or an invalid command is typed with the specified keywords
+
+		---@class chatCommandColors
+		---@field title? color Color for the addon title used for branding chat messages | ***Default:*** `YELLOW_FONT_COLOR`
+		---@field content? color Color for chat message contents appended after the title (used for success & error responses) | ***Default:*** `WHITE_FONT_COLOR`
+		---@field command? color Used to color the registered chat commands when they are being listed | ***Default:*** `LIGHTBLUE_FONT_COLOR`
+		---@field description? color Used to color the description of registered chat commands when they are being listed | ***Default:*** `LIGHTGRAY_FONT_COLOR`
+
+	--| Returns
+
+	---***Default:*** `nil`
+	---@alias CreateChatmanager_return_chatmanager chatmanager|nil
+
+		---`Chatmanager` WidgetTools widget instance table
+		---@class chatmanager : widget
+		local _ = {}
+
+			--[ Type ]
+
+			---Returns the type list of this widget
+			---@return { [typename_root]: true, [typename_widget]: true, [typename_chatmanager]: true, }
+			function _:GetTypes() return {} end
+
+				---@alias typename_chatmanager "Chatmanager"
+
+			--[ Events ]
+
+			---Register a listener for a custom event to call the specified handler on trigger
+			---@param event eventTag Unique event identifier tag
+			---@param handler chatmanager_handler Called when a custom event is invoked
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener(event, handler, callIndex) end
+
+			---Register a listener for an "enabled" event to call the specified handler on trigger
+			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+			--[ Print ]
+
+			---Print out a formatted chat message
+			---@param message string Message content
+			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
+			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
+			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
+			function _:Print(message, title, titleColor, contentColor) end
+
+				---@alias chatCommandColorNames
+				---| "title"
+				---| "content"
+				---| "command"
+				---| "description"
+
+			--Print a welcome message with a hint about chat keywords
+			function _:Welcome() end
+
+			--| Commands
+
+			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
+			function _:Help() end
+
+			---Find and a specific command by its name and call its handler script
+			---***
+			---@param command string Name of the slash command word (no spaces)
+			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
+			---***
+			---@return boolean # Whether the command was found and the handler called successfully
+			function _:Trigger(command, ...) return false end
+end
+
+
 --[[ WIDGET ]]
 
 ---Create a basic non-GUI parentable widget instance with typename, event callback, child widget, enabled state and dependency management logic
@@ -1927,20 +2057,20 @@ function wt.CreateWidget(t)
 
 	--| Returns
 
-	local _ = {} ---@class widget
+	local _ = {} ---@class widget : construct
 
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_widget "Widget"
 
 		---Checks and returns if the type of this widget matches the string provided
-		---@param s typename|string
+		---@param typename typename
 		---@return boolean
-		function _:IsType(s) return false end
+		function _:IsType(typename) return false end
 
 		--[ Events ]
 
@@ -2079,7 +2209,7 @@ function wt.CreateWidget(t)
 	return _
 end
 
---[ CONTAINER ]
+--[ Container ]
 
 ---Create a basic GUI container instance
 ---@param t? container_options Optional parameters
@@ -2148,8 +2278,8 @@ function wt.CreateContainer(t, ancestor, lite)
 	--[ Type ]
 
 	---Returns the type list of this widget
-	---@return { [typename_widget]: true, [typename_container]: true, }
-	function _.getTypes() return {} end
+	---@return { [typename_root]: true, [typename_widget]: true, [typename_container]: true, }
+	function _:GetTypes() return {} end
 
 		---@alias typename_container "Container"
 
@@ -2254,8 +2384,8 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 	--[ Type ]
 
 	---Returns the type list of this widget
-	---@return { [typename_widget]: true, [typename_customContainer]: true, }
-	function _.getTypes() return {} end
+	---@return { [typename_root]: true, [typename_widget]: true, [typename_customContainer]: true, }
+	function _:GetTypes() return {} end
 
 		---@alias typename_customContainer "CustomContainer"
 
@@ -2376,8 +2506,8 @@ function wt.CreatePanel(t, ancestor, lite)
 	--[ Type ]
 
 	---Returns the type list of this widget
-	---@return { [typename_widget]: true, [typename_panel]: true, }
-	function _.getTypes() return {} end
+	---@return { [typename_root]: true, [typename_widget]: true, [typename_panel]: true, }
+	function _:GetTypes() return {} end
 
 		---@alias typename_panel "Panel"
 
@@ -2441,7 +2571,7 @@ function wt.CreateAction(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_action]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_action "Action"
@@ -2545,7 +2675,7 @@ function wt.CreateButton(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_button "Button"
@@ -2640,7 +2770,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_customButton "CustomButton"
@@ -2768,7 +2898,7 @@ function wt.CreateDatamanager(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_datamanager "Datamanager"
@@ -2964,8 +3094,8 @@ function wt.CreateBinary(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_binary "Binary"
 
@@ -3134,7 +3264,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_checkbox "Checkbox"
@@ -3232,8 +3362,8 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_classicCheckbox "ClassicCheckbox"
 
@@ -3337,8 +3467,8 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_radiobutton]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_radiobutton]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_radiobutton "Radiobutton"
 
@@ -3477,8 +3607,8 @@ function wt.CreateSelector(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_selector "Selector"
 
@@ -3673,8 +3803,8 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_specialSelector "SpecialSelector"
 
@@ -3849,8 +3979,8 @@ function wt.CreateMultiselector(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_multiselector "Multiselector"
 
@@ -4042,8 +4172,8 @@ function wt.CreateRadiogroup(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_radiogroup "Radiogroup"
 
@@ -4184,8 +4314,8 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_dropdownRadiogroup "DropdownRadiogroup"
 
@@ -4296,8 +4426,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, [typename_specialRadiogroup]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, [typename_specialRadiogroup]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_specialRadiogroup "SpecialRadiogroup"
 
@@ -4417,8 +4547,8 @@ function wt.CreateCheckgroup(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_checkgroup "Checkgroup"
 
@@ -4538,8 +4668,8 @@ function wt.CreateTextual(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_textual "Textual"
 
@@ -4695,8 +4825,8 @@ function wt.CreateEditbox(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_editbox]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_editbox]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_editbox "Editbox"
 
@@ -4790,8 +4920,8 @@ function wt.CreateCustomEditbox(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_customEditbox]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_customEditbox]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_customEditbox "CustomEditbox"
 
@@ -4902,8 +5032,8 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_multilineEditbox]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_multilineEditbox]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_multilineEditbox "MultilineEditbox"
 
@@ -4969,7 +5099,7 @@ function wt.CreateCopybox(t)
 
 		---Returns the type list of this widget
 		---@return { [typename_copybox]: true,}
-		function _.getTypes() return {} end
+		function _:GetTypes() return {} end
 
 			---@alias typename_copybox "Copybox"
 
@@ -5089,8 +5219,8 @@ function wt.CreateNumeric(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_numeric "Numeric"
 
@@ -5308,8 +5438,8 @@ function wt.CreateSlider(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_slider]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_slider]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_slider "Slider"
 
@@ -5433,8 +5563,8 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_classicSlider]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_classicSlider]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_classicSlider "ClassicSlider"
 
@@ -5551,8 +5681,8 @@ function wt.CreateColormanager(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_colormanager "Colormanager"
 
@@ -5703,8 +5833,8 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, [typename_colorpicker]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, [typename_colorpicker]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_colorpicker "Colorpicker"
 
@@ -5887,8 +6017,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_positionmanager]: true, [typename_positionPanel]: true,  }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_positionmanager]: true, [typename_positionPanel]: true,  }
+		function _:GetTypes() return {} end
 
 			---@alias typename_positionPanel "PositionOptions"
 
@@ -5986,8 +6116,8 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_fontmanager]: true, [typename_fontPanel]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_fontmanager]: true, [typename_fontPanel]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_fontPanel "FontOptions"
 end
@@ -6094,8 +6224,8 @@ function wt.CreateSettingsmanager(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_settingsmanager]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsmanager]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_settingsmanager "Settingsmanager"
 
@@ -6296,7 +6426,7 @@ function wt.CreateSettingsPage(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_settingsPage "SettingsPage"
@@ -6380,7 +6510,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_settingsCategory]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsCategory]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_settingsCategory "SettingsCategory"
@@ -6513,7 +6643,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, anc
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_profilemanager]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_profilemanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_profilemanager "Profilemanager"
@@ -6766,8 +6896,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_profilemanager]: true, [typename_profilesPage]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_profilemanager]: true, [typename_profilesPage]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_profilesPage "ProfilesPage"
 
@@ -6880,7 +7010,7 @@ function wt.CreateAddonmanager(t, ancestor)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_addonmanager]: true, }
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_addonmanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_addonmanager "Addonmanager"
@@ -7064,8 +7194,8 @@ function wt.CreateAddonPage(t, ancestor, lite)
 		--[ Type ]
 
 		---Returns the type list of this widget
-		---@return { [typename_widget]: true, [typename_addonmanager]: true, [typename_addonPage]: true, }
-		function _.getTypes() return {} end
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_addonmanager]: true, [typename_addonPage]: true, }
+		function _:GetTypes() return {} end
 
 			---@alias typename_addonPage "AddonPage"
 
@@ -7084,116 +7214,4 @@ function wt.CreateAddonPage(t, ancestor, lite)
 			---@param handler addonPage_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function addListener.enabled(handler, callIndex) end
-end
-
-
---[[ CHAT COMMANDS ]]
-
----Create a non-GUI chatmanager widget instance and register a list of chat keywords and related commands for use
----@param keywords CreateChatmanager_param_keywords List of addon-specific keywords to register to listen to when typed as slash commands
---- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
----@param t? chatCommandManager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
-function wt.CreateChatmanager(keywords, t, ancestor)
-
-	--| Parameters
-
-	---List of addon-specific keywords to register to listen to when typed as slash commands
-	--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
-	---@alias CreateChatmanager_param_keywords string[]
-
-	---Optional parameters
-	---@class chatCommandManager_options : widget_options
-	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
-	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
-	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
-	---@field defaultHandler? fun(commandManager: chatmanager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
-	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
-
-		---@class chatCommandData
-		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
-		---@field description? string|fun(): string Note to append to the first specified keyword and `command` in this command's line in the list printed out via the help command(s)
-		---@field handler? fun(manager: chatmanager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><p>@*return* `result`? boolean|nil ― Call <code>[<i>value</i>].onSuccess</code> if `true` or <code>[<i>value</i>].onError</code> if `false` (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
-		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after<code>commands[<i>value</i>].handler</code> returns with `true`<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
-		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil)<p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
-		---@field onSuccess? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `true` to handle a successful result (after `success` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field onError? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil) to handle a failed result (after `error` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If `onHelp` is specified, it will still be called even if the command is hidden.</li></ul>
-		---@field help? boolean If `true`, call `chatCommandManager.help()` on trigger | ***Default:*** `false`
-		---@field onHelp? function Function to call after a specified help command has been triggered or an invalid command is typed with the specified keywords
-
-		---@class chatCommandColors
-		---@field title? color Color for the addon title used for branding chat messages | ***Default:*** `YELLOW_FONT_COLOR`
-		---@field content? color Color for chat message contents appended after the title (used for success & error responses) | ***Default:*** `WHITE_FONT_COLOR`
-		---@field command? color Used to color the registered chat commands when they are being listed | ***Default:*** `LIGHTBLUE_FONT_COLOR`
-		---@field description? color Used to color the description of registered chat commands when they are being listed | ***Default:*** `LIGHTGRAY_FONT_COLOR`
-
-	--| Returns
-
-	---***Default:*** `nil`
-	---@alias CreateChatmanager_return_chatmanager chatmanager|nil
-
-		---`Chatmanager` WidgetTools widget instance table
-		---@class chatmanager : widget
-		local _ = {}
-
-			--[ Type ]
-
-			---Returns the type list of this widget
-			---@return { [typename_widget]: true, [typename_chatmanager]: true, }
-			function _:GetTypes() return {} end
-
-				---@alias typename_chatmanager "Chatmanager"
-
-			---Checks and returns if the type of this widget matches the string provided
-			---***
-			---@param s typename|string
-			---@return boolean
-			---<p></p>
-			function _:IsType(s) return false end
-
-			--[ Events ]
-
-			---Register a listener for a custom event to call the specified handler on trigger
-			---@param event eventTag Unique event identifier tag
-			---@param handler chatmanager_handler Called when a custom event is invoked
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener(event, handler, callIndex) end
-
-			---Register a listener for an "enabled" event to call the specified handler on trigger
-			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener_enabled(handler, callIndex) end
-
-			--[ Print ]
-
-			---Print out a formatted chat message
-			---@param message string Message content
-			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
-			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
-			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
-			function _:Print(message, title, titleColor, contentColor) end
-
-				---@alias chatCommandColorNames
-				---| "title"
-				---| "content"
-				---| "command"
-				---| "description"
-
-			--Print a welcome message with a hint about chat keywords
-			function _:Welcome() end
-
-			--| Commands
-
-			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
-			function _:Help() end
-
-			---Find and a specific command by its name and call its handler script
-			---***
-			---@param command string Name of the slash command word (no spaces)
-			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
-			---***
-			---@return boolean # Whether the command was found and the handler called successfully
-			function _:Trigger(command, ...) return false end
 end
