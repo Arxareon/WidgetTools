@@ -9,6 +9,8 @@ local ds = WidgetTools.debugging
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
 
+wt.clipboard = {}
+
 
 --[[ CONSTRUCT ]]
 
@@ -5796,19 +5798,8 @@ local settingsmanager_invoke_applied ---@type fun(self: settingsmanager, user: b
 local settingsmanager_invoke_reverted ---@type fun(self: settingsmanager, user: boolean)
 local settingsmanager_invoke_reset ---@type fun(self: settingsmanager, user: boolean)
 
-local function buildSettingsmanager()
-	local settingsmanager = buildWidget() ---@cast settingsmanager settingsmanager
-
-	local typename = "Settingsmanager" ---@type typename_settingsmanager
-	widget_types[settingsmanager][typename] = true
-
-	if settingsmanager_base then
-		us.Fill(settingsmanager, settingsmanager_base)
-
-		ds.Log(function() return "Datamanager base mutated into a new Settingsmanager base: " .. us.ToString(settingsmanager), wt.title .. "buildSettingsmanager" end)
-
-		return settingsmanager
-	end
+---@param settingsmanager settingsmanager
+function build.Settingsmanager(settingsmanager)
 
 	--[ Batched Datamanagement ]
 
@@ -5907,19 +5898,12 @@ local function buildSettingsmanager()
 
 		for i = 1, #handlers do handlers[i](self, user) end
 	end
-
-	settingsmanager_base = settingsmanager
-
-	ds.Log(function() return "Widget base mutated into the main Settingsmanager base: " .. us.ToString(settingsmanager), wt.title .. "buildSettingsmanager" end)
-
-	return settingsmanager
 end
 
-function wt.CreateSettingsmanager(t, widget)
-	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
-
-	local settingsmanager = setmetatable(widget, settingsmanager_base or buildSettingsmanager()) ---@cast settingsmanager settingsmanager
+progenitors.Settingsmanager = "Widget" ---@type typename_widget
+function wt.CreateSettingsmanager(t, ancestor)
+	local typename = "Settingsmanager" ---@type typename_settingsmanager
+	local settingsmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t), buildBase(typename)) ---@cast settingsmanager settingsmanager
 
 	--[ Initialization ]
 
@@ -5939,10 +5923,7 @@ function wt.CreateSettingsmanager(t, widget)
 		end
 	end
 
-	ds.Log(function() return
-		"Widget instance mutated into Settingsmanager instance: " .. us.ToString(settingsmanager) .. " with base: " .. action_base,
-		wt.title .. ".CreateSettingsmanager"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Settingsmanager: " .. us.ToString(settingsmanager), wt.title .. ".CreateSettingsmanager" end)
 
 	return settingsmanager
 end
@@ -6294,8 +6275,6 @@ end
 
 --[[ PROFILES ]]
 
-local profilemanager_base ---@type profilemanager
-
 local profiles_accountData ---@type table<profilemanager, profileStorage>
 local profiles_characterData ---@type table<profilemanager, characterProfileData>
 local profiles_defaultData ---@type table<profilemanager, table>
@@ -6323,19 +6302,8 @@ local profilemanager_invoke_deleted ---@type fun(self: profilemanager, success: 
 local profilemanager_invoke_reset ---@type fun(self: profilemanager, profilemanager, success: boolean, user?: boolean, index: any, title?: string)
 local profilemanager_invoke_loaded ---@type fun(self: profilemanager, user?: boolean)
 
-local function buildProfilemanager()
-	local profilemanager = buildWidget() ---@cast profilemanager profilemanager
-
-	local typename = "Profilemanager" ---@type typename_profilemanager
-	widget_types[profilemanager][typename] = true
-
-	if profilemanager_base then
-		us.Fill(profilemanager, profilemanager_base)
-
-		ds.Log(function() return "Widget base mutated into a new Profilemanager base: " .. us.ToString(profilemanager), wt.title .. "buildProfilemanager" end)
-
-		return profilemanager
-	end
+---@param profilemanager profilemanager
+function build.Profilemanager(profilemanager)
 
 	--[ Profile ]
 
@@ -6634,21 +6602,13 @@ local function buildProfilemanager()
 
 		for i = 1, #handlers do	handlers[i](self, user) end
 	end
-
-	profilemanager_base = profilemanager
-
-	ds.Log(function() return "Widget base mutated into the main Profilemanager base: " .. us.ToString(profilemanager), wt.title .. "buildProfilemanager" end)
-
-	return profilemanager
 end
 
-function wt.CreateProfilemanager(accountData, characterData, defaultData, t, widget)
+function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
-	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
-
-	local profilemanager = setmetatable(widget, profilemanager_base or buildProfilemanager()) ---@cast profilemanager profilemanager
+	local typename = "Profilemanager" ---@type typename_profilemanager
+	local profilemanager = setmetatable({}, buildBase(typename)) ---@cast profilemanager profilemanager
 
 	--[ Initialization ]
 
@@ -6677,10 +6637,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 
 	profilemanager:Load(nil, nil, false, true)
 
-	ds.Log(function() return
-		"Widget instance mutated into Profilemanager instance: " .. us.ToString(profilemanager) .. " with base: " .. action_base,
-		wt.title .. ".CreateProfilemanager"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Profilemanager: " .. us.ToString(profilemanager), wt.title .. ".CreateProfilemanager" end)
 
 	return profilemanager
 end
@@ -7125,26 +7082,13 @@ end
 
 --[[ ADDON ]]
 
-local addonmanager_base ---@type addonmanager
-
 local addonmanager_addonData ---@type table<addonmanager, addonInfo>
 
 local addonmanager_invoke_changed ---@type fun(self: addonmanager, user: boolean)
 local addonmanager_handlers_changed ---@type table<addonmanager, addonmanager_handler_changed[]>
 
-local function buildAddonmanager()
-	local addonmanager = buildWidget() ---@cast addonmanager addonmanager
-
-	local typename = "Addonmanager" ---@type typename_addonmanager
-	widget_types[addonmanager][typename] = true
-
-	if addonmanager_base then
-		us.Fill(addonmanager, addonmanager_base)
-
-		ds.Log(function() return "Widget base mutated into a new Addonmanager base: " .. us.ToString(addonmanager), wt.title .. "buildAddonmanager" end)
-
-		return addonmanager
-	end
+---@param addonmanager addonmanager
+function build.Addonmanager(addonmanager)
 
 	--[ Metadata ]
 
@@ -7232,19 +7176,11 @@ local function buildAddonmanager()
 
 		for i = 1, #handlers do handlers[i](self, name, user) end
 	end
-
-	addonmanager_base = addonmanager
-
-	ds.Log(function() return "Widget base mutated into the main Addonmanager base: " .. us.ToString(addonmanager), wt.title .. "buildAddonmanager" end)
-
-	return addonmanager
 end
 
-function wt.CreateAddonmanager(t, widget)
-	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
-
-	local addonmanager = setmetatable(widget, addonmanager_base or buildAddonmanager()) ---@cast addonmanager addonmanager
+function wt.CreateAddonmanager(t, ancestor)
+	local typename = "Addonmanager" ---@type typename_addonmanager
+	local addonmanager = setmetatable({}, buildBase(typename)) ---@cast addonmanager addonmanager
 
 	--[ Initialization ]
 
@@ -7252,10 +7188,7 @@ function wt.CreateAddonmanager(t, widget)
 
 	addonmanager:SetAddon(t.addon, t.changelog)
 
-	ds.Log(function() return
-		"Widget instance mutated into Addonmanager instance: " .. us.ToString(addonmanager) .. " with base: " .. action_base,
-		wt.title .. ".CreateAddonmanager"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Addonmanager: " .. us.ToString(addonmanager), wt.title .. ".CreateAddonmanager" end)
 
 	return addonmanager
 end
@@ -7654,8 +7587,6 @@ end
 
 --[[ CHAT COMMANDS ]]
 
-local chatmanager_base ---@type chatmanager
-
 local chatmanager_keywords ---@type table<chatmanager, string[]>
 local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
 local chatmanager_colors ---@type table<chatmanager, table>
@@ -7665,14 +7596,8 @@ local chatmanager_branding ---@type table<chatmanager, string>
 
 local chatmanager_onWelcome ---@type table<chatmanager, function>
 
-local function buildChatmanager()
-	local chatmanager = buildWidget() ---@cast chatmanager chatmanager
-
-	--[ Type ]
-
-	local typename = "Chatmanager" ---@type typename_chatmanager
-
-	widget_types[chatmanager][typename] = true
+---@param chatmanager chatmanager
+function build.Chatmanager(chatmanager)
 
 	--[ Print ]
 
@@ -7764,17 +7689,11 @@ local function buildChatmanager()
 
 		return false
 	end
-
-	ds.Log(function() return "Widget base mutated into Chatmanager base: " .. us.ToString(chatmanager), wt.title .. "buildChatmanager" end)
-
-	return chatmanager
 end
 
-function wt.CreateChatmanager(keywords, t, widget)
-	local typenameBase = "Widget" ---@type typename_widget
-	if not wt.IsType(widget, typenameBase) then widget = wt.CreateWidget(t) end
-
-	local chatmanager = setmetatable(widget, chatmanager_base or buildChatmanager()) ---@cast chatmanager chatmanager
+function wt.CreateChatmanager(keywords, t)
+	local typename = "Chatmanager" ---@type typename_chatmanager
+	local chatmanager = setmetatable({}, buildBase(typename)) ---@type chatmanager
 
 	--[ Initialization ]
 
@@ -7848,8 +7767,3 @@ function wt.CreateChatmanager(keywords, t, widget)
 
 	return chatmanager
 end
-
-
---[[ CLIPBOARD ]]
-
-wt.clipboard = {}

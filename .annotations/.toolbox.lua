@@ -1844,110 +1844,6 @@ function wt.IsType(object, typename)
 	return false
 end
 
---[ Chat Commands ]
-
----Create a non-GUI chatmanager instance and register a list of chat keywords and related commands for use
----@param keywords CreateChatmanager_param_keywords List of addon-specific keywords to register to listen to when typed as slash commands
---- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
----@param t? chatCommandManager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
-function wt.CreateChatmanager(keywords, t, ancestor)
-
-	--| Parameters
-
-	---List of addon-specific keywords to register to listen to when typed as slash commands
-	--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
-	---@alias CreateChatmanager_param_keywords string[]
-
-	---Optional parameters
-	---@class chatCommandManager_options : widget_options
-	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
-	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
-	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
-	---@field defaultHandler? fun(commandManager: chatmanager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
-	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
-
-		---@class chatCommandData
-		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
-		---@field description? string|fun(): string Note to append to the first specified keyword and `command` in this command's line in the list printed out via the help command(s)
-		---@field handler? fun(manager: chatmanager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><p>@*return* `result`? boolean|nil ― Call <code>[<i>value</i>].onSuccess</code> if `true` or <code>[<i>value</i>].onError</code> if `false` (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
-		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after<code>commands[<i>value</i>].handler</code> returns with `true`<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
-		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil)<p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
-		---@field onSuccess? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `true` to handle a successful result (after `success` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field onError? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil) to handle a failed result (after `error` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
-		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If `onHelp` is specified, it will still be called even if the command is hidden.</li></ul>
-		---@field help? boolean If `true`, call `chatCommandManager.help()` on trigger | ***Default:*** `false`
-		---@field onHelp? function Function to call after a specified help command has been triggered or an invalid command is typed with the specified keywords
-
-		---@class chatCommandColors
-		---@field title? color Color for the addon title used for branding chat messages | ***Default:*** `YELLOW_FONT_COLOR`
-		---@field content? color Color for chat message contents appended after the title (used for success & error responses) | ***Default:*** `WHITE_FONT_COLOR`
-		---@field command? color Used to color the registered chat commands when they are being listed | ***Default:*** `LIGHTBLUE_FONT_COLOR`
-		---@field description? color Used to color the description of registered chat commands when they are being listed | ***Default:*** `LIGHTGRAY_FONT_COLOR`
-
-	--| Returns
-
-	---***Default:*** `nil`
-	---@alias CreateChatmanager_return_chatmanager chatmanager|nil
-
-		---`Chatmanager` WidgetTools widget instance table
-		---@class chatmanager : widget
-		local _ = {}
-
-			--[ Type ]
-
-			---Returns the type list of this widget
-			---@return { [typename_root]: true, [typename_widget]: true, [typename_chatmanager]: true, }
-			function _:GetTypes() return {} end
-
-				---@alias typename_chatmanager "Chatmanager"
-
-			--[ Events ]
-
-			---Register a listener for a custom event to call the specified handler on trigger
-			---@param event eventTag Unique event identifier tag
-			---@param handler chatmanager_handler Called when a custom event is invoked
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener(event, handler, callIndex) end
-
-			---Register a listener for an "enabled" event to call the specified handler on trigger
-			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener_enabled(handler, callIndex) end
-
-			--[ Print ]
-
-			---Print out a formatted chat message
-			---@param message string Message content
-			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
-			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
-			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
-			function _:Print(message, title, titleColor, contentColor) end
-
-				---@alias chatCommandColorNames
-				---| "title"
-				---| "content"
-				---| "command"
-				---| "description"
-
-			--Print a welcome message with a hint about chat keywords
-			function _:Welcome() end
-
-			--| Commands
-
-			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
-			function _:Help() end
-
-			---Find and a specific command by its name and call its handler script
-			---***
-			---@param command string Name of the slash command word (no spaces)
-			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
-			---***
-			---@return boolean # Whether the command was found and the handler called successfully
-			function _:Trigger(command, ...) return false end
-end
-
 
 --[[ WIDGET ]]
 
@@ -2172,7 +2068,8 @@ function wt.CreateWidget(t)
 	return _
 end
 
---[ Container ]
+
+--[[ CONTAINER ]]
 
 ---Create a basic GUI container instance
 ---@param t? container_options Optional parameters
@@ -2347,7 +2244,7 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 	return _
 end
 
---| Panel
+--[ Panel ]
 
 ---Create a GUI container panel instance with customized panel UI
 ---@param t? panel_options Optional parameters
@@ -2469,7 +2366,8 @@ function wt.CreatePanel(t, ancestor, lite)
 	return _
 end
 
---[ Action ]
+
+--[[ ACTION ]]
 
 ---Create a non-GUI action widget instance with custom trigger logic
 ---@param t? action_options Optional parameters
@@ -2558,7 +2456,7 @@ function wt.CreateAction(t, ancestor)
 	return _
 end
 
---| Button
+--[ Button ]
 
 ---Create a Blizzard button GUI frame instance with enhanced widget functionality
 ---@param t? actionButton_options Optional parameters
@@ -2972,7 +2870,8 @@ function wt.CreateDatamanager(t, ancestor)
 	return _
 end
 
---[ Binary ]
+
+--[[ BINARY ]]
 
 ---Create a non-GUI binary datamanager widget instance with boolean data management logic
 ---@param t? binary_options Optional parameters
@@ -3128,7 +3027,7 @@ function wt.CreateBinary(t, ancestor)
 	return _
 end
 
---| Checkbox
+--[ Toggle Button]
 
 ---Create a Blizzard checkbox GUI frame instance with enhanced widget functionality
 ---@param t? checkbox_options Optional parameters
@@ -3340,8 +3239,6 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 	return _
 end
 
---| Radiobutton
-
 ---Create a classic Blizzard radio button GUI frame instance with enhanced widget functionality
 ---@param t? radiobutton_options Optional parameters
 ---@param ancestor? binary|datamanager|widget Reference to an already existing binary datamanager instance to turn into a radio button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from
@@ -3445,7 +3342,8 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 	return _
 end
 
---[ Selector ]
+
+--[[ SELECTOR ]]
 
 ---Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
@@ -4028,7 +3926,7 @@ function wt.CreateMultiselector(t, ancestor)
 	return _
 end
 
---| Selector frames
+--[ Toggle Button Group ]
 
 ---Create a radio button selector GUI frame instance to pick one out of multiple options with enhanced widget functionality
 ---@param t? radiogroup_options Optional parameters
@@ -4538,7 +4436,8 @@ function wt.CreateCheckgroup(t, ancestor)
 	return _
 end
 
---[ Text ]
+
+--[[ TEXT ]]
 
 ---Create a non-GUI textual datamanager widget instance with string data management logic
 ---@param t? textual_options Optional parameters
@@ -4682,7 +4581,7 @@ function wt.CreateTextual(t, ancestor)
 	return _
 end
 
---| Editbox
+--[ Editbox]
 
 ---Create a default single-line Blizzard editbox GUI frame instance with enhanced widget functionality
 ---@param t? editbox_options Optional parameters
@@ -5008,7 +4907,7 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 	return _
 end
 
---| Copybox
+--[ Copybox]
 
 ---Create a custom button with a toggled textline & editbox from which text can be copied
 ---@param t? copybox_options Optional parameters
@@ -5048,7 +4947,7 @@ function wt.CreateCopybox(t)
 	return {}
 end
 
---| Popup Inputbox
+--[ Popup Inputbox]
 
 ---Show a movable input window with a textbox, accept and cancel buttons
 ---@param t? popupInputBoxData
@@ -5067,7 +4966,8 @@ function wt.CreatePopupInputbox(t)
 		---@field tooltip? widgetTooltipTextData List of text lines to be added to the tooltip of the widget displayed when mousing over the frame
 end
 
---[ Numeric ]
+
+--[[ NUMERIC ]]
 
 ---Create a non-GUI numeric datamanager widget instance with number data management logic
 ---@param t? numeric_options Optional parameters
@@ -5291,7 +5191,7 @@ function wt.CreateNumeric(t, ancestor)
 	return _
 end
 
---| Slider
+--[ Slider]
 
 ---Create a Blizzard slider GUI frame instance with enhanced widget functionality
 ---@param t? slider_options Optional parameters
@@ -5549,7 +5449,8 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 	return _
 end
 
---[ Color ]
+
+--[[ COLOR ]]
 
 ---Create a non-GUI colormanager datamanager widget instance with color data management logic
 ---@param t? colormanager_options Optional parameters
@@ -5704,7 +5605,7 @@ function wt.CreateColormanager(t, ancestor)
 	return _
 end
 
---| Colorpicker
+--[ Colorpicker ]
 
 ---Create a color picker GUI frame instance with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---@param t? colorpicker_options Optional parameters
@@ -5809,7 +5710,8 @@ function wt.CreateColorpicker(t, ancestor, lite)
 	return _
 end
 
---[ Position ]
+
+--[[ POSITION ]]
 
 ---Create a non-GUI position datamanager widget instance with frame positioning data management logic
 ---@param t positionmanager_options Optional parameters
@@ -5843,7 +5745,7 @@ function wt.CreatePositionmanager(t, ancestor)
 	return _
 end
 
---| Options Panel
+--[ Panel ]
 
 ---Create and set up a positionmanager widget instance for a specified frame within an options panel frame
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
@@ -5966,7 +5868,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 end
 
---[ Font ]
+
+--[[ FONT ]]
 
 ---Create a non-GUI font datamanager widget instance with font customization data management logic
 ---@param t fontmanager_options Optional parameters
@@ -6000,7 +5903,7 @@ function wt.CreateFontmanager(t, ancestor)
 	return _
 end
 
---| Options Panel
+--[ Panel ]
 
 ---Create and set up a fontmanager widget instance for a specified text object ([FontString](https://warcraft.wiki.gg/wiki/UIOBJECT_FontString)) including access to a font family selector dropdown to pick a custom font from the Widget Tools fonts list
 ---@param addon uiAddon The name of the addon's folder (the addon namespace, not its displayed title) or its loaded index
@@ -6250,7 +6153,7 @@ function wt.CreateSettingsmanager(t, ancestor)
 	return _
 end
 
---| Settings Page
+--[ Settings Page ]
 
 ---Create an new settings page and add it to the Options menu
 ---@param t? settingsPage_options Optional parameters
@@ -6458,7 +6361,8 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 			---@alias typename_settingsCategory "SettingsCategory"
 end
 
---[ Profiles ]
+
+--[[ PROFILES ]]
 
 ---Create a non-GUI profilemanager widget instance with live database management and profile selection logic
 ---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
@@ -6467,9 +6371,8 @@ end
 	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
 ---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a profilemanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return profilemanager|nil profilemanager Reference to the new profilemanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
-function wt.CreateProfilemanager(accountData, characterData, defaultData, t, ancestor)
+function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 
 	--| Parameters
 
@@ -6717,7 +6620,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, anc
 	return _
 end
 
---| Profiles Page
+--[ Settings Page ]
 
 ---Create and set up a new settings page with profile data handling and advanced backup management options
 ---@param accountData CreateProfilemanager_param1 Reference to the account-bound SavedVariables addon database where profile data is to be stored
@@ -6728,7 +6631,7 @@ end
 ---@param settingsData CreateProfilesPage_param4 Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
 --- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPage_options Optional parameters
----@param ancestor? profilemanager|widget Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new profilemanager
+---@param ancestor? profilemanager Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return profilemanager|profilesPage|nil profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, ancestor, lite)
@@ -6885,7 +6788,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 			function addListener.enabled(handler, callIndex) end
 end
 
---[ Addon ]
+
+--[[ ADDON ]]
 
 ---@class addonInfo
 ---@field name string Namespace name of the addon
@@ -6908,11 +6812,10 @@ end
 ---@field changelog_latest string? Formatted changelog text of the latest release
 ---@field changelog_full string? Formatted changelog text of the entire version history
 
----Create a non-GUI addonmanager widget instance providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
+---Create a non-GUI addonmanager instance providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---@param t? addonmanager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into an addonmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return addonmanager addonmanager Reference to the new addonmanager widget, utility functions and more wrapped in a widget table
-function wt.CreateAddonmanager(t, ancestor)
+---@return addonmanager addonmanager Reference to the new addonmanager instance, utility functions and more wrapped in a construct table
+function wt.CreateAddonmanager(t)
 
 	--| Parameters
 
@@ -7085,11 +6988,11 @@ function wt.CreateAddonmanager(t, ancestor)
 	return _
 end
 
---| Addon Page
+--[ Settings Page ]
 
 ---Create and set up a new static settings page with read-only addon about info
 ---@param t? addonPage_options Optional parameters
----@param ancestor? addonmanager|widget Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new addonmanager
+---@param ancestor? addonmanager Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 --- - ***Note:*** If an empty Addonmanager is provided with no addon set (even if `t.addon` is set), the settings page will not be created and `addonmanager` is returned.
 --- - ***Note:*** If the settings page is created, `addonmanager` will be turned to readn-only (along with the settings page), disabling its `SetAddon(...)` call.
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
@@ -7156,4 +7059,104 @@ function wt.CreateAddonPage(t, ancestor, lite)
 			---@param handler addonPage_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function addListener.enabled(handler, callIndex) end
+end
+
+
+--[[ CHAT COMMANDS ]]
+
+---Create a non-GUI chatmanager instance and register a list of chat keywords and related commands for use
+---@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands
+--- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
+---@param t? chatCommandManager_options Optional parameters
+---@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
+function wt.CreateChatmanager(keywords, t)
+
+	--| Parameters
+
+	---Optional parameters
+	---@class chatCommandManager_options : widget_options
+	---@field commands? chatCommandData[] Indexed table with the list of commands to register under the specified `keywords`
+	---@field addon? uiAddon|addonmanager Namespace name or manager widget of the addon to use as branding for printed chat messages
+	---@field colors? chatCommandColors Color palette used when printing out default-formatted chat messages
+	---@field defaultHandler? fun(commandManager: chatmanager, command: string, ...: string) Default handler function to call when an unrecognized command is typed, executed before a help command is triggered, listing all registered commands<p>@*param* `commandManager` commandManager ― Reference to the command manager</p><p>@*param* `command` string ― The unrecognized command typed after the keyword (separated by a space character)</p><p>@*param* `...` string Payload of the command typed, any words following the command name separated by spaces (split, returned unpacked)</p>
+	---@field onWelcome? function Called when the welcome message with keyword hints is printed out
+
+		---@class chatCommandData
+		---@field command string Name of the slash command word (no spaces) to recognize after the keyword (separated by a space character)
+		---@field description? string|fun(): string Note to append to the first specified keyword and `command` in this command's line in the list printed out via the help command(s)
+		---@field handler? fun(manager: chatmanager, ...: string): result: boolean|nil, ...: any Function to be called when the specific command was recognized after being typed into chat<p>@*param* `...` string ― Payload of the command typed, any words following the command name separated by spaces split and returned one by one</p><p>@*return* `result`? boolean|nil ― Call <code>[<i>value</i>].onSuccess</code> if `true` or <code>[<i>value</i>].onError</code> if `false` (not nil) after the operation | ***Default:*** `nil` *(no response)*</p><p>@*return* `...` any ― Leftover arguments to be passed over to response handler scripts</p>
+		---@field success? string|fun(...: any): string Response message (or a function returning the message string) to print out on success after<code>commands[<i>value</i>].handler</code> returns with `true`<p>@*param* `...` any ― Leftover arguments passed over by the handler script</p>
+		---@field error? string|fun(...: any): string Response message (or a function returning the message string) to print out on error after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil)<p>@*param* `...` any ― Any leftover arguments passed over by the handler script</p>
+		---@field onSuccess? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `true` to handle a successful result (after `success` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field onError? fun(manager: chatmanager, ...: any) Function to call after<code>commands[<i>value</i>].handler</code> returns with `false` (not nil) to handle a failed result (after `error` is printed)<p>@*param* `manager` chatCommandManager ― Reference to this chat command manager</p><p>@*param* `...` any ― Any leftover arguments returned by the handler script will be passed over</p>
+		---@field hidden? boolean Skip printing this command when listing out chat commands on help | ***Default:*** `false`<ul><li>***Note:*** If `onHelp` is specified, it will still be called even if the command is hidden.</li></ul>
+		---@field help? boolean If `true`, call `chatCommandManager.help()` on trigger | ***Default:*** `false`
+		---@field onHelp? function Function to call after a specified help command has been triggered or an invalid command is typed with the specified keywords
+
+		---@class chatCommandColors
+		---@field title? color Color for the addon title used for branding chat messages | ***Default:*** `YELLOW_FONT_COLOR`
+		---@field content? color Color for chat message contents appended after the title (used for success & error responses) | ***Default:*** `WHITE_FONT_COLOR`
+		---@field command? color Used to color the registered chat commands when they are being listed | ***Default:*** `LIGHTBLUE_FONT_COLOR`
+		---@field description? color Used to color the description of registered chat commands when they are being listed | ***Default:*** `LIGHTGRAY_FONT_COLOR`
+
+	--| Returns
+
+	---***Default:*** `nil`
+	---@alias CreateChatmanager_return_chatmanager chatmanager|nil
+
+		---`Chatmanager` WidgetTools constrcut instance table
+		---@class chatmanager : construct
+		local _ = {}
+
+			--[ Type ]
+
+			---Returns the type list of this widget
+			---@return { [typename_root]: true, [typename_widget]: true, [typename_chatmanager]: true, }
+			function _:GetTypes() return {} end
+
+				---@alias typename_chatmanager "Chatmanager"
+
+			--[ Events ]
+
+			---Register a listener for a custom event to call the specified handler on trigger
+			---@param event eventTag Unique event identifier tag
+			---@param handler chatmanager_handler Called when a custom event is invoked
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener(event, handler, callIndex) end
+
+			---Register a listener for an "enabled" event to call the specified handler on trigger
+			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+			--[ Print ]
+
+			---Print out a formatted chat message
+			---@param message string Message content
+			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
+			---@param contentColor? chatCommandColorNames|color ***Default:*** `"content"`
+			---@param titleColor? chatCommandColorNames|color ***Default:*** `"title"`
+			function _:Print(message, title, titleColor, contentColor) end
+
+				---@alias chatCommandColorNames
+				---| "title"
+				---| "content"
+				---| "command"
+				---| "description"
+
+			--Print a welcome message with a hint about chat keywords
+			function _:Welcome() end
+
+			--| Commands
+
+			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
+			function _:Help() end
+
+			---Find and a specific command by its name and call its handler script
+			---***
+			---@param command string Name of the slash command word (no spaces)
+			---@param ... any Any further arguments are used as the payload of the command, passed over to its handler
+			---***
+			---@return boolean # Whether the command was found and the handler called successfully
+			function _:Trigger(command, ...) return false end
 end
