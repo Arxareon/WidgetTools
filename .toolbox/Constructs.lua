@@ -12,23 +12,16 @@ local crc = C_ColorUtil.WrapTextInColorCode
 
 --[[ CONSTRUCT ]]
 
-local bases ---@type table<typename, anyWidget>
-local types ---@type table<anyWidget, table<typename, true>>
+local types ---@type table<construct, table<typename, true>>
+local bases ---@type table<typename, construct>
+local proxies
+local progenitors = {} ---@type table<typename, typename>
 local build
-
----@type table<typename, typename>
-local progenitors = {
-	Action = "Widget",
-
-}
 
 ---Build a root construct prototype
 ---@return construct
 local function buildRoot()
 	local base = {}
-
-	base.__metatable = "Protected base class"
-	base.__index = base
 
 	if not types then types = {} end
 	local typename = "Construct" ---@type typename_root
@@ -44,10 +37,11 @@ local function buildRoot()
 		return base
 	end
 
-	function base:GetTypes() return us.Clone(types[base]) end
-	function base:IsType(t) return types[base][t] == true end
+	function base:GetTypes() return us.Clone(types[bases[getmetatable(self)]]) end
+	function base:IsType(t) return types[bases[getmetatable(self)]][t] == true end
 
 	bases[typename] = base
+	proxies = {}
 
 	ds.Log(function() return "Created the main root " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildRoot" end)
 
@@ -56,10 +50,11 @@ end
 
 ---Mutate a construct prototype into a new variant
 ---@param typename typename
----@return anyWidget
+---@return table, construct
 local function buildBase(typename)
 	local progenitor = progenitors[typename]
-	local base = progenitor and buildBase(progenitor) or buildRoot()
+	local _, base
+	if progenitor then _, base = buildBase(progenitor) else base = buildRoot() end
 
 	types[base][typename] = true
 
@@ -69,18 +64,25 @@ local function buildBase(typename)
 
 		ds.Log(function() return (progenitor or "Construct") .. " base mutated into a new " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildBase" end)
 
-		return base
+		return proxies[typename], base
 	end
 
-	build[typename](base)
-	build[typename] = nil
-	if not next(build) then build = nil end
+	local builder = build and build[typename]
+	if builder then
+		builder(base)
+		build[typename] = nil
+		if not next(build) then build = nil end
+	end
 
 	bases[typename] = base
+	proxies[typename] = {
+		__index = base,
+		__metatable = typename,
+	}
 
 	ds.Log(function() return (progenitor or "Construct") .. " base mutated into the main " .. typename .. " base: " .. us.ToString(base), wt.title .. "buildBase" end)
 
-	return base
+	return proxies[typename], base
 end
 
 ---`AddListener_eventTag` builder utility
@@ -102,6 +104,8 @@ local function assignAddListener(widget, eventTag, handlerList)
 	end
 end
 
+build = {} ---@type table<typename, function>
+
 --| Management
 
 function wt.IsType(object, typename)
@@ -111,8 +115,6 @@ end
 
 
 --[[ WIDGET ]]
-
-build = {} ---@type table<typename, function>
 
 local widget_handlers ---@type table<widget, table<string, fun(self: widget, ...: any)[]>>
 
@@ -427,7 +429,7 @@ function wt.CreateWidget(t)
 	widget:SetDependencies(t.dependencies)
 	widget:SetEnabled(t.disabled ~= true)
 
-	ds.Log(function() return "Widget instance constructed: " .. us.ToString(widget) .. " with base: " .. us.ToString(widget_base), wt.title .. ".CreateWidget" end)
+	ds.Log(function() return "Widget instance constructed: " .. us.ToString(widget), wt.title .. ".CreateWidget" end)
 
 	return widget
 end
@@ -437,12 +439,7 @@ end
 
 ---@param container container
 function build.Container(container)
-	--TODO implement container prototype
-end
-
----@param container customContainer
-function build.CustomContainer(container)
-	--TODO implement custom container prototype
+	--ADD container prototype initialization
 end
 
 ---Set the parameters of a GUI container frame
@@ -453,7 +450,7 @@ local function setUpContainer(container, frame, t)
 
 	--| Position & dimensions
 
-	local width = t.width or t.parentFrame and t.parentFrame:GetWidth() - 20 or 0
+	local width = t.width or t.parentFrame and t.parentFrame:GetWidth() or 0
 	local height = t.height or 0
 	local arrange = type(t.arrange) == "table" and t.arrange or {}
 
@@ -489,14 +486,14 @@ local function setUpContainer(container, frame, t)
 	end
 end
 
+progenitors.Container = "Widget" ---@type typename_widget
 function wt.CreateContainer(t, ancestor, lite)
-	local typenameBase = "Widget" ---@type typename_widget
-	local container = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local typename = "Container" ---@type typename_container
+	local container = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
-	local typename = "Container" ---@type typename_container
-	setmetatable(container, buildBase(typename, typenameBase)) ---@cast container container
+	setmetatable(container, buildBase(typename)) ---@cast container container
 
 	--[ Frame ]
 
@@ -513,18 +510,19 @@ function wt.CreateContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	ds.Log(function() return "Widget instance mutated into Container GUI instance: " .. us.ToString(container), wt.title .. ".CreateContainer" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Container: " .. us.ToString(container), wt.title .. ".CreateContainer" end)
 
 	return container
 end
 
+progenitors.CustomContainer = "Container" ---@type typename_container
 function wt.CreateCustomContainer(t, ancestor, lite)
-	local typenameBase = "Widget" ---@type typename_widget
-	local container = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
+	local typename = "CustomContainer" ---@type typename_customContainer
+	local container = wt.IsType(ancestor, progenitors[progenitors[typename]]) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
-	setmetatable(container, customContainer_base or buildCustomContainer()) ---@cast container customContainer
+	setmetatable(container, buildBase(typename)) ---@cast container customContainer
 
 	--[ Frame ]
 
@@ -541,43 +539,21 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	ds.Log(function() return "Widget instance mutated into CustomContainer GUI instance: " .. us.ToString(container), wt.title .. ".CreateCustomContainer" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a CustomContainer: " .. us.ToString(container), wt.title .. ".CreateCustomContainer" end)
 
 	return container
 end
 
---| Panel
+--[ Panel ]
 
-local panel_base ---@type panel
-
-local function buildPanel()
-	local panel = buildCustomContainer()
-
-	local typename = "Panel" ---@type typename_panel
-	widget_types[panel][typename] = true ---@cast panel panel
-
-	if panel_base then
-		us.Fill(panel, panel_base)
-
-		ds.Log(function() return "Widget base mutated into a new Panel base: " .. us.ToString(panel), wt.title .. "buildPanel" end)
-
-		return panel
-	end
-
-	panel_base = panel
-
-	ds.Log(function() return "Widget base mutated into the main Panel base: " .. us.ToString(panel), wt.title .. "buildPanel" end)
-
-	return panel
-end
-
+progenitors.Panel = "CustomContainer" ---@type typename_customContainer
 function wt.CreatePanel(t, ancestor, lite)
-	local typenameBase = "CustomContainer" ---@type typename_customContainer
-	local panel = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateCustomContainer(t, ancestor)
+	local typename = "Panel" ---@type typename_panel
+	local panel = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateCustomContainer(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return panel end
 
-	setmetatable(panel, panel_base or buildPanel()) ---@cast panel panel
+	setmetatable(panel, buildBase(typename)) ---@cast panel panel
 
 	--[ Frame ]
 
@@ -612,7 +588,7 @@ function wt.CreatePanel(t, ancestor, lite)
 		})
 	})
 
-	ds.Log(function() return "CustomContainer GUI instance mutated into Panel GUI instance: " .. us.ToString(panel), wt.title .. ".CreatePanel" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Panel: " .. us.ToString(panel), wt.title .. ".CreatePanel" end)
 
 	return panel
 end
@@ -620,29 +596,13 @@ end
 
 --[[ ACTION ]]
 
-local action_base ---@type action
-
 local action_call ---@type table<action, fun(self: action, user?: boolean)>
 
 local action_handlers_triggered ---@type table<action, action_handler_triggered[]>
 local action_invoke_triggered ---@type fun(self: action, user: boolean)
 
-local function buildAction()
-	local action = buildWidget()
-
-	local typename = "Action" ---@type typename_action
-	widget_types[action][typename] = true ---@cast action action
-
-	if action_base then
-		us.Fill(action, action_base)
-
-		ds.Log(function() return "Widget base mutated into a new Action base: " .. us.ToString(action), wt.title .. "buildAction" end)
-
-		return action
-	end
-
-	--[ Action ]
-
+---@param action action
+function build.Action(action)
 	action_call = {}
 
 	function action:Trigger(user, silent)
@@ -666,19 +626,12 @@ local function buildAction()
 
 		for i = 1, #handlers do handlers[i](self, user) end
 	end
-
-	action_base = action
-
-	ds.Log(function() return "Widget base mutated into the main Action base: " .. us.ToString(action), wt.title .. "buildAction" end)
-
-	return action
 end
 
+progenitors.Action = "Widget" ---@type typename_widget
 function wt.CreateAction(t, ancestor)
-	local typenameBase = "Widget" ---@type typename_widget
-	local action = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
-
-	setmetatable(action, action_base or buildAction()) ---@cast action action
+	local typename = "Action" ---@type typename_action
+	local action = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t), buildBase(typename)) ---@cast action action
 
 	--[ Initialization ]
 
@@ -698,57 +651,12 @@ function wt.CreateAction(t, ancestor)
 
 	action:SetAction(t.action)
 
-	ds.Log(function() return "Widget instance mutated into Action instance: " .. us.ToString(action) .. " with base: " .. action_base, wt.title .. ".CreateAction" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into an Action: " .. us.ToString(action), wt.title .. ".CreateAction" end)
 
 	return action
 end
 
---| Button
-
-local button_base ---@type actionButton
-local customButton_base ---@type customButton
-
-local function buildButton()
-	local button = buildAction()
-
-	local typename = "Button" ---@type typename_button
-	widget_types[button][typename] = true ---@cast button actionButton
-
-	if button_base then
-		us.Fill(button, button_base)
-
-		ds.Log(function() return "Widget base mutated into a new Button base: " .. us.ToString(button), wt.title .. "buildButton" end)
-
-		return button
-	end
-
-	button_base = button
-
-	ds.Log(function() return "Widget base mutated into the main Button base: " .. us.ToString(button), wt.title .. "buildButton" end)
-
-	return button
-end
-
-local function buildCustomButton()
-	local button = buildAction()
-
-	local typename = "CustomButton" ---@type typename_customButton
-	widget_types[button][typename] = true ---@cast button customButton
-
-	if customButton_base then
-		us.Fill(button, customButton_base)
-
-		ds.Log(function() return "Widget base mutated into a new CustomButton base: " .. us.ToString(button), wt.title .. "buildCustomButton" end)
-
-		return button
-	end
-
-	customButton_base = button
-
-	ds.Log(function() return "Widget base mutated into the main CustomButton base: " .. us.ToString(button), wt.title .. "buildCustomButton" end)
-
-	return button
-end
+--[ Button ]
 
 ---Set the parameters of a GUI button widget frame
 ---@param button actionButton|customButton
@@ -879,13 +787,14 @@ local function setUpButton(button, template, t, name, useHighlight)
 	end end)
 end
 
+progenitors.Button = "Action" ---@type typename_action
 function wt.CreateButton(t, ancestor, lite)
-	local typenameBase = "Action" ---@type typename_action
-	local button = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
+	local typename = "Button" ---@type typename_button
+	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
-	setmetatable(button, button_base or buildButton()) ---@cast button actionButton
+	setmetatable(button, buildBase(typename)) ---@cast button actionButton
 
 	--[ Frame ]
 
@@ -908,18 +817,19 @@ function wt.CreateButton(t, ancestor, lite)
 
 	setUpButton(button, template, t, name)
 
-	ds.Log(function() return "Action instance mutated into Button GUI instance: " .. us.ToString(button), wt.title .. ".CreateButton" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Button: " .. us.ToString(button), wt.title .. ".CreateButton" end)
 
 	return button
 end
 
+progenitors.CustomButton = "Action" ---@type typename_action
 function wt.CreateCustomButton(t, ancestor, lite)
-	local typenameBase = "Action" ---@type typename_action
-	local button = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateAction(t, ancestor)
+	local typename = "Button" ---@type typename_button
+	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
-	setmetatable(button, customButton_base or buildCustomButton()) ---@cast button customButton
+	setmetatable(button, buildBase(typename)) ---@cast button customButton
 
 	--[ Frame ]
 
@@ -945,7 +855,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 
 	wt.SetBackdrop(template, t.backdrop, t.backdropUpdates)
 
-	ds.Log(function() return "Action instance mutated into CustomButton GUI instance: " .. us.ToString(button), wt.title .. ".CreateCustomButton" end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a CustomButton: " .. us.ToString(button), wt.title .. ".CreateCustomButton" end)
 
 	return button
 end
@@ -953,10 +863,8 @@ end
 
 --[[ DATAMANAGER ]]
 
-local datamanager_base ---@type datamanager
-
-local data_default ---@type table<datamanager, any>
 local data_value ---@type table<datamanager, any>
+local data_default ---@type table<datamanager, any>
 local data_snapshot ---@type table<datamanager, any>
 
 local datamanager_read ---@type table<datamanager, fun(): data: any>
@@ -972,21 +880,10 @@ local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
 local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
 local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
 
-local function buildDatamanager()
-	local datamanager = buildWidget()
+---@param datamanager datamanager
+function build.Datamanager(datamanager)
 
-	local typename = "Datamanager" ---@type typename_datamanager
-	widget_types[datamanager][typename] = true ---@cast datamanager datamanager
-
-	if datamanager_base then
-		us.Fill(datamanager, datamanager_base)
-
-		ds.Log(function() return "Widget base mutated into a new Datamanager base: " .. us.ToString(datamanager), wt.title .. "buildDatamanager" end)
-
-		return datamanager
-	end
-
-	--[ Data ]
+	--[ Value ]
 
 	data_value = {}
 
@@ -1024,7 +921,22 @@ local function buildDatamanager()
 		for i = 1, #handlers do handlers[i](self, value, user) end
 	end
 
-	--| Storage
+	--| Default
+
+	data_default = {}
+
+	function datamanager:GetDefault() return data_default[self] end
+	function datamanager:SetDefault(newDefault) data_default[self] = datamanager:Verify(newDefault) end
+	function datamanager:Reset(handleChanges, silent) datamanager:SetData(data_default[self], handleChanges, silent) end
+
+	--| Snapshot
+
+	data_snapshot = {}
+
+	function datamanager:Snapshot(stored) if stored == true then data_snapshot[self] = datamanager:GetData() else data_snapshot[self] = data_value[self] end end
+	function datamanager:Revert(handleChanges, silent) datamanager:SetData(data_snapshot[self], handleChanges, silent) end
+
+	--[ Storage ]
 
 	datamanager_read = {}
 	datamanager_write = {}
@@ -1103,37 +1015,17 @@ local function buildDatamanager()
 		for i = 1, #handlers do handlers[i](self, success) end
 	end
 
-	--| Default
-
-	data_default = {}
-
-	function datamanager:GetDefault() return data_default[self] end
-	function datamanager:SetDefault(newDefault) data_default[self] = datamanager:Verify(newDefault) end
-	function datamanager:Reset(handleChanges, silent) datamanager:SetData(data_default[self], handleChanges, silent) end
-
-	--| Snapshot
-
-	data_snapshot = {}
-
-	function datamanager:Snapshot(stored) if stored == true then data_snapshot[self] = datamanager:GetData() else data_snapshot[self] = data_value[self] end end
-	function datamanager:Revert(handleChanges, silent) datamanager:SetData(data_snapshot[self], handleChanges, silent) end
-
-	--| Datamanagement
+	--[ Datamanagement ]
 
 	datamanagement = {}
 
-	datamanager_base = datamanager
-
-	ds.Log(function() return "Widget base mutated into the main Datamanager base: " .. us.ToString(datamanager), wt.title .. "buildDatamanager" end)
-
-	return datamanager
+	--ADD datamanagement
 end
 
+progenitors.Datamanager = "Widget" ---@type typename_widget
 function wt.CreateDatamanager(t, ancestor)
-	local typenameBase = "Widget" ---@type typename_widget
-	local datamanager = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateWidget(t)
-
-	setmetatable(datamanager, datamanager_base or buildDatamanager()) ---@cast datamanager datamanager
+	local typename = "Datamanager" ---@type typename_datamanager
+	local datamanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t), buildBase(typename)) ---@cast datamanager datamanager
 
 	--[ Initialization ]
 
@@ -1156,10 +1048,7 @@ function wt.CreateDatamanager(t, ancestor)
 
 	if datamanagement[datamanager] then wt.AddSettingsDataManagementEntry(datamanager, datamanagement[datamanager]) end --TODO update
 
-	ds.Log(function() return
-		"Widget instance mutated into Datamanager instance: " .. us.ToString(datamanager) .. " with base: " .. us.ToString(datamanager_base),
-		wt.title .. ".CreateDatamanager"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Datamanager: " .. us.ToString(datamanager), wt.title .. ".CreateDatamanager" end)
 
 	return datamanager
 end
@@ -1167,23 +1056,10 @@ end
 
 --[[ BINARY ]]
 
-local binary_base ---@type binary
+---@param binary binary
+function build.Binary(binary)
 
-local function buildBinary()
-	local binary = buildDatamanager()
-
-	local typename = "Binary" ---@type typename_binary
-	widget_types[binary][typename] = true ---@cast binary binary
-
-	if binary_base then
-		us.Fill(binary, binary_base)
-
-		ds.Log(function() return "Datamanager base mutated into a new Binary base: " .. us.ToString(binary), wt.title .. "buildBinary" end)
-
-		return binary
-	end
-
-	--[ Data ]
+	--[ Value ]
 
 	function binary:Verify(value) return value == true end
 	function binary:Format(state)
@@ -1193,19 +1069,12 @@ local function buildBinary()
 	end
 
 	function binary:Flip(user, silent) binary:SetValue(not binary:GetValue(), user, silent) end
-
-	binary_base = binary
-
-	ds.Log(function() return "Datamanager base mutated into the main Binary base: " .. us.ToString(binary), wt.title .. "buildBinary" end)
-
-	return binary
 end
 
+progenitors.Binary = "Datamanager" ---@type typename_datamanager
 function wt.CreateBinary(t, ancestor)
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	local binary = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
-
-	setmetatable(binary, binary_base or buildBinary()) ---@cast binary binary
+	local typename = "Binary" ---@type typename_binary
+	local binary = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast binary binary
 
 	--[ Initialization ]
 
@@ -1220,82 +1089,12 @@ function wt.CreateBinary(t, ancestor)
 	binary:SetValue(t.value)
 	binary:Snapshot()
 
-	ds.Log(function() return
-		"Datamanager instance mutated into Binary instance:" .. us.ToString(binary) .. " with base: " .. us.ToString(binary_base),
-		wt.title .. ".CreateBinary"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Binary: " .. us.ToString(binary), wt.title .. ".CreateBinary" end)
 
 	return binary
 end
 
---| Toggle button
-
-local checkbox_base ---@type checkbox
-local classicCheckbox_base ---@type classicCheckbox
-local radiobutton_base ---@type radiobutton
-
-local function buildCheckbox()
-	local checkbox = buildBinary()
-
-	local typename = "Checkbox" ---@type typename_checkbox
-	widget_types[checkbox][typename] = true ---@cast checkbox checkbox
-
-	if checkbox_base then
-		us.Fill(checkbox, checkbox_base)
-
-		ds.Log(function() return "Widget base mutated into a new Checkbox base: " .. us.ToString(checkbox), wt.title .. "buildCheckbox" end)
-
-		return checkbox
-	end
-
-	checkbox_base = checkbox
-
-	ds.Log(function() return "Widget base mutated into the main Checkbox base: " .. us.ToString(checkbox), wt.title .. "buildCheckbox" end)
-
-	return checkbox
-end
-
-local function buildClassicCheckbox()
-	local checkbox = buildBinary()
-
-	local typename = "ClassicCheckbox" ---@type typename_classicCheckbox
-	widget_types[checkbox][typename] = true ---@cast checkbox classicCheckbox
-
-	if classicCheckbox_base then
-		us.Fill(checkbox, classicCheckbox_base)
-
-		ds.Log(function() return "Widget base mutated into a new ClassicCheckbox base: " .. us.ToString(checkbox), wt.title .. "buildClassicCheckbox" end)
-
-		return checkbox
-	end
-
-	classicCheckbox_base = checkbox
-
-	ds.Log(function() return "Widget base mutated into the main ClassicCheckbox base: " .. us.ToString(checkbox), wt.title .. "buildClassicCheckbox" end)
-
-	return checkbox
-end
-
-local function buildRadiobutton()
-	local radiobutton = buildBinary()
-
-	local typename = "Radiobutton" ---@type typename_radiobutton
-	widget_types[radiobutton][typename] = true ---@cast radiobutton radiobutton
-
-	if radiobutton_base then
-		us.Fill(radiobutton, radiobutton_base)
-
-		ds.Log(function() return "Widget base mutated into a new Radiobutton base: " .. us.ToString(radiobutton), wt.title .. "buildRadiobutton" end)
-
-		return radiobutton
-	end
-
-	radiobutton_base = radiobutton
-
-	ds.Log(function() return "Widget base mutated into the main Radiobutton base: " .. us.ToString(radiobutton), wt.title .. "buildRadiobutton" end)
-
-	return radiobutton
-end
+--[ Toggle Button ]
 
 function wt.CreateCheckbox(t, ancestor, lite)
 	local typenameBase = "Binary" ---@type typename_binary
@@ -2258,7 +2057,7 @@ function wt.CreateMultiselector(t, datamanager)
 	return multiselector
 end
 
---| Toggle button group
+--[ Toggle Button Group ]
 
 ---Item naming utility
 ---@param parentName string
@@ -3313,7 +3112,7 @@ function wt.CreateTextual(t, datamanager)
 	return textual
 end
 
---| Editbox
+--[ Editbox ]
 
 ---Set the parameters of a GUI textual widget frame
 ---@param editbox textualEditbox|customEditbox|multilineEditbox
@@ -3726,7 +3525,7 @@ function wt.CreateMultilineEditbox(t, textual, lite)
 	return editbox
 end
 
---| Copybox
+--[ Copybox ]
 
 function wt.CreateCopybox(t) --FIX lite
 	t = type(t) == "table" and t or {}
@@ -3824,7 +3623,7 @@ function wt.CreateCopybox(t) --FIX lite
 	return copybox
 end
 
---| Popup Inputbox
+--[ Popup Inputbox ]
 
 local customPopupInputBoxFrame
 
@@ -4080,7 +3879,7 @@ function wt.CreateNumeric(t, datamanager)
 	return numeric
 end
 
---| Slider
+--[ Slider ]
 
 function wt.CreateSlider(t, numeric, lite)
 	local typenameBase = "Numeric" ---@type typename_numeric
@@ -4920,7 +4719,7 @@ function wt.CreateColormanager(t, datamanager)
 	return colormanager
 end
 
---| Colorpicker
+--[ Colorpicker ]
 
 function wt.CreateColorpicker(t, colormanager, lite)
 	local typenameBase = "Colormanager" ---@type typename_colormanager
@@ -5226,7 +5025,7 @@ end
 
 
 
---| Panel
+--[ Panel ]
 
 local positioningVisualAids = {}
 
@@ -5797,7 +5596,7 @@ end
 
 
 
---| Panel
+--[ Panel ]
 
 local fonts ---@type fontFileData[]|nil
 local fontItems ---@type selectorItemData[]|nil
@@ -6294,7 +6093,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 	return category
 end
 
---| Settings page
+--[ Settings Page ]
 
 function wt.CreateSettingsPage(t, settingsmanager)
 	t = type(t) == "table" and t or {}
@@ -6950,7 +6749,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, wid
 	return profilemanager
 end
 
---| Settings page
+--[ Settings Page ]
 
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, profilemanager, lite)
 	if type(settingsData) ~= "table" then return nil end
@@ -7525,7 +7324,7 @@ function wt.CreateAddonmanager(t, widget)
 	return addonmanager
 end
 
---| Settings page
+--[ Settings Page ]
 
 function wt.CreateAddonPage(t, addonmanager, lite)
 	local typenameBase = "Addonmanager" ---@type typename_addonmanager

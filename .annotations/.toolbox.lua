@@ -1780,44 +1780,6 @@ local c = {} ---@class construct
 
 --| Management
 
----@alias anyWidget
----| widget
----| action
----| actionButton
----| customButton
----| datamanager
----| binary
----| radiobutton
----| checkbox
----| classicCheckbox
----| selector
----| radiogroup
----| dropdownRadiogroup
----| specialSelector
----| specialRadiogroup
----| multiselector
----| checkgroup
----| textual
----| textualEditbox
----| customEditbox
----| multilineEditbox
----| numeric
----| numericSlider
----| classicSlider
----| colormanager
----| colorpicker
----| positionmanager
----| positionPanel
----| fontmanager
----| fontPanel
----| settingsmanager
----| settingsPage
----| profilemanager
----| profilesPage
----| addonmanager
----| addonPage
----| settingsCategory
-
 ---Check if an object is a recognizable construct instance and it is of the specific type
 ---@param object IsType_param_object Reference to the object to check
 ---@param typename IsType_param_typename WidgetTools typename to check if `object` is an instance of this specific type
@@ -1834,8 +1796,9 @@ function wt.IsType(object, typename)
 
 		---@alias typename
 		---| typename_widget
-		---| typename_chatmanager
 		---| typename_container
+		---| typename_panel
+		---| typename_chatmanager
 		---| typename_customContainer
 		---| typename_action
 		---| typename_button
@@ -1997,7 +1960,7 @@ function wt.CreateWidget(t)
 
 	---Optional parameters
 	---@class widget_options : togglableObject
-	---@field parent? anyWidget Reference to the widget to set as the parent | ***Default:*** `nil` *no parent*
+	---@field parent? widget Reference to the widget to set as the parent | ***Default:*** `nil` *no parent*
 	---@field independent? boolean If `true`, do not link the enabled state of this widget to the enabled state of `parent` (if set) | ***Default:*** `false`
 	---@field childIndex? integer If set, add this widget at the specified order index in the current list of children of `parent` (if set) | ***Default:*** *last position*
 	---@field listeners? widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -2099,11 +2062,11 @@ function wt.CreateWidget(t)
 		--| Parent
 
 		---Return the parent of this widget
-		---@return anyWidget|nil parent Reference to widget set as the parent | ***Default:*** `nil` *no parent is set*
+		---@return widget|nil parent Reference to widget set as the parent | ***Default:*** `nil` *no parent is set*
 		function _:GetParent() end
 
 		---Set the parent of this widget (replacing the current parent if set)
-		---@param parent anyWidget|nil Reference to the widget to set as the new parent, or `nil` to remove the current parent | ***Default:*** `nil`
+		---@param parent widget|nil Reference to the widget to set as the new parent, or `nil` to remove the current parent | ***Default:*** `nil`
 		--- - ***Note:*** If the parent of this widget is already set to `parent`, it will not be added again, ignoring `independent` & `childIndex`.
 		---@param independent? boolean If `true`, do not link the enabled state of this widget to the enabled state of `parent` | ***Default:*** `false`
 		---@param childIndex? integer If set, add this widget at the specified order index in the current list of children | ***Default:*** *last position*
@@ -2119,15 +2082,15 @@ function wt.CreateWidget(t)
 
 		---Return a child at the specified order index
 		---@param index integer
-		---@return anyWidget? child Reference to the child at `index` in the current list of children | ***Default:*** `nil` *no child found*
+		---@return widget? child Reference to the child at `index` in the current list of children | ***Default:*** `nil` *no child found*
 		function _:GetChild(index) end
 
 		---Get a copy of the current list of children
-		---@return anyWidget[] children Ordered array of child widget references
+		---@return widget[] children Ordered array of child widget references
 		function _:GetChildren() return {} end
 
 		---Assign a new child to this widget
-		---@param child anyWidget Reference to the widget to add
+		---@param child widget Reference to the widget to add
 		--- - ***Note:*** If `child` was already added, it will not be added again, ignoring `independent` &  `index`, and returning `nil`.
 		---@param independent? boolean If `true`, do not link the enabled state of `child` to the enabled state of this widget | ***Default:*** `false`
 		---@param index? integer If set, add `child` at the specified order index in the current list of children | ***Default:*** *last position*
@@ -2136,16 +2099,16 @@ function wt.CreateWidget(t)
 		function _:AddChild(child, independent, index) end
 
 		---Remove a child from this widget
-		---@param child anyWidget Reference to the child widget to unassign
+		---@param child widget Reference to the child widget to unassign
 		function _:RemoveChild(child) end
 
 		---Check if a child is set as independent (whether the enabled state of a child is unlinked from the enabled state of this widget)
-		---@param child anyWidget Reference to the child widget
+		---@param child widget Reference to the child widget
 		---@return boolean? # ***Default:*** `nil` *not a child*
 		function _:IsIndependent(child) end
 
 		---Set the independence relationship of a child of this widget (whether the enabled state of a child is unlinked from the enabled state of this widget)
-		---@param child anyWidget Reference to the child widget
+		---@param child widget Reference to the child widget
 		---@param independent? boolean ***Default:*** `true`
 		function _:SetIndependent(child, independent) end
 
@@ -2213,7 +2176,7 @@ end
 
 ---Create a basic GUI container instance
 ---@param t? container_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a container frame instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget Reference to an already existing widget instance to turn into a container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return container|widget container References to the new container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateContainer(t, ancestor, lite)
@@ -2224,8 +2187,8 @@ function wt.CreateContainer(t, ancestor, lite)
 	---@class container_options : widget_options, namedChildFrame, positionableScreenFrame, arrangeableFrame, visibleFrame, initializableContainerFrame, eventFrame
 	---@field name? string Unique string used to set the frame name | ***Default:*** `"Container"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
 	---@field append? boolean When setting the name, append `t.name` to the name of `t.parent` instead | ***Default:*** `true` if `t.name` ~= nil and `t.parent` ~= nil and `t.parent` ~= `UIParent`
-	---@field width? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to `0` will result in the frame being invisible and not getting placed on the screen.</li></ul>
-	---@field height? number ***Default:*** `0`<ul><li>***Note:*** Omitting or setting to 0 will result in the frame being invisible and not getting placed on the screen.</li></ul>
+	---@field width? number ***Default:*** `t.parent` and *width of the parent frame* or `0`<ul><li>***Note:*** Setting to 0 will result in the frame not being plced on the screen.</li></ul>
+	---@field height? number ***Default:*** `0`<ul><li>***Note:*** If content is added, arranged and `t.arrangement.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
 	---@field listeners? container_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field arrangement? arrangementRules_container If set, arrange the content added to the container frame during initialization into stacked rows based on the specifications provided in this table
 	---@field initialize? fun(container: container, canvas?: Frame, width: number, height: number, name?: string) This function will be called while setting up the container frame to perform specific tasks like creating content child frames right away<p>@*param* `container` container ― Reference to the container to be set as the parent for child objects created during initialization</p><p>@*param* `width` number The current width of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `height` number The current height of the container frame (0 if `WidgetToolsDB.lite` is `true`)</p><p>@*param* `name`? string The name parameter of the container specified at construction</p>
@@ -2266,7 +2229,7 @@ function wt.CreateContainer(t, ancestor, lite)
 
 	---If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 	---@alias liteFlag boolean?
-	
+
 	--| Returns
 
 	---@class container : widget, guiFrame
@@ -2275,42 +2238,31 @@ function wt.CreateContainer(t, ancestor, lite)
 		---@class guiFrame
 		---@field frame Frame Widget GUI parent frame
 
-	--[ Type ]
+		--[ Type ]
 
-	---Returns the type list of this widget
-	---@return { [typename_root]: true, [typename_widget]: true, [typename_container]: true, }
-	function _:GetTypes() return {} end
+		---Returns the type list of this widget
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_container]: true, }
+		function _:GetTypes() return {} end
 
-		---@alias typename_container "Container"
+			---@alias typename_container "Container"
 
-	--[ Events ]
+		--[ Events ]
 
-	---@class container_addListener : widget_addListener
-	---@field [string] fun(handler: container_handler, callIndex?: integer) Register a listener for a custom widget event
-	local addListener = {}
-
-		---Register a listener for an "enabled" widget event
-		---@param handler container_handler_enabled Handler function to call on trigger
-		---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-		function addListener.enabled(handler, callIndex) end
 
 	return _
 end
 
----Create a GUI container instance with customizable UI elements
----@param t? customContainer_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a custom container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---Create a basic GUI container instance with customizable UI elements
+---@param t? container_options Optional parameters
+---@param ancestor? widget Reference to an already existing widget instance to turn into a customizable container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
----@return customContainer|widget customContainer References to the new custom container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
+---@return customContainer|widget container References to the new customizable container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomContainer(t, ancestor, lite)
 
 	--| Parameters
 
 	---Optional parameters
 	---@class customContainer_options : container_options, backdropData
-	---@field name? string Unique string used to set the frame name | ***Default:*** `"Container"`<ul><li>***Note:*** Space characters will be removed when used for setting the frame name.</li></ul>
-	---@field width? number ***Default:*** `t.parent` and *width of the parent frame* - 20 or `0`
-	---@field height? number ***Default:*** `0`<ul><li>***Note:*** If content is added, arranged and `t.arrangeContent.resize` is `true`, the height will be set dynamically based on the calculated height of the content.</li></ul>
 	---@field background? backdropBackgroundData_customContainer Table containing the parameters used for the background
 	---@field border? backdropBorderData_customContainer Table containing the parameters used for the border
 	---@field listeners? customContainer_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -2379,26 +2331,18 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 	---@class customContainer : container
 	---@field frame Frame|BackdropTemplate Widget GUI customizable parent frame with BackdropTemplate
-	local _ = {}
+	local __ = {}
 
-	--[ Type ]
+		--[ Type ]
 
-	---Returns the type list of this widget
-	---@return { [typename_root]: true, [typename_widget]: true, [typename_customContainer]: true, }
-	function _:GetTypes() return {} end
+		---Returns the type list of this widget
+		---@return { [typename_root]: true, [typename_widget]: true, [typename_customContainer]: true, }
+		function __:GetTypes() return {} end
 
-		---@alias typename_customContainer "CustomContainer"
+			---@alias typename_customContainer "CustomContainer"
 
-	--[ Events ]
+		--[ Events ]
 
-	---@class customContainer_addListener : widget_addListener
-	---@field [string] fun(handler: customContainer_handler, callIndex?: integer) Register a listener for a custom widget event
-	local addListener = {}
-
-		---Register a listener for an "enabled" widget event
-		---@param handler customContainer_handler_enabled Handler function to call on trigger
-		---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-		function addListener.enabled(handler, callIndex) end
 
 	return _
 end
@@ -4359,8 +4303,8 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 end
 
 ---Create a special radio button selector GUI frame instance to pick an Anchor Point, a horizontal or vertical text alignment or Frame Strata value with enhanced widget functionality
----@param itemset CreateSpecialRadiogroup_param1 Specify what type of selector should be created
---- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
+---@param itemset CreateSpecialRadiogroup_param_itemset Specify what type of selector should be created
+--- - ***Note:*** Value is overwritten by `ancestor.getItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroup_options Optional parameters
 ---@param ancestor? specialSelector|datamanager|widget Reference to an already existing special selector instance to turn into a special radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new special selector, or widget instance to create its datamanager from
 ---@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
@@ -4369,10 +4313,8 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 	--| Parameters
 
 	---Specify what type of selector should be created
-	--- - ***Note:*** Value is overwritten by `selector.getItemset()` if a valid `selector` is provided.
-	---@alias CreateSpecialRadiogroup_param1 # itemset
-	---| SpecialSelectorItemset
-	---| nil
+	--- - ***Note:*** Value is overwritten by `ancestor.getItemset()` if a valid `selector` is provided.
+	---@alias CreateSpecialRadiogroup_param_itemset SpecialSelectorItemset?
 
 	---Optional parameters
 	---@class specialRadiogroup_options : specialSelector_options, selectorFrame_options, radiogroup_options_base
