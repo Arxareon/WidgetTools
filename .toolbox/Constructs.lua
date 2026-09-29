@@ -3723,8 +3723,6 @@ end
 
 --[[ NUMERIC ]]
 
-local numeric_base ---@type numeric
-
 local numeric_limitMin ---@type table<numeric, number>
 local numeric_limitMax ---@type table<numeric, number>
 local numeric_step ---@type table<numeric, number>
@@ -3736,26 +3734,11 @@ local numeric_handlers_max ---@type table<numeric, numeric_handler_max[]>
 local numeric_invoke_min ---@type fun(self: numeric)
 local numeric_invoke_max ---@type fun(self: numeric)
 
-local function buildNumeric()
-	local numeric = buildDatamanager() ---@cast numeric numeric
+---@param numeric numeric
+function build.Numeric(numeric)
 
-	local typename = "Numeric" ---@type typename_numeric
-	widget_types[numeric][typename] = true
+	--[ Value ]
 
-	if numeric_base then
-		us.Fill(numeric, numeric_base)
-
-		ds.Log(function() return "Datamanager base mutated into a new Numeric base: " .. us.ToString(numeric), wt.title .. "buildNumeric" end)
-
-		return numeric
-	end
-
-	--[ Data ]
-
-	numeric_limitMin = {}
-	numeric_limitMax = {}
-	numeric_step = {}
-	numeric_altStep = {}
 	numeric_hardStep = {}
 
 	function numeric:Verify(value)
@@ -3774,6 +3757,9 @@ local function buildNumeric()
 	function numeric:Increase(alt, user, silent) self:SetValue(data_value[self] + (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
 
 	--| Limits
+
+	numeric_limitMin = {}
+	numeric_limitMax = {}
 
 	function numeric:GetMin() return numeric_limitMin[self] end
 	function numeric:SetMin(number, silent)
@@ -3811,21 +3797,17 @@ local function buildNumeric()
 
 	--| Step
 
+	numeric_step = {}
+	numeric_altStep = {}
+
 	function numeric:GetStep() return numeric_step[self] end
 	function numeric:GetAltStep() return numeric_altStep[self] end
-
-	numeric_base = numeric
-
-	ds.Log(function() return "Datamanager base mutated into the main Numeric base: " .. us.ToString(numeric), wt.title .. "buildNumeric" end)
-
-	return numeric
 end
 
-function wt.CreateNumeric(t, datamanager)
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
-
-	local numeric = setmetatable(datamanager, numeric_base or buildNumeric()) ---@cast numeric numeric
+progenitors.Numeric = "Datamanager" ---@type typename_datamanager
+function wt.CreateNumeric(t, ancestor)
+	local typename = "Numeric" ---@type typename_numeric
+	local numeric = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast numeric numeric
 
 	--[ Initialization ]
 
@@ -3845,6 +3827,8 @@ function wt.CreateNumeric(t, datamanager)
 	numeric:SetDefault(t.default or numeric_limitMin[numeric])
 	numeric:SetValue(t.value)
 	numeric:Snapshot()
+
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Numeric: " .. us.ToString(numeric), wt.title .. ".CreateNumeric" end)
 
 	return numeric
 end
@@ -4581,26 +4565,13 @@ end
 
 --[[ COLOR ]]
 
-local colormanager_base ---@type colormanager
-
 local colormanager_active ---@type table<colormanager, boolean>
 local colormanager_onCancel ---@type table<colormanager, function>
 
-local function buildColormanager()
-	local colormanager = buildDatamanager() ---@cast colormanager colormanager
+---@param colormanager colormanager
+function build.Colormanager(colormanager)
 
-	local typename = "Colormanager" ---@type typename_colormanager
-	widget_types[colormanager][typename] = true
-
-	if colormanager_base then
-		us.Fill(colormanager, colormanager_base)
-
-		ds.Log(function() return "Datamanager base mutated into a new Colormanager base: " .. us.ToString(colormanager), wt.title .. "buildColormanager" end)
-
-		return colormanager
-	end
-
-	--[ Data ]
+	--[ Value ]
 
 	function colormanager:Verify(color) wt.PackColor(wt.UnpackColor(color)) end
 
@@ -4654,19 +4625,12 @@ local function buildColormanager()
 	function colormanager:IsActive() return colormanager_active[self] end
 
 	colormanager:AddListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
-
-	colormanager_base = colormanager
-
-	ds.Log(function() return "Datamanager base mutated into the main Colormanager base: " .. us.ToString(colormanager), wt.title .. "buildColormanager" end)
-
-	return colormanager
 end
 
-function wt.CreateColormanager(t, datamanager)
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
-
-	local colormanager = setmetatable(datamanager, colormanager_base or buildColormanager()) ---@cast colormanager colormanager
+progenitors.Colormanager = "Datamanager" ---@type typename_datamanager
+function wt.CreateColormanager(t, ancestor)
+	local typename = "Colormanager" ---@type typename_colormanager
+	local colormanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast colormanager colormanager
 
 	--[ Initialization ]
 
@@ -4685,6 +4649,8 @@ function wt.CreateColormanager(t, datamanager)
 	if type(t.onCancel) == "function" then colormanager_onCancel[colormanager] = t.onCancel end
 
 	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[colormanager] = false end)
+
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Colormanager: " .. us.ToString(colormanager), wt.title .. ".CreateColormanager" end)
 
 	return colormanager
 end
