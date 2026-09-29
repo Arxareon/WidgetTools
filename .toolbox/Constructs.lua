@@ -14,9 +14,8 @@ local crc = C_ColorUtil.WrapTextInColorCode
 
 local types ---@type table<construct, table<typename, true>>
 local bases ---@type table<typename, construct>
-local proxies
 local progenitors = {} ---@type table<typename, typename>
-local build
+local build, proxies
 
 ---Build a root construct prototype
 ---@return construct
@@ -1096,13 +1095,14 @@ end
 
 --[ Toggle Button ]
 
+progenitors.Checkbox = "Binary" ---@type typename_binary
 function wt.CreateCheckbox(t, ancestor, lite)
-	local typenameBase = "Binary" ---@type typename_binary
-	local checkbox = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
+	local typename = "Checkbox" ---@type typename_checkbox
+	local checkbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
-	setmetatable(checkbox, checkbox_base or buildCheckbox()) ---@cast checkbox checkbox
+	setmetatable(checkbox, buildBase(typename)) ---@cast checkbox checkbox
 
 	--[ Frame ]
 
@@ -1276,6 +1276,8 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		end
 	}) end
 
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. us.ToString(checkbox), wt.title .. ".CreateCheckbox" end)
+
 	return checkbox
 end
 
@@ -1405,13 +1407,14 @@ local function setUpClassicToggle(toggle, template, frame, height, typeTag, labe
 	end, 1)
 end
 
+progenitors.ClassicCheckbox = "Binary" ---@type typename_binary
 function wt.CreateClassicCheckbox(t, ancestor, lite)
-	local typenameBase = "Binary" ---@type typename_binary
-	local checkbox = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor)
+	local typename = "ClassicCheckbox" ---@type typename_classicCheckbox
+	local checkbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
-	setmetatable(checkbox, classicCheckbox_base or buildClassicCheckbox()) ---@cast checkbox classicCheckbox
+	setmetatable(checkbox, buildBase(typename)) ---@cast checkbox classicCheckbox
 
 	--[ Frame ]
 
@@ -1462,16 +1465,19 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 		if isInside and button == "LeftButton" or button == "RightButton" then template:Click(button) end
 	end end)
 
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. us.ToString(checkbox), wt.title .. ".CreateClassicCheckbox" end)
+
 	return checkbox
 end
 
+progenitors.Radiobutton = "Binary" ---@type typename_binary
 function wt.CreateRadiobutton(t, ancestor, lite)
-	local typenameBase = "Binary" ---@type typename_binary
-	local radiobutton = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateBinary(t, ancestor) ---@type binary
+	local typename = "Radiobutton" ---@type typename_radiobutton
+	local radiobutton = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t, ancestor)
 
 	if WidgetToolsDB.lite and lite ~= false then return radiobutton end
 
-	setmetatable(radiobutton, radiobutton_base or buildRadiobutton()) ---@cast radiobutton radiobutton
+	setmetatable(radiobutton, buildBase(typename)) ---@cast radiobutton radiobutton
 
 	--[ Frame ]
 
@@ -1528,15 +1534,13 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 		if isInside and button == "LeftButton" or (clearable and button == "RightButton") then template:Click(button) end
 	end end)
 
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Radiobutton: " .. us.ToString(radiobutton), wt.title .. ".CreateRadiobutton" end)
+
 	return radiobutton
 end
 
 
 --[[ SELECTOR ]]
-
-local selector_base ---@type selector
-local specialSelector_base ---@type specialSelector
-local multiselector_base ---@type multiselector
 
 local selector_clearable ---@type table<selector, boolean>
 
@@ -1581,18 +1585,36 @@ local itemsets = {
 	}
 }
 
-local function buildSelector()
-	local selector = buildDatamanager()
+---@param selector selector
+function build.Selector(selector)
 
-	local typename = "Selector" ---@type typename_selector
-	widget_types[selector][typename] = true ---@cast selector selector
+	--[ Value ]
 
-	if selector_base then
-		us.Fill(selector, selector_base)
+	selector_clearable = {}
 
-		ds.Log(function() return "Datamanager base mutated into a new Selector base: " .. us.ToString(selector), wt.title .. "buildSelector" end)
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
 
-		return selector
+		return value and value or not selector_clearable[self] and value or nil
+	end
+	function selector:Format(state)
+		if type(state) ~= "boolean" then state = selector:GetValue() end
+
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
+	end
+
+	function selector:SetValue(index, user, silent)
+		data_value[self] = selector:Verify(index)
+
+		for i = 1, #selector.items do selector.items[i]:SetValue(i == data_value[self], user, silent) end
+
+		if user and datamanager_instantSave[self] ~= false then selector:SaveData(nil, silent) end
+
+		if not silent then datamanager_invoke_changed(self, user == true) end
+
+		local management = datamanagement[self]
+
+		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 	end
 
 	--[ Items ]
@@ -1669,48 +1691,20 @@ local function buildSelector()
 
 		for i = 1, #handlers do handlers[i](self, item) end
 	end
-
-	--[ Data ]
-
-	selector_clearable = {}
-
-	function selector:Verify(value)
-		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
-
-		return value and value or not selector_clearable[self] and value or nil
-	end
-	function selector:Format(state)
-		if type(state) ~= "boolean" then state = selector:GetValue() end
-
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
-	end
-
-	function selector:SetValue(index, user, silent)
-		data_value[self] = selector:Verify(index)
-
-		for i = 1, #selector.items do selector.items[i]:SetValue(i == data_value[self], user, silent) end
-
-		if user and datamanager_instantSave[self] ~= false then selector:SaveData(nil, silent) end
-
-		if not silent then datamanager_invoke_changed(self, user == true) end
-
-		local management = datamanagement[self]
-
-		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
-	end
-
-	selector_base = selector
-
-	ds.Log(function() return "Datamanager base mutated into the main Selector base: " .. us.ToString(selector), wt.title .. "buildSelector" end)
-
-	return selector
 end
 
-function wt.CreateSelector(t, ancestor)
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	local selector = wt.IsType(ancestor, typenameBase) and ancestor or wt.CreateDatamanager(t, ancestor)
+function build.SpecialSelector()
+	--ADD special selector init
+end
 
-	setmetatable(selector, selector_base or buildSelector()) ---@cast selector selector
+function build.Multiselector()
+	--ADD multiselector init
+end
+
+progenitors.Selector = "Datamanager" ---@type typename_datamanager
+function wt.CreateSelector(t, ancestor)
+	local typename = "Selector" ---@type typename_selector
+	local selector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast selector selector
 
 	--[ Initialization ]
 
@@ -1729,24 +1723,19 @@ function wt.CreateSelector(t, ancestor)
 
 	selector_clearable[selector] = t.clearable
 
-	ds.Log(function() return
-		"Datamanager instance mutated into Selector instance:" .. us.ToString(selector) .. " with base: " .. us.ToString(selector_base),
-		wt.title .. ".CreateSelector"
-	end)
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Selector: " .. us.ToString(selector), wt.title .. ".CreateSelector" end)
 
 	return selector
 end
 
-function wt.CreateSpecialSelector(itemset, t, datamanager)
-	t = type(t) == "table" and t or {}
-
+progenitors.SpecialSelector = "Datamanager" ---@type typename_datamanager
+function wt.CreateSpecialSelector(itemset, t, ancestor)
 	local typename = "SpecialSelector" ---@type typename_specialSelector
-	local typenameBase = "Datamanager" ---@type typename_datamanager
+	local specialSelector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast selector specialSelector
 
-	datamanager = wt.IsType(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-	local specialSelector = datamanager ---@cast specialSelector specialSelector
+	--[ Initialization ]
 
-	widget_types[specialSelector][typename] = true
+	t = type(t) == "table" and t or {}
 
 	--[ Items ]
 
@@ -1849,22 +1838,19 @@ function wt.CreateSpecialSelector(itemset, t, datamanager)
 	--Set starting value
 	specialSelector.setValue(value, false, true)
 
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a SpecialSelector: " .. us.ToString(specialSelector), wt.title .. ".CreateSpecialSelector" end)
+
 	return specialSelector
 end
 
-function wt.CreateMultiselector(t, datamanager)
-	t = type(t) == "table" and t or {}
-
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	datamanager = wt.IsType(datamanager, typenameBase) and datamanager or wt.CreateDatamanager(t)
-
-	local multiselector = datamanager ---@cast multiselector multiselector
-
-	--[ Type ]
-
+progenitors.Multiselector = "Datamanager" ---@type typename_datamanager
+function wt.CreateMultiselector(t, ancestor)
 	local typename = "Multiselector" ---@type typename_multiselector
+	local multiselector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast multiselector multiselector
 
-	widget_types[multiselector][typename] = true
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
 
 	--[ Items ]
 
@@ -2053,6 +2039,8 @@ function wt.CreateMultiselector(t, datamanager)
 
 	--Set starting value
 	multiselector.setValue(value, false, true)
+
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Multiselector: " .. us.ToString(multiselector), wt.title .. ".CreateMultiselector" end)
 
 	return multiselector
 end
@@ -3051,25 +3039,12 @@ end
 
 --[[ TEXT ]]
 
-local textual_base ---@type textual
-
 local textual_color ---@type table<textual, color>
 
-local function buildTextual()
-	local textual = buildDatamanager() ---@cast textual textual
+---@param textual textual
+function build.Textual(textual)
 
-	local typename = "Textual" ---@type typename_textual
-	widget_types[textual][typename] = true
-
-	if textual_base then
-		us.Fill(textual, textual_base)
-
-		ds.Log(function() return "Datamanager base mutated into a new Textual base: " .. us.ToString(textual), wt.title .. "buildTextual" end)
-
-		return textual
-	end
-
-	--[ Data ]
+	--[ Value ]
 
 	textual_color = {}
 
@@ -3080,19 +3055,12 @@ local function buildTextual()
 
 		return color and cr(value, color) or value
 	end
-
-	textual_base = textual
-
-	ds.Log(function() return "Datamanager base mutated into the main Textual base: " .. us.ToString(textual), wt.title .. "buildTextual" end)
-
-	return textual
 end
 
-function wt.CreateTextual(t, datamanager)
-	local typenameBase = "Datamanager" ---@type typename_datamanager
-	if not wt.IsType(datamanager, typenameBase) then datamanager = wt.CreateDatamanager(t) end
-
-	local textual = setmetatable(datamanager, textual_base or buildTextual()) ---@cast textual textual
+progenitors.Textual = "Datamanager" ---@type typename_datamanager
+function wt.CreateTextual(t, ancestor)
+	local typename = "Textual" ---@type typename_textual
+	local textual = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), buildBase(typename)) ---@cast textual textual
 
 	--[ Initialization ]
 
@@ -3108,6 +3076,8 @@ function wt.CreateTextual(t, datamanager)
 	textual:Snapshot()
 
 	if wt.IsColor(t.color) then textual_color = t.color end
+
+	ds.Log(function() return progenitors[typename] .. " instance mutated into a Textual: " .. us.ToString(textual), wt.title .. ".CreateTextual" end)
 
 	return textual
 end
