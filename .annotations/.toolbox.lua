@@ -1757,26 +1757,102 @@ end
 
 --[[ CONSTRUCT ]]
 
-local c = {} ---@class construct
+---@alias rootType typename_construct
 
-	---Returns the type list of this widget
-	---@return { [typename_root]: true, }
-	function c:GetTypes() return {} end
+function wt.CreateConstruct(t)
 
-		---@alias typename_root "Construct"
+	--| Parameters
 
-	---Checks and returns if the type of this contruct matches the name provided
-	---@param typename construct_IsType_typename WidgetTools typename to check if this instance is of this specific type
-	---@return boolean
-	function c:IsType(typename)
+	---@class construct_options
+	---@field listeners? construct_listeners Table of key, value pairs of custom event tags and functions to assign as event handlers to call on trigger
+	---@field properties? table<any, any> Default list of custom instance properties, unique property key and value pairs to assign
 
-		--| Parameters
+		---@class construct_listeners
+		---@field [1]? table<eventTag, widget_listener[]> Table of key, value pairs of unique event identifier tags to register as custom events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? construct_listener_assigned[] Ordered list of functions to call when an "assigned" event is invoked after `construct:SetProperty(...)` was called
 
-		---WidgetTools typename to check if this instance is of this specific type
-		---@alias construct_IsType_typename typename|typename_root
+			---Unique event identifier tag
+			---@alias eventTag string
 
-		return false
-	end
+			---@class construct_listener : indexedEventHandler
+			---@field handler eventHandler Handler function to register for call
+
+				---@class indexedEventHandler
+				---@field callIndex? eventHandlerCallIndex
+
+					---Set when to call the handler function in the execution order | ***Default:*** *last position*
+					---@alias eventHandlerCallIndex integer?
+
+				---Called when a custom event is invoked
+				---@alias eventHandler fun(self: construct_self, ...: any)
+
+					---Reference to the construct instance table
+					---@alias construct_self widget
+
+			---@class construct_listener_assigned : indexedEventHandler
+			---@field handler construct_handler_assigned Handler function to register for call
+
+				---Called when an "assigned" event is invoked after `construct:SetProperty(...)` was called
+				---@alias construct_handler_assigned fun(self: construct_self, property: any, value: any)
+
+	--| Returns
+
+	local _ = {} ---@class construct
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_construct "Construct"
+
+		---Checks and returns if the type of this contruct matches the name provided
+		---@param typename construct_IsType_typename WidgetTools typename to check if this instance is of this specific type
+		---@return boolean
+		function _:IsType(typename)
+
+			--| Parameters
+
+			---WidgetTools typename to check if this instance is of this specific type
+			---@alias construct_IsType_typename typename|typename_construct
+
+			return false
+		end
+
+		--[ Events ]
+
+		---Add a new custom event to register listeners for, and invoke manually to call registered handlers
+		---@param event eventTag Unique event identifier tag
+		function _:AddEvent(event) end
+
+		---Invoke a custom event to notify registered listeners and call handlers, passing arguments along
+		---@param event eventTag Unique event identifier tag
+		---@param ... any Leftover arguments to pass to event handlers as payload
+		function _:Invoke(event, ...) end
+
+		---Register a listener for a custom event to call the specified handler on trigger
+		---@param event eventTag Unique event identifier tag
+		---@param handler eventHandler Called when a custom event is invoked
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:AddListener(event, handler, callIndex) end
+
+		---Register a listener for an "assigned" event to call the specified handler on trigger
+		---@param handler construct_handler_assigned Called when an "assigned" event is invoked after `construct:SetProperty(...)` was called
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:AddListener_assigned(handler, callIndex) end
+
+		--[ Properties ]
+
+		---Set a custom instance property
+		---@param property any
+		---@param value any
+		function _:SetProperty(property, value) end
+
+		---Get the value of a custom instance property
+		---@param property any
+		function _:GetProperty(property) end
+end
 
 --| Management
 
@@ -1792,9 +1868,10 @@ function wt.IsType(object, typename)
 	---@alias IsType_param_object any
 
 	---WidgetTools typename to check if `object` is an instance of this specific type
-	---@alias IsType_param_typename typename|typename_root
+	---@alias IsType_param_typename typename
 
 		---@alias typename
+		---| typename_construct
 		---| typename_widget
 		---| typename_container
 		---| typename_panel
@@ -1849,15 +1926,16 @@ end
 
 ---Create a basic non-GUI parentable widget instance with typename, event callback, child widget, enabled state and dependency management logic
 ---@param t? widget_options Optional parameters
+---@param ancestor? construct Reference to an already existing construct instance to turn into a widget instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return widget widget Reference to the new widget, utility functions and more wrapped in a widget table
-function wt.CreateWidget(t)
+function wt.CreateWidget(t, ancestor)
 
 	--| Parameters
 
 	---Optional parameters
-	---@class widget_options : togglableObject
+	---@class widget_options : construct_options, togglableObject
 	---@field parent? widget Reference to the widget to set as the parent | ***Default:*** `nil` *no parent*
-	---@field independent? boolean If `true`, do not link the enabled state of this widget to the enabled state of `parent` (if set) | ***Default:*** `false`
+	---@field independent? boolean If `true`, keep the enabled state of this widget unlinked from the enabled state of its parent (when parented) | ***Default:*** `false`
 	---@field childIndex? integer If set, add this widget at the specified order index in the current list of children of `parent` (if set) | ***Default:*** *last position*
 	---@field listeners? widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
@@ -1882,30 +1960,21 @@ function wt.CreateWidget(t)
 
 		---@class widget_listeners
 		---@field [1]? table<eventTag, widget_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? widget_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `widget:setEnabled(...)` was called
-
-			---Unique event identifier tag
-			---@alias eventTag string
+		---@field enabled? widget_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `widget:SetEnabled(...)` was called
 
 			---@class widget_listener : indexedEventHandler
 			---@field handler widget_handler Handler function to register for call
 
-				---@class indexedEventHandler
-				---@field callIndex? eventHandlerCallIndex
-
-					---Set when to call the handler function in the execution order | ***Default:*** *last position*
-					---@alias eventHandlerCallIndex integer?
-
 				---Called when a custom event is invoked
 				---@alias widget_handler fun(self: widget_self, ...: any)
 
-					---Reference to the widget table
+					---Reference to the widget instance table
 					---@alias widget_self widget
 
 			---@class widget_listener_enabled : indexedEventHandler
 			---@field handler widget_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `widget:setEnabled(...)` was called
+				---Called when an "enabled" event is invoked after `widget:SetEnabled(...)` was called
 				---@alias widget_handler_enabled fun(self: widget_self, state: widget_handler_enabled_state, user: widget_handler_enabled_user)
 
 					---`true` if the widget is enabled
@@ -1918,29 +1987,15 @@ function wt.CreateWidget(t)
 
 	local _ = {} ---@class widget : construct
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_widget "Widget"
 
-		---Checks and returns if the type of this widget matches the string provided
-		---@param typename typename
-		---@return boolean
-		function _:IsType(typename) return false end
-
 		--[ Events ]
-
-		---Add a new custom event to register listeners for, and invoke manually to call registered handlers
-		---@param event eventTag Unique event identifier tag
-		function _:AddEvent(event) end
-
-		---Invoke a custom event to notify registered listeners and call handlers, passing arguments along
-		---@param event eventTag Unique event identifier tag
-		---@param ... any Leftover arguments to pass to event handlers as payload
-		function _:Invoke(event, ...) end
 
 		---Register a listener for a custom event to call the specified handler on trigger
 		---@param event eventTag Unique event identifier tag
@@ -1949,27 +2004,36 @@ function wt.CreateWidget(t)
 		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler widget_handler_enabled Called when an "enabled" event is invoked after `widget:setEnabled(...)` was called
+		---@param handler widget_handler_enabled Called when an "enabled" event is invoked after `widget:SetEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_enabled(handler, callIndex) end
 
 		--[ Hierarchy ]
 
-		--| Parent
+		--| Child
 
 		---Return the parent of this widget
 		---@return widget|nil parent Reference to widget set as the parent | ***Default:*** `nil` *no parent is set*
 		function _:GetParent() end
 
 		---Set the parent of this widget (replacing the current parent if set)
-		---@param parent widget|nil Reference to the widget to set as the new parent, or `nil` to remove the current parent | ***Default:*** `nil`
-		--- - ***Note:*** If the parent of this widget is already set to `parent`, it will not be added again, ignoring `independent` & `childIndex`.
-		---@param independent? boolean If `true`, do not link the enabled state of this widget to the enabled state of `parent` | ***Default:*** `false`
-		---@param childIndex? integer If set, add this widget at the specified order index in the current list of children | ***Default:*** *last position*
+		---@param parent widget? Reference to the widget to set as the new parent, or `nil` to remove the current parent | ***Default:*** `nil`
+		--- - ***Note:*** If the direct parent or any ancestor of this widget is already set to `parent`, it will not be added again, ignoring `independent` & `index`.
+		---@param independent? boolean If `true`, unlink the enabled state of this widget from the enabled state of `parent` by toggling its independency on | ***Default:*** `false`
+		---@param index? integer If set, add this widget at the specified order index in the current list of children | ***Default:*** *last position*
 		---@return boolean # `true` on success, `false` if `parent` was invalid
-		function _:SetParent(parent, independent, childIndex) return false end
+		---@return integer|nil # The current order index this widget was placed at | ***Default:*** `nil` *parent was not set*
+		function _:SetParent(parent, independent, index) return false end
 
-		--| Children
+		---Check if this widget is set as independent and its enabled state is unlinked from the enabled state of its parent when parented
+		---@return boolean
+		function _:IsIndependent() return false end
+
+		---Set whether to keep the enabled state of this widget unlinked from the enabled state of its parent when parented
+		---@param independent? boolean ***Default:*** `true`
+		function _:SetIndependent(independent) end
+
+		--| Parent
 
 		---Check if the specified widget is a child of this widget
 		---@param child any
@@ -1987,26 +2051,17 @@ function wt.CreateWidget(t)
 
 		---Assign a new child to this widget
 		---@param child widget Reference to the widget to add
-		--- - ***Note:*** If `child` was already added, it will not be added again, ignoring `independent` &  `index`, and returning `nil`.
-		---@param independent? boolean If `true`, do not link the enabled state of `child` to the enabled state of this widget | ***Default:*** `false`
+		--- - ***Note:*** If `child` was already added, it will not be added again, ignoring `independent` & `index`, returning `nil`.
+		---@param independent? boolean If `true`, unlink the enabled state of `child` from the enabled state of this widget by toggling its independency on | ***Default:*** `false`
 		---@param index? integer If set, add `child` at the specified order index in the current list of children | ***Default:*** *last position*
 		--- - ***Note:*** Ordering indexes can shift as new children get injected or removed, but relative order is always preserved.
-		---@return integer|nil index The current order index `child` was placed at | ***Default:*** `nil` *child was not added*
-		function _:AddChild(child, independent, index) end
+		---@return boolean # `true` on success, `false` if `child` was invalid
+		---@return integer|nil # The current order index `child` was placed at | ***Default:*** `nil` *child was not added*
+		function _:AddChild(child, independent, index) return false end
 
 		---Remove a child from this widget
 		---@param child widget Reference to the child widget to unassign
 		function _:RemoveChild(child) end
-
-		---Check if a child is set as independent (whether the enabled state of a child is unlinked from the enabled state of this widget)
-		---@param child widget Reference to the child widget
-		---@return boolean? # ***Default:*** `nil` *not a child*
-		function _:IsIndependent(child) end
-
-		---Set the independence relationship of a child of this widget (whether the enabled state of a child is unlinked from the enabled state of this widget)
-		---@param child widget Reference to the child widget
-		---@param independent? boolean ***Default:*** `true`
-		function _:SetIndependent(child, independent) end
 
 		--[ State ]
 
@@ -2073,7 +2128,7 @@ end
 
 ---Create a basic GUI container instance
 ---@param t? container_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget|construct Reference to an already existing widget instance to turn into a container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return container|widget container References to the new container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateContainer(t, ancestor, lite)
@@ -2101,12 +2156,12 @@ function wt.CreateContainer(t, ancestor, lite)
 
 		---@class container_listeners : widget_listeners
 		---@field [1]? table<string, container_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? container_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `container:setEnabled(...)` was called
+		---@field enabled? container_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `container:SetEnabled(...)` was called
 
 			---@class container_listener_enabled : indexedEventHandler
 			---@field handler container_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `container:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `container:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias container_handler_enabled fun(self: container, state: boolean, user: boolean)
 
 			---@class container_listener : indexedEventHandler
@@ -2135,10 +2190,10 @@ function wt.CreateContainer(t, ancestor, lite)
 		---@class guiFrame
 		---@field frame Frame Widget GUI parent frame
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_container]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_container]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_container "Container"
@@ -2151,7 +2206,7 @@ end
 
 ---Create a basic GUI container instance with customizable UI elements
 ---@param t? container_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a customizable container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget|construct Reference to an already existing widget instance to turn into a customizable container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return customContainer|widget container References to the new customizable container [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomContainer(t, ancestor, lite)
@@ -2168,12 +2223,12 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 		---@class customContainer_listeners : widget_listeners
 		---@field [1]? table<string, customContainer_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? customContainer_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customContainer:setEnabled(...)` was called
+		---@field enabled? customContainer_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customContainer:SetEnabled(...)` was called
 
 			---@class customContainer_listener_enabled : indexedEventHandler
 			---@field handler customContainer_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `customContainer:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `customContainer:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias customContainer_handler_enabled fun(self: customContainer, state: boolean, user: boolean)
 
 			---@class customContainer_listener : indexedEventHandler
@@ -2230,10 +2285,10 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 	---@field frame Frame|BackdropTemplate Widget GUI customizable parent frame with BackdropTemplate
 	local __ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_customContainer]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_customContainer]: true, }
 		function __:GetTypes() return {} end
 
 			---@alias typename_customContainer "CustomContainer"
@@ -2248,7 +2303,7 @@ end
 
 ---Create a GUI container panel instance with customized panel UI
 ---@param t? panel_options Optional parameters
----@param ancestor? customContainer|widget Reference to an already existing custom container instance to turn into a panel instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new custom container
+---@param ancestor? customContainer|widget|construct Reference to an already existing custom container instance to turn into a panel instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new custom container, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return panel|widget panel References to the new panel [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreatePanel(t, ancestor, lite)
@@ -2268,12 +2323,12 @@ function wt.CreatePanel(t, ancestor, lite)
 
 		---@class panel_listeners : widget_listeners
 		---@field [1]? table<string, panel_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? panel_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `panel:setEnabled(...)` was called
+		---@field enabled? panel_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `panel:SetEnabled(...)` was called
 
 			---@class panel_listener_enabled : indexedEventHandler
 			---@field handler panel_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `panel:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `panel:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias panel_handler_enabled fun(self: panel, state: boolean, user: boolean)
 
 			---@class panel_listener : indexedEventHandler
@@ -2344,10 +2399,10 @@ function wt.CreatePanel(t, ancestor, lite)
 	---@field description? FontString Reference to the description textline appearing in the panel
 	local _ = {}
 
-	--[ Type ]
+	--[ Types ]
 
 	---Returns the type list of this widget
-	---@return { [typename_root]: true, [typename_widget]: true, [typename_panel]: true, }
+	---@return { [typename_construct]: true, [typename_widget]: true, [typename_panel]: true, }
 	function _:GetTypes() return {} end
 
 		---@alias typename_panel "Panel"
@@ -2371,7 +2426,7 @@ end
 
 ---Create a non-GUI action widget instance with custom trigger logic
 ---@param t? action_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into an action instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget|construct Reference to an already existing widget instance to turn into an action instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@return action action Reference to the new action widget, utility functions and more wrapped in a widget table
 function wt.CreateAction(t, ancestor)
 
@@ -2385,7 +2440,7 @@ function wt.CreateAction(t, ancestor)
 		---@class action_listeners : widget_listeners
 		---@field [1]? table<string, action_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field triggered? action_listener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after `action:trigger(...)` was called
-		---@field enabled? action_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `action:setEnabled(...)` was called
+		---@field enabled? action_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `action:SetEnabled(...)` was called
 
 			---@class action_listener_triggered : indexedEventHandler
 			---@field handler action_handler_triggered Handler function to register for call
@@ -2396,7 +2451,7 @@ function wt.CreateAction(t, ancestor)
 			---@class action_listener_enabled : indexedEventHandler
 			---@field handler action_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `action:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `action:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias action_handler_enabled fun(self: action, state: boolean, user: boolean)
 
 			---@class action_listener : indexedEventHandler
@@ -2409,34 +2464,6 @@ function wt.CreateAction(t, ancestor)
 
 	---@class action : widget
 	local _ = {}
-
-		--[ Type ]
-
-		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, }
-		function _:GetTypes() return {} end
-
-			---@alias typename_action "Action"
-
-		--[ Events ]
-
-		---Register a listener for a custom event to call the specified handler on trigger
-		---@param event eventTag Unique event identifier tag
-		---@param handler action_handler Called when a custom event is invoked
-		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:AddListener(event, handler, callIndex) end
-
-		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler action_handler_enabled Called when an "enabled" event is invoked after `action:setEnabled(...)` was called
-		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:AddListener_enabled(handler, callIndex) end
-
-		---Register a listener for a "triggered" event to call the specified handler on trigger
-		---@param handler action_handler_triggered Called when a "triggered" event is invoked after `action:trigger(...)` was called
-		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-		function _:AddListener_triggered(handler, callIndex) end
-
-		--[ Action ]
 
 		---Trigger the registered action (if the widget is enabled)
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
@@ -2453,6 +2480,32 @@ function wt.CreateAction(t, ancestor)
 			---@alias action_setAction_param1 fun(self: action, user?: boolean)
 		end
 
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_action]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_action "Action"
+
+		--[ Events ]
+
+		---Register a listener for a custom event to call the specified handler on trigger
+		---@param event eventTag Unique event identifier tag
+		---@param handler action_handler Called when a custom event is invoked
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:AddListener(event, handler, callIndex) end
+
+		---Register a listener for an "enabled" event to call the specified handler on trigger
+		---@param handler action_handler_enabled Called when an "enabled" event is invoked after `action:SetEnabled(...)` was called
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:AddListener_enabled(handler, callIndex) end
+
+		---Register a listener for a "triggered" event to call the specified handler on trigger
+		---@param handler action_handler_triggered Called when a "triggered" event is invoked after `action:trigger(...)` was called
+		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+		function _:AddListener_triggered(handler, callIndex) end
+
 	return _
 end
 
@@ -2460,7 +2513,7 @@ end
 
 ---Create a Blizzard button GUI frame instance with enhanced widget functionality
 ---@param t? actionButton_options Optional parameters
----@param ancestor? action|widget Reference to an already existing action instance to turn into a button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new action
+---@param ancestor? action|widget|construct Reference to an already existing action instance to turn into a button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new action, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return actionButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
 function wt.CreateButton(t, ancestor, lite)
@@ -2486,7 +2539,7 @@ function wt.CreateButton(t, ancestor, lite)
 		---@class button_listeners : action_listeners
 		---@field [1]? table<string, button_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field trigger? button_listener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after `button:trigger(...)` was called
-		---@field enabled? button_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `button:setEnabled(...)` was called
+		---@field enabled? button_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `button:SetEnabled(...)` was called
 
 			---@class button_listener_triggered : indexedEventHandler
 			---@field handler button_handler_triggered Handler function to register for call
@@ -2497,7 +2550,7 @@ function wt.CreateButton(t, ancestor, lite)
 			---@class button_listener_enabled : indexedEventHandler
 			---@field handler button_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `button:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `button:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias button_handler_enabled fun(self: actionButton, state: boolean, user: boolean)
 
 			---@class button_listener : indexedEventHandler
@@ -2514,10 +2567,10 @@ function wt.CreateButton(t, ancestor, lite)
 	---@field template Button
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_button "Button"
@@ -2531,7 +2584,7 @@ function wt.CreateButton(t, ancestor, lite)
 		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler button_handler_enabled Called when an "enabled" event is invoked after `button:setEnabled(...)` was called
+		---@param handler button_handler_enabled Called when an "enabled" event is invoked after `button:SetEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_enabled(handler, callIndex) end
 
@@ -2557,7 +2610,7 @@ end
 
 ---Create a Blizzard button GUI frame instance with customizable UI elements and enhanced widget functionality
 ---@param t? customButton_options Optional parameters
----@param ancestor? action|widget Reference to an already existing action instance to turn into a custom button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new action
+---@param ancestor? action|widget|construct Reference to an already existing action instance to turn into a custom button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new action, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return customButton|action # References to the new [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button) (inheriting [BackdropTemplate](https://warcraft.wiki.gg/wiki/BackdropTemplate)), utility functions and more wrapped in a widget table
 function wt.CreateCustomButton(t, ancestor, lite)
@@ -2583,7 +2636,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 		---@class customButton_listeners : action_listeners
 		---@field [1]? table<string, customButton_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field trigger? customButton_listener_triggered[] Ordered list of functions to call when a "triggered" event is invoked after `customButton:trigger(...)` was called
-		---@field enabled? customButton_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customButton:setEnabled(...)` was called
+		---@field enabled? customButton_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customButton:SetEnabled(...)` was called
 
 			---@class customButton_listener_triggered : indexedEventHandler
 			---@field handler customButton_handler_triggered Handler function to register for call
@@ -2594,7 +2647,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 			---@class customButton_listener_enabled : indexedEventHandler
 			---@field handler customButton_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `customButton:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `customButton:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias customButton_handler_enabled fun(self: customButton, state: boolean, user: boolean)
 
 			---@class customButton_listener : indexedEventHandler
@@ -2609,10 +2662,10 @@ function wt.CreateCustomButton(t, ancestor, lite)
 	---@field template Button|BackdropTemplate
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_action]: true, [typename_button]: true, [typename_customButton]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_customButton "CustomButton"
@@ -2626,7 +2679,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler customButton_handler_enabled Called when an "enabled" event is invoked after `button:setEnabled(...)` was called
+		---@param handler customButton_handler_enabled Called when an "enabled" event is invoked after `button:SetEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_enabled(handler, callIndex) end
 
@@ -2655,7 +2708,7 @@ end
 
 ---Create a non-GUI datamanager widget instance with generic data management logic
 ---@param t? datamanager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget|construct Reference to an already existing widget instance to turn into a datamanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@return datamanager datamanager Reference to the new datamanager widget, utility functions and more wrapped in a widget table
 function wt.CreateDatamanager(t, ancestor)
 
@@ -2666,15 +2719,17 @@ function wt.CreateDatamanager(t, ancestor)
 	---@field listeners? datamanager_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? any Default value of the widget | ***Default:*** `nil`
-	---@field data? datamanager_storage If set, connect this widget to also manage storage data
+	---@field read datamanager_storage_read
+	---@field write datamanager_storage_write
+	---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`
 	---@field dataManagement? settingsData If set, register this widget to settings data management for batched data saving & loading and handling data changes
 
 		---@class datamanager_listeners : widget_listeners
 		---@field [1]? table<string, datamanager_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field loaded? datamanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? datamanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? datamanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager:setValue(...)` was called
-		---@field enabled? datamanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `datamanager:setEnabled(...)` was called
+		---@field changed? datamanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `datamanager:SetValue(...)` was called
+		---@field enabled? datamanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `datamanager:SetEnabled(...)` was called
 
 			---@class datamanager_listener_loaded : indexedEventHandler
 			---@field handler datamanager_handler_loaded Handler function to register for call
@@ -2691,13 +2746,13 @@ function wt.CreateDatamanager(t, ancestor)
 			---@class datamanager_listener_changed : indexedEventHandler
 			---@field handler datamanager_handler_changed Handler function to register for call
 
-				---Called when a "changed" event is invoked after `datamanager:setValue(...)` was called<p>@*param* `self` ― Reference to the binary widget</p><p>@*param* `value` ― Current value of the widget</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when a "changed" event is invoked after `datamanager:SetValue(...)` was called<p>@*param* `self` ― Reference to the binary widget</p><p>@*param* `value` ― Current value of the widget</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias datamanager_handler_changed fun(self: datamanager, value: any, user: boolean)
 
 			---@class datamanager_listener_enabled : indexedEventHandler
 			---@field handler datamanager_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `datamanager:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `datamanager:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias datamanager_handler_enabled fun(self: datamanager, state: boolean, user: boolean)
 
 			---@class datamanager_listener : indexedEventHandler
@@ -2706,25 +2761,20 @@ function wt.CreateDatamanager(t, ancestor)
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
 				---@alias datamanager_handler fun(self: datamanager, ...: any)
 
-		---@class datamanager_storage
-		---@field read datamanager_storage_read
-		---@field write datamanager_storage_write
-		---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`
+		---Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
+		---@alias datamanager_storage_read datamanager_read|nil
 
-			---Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-			---@alias datamanager_storage_read datamanager_read|nil
+			---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
+			---@alias datamanager_read fun(): data: datamanager_data
 
-				---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
-				---@alias datamanager_read fun(): data: datamanager_data
+				---***Default:*** `nil`
+				---@alias datamanager_data any
 
-					---***Default:*** `nil`
-					---@alias datamanager_data any
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
+		---@alias datamanager_storage_write datamanager_writer|nil
 
-			---Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-			---@alias datamanager_storage_write datamanager_writer|nil
-
-				---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
-				---@alias datamanager_writer fun(data: datamanager_data)
+			---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
+			---@alias datamanager_writer fun(data: datamanager_data)
 
 		---@class settingsData
 		---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** `"WidgetTools"` *(register as a global rule)*
@@ -2737,10 +2787,10 @@ function wt.CreateDatamanager(t, ancestor)
 	---@class datamanager : widget
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_datamanager "Datamanager"
@@ -2754,7 +2804,7 @@ function wt.CreateDatamanager(t, ancestor)
 		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler datamanager_handler_enabled Called when an "enabled" event is invoked after `datamanager:setEnabled(...)` was called
+		---@param handler datamanager_handler_enabled Called when an "enabled" event is invoked after `datamanager:SetEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_enabled(handler, callIndex) end
 
@@ -2769,13 +2819,11 @@ function wt.CreateDatamanager(t, ancestor)
 		function _:AddListener_saved(handler, callIndex) end
 
 		---Register a listener for a "changed" widget event to call the specified handler on trigger
-		---@param handler datamanager_handler_changed Called when a "changed" event is invoked after `datamanager:setValue(...)` was called
+		---@param handler datamanager_handler_changed Called when a "changed" event is invoked after `datamanager:SetValue(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_changed(handler, callIndex) end
 
-		--[ Data ]
-
-		--| Value
+		--[ Value ]
 
 		---Validate a value to be accepted by the widget
 		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
@@ -2805,7 +2853,36 @@ function wt.CreateDatamanager(t, ancestor)
 			---***Default:*** `t.data.read()` or *current default value*
 			---@alias datamanager_value_readDefault any?
 
-		--| Storage
+		--| Default
+
+		---Get the currently set default value
+		---@return datamanager_value
+		function _:GetDefault() end
+
+		---Set the default value
+		---@param value datamanager_default ***Default:*** *current default value*
+		function _:SetDefault(value) end
+
+			---***Default:*** *current default value*
+			---@alias datamanager_default any?
+
+		---Set and load the stored data managed by the widget to the currently set default value
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:Reset(handleChanges, silent) end
+
+		--| Snapshot
+
+		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value
+		---@param stored? boolean If `true`, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
+		function _:Snapshot(stored) end
+
+		---Set and load the stored data managed by the widget to the last saved data snapshot
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:Revert(handleChanges, silent) end
+
+		--[ Storage ]
 
 		---Set the reader utility called to pull data from storage
 		---@param read datamanager_storage_read Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
@@ -2838,35 +2915,6 @@ function wt.CreateDatamanager(t, ancestor)
 		---@param instantSave boolean? ***Default:*** `true`
 		function _:SetInstantSave(instantSave) end
 
-		--| Default
-
-		---Get the currently set default value
-		---@return datamanager_value
-		function _:GetDefault() end
-
-		---Set the default value
-		---@param value datamanager_default ***Default:*** *current default value*
-		function _:SetDefault(value) end
-
-			---***Default:*** *current default value*
-			---@alias datamanager_default any?
-
-		---Set and load the stored data managed by the widget to the currently set default value
-		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
-		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:Reset(handleChanges, silent) end
-
-		--| Snapshot
-
-		---Set a data snapshot so any changes made to the widget and/or the stored data can be reverted to this value
-		---@param stored? boolean If `true`, use the data from storage to create the snapshot instead of using the current value of the widget | ***Default:*** `false`
-		function _:Snapshot(stored) end
-
-		---Set and load the stored data managed by the widget to the last saved data snapshot
-		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
-		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:Revert(handleChanges, silent) end
-
 	return _
 end
 
@@ -2875,7 +2923,7 @@ end
 
 ---Create a non-GUI binary datamanager widget instance with boolean data management logic
 ---@param t? binary_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into binary instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into binary instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return binary binary Reference to the new binary widget, utility functions and more wrapped in a widget table
 function wt.CreateBinary(t, ancestor)
 
@@ -2891,8 +2939,8 @@ function wt.CreateBinary(t, ancestor)
 		---@field [1]? table<string, binary_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field loaded? binary_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? binary_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? binary_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `binary:setState(...)` was called
-		---@field enabled? binary_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `binary:setEnabled(...)` was called
+		---@field changed? binary_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `binary:SetState(...)` was called
+		---@field enabled? binary_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `binary:SetEnabled(...)` was called
 
 			---@class binary_listener_loaded : indexedEventHandler
 			---@field handler binary_handler_loaded Handler function to register for call
@@ -2909,13 +2957,13 @@ function wt.CreateBinary(t, ancestor)
 			---@class binary_listener_changed : indexedEventHandler
 			---@field handler binary_handler_changed Handler function to register for call
 
-				---Called when a "changed" event is invoked after `binary:setState(...)` was called<p>@*param* `self` ― Reference to the binary widget</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when a "changed" event is invoked after `binary:SetState(...)` was called<p>@*param* `self` ― Reference to the binary widget</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias binary_handler_changed fun(self: binary, state: boolean, user: boolean)
 
 			---@class binary_listener_enabled : indexedEventHandler
 			---@field handler binary_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `binary:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `binary:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias binary_handler_enabled fun(self: binary, state: boolean, user: boolean)
 
 			---@class binary_listener : indexedEventHandler
@@ -2934,10 +2982,10 @@ function wt.CreateBinary(t, ancestor)
 	---@class binary : datamanager
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_binary "Binary"
@@ -3031,7 +3079,7 @@ end
 
 ---Create a Blizzard checkbox GUI frame instance with enhanced widget functionality
 ---@param t? checkbox_options Optional parameters
----@param ancestor? binary|datamanager|widget Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from
+---@param ancestor? binary|datamanager|widget|construct Reference to an already existing binary datamanager instance to turn into a checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return checkbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCheckbox(t, ancestor, lite)
@@ -3060,8 +3108,8 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		---@field [1]? table<string, checkbox_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field loaded? binary_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? binary_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? checkbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `checkbox:setState(...)` was called
-		---@field enabled? checkbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkbox:setEnabled(...)` was called
+		---@field changed? checkbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `checkbox:SetState(...)` was called
+		---@field enabled? checkbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkbox:SetEnabled(...)` was called
 
 			---@class checkbox_listener_loaded : indexedEventHandler
 			---@field handler checkbox_handler_loaded Handler function to register for call
@@ -3079,13 +3127,13 @@ function wt.CreateCheckbox(t, ancestor, lite)
 			---@field handler checkbox_handler_changed Handler function to register for call
 
 				---@alias checkbox_handler_changed
-				---| fun(self: checkbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `checkbox:setState(...)` was called<p>@*param* `self` checkbox ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: checkbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `checkbox:SetState(...)` was called<p>@*param* `self` checkbox ― Reference to the checkbox widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class checkbox_listener_enabled : indexedEventHandler
 			---@field handler checkbox_handler_enabled Handler function to register for call
 
 				---@alias checkbox_handler_enabled
-			---| fun(self: checkbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `checkbox:setEnabled(...)` was called<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+			---| fun(self: checkbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `checkbox:SetEnabled(...)` was called<p>@*param* `self` checkbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class checkbox_listener : indexedEventHandler
 			---@field handler checkbox_handler Handler function to register for call
@@ -3104,10 +3152,10 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		---@class SettingsCheckbox : CheckButton
 		---@field HoverBackground Frame
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_checkbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_checkbox "Checkbox"
@@ -3121,7 +3169,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		function _:AddListener(event, handler, callIndex) end
 
 		---Register a listener for an "enabled" event to call the specified handler on trigger
-		---@param handler checkbox_handler_enabled Called when an "enabled" event is invoked after `checkbox:setEnabled(...)` was called
+		---@param handler checkbox_handler_enabled Called when an "enabled" event is invoked after `checkbox:SetEnabled(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_enabled(handler, callIndex) end
 
@@ -3136,7 +3184,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		function _:AddListener_saved(handler, callIndex) end
 
 		---Register a listener for a "changed" widget event to call the specified handler on trigger
-		---@param handler checkbox_handler_changed Called when a "changed" event is invoked after `checkbox:setValue(...)` was called
+		---@param handler checkbox_handler_changed Called when a "changed" event is invoked after `checkbox:SetValue(...)` was called
 		---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
 		function _:AddListener_changed(handler, callIndex) end
 
@@ -3145,7 +3193,7 @@ end
 
 ---Create a classic Blizzard checkbox GUI frame instance with enhanced widget functionality
 ---@param t? classicCheckbox_options Optional parameters
----@param ancestor? binary|datamanager|widget Reference to an already existing binary datamanager instance to turn into a classic checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from
+---@param ancestor? binary|datamanager|widget|construct Reference to an already existing binary datamanager instance to turn into a classic checkbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return classicCheckbox|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateClassicCheckbox(t, ancestor, lite)
@@ -3161,8 +3209,8 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 		---@field [1]? table<string, classicCheckbox_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field loaded? classicCheckbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? classicCheckbox_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? classicCheckbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `classicCheckbox:setState(...)` was called
-		---@field enabled? classicCheckbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `classicCheckbox:setEnabled(...)` was called
+		---@field changed? classicCheckbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `classicCheckbox:SetState(...)` was called
+		---@field enabled? classicCheckbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `classicCheckbox:SetEnabled(...)` was called
 
 			---@class classicCheckbox_listener_loaded : indexedEventHandler
 			---@field handler classicCheckbox_handler_loaded Handler function to register for call
@@ -3180,13 +3228,13 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 			---@field handler classicCheckbox_handler_changed Handler function to register for call
 
 				---@alias classicCheckbox_handler_changed
-				---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `classicCheckbox:setState(...)` was called<p>@*param* `self` classicCheckbox ― Reference to the classicCheckbox widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when a "changed" event is invoked after `classicCheckbox:SetState(...)` was called<p>@*param* `self` classicCheckbox ― Reference to the classicCheckbox widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class classicCheckbox_listener_enabled : indexedEventHandler
 			---@field handler classicCheckbox_handler_enabled Handler function to register for call
 
 				---@alias classicCheckbox_handler_enabled
-			---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `classicCheckbox:setEnabled(...)` was called<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+			---| fun(self: classicCheckbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `classicCheckbox:SetEnabled(...)` was called<p>@*param* `self` classicCheckbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class classicCheckbox_listener : indexedEventHandler
 			---@field handler classicCheckbox_handler Handler function to register for call
@@ -3202,10 +3250,10 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 	---@field addListener classicCheckbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_classicCheckbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_classicCheckbox "ClassicCheckbox"
@@ -3241,7 +3289,7 @@ end
 
 ---Create a classic Blizzard radio button GUI frame instance with enhanced widget functionality
 ---@param t? radiobutton_options Optional parameters
----@param ancestor? binary|datamanager|widget Reference to an already existing binary datamanager instance to turn into a radio button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from
+---@param ancestor? binary|datamanager|widget|construct Reference to an already existing binary datamanager instance to turn into a radio button instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new binary, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return radiobutton|binary # References to the new [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateRadiobutton(t, ancestor, lite)
@@ -3264,8 +3312,8 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 		---@field [1]? table<string, radiobutton_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field loaded? radiobutton_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? radiobutton_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? radiobutton_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `radiobutton:setState(...)` was called
-		---@field enabled? radiobutton_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiobutton:setEnabled(...)` was called
+		---@field changed? radiobutton_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `radiobutton:SetState(...)` was called
+		---@field enabled? radiobutton_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiobutton:SetEnabled(...)` was called
 
 			---@class radiobutton_listener_loaded : indexedEventHandler
 			---@field handler radiobutton_handler_loaded Handler function to register for call
@@ -3283,13 +3331,13 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 			---@field handler radiobutton_handler_changed Handler function to register for call
 
 				---@alias radiobutton_handler_changed
-				---| fun(self: radiobutton, state: boolean, user: boolean) Called when a "changed" event is invoked after `radiobutton:setState(...)` was called<p>@*param* `self` radiobutton ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: radiobutton, state: boolean, user: boolean) Called when a "changed" event is invoked after `radiobutton:SetState(...)` was called<p>@*param* `self` radiobutton ― Reference to the radiobutton widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class radiobutton_listener_enabled : indexedEventHandler
 			---@field handler radiobutton_handler_enabled Handler function to register for call
 
 				---@alias radiobutton_handler_enabled
-			---| fun(self: radiobutton, state: boolean, user: boolean) Called when an "enabled" event is invoked after `radiobutton:setEnabled(...)` was called<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+			---| fun(self: radiobutton, state: boolean, user: boolean) Called when an "enabled" event is invoked after `radiobutton:SetEnabled(...)` was called<p>@*param* `self` radiobutton ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class radiobutton_listener : indexedEventHandler
 			---@field handler radiobutton_handler Handler function to register for call
@@ -3305,10 +3353,10 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 	---@field addListener radiobutton_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_radiobutton]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_radiobutton]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_radiobutton "Radiobutton"
@@ -3347,7 +3395,7 @@ end
 
 ---Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return selector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSelector(t, ancestor)
 
@@ -3365,7 +3413,7 @@ function wt.CreateSelector(t, ancestor)
 
 	---Optional parameters
 	---@class selector_options : datamanager_options, selector_options_base
-	---@field items? (selectorItemData|selectorBinary|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
+	---@field items? (selectorItemData|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
 	---@field listeners? selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun() Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selected`? integer</p>
@@ -3386,17 +3434,14 @@ function wt.CreateSelector(t, ancestor)
 			---@class widgetTooltipTextData : tooltipTextData
 			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** `t.title`
 
-		---@class selectorBinary : binary
-		---@field index integer The index of this binary item inside a selector widget
-
 		---@class selector_listeners : datamanager_listeners
 		---@field [1]? table<string, selector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? selector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selector:SetEnabled(...)` was called
 		---@field loaded? selector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? selector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? selector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `selector.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? selector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `selector.updatedItems(...)` was called
 		---@field added? selector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `selector.updatedItems(...)`
-		---@field enabled? selector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selector:setEnabled(...)` was called
 
 			---@class selector_listener_loaded : indexedEventHandler
 			---@field handler selector_handler_loaded Handler function to register for call
@@ -3432,7 +3477,7 @@ function wt.CreateSelector(t, ancestor)
 			---@field handler selector_handler_enabled Handler function to register for call
 
 				---@alias selector_handler_enabled
-				---| fun(self: selector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `selector:setEnabled(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: selector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `selector:SetEnabled(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class selector_listener : indexedEventHandler
 			---@field handler selector_handler Handler function to register for call
@@ -3443,13 +3488,12 @@ function wt.CreateSelector(t, ancestor)
 	--| Returns
 
 	---@class selector : datamanager
-	---@field items selectorBinary[]
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_selector "Selector"
@@ -3554,7 +3598,7 @@ end
 ---Create a non-GUI special selector datamanager widget instance (managing a set of binary datamanager child widgets) with specific pre-defined `itemset` data management logic
 ---@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
 ---@param t? specialSelector_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a special selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a special selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return specialSelector specialSelector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSpecialSelector(itemset, t, ancestor)
 
@@ -3597,10 +3641,10 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 
 		---@class specialSelector_listeners : datamanager_listeners
 		---@field [1]? table<string, specialSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? specialSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialSelector:SetEnabled(...)` was called
 		---@field loaded? specialSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? specialSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? specialSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `specialSelector.setSelected(...)` was called or an option was clicked or cleared
-		---@field enabled? specialSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialSelector:setEnabled(...)` was called
 
 			---@class specialSelector_listener_loaded : indexedEventHandler
 			---@field handler specialSelector_handler_loaded Handler function to register for call
@@ -3624,7 +3668,7 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 			---@field handler specialSelector_handler_enabled Handler function to register for call
 
 				---@alias specialSelector_handler_enabled
-				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialSelector:setEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialSelector:SetEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialSelector_listener : indexedEventHandler
 			---@field handler specialSelector_handler Handler function to register for call
@@ -3642,10 +3686,10 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 		---@return SpecialSelectorItemset itemset
 		function _:GetItemset() return "anchor" end
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_specialSelector "SpecialSelector"
@@ -3723,7 +3767,7 @@ end
 
 ---Create a non-GUI multiselector datamanager widget instance (managing a set of binary datamanager child widgets) with boolean mask data management logic
 ---@param t? multiselector_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a multiselector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a multiselector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return multiselector multiselector Reference to the new multiselector widget, utility functions and more wrapped in a widget table
 function wt.CreateMultiselector(t, ancestor)
 
@@ -3756,13 +3800,13 @@ function wt.CreateMultiselector(t, ancestor)
 
 		---@class multiselector_listeners : datamanager_listeners
 		---@field [1]? table<string, multiselector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? multiselector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called
 		---@field loaded? multiselector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? multiselector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? multiselector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `multiselector.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? multiselector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `multiselector.updatedItems(...)` was called
 		---@field added? multiselector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `multiselector.updatedItems(...)`
-		---@field min? multiselector_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
-		---@field enabled? multiselector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multiselector:setEnabled(...)` was called
+		---@field limited? multiselector_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
 
 			---@class multiselector_listener_loaded : indexedEventHandler
 			---@field handler multiselector_handler_loaded Handler function to register for call
@@ -3804,7 +3848,7 @@ function wt.CreateMultiselector(t, ancestor)
 			---@field handler multiselector_handler_enabled Handler function to register for call
 
 				---@alias multiselector_handler_enabled
-				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multiselector:setEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class multiselector_listener : indexedEventHandler
 			---@field handler multiselector_handler Handler function to register for call
@@ -3818,10 +3862,10 @@ function wt.CreateMultiselector(t, ancestor)
 	---@field items selectorBinary[]
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_multiselector "Multiselector"
@@ -3930,7 +3974,7 @@ end
 
 ---Create a radio button selector GUI frame instance to pick one out of multiple options with enhanced widget functionality
 ---@param t? radiogroup_options Optional parameters
----@param ancestor? selector|datamanager|widget Reference to an already existing selector instance to turn into a radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@return radiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateRadiogroup(t, ancestor)
 
@@ -3957,7 +4001,7 @@ function wt.CreateRadiogroup(t, ancestor)
 		---@field changed? radiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `radiogroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? radiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `radiogroup.updatedItems(...)` was called
 		---@field added? radiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the radiogroup via `radiogroup.updatedItems(...)`
-		---@field enabled? radiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiogroup:setEnabled(...)` was called
+		---@field enabled? radiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiogroup:SetEnabled(...)` was called
 
 			---@class radiogroup_listener_loaded : indexedEventHandler
 			---@field handler radiogroup_handler_loaded Handler function to register for call
@@ -3993,7 +4037,7 @@ function wt.CreateRadiogroup(t, ancestor)
 			---@field handler radiogroup_handler_enabled Handler function to register for call
 
 				---@alias radiogroup_handler_enabled
-				---| fun(self: radiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `radiogroup:setEnabled(...)` was called<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: radiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `radiogroup:SetEnabled(...)` was called<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class radiogroup_listener : indexedEventHandler
 			---@field handler radiogroup_handler Handler function to register for call
@@ -4011,10 +4055,10 @@ function wt.CreateRadiogroup(t, ancestor)
 
 		---@class selectorRadiobutton : selectorBinary, radiobutton
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_radiogroup "Radiogroup"
@@ -4060,7 +4104,7 @@ end
 
 ---Create a dropdown radio button selector GUI frame instance to pick one out of multiple options with enhanced widget functionality
 ---@param t? dropdownRadiogroup_options Optional parameters
----@param ancestor? selector|datamanager|widget Reference to an already existing selector instance to turn into a dropdown radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a dropdown radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@return dropdownRadiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
 function wt.CreateDropdownRadiogroup(t, ancestor)
 
@@ -4087,7 +4131,7 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 		---@field changed? dropdownRadiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `dropdownRadiogroup.setSelected(...)` was called or an option was clicked or cleared
 		---@field updated? dropdownRadiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `dropdownRadiogroup.updatedItems(...)` was called
 		---@field added? dropdownRadiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the dropdownRadiogroup via `dropdownRadiogroup.updatedItems(...)`
-		---@field enabled? dropdownRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `dropdownRadiogroup:setEnabled(...)` was called
+		---@field enabled? dropdownRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `dropdownRadiogroup:SetEnabled(...)` was called
 
 			---@class dropdownRadiogroup_listener_loaded : indexedEventHandler
 			---@field handler dropdownRadiogroup_handler_loaded Handler function to register for call
@@ -4123,7 +4167,7 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 			---@field handler dropdownRadiogroup_handler_enabled Handler function to register for call
 
 				---@alias dropdownRadiogroup_handler_enabled
-				---| fun(self: dropdownRadiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `dropdownRadiogroup:setEnabled(...)` was called<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: dropdownRadiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `dropdownRadiogroup:SetEnabled(...)` was called<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class dropdownRadiogroup_listener : indexedEventHandler
 			---@field handler dropdownRadiogroup_handler Handler function to register for call
@@ -4153,10 +4197,10 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 		---@param state? boolean ***Default:*** `not selector.list:IsVisible()`
 		function _.toggleMenu(state) end
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_dropdownRadiogroup "DropdownRadiogroup"
@@ -4204,7 +4248,7 @@ end
 ---@param itemset CreateSpecialRadiogroup_param_itemset Specify what type of selector should be created
 --- - ***Note:*** Value is overwritten by `ancestor.getItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroup_options Optional parameters
----@param ancestor? specialSelector|datamanager|widget Reference to an already existing special selector instance to turn into a special radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new special selector, or widget instance to create its datamanager from
+---@param ancestor? specialSelector|datamanager|widget|construct Reference to an already existing special selector instance to turn into a special radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new special selector, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 
@@ -4223,7 +4267,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 		---@field loaded? specialRadiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? specialRadiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? specialRadiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `specialRadiogroup.setSelected(...)` was called or an option was clicked or cleared
-		---@field enabled? specialRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialRadiogroup:setEnabled(...)` was called
+		---@field enabled? specialRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialRadiogroup:SetEnabled(...)` was called
 
 			---@class specialRadiogroup_listener_loaded : indexedEventHandler
 			---@field handler specialRadiogroup_handler_loaded Handler function to register for call
@@ -4247,7 +4291,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 			---@field handler specialRadiogroup_handler_enabled Handler function to register for call
 
 				---@alias specialRadiogroup_handler_enabled
-				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialRadiogroup:setEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialRadiogroup:SetEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialRadiogroup_listener : indexedEventHandler
 			---@field handler specialRadiogroup_handler Handler function to register for call
@@ -4263,10 +4307,10 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 	---@field addListener specialRadiogroup_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, [typename_specialRadiogroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, [typename_specialRadiogroup]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_specialRadiogroup "SpecialRadiogroup"
@@ -4302,7 +4346,7 @@ end
 
 ---Create a checkbox selector GUI frame instance to pick multiple options out of a list with enhanced widget functionality
 ---@param t? checkgroup_options Optional parameters
----@param ancestor? multiselector|datamanager|widget Reference to an already existing multiselector instance to turn into a checkbox group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new multiselector, or widget instance to create its datamanager from
+---@param ancestor? multiselector|datamanager|widget|construct Reference to an already existing multiselector instance to turn into a checkbox group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new multiselector, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@return checkgroup|multiselector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
 function wt.CreateCheckgroup(t, ancestor)
 
@@ -4324,7 +4368,7 @@ function wt.CreateCheckgroup(t, ancestor)
 		---@field updated? checkgroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `checkgroup.updatedItems(...)` was called
 		---@field added? checkgroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `checkgroup.updatedItems(...)`
 		---@field min? checkgroup_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
-		---@field enabled? checkgroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkgroup:setEnabled(...)` was called
+		---@field enabled? checkgroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkgroup:SetEnabled(...)` was called
 
 			---@class checkgroup_listener_loaded : indexedEventHandler
 			---@field handler checkgroup_handler_loaded Handler function to register for call
@@ -4366,7 +4410,7 @@ function wt.CreateCheckgroup(t, ancestor)
 			---@field handler checkgroup_handler_enabled Handler function to register for call
 
 				---@alias checkgroup_handler_enabled
-				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `checkgroup:setEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `checkgroup:SetEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class checkgroup_listener : indexedEventHandler
 			---@field handler checkgroup_handler Handler function to register for call
@@ -4384,10 +4428,10 @@ function wt.CreateCheckgroup(t, ancestor)
 
 		---@class selectorCheckbox : selectorBinary, checkbox
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_checkgroup "Checkgroup"
@@ -4441,7 +4485,7 @@ end
 
 ---Create a non-GUI textual datamanager widget instance with string data management logic
 ---@param t? textual_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into textual instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into textual instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return textual textual Reference to the new textual datamanager, utility functions and more wrapped in a widget table
 function wt.CreateTextual(t, ancestor)
 
@@ -4469,7 +4513,7 @@ function wt.CreateTextual(t, ancestor)
 		---@field loaded? textual_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? textual_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? textual_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `textual.setText(...)` was called
-		---@field enabled? textual_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `textual:setEnabled(...)` was called
+		---@field enabled? textual_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `textual:SetEnabled(...)` was called
 
 			---@class textual_listener_loaded : indexedEventHandler
 			---@field handler textual_handler_loaded Handler function to register for call
@@ -4493,7 +4537,7 @@ function wt.CreateTextual(t, ancestor)
 			---@field handler textual_handler_enabled Handler function to register for call
 
 				---@alias textual_handler_enabled
-				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `textual:setEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `textual:SetEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class textual_listener : indexedEventHandler
 			---@field handler textual_handler Handler function to register for call
@@ -4506,10 +4550,10 @@ function wt.CreateTextual(t, ancestor)
 	---@class textual : datamanager
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_textual "Textual"
@@ -4585,7 +4629,7 @@ end
 
 ---Create a default single-line Blizzard editbox GUI frame instance with enhanced widget functionality
 ---@param t? editbox_options Optional parameters
----@param ancestor? textual|datamanager|widget Reference to an already existing textual datamanager instance to turn into an editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from
+---@param ancestor? textual|datamanager|widget|construct Reference to an already existing textual datamanager instance to turn into an editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return textualEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateEditbox(t, ancestor, lite)
@@ -4623,7 +4667,7 @@ function wt.CreateEditbox(t, ancestor, lite)
 		---@field loaded? editbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? editbox_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? editbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `editbox.setText(...)` was called
-		---@field enabled? editbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `editbox:setEnabled(...)` was called
+		---@field enabled? editbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `editbox:SetEnabled(...)` was called
 
 			---@class editbox_listener_loaded : indexedEventHandler
 			---@field handler editbox_handler_loaded Handler function to register for call
@@ -4647,7 +4691,7 @@ function wt.CreateEditbox(t, ancestor, lite)
 			---@field handler editbox_handler_enabled Handler function to register for call
 
 				---@alias editbox_handler_enabled
-				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `editbox:setEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `editbox:SetEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class editbox_listener : indexedEventHandler
 			---@field handler editbox_handler Handler function to register for call
@@ -4663,10 +4707,10 @@ function wt.CreateEditbox(t, ancestor, lite)
 	---@field addListener editbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_editbox]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_editbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_editbox "Editbox"
@@ -4702,7 +4746,7 @@ end
 
 ---Create a single-line Blizzard editbox GUI frame instance with customizable UI elements and enhanced widget functionality
 ---@param t? customEditbox_options Optional parameters
----@param ancestor? textual|datamanager|widget Reference to an already existing textual datamanager instance to turn into a customizable editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from
+---@param ancestor? textual|datamanager|widget|construct Reference to an already existing textual datamanager instance to turn into a customizable editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return customEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateCustomEditbox(t, ancestor, lite)
@@ -4718,7 +4762,7 @@ function wt.CreateCustomEditbox(t, ancestor, lite)
 		---@field loaded? customEditbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? customEditbox_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? customEditbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `customEditbox.setText(...)` was called
-		---@field enabled? customEditbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customEditbox:setEnabled(...)` was called
+		---@field enabled? customEditbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `customEditbox:SetEnabled(...)` was called
 
 			---@class customEditbox_listener_loaded : indexedEventHandler
 			---@field handler customEditbox_handler_loaded Handler function to register for call
@@ -4742,7 +4786,7 @@ function wt.CreateCustomEditbox(t, ancestor, lite)
 			---@field handler customEditbox_handler_enabled Handler function to register for call
 
 				---@alias customEditbox_handler_enabled
-				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `customEditbox:setEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: textual, state: boolean, user: boolean) Called when an "enabled" event is invoked after `customEditbox:SetEnabled(...)` was called<p>@*param* `self` textual ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class customEditbox_listener : indexedEventHandler
 			---@field handler customEditbox_handler Handler function to register for call
@@ -4758,10 +4802,10 @@ function wt.CreateCustomEditbox(t, ancestor, lite)
 	---@field addListener customEditbox_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_customEditbox]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_customEditbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_customEditbox "CustomEditbox"
@@ -4797,7 +4841,7 @@ end
 
 ---Create a default multiline Blizzard editbox GUI frame instance with enhanced widget functionality
 ---@param t? multilineEditbox_options Optional parameters
----@param ancestor? textual|datamanager|widget Reference to an already existing textual datamanager instance to turn into a multiline editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from
+---@param ancestor? textual|datamanager|widget|construct Reference to an already existing textual datamanager instance to turn into a multiline editbox instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new textual, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return multilineEditbox|textual # Reference to the new [EditBox](hhttps://warcraft.wiki.gg/wiki/UIOBJECT_EditBox), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateMultilineEditbox(t, ancestor, lite)
@@ -4818,7 +4862,7 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 		---@field loaded? multilineEditbox_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? multilineEditbox_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? multilineEditbox_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `multilineEditbox.setText(...)` was called
-		---@field enabled? multilineEditbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multilineEditbox:setEnabled(...)` was called
+		---@field enabled? multilineEditbox_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multilineEditbox:SetEnabled(...)` was called
 
 			---@class multilineEditbox_listener_loaded : indexedEventHandler
 			---@field handler multilineEditbox_handler_loaded Handler function to register for call
@@ -4842,7 +4886,7 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 			---@field handler multilineEditbox_handler_enabled Handler function to register for call
 
 				---@alias multilineEditbox_handler_enabled
-				---| fun(self: multilineEditbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multilineEditbox:setEnabled(...)` was called<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: multilineEditbox, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multilineEditbox:SetEnabled(...)` was called<p>@*param* `self` multilineEditbox ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class multilineEditbox_listener : indexedEventHandler
 			---@field handler multilineEditbox_handler Handler function to register for call
@@ -4870,10 +4914,10 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 			---@field panExtentPercentage number
 			---@field SetPanExtentPercentage fun(panExtentPercentage: number)
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_multilineEditbox]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_textual]: true, [typename_multilineEditbox]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_multilineEditbox "MultilineEditbox"
@@ -4936,7 +4980,7 @@ function wt.CreateCopybox(t)
 	---@field textual customEditbox|textual|nil
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
 		---@return { [typename_copybox]: true,}
@@ -4971,7 +5015,7 @@ end
 
 ---Create a non-GUI numeric datamanager widget instance with number data management logic
 ---@param t? numeric_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into numeric instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into numeric instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return numeric numeric Reference to the new numeric widget, utility functions and more wrapped in a widget table
 function wt.CreateNumeric(t, ancestor)
 
@@ -5004,12 +5048,12 @@ function wt.CreateNumeric(t, ancestor)
 
 		---@class numeric_listeners : datamanager_listeners
 		---@field [1]? table<string, numeric_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? numeric_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `numeric:SetEnabled(...)` was called
 		---@field loaded? numeric_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? numeric_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? numeric_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `numeric.setNumber(...)` was called
 		---@field min? numeric_listener_min[] Ordered list of functions to call when a "min" event is invoked after `numeric.setMin(...)` was called
 		---@field max? numeric_listener_max[] Ordered list of functions to call when a "max" event is invoked after `numeric.setMax(...)` was called
-		---@field enabled? numeric_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `numeric:setEnabled(...)` was called
 
 			---@class numeric_listener_loaded : indexedEventHandler
 			---@field handler numeric_handler_loaded Handler function to register for call
@@ -5045,7 +5089,7 @@ function wt.CreateNumeric(t, ancestor)
 			---@field handler numeric_handler_enabled Handler function to register for call
 
 				---@alias numeric_handler_enabled
-				---| fun(self: numeric, state: boolean, user: boolean) Called when an "enabled" event is invoked after `numeric:setEnabled(...)` was called<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: numeric, state: boolean, user: boolean) Called when an "enabled" event is invoked after `numeric:SetEnabled(...)` was called<p>@*param* `self` numeric ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class numeric_listener : indexedEventHandler
 			---@field handler numeric_handler Handler function to register for call
@@ -5058,10 +5102,10 @@ function wt.CreateNumeric(t, ancestor)
 	---@class numeric : datamanager
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_numeric "Numeric"
@@ -5195,7 +5239,7 @@ end
 
 ---Create a Blizzard slider GUI frame instance with enhanced widget functionality
 ---@param t? slider_options Optional parameters
----@param ancestor? numeric|datamanager|widget Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new numeric, or widget instance to create its datamanager from
+---@param ancestor? numeric|datamanager|widget|construct Reference to an already existing numeric datamanager instance to turn into a slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new numeric, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return numericSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateSlider(t, ancestor, lite)
@@ -5216,7 +5260,7 @@ function wt.CreateSlider(t, ancestor, lite)
 		---@field changed? slider_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `slider.setNumber(...)` was called
 		---@field min? slider_listener_min[] Ordered list of functions to call when a "min" event is invoked after `slider.setMin(...)` was called
 		---@field max? slider_listener_max[] Ordered list of functions to call when a "max" event is invoked after `slider.setMax(...)` was called
-		---@field enabled? slider_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `slider:setEnabled(...)` was called
+		---@field enabled? slider_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `slider:SetEnabled(...)` was called
 
 			---@class slider_listener_loaded : indexedEventHandler
 			---@field handler slider_handler_loaded Handler function to register for call
@@ -5252,7 +5296,7 @@ function wt.CreateSlider(t, ancestor, lite)
 			---@field handler slider_handler_enabled Handler function to register for call
 
 				---@alias slider_handler_enabled
-				---| fun(self: slider, state: boolean, user: boolean) Called when an "enabled" event is invoked after `slider:setEnabled(...)` was called<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: slider, state: boolean, user: boolean) Called when an "enabled" event is invoked after `slider:SetEnabled(...)` was called<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class slider_listener : indexedEventHandler
 			---@field handler slider_handler Handler function to register for call
@@ -5277,10 +5321,10 @@ function wt.CreateSlider(t, ancestor, lite)
 		---@field MinText FontString Min value text
 		---@field MaxText FontString Max value text
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_slider]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_slider]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_slider "Slider"
@@ -5326,7 +5370,7 @@ end
 
 ---Create a classic Blizzard slider GUI frame instance with enhanced widget functionality
 ---@param t? classicSlider_options Optional parameters
----@param ancestor? numeric|datamanager|widget Reference to an already existing numeric datamanager instance to turn into a classic slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new numeric, or widget instance to create its datamanager from
+---@param ancestor? numeric|datamanager|widget|construct Reference to an already existing numeric datamanager instance to turn into a classic slider instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new numeric, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return classicSlider|numeric # References to the new [Slider](https://warcraft.wiki.gg/wiki/UIOBJECT_Slider), its holder [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), child widgets, utility functions and more wrapped in a widget table
 function wt.CreateClassicSlider(t, ancestor, lite)
@@ -5345,7 +5389,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 		---@field changed? classicSlider_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `classicSlider.setNumber(...)` was called
 		---@field min? classicSlider_listener_min[] Ordered list of functions to call when a "min" event is invoked after `classicSlider.setMin(...)` was called
 		---@field max? classicSlider_listener_max[] Ordered list of functions to call when a "max" event is invoked after `classicSlider.setMax(...)` was called
-		---@field enabled? classicSlider_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `classicSlider:setEnabled(...)` was called
+		---@field enabled? classicSlider_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `classicSlider:SetEnabled(...)` was called
 
 			---@class classicSlider_listener_loaded : indexedEventHandler
 			---@field handler classicSlider_handler_loaded Handler function to register for call
@@ -5381,7 +5425,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 			---@field handler classicSlider_handler_enabled Handler function to register for call
 
 				---@alias classicSlider_handler_enabled
-				---| fun(self: slider, state: boolean, user: boolean) Called when an "enabled" event is invoked after `classicSlider:setEnabled(...)` was called<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: slider, state: boolean, user: boolean) Called when an "enabled" event is invoked after `classicSlider:SetEnabled(...)` was called<p>@*param* `self` slider ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class classicSlider_listener : indexedEventHandler
 			---@field handler classicSlider_handler Handler function to register for call
@@ -5402,10 +5446,10 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 	---@field addListener classicSlider_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_classicSlider]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_numeric]: true, [typename_classicSlider]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_classicSlider "ClassicSlider"
@@ -5454,7 +5498,7 @@ end
 
 ---Create a non-GUI colormanager datamanager widget instance with color data management logic
 ---@param t? colormanager_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a colormanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a colormanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return colormanager colormanager Reference to the new color pick manager widget, utility functions and more wrapped in a widget table
 function wt.CreateColormanager(t, ancestor)
 
@@ -5484,7 +5528,7 @@ function wt.CreateColormanager(t, ancestor)
 		---@field loaded? colormanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colormanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? colormanager_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `colormanager.setColor(...)` was called
-		---@field enabled? colormanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colormanager:setEnabled(...)` was called
+		---@field enabled? colormanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colormanager:SetEnabled(...)` was called
 
 			---@class colormanager_listener_loaded : indexedEventHandler
 			---@field handler colormanager_handler_loaded Handler function to register for call
@@ -5508,7 +5552,7 @@ function wt.CreateColormanager(t, ancestor)
 			---@field handler colormanager_handler_enabled Handler function to register for call
 
 				---@alias colormanager_handler_enabled
-				---| fun(self: colormanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `colormanager:setEnabled(...)` was called<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: colormanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `colormanager:SetEnabled(...)` was called<p>@*param* `self` colormanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colormanager_listener : indexedEventHandler
 			---@field handler colormanager_handler Handler function to register for call
@@ -5521,10 +5565,10 @@ function wt.CreateColormanager(t, ancestor)
 	---@class colormanager : datamanager
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_colormanager "Colormanager"
@@ -5609,7 +5653,7 @@ end
 
 ---Create a color picker GUI frame instance with HEX(A) & RGB(A) input while utilizing the [ColorPickerFrame](https://warcraft.wiki.gg/wiki/Using_the_ColorPickerFrame) wheel
 ---@param t? colorpicker_options Optional parameters
----@param ancestor? colormanager|datamanager|widget Reference to an already existing color datamanager instance to turn into a colorpicker instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new colormanager, or widget instance to create its datamanager from
+---@param ancestor? colormanager|datamanager|widget|construct Reference to an already existing color datamanager instance to turn into a colorpicker instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new colormanager, or widget instance to create its datamanager from, or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return colorpicker|colormanager # Reference to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), utility functions and more wrapped in a widget table
 function wt.CreateColorpicker(t, ancestor, lite)
@@ -5627,7 +5671,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		---@field loaded? colorpicker_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
 		---@field saved? colorpicker_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
 		---@field changed? colorpicker_listener_changed[] Ordered list of functions to call when a "changed" event is invoked after `colorpicker.setColor(...)` was called
-		---@field enabled? colorpicker_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colorpicker:setEnabled(...)` was called
+		---@field enabled? colorpicker_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `colorpicker:SetEnabled(...)` was called
 
 			---@class colorpicker_listener_loaded : indexedEventHandler
 			---@field handler colorpicker_handler_loaded Handler function to register for call
@@ -5651,7 +5695,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 			---@field handler colorpicker_handler_enabled Handler function to register for call
 
 				---@alias colorpicker_handler_enabled
-				---| fun(self: colorpicker, state: boolean, user: boolean) Called when an "enabled" event is invoked after `colorpicker:setEnabled(...)` was called<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: colorpicker, state: boolean, user: boolean) Called when an "enabled" event is invoked after `colorpicker:SetEnabled(...)` was called<p>@*param* `self` colorpicker ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class colorpicker_listener : indexedEventHandler
 			---@field handler colorpicker_handler Handler function to register for call
@@ -5673,10 +5717,10 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		---@field gradient Texture
 		---@field checker Texture
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, [typename_colorpicker]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_colormanager]: true, [typename_colorpicker]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_colorpicker "Colorpicker"
@@ -5715,7 +5759,7 @@ end
 
 ---Create a non-GUI position datamanager widget instance with frame positioning data management logic
 ---@param t positionmanager_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a positionmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a positionmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return positionmanager positionmanager Reference to the new positionmanager widget, utility functions and more wrapped in a widget table
 function wt.CreatePositionmanager(t, ancestor)
 
@@ -5858,10 +5902,10 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 		--Reset the custom preset to its default state
 		function _:ResetCustomPreset() end
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_positionmanager]: true, [typename_positionPanel]: true,  }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_positionmanager]: true, [typename_positionPanel]: true,  }
 		function _:GetTypes() return {} end
 
 			---@alias typename_positionPanel "PositionOptions"
@@ -5873,7 +5917,7 @@ end
 
 ---Create a non-GUI font datamanager widget instance with font customization data management logic
 ---@param t fontmanager_options Optional parameters
----@param ancestor? datamanager|widget Reference to an already existing datamanager instance to turn into a fontmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager
+---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a fontmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return fontmanager fontmanager Reference to the new fontmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateFontmanager(t, ancestor)
 
@@ -5958,10 +6002,10 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 		---@field alignment specialSelector|specialRadiogroup
 		---@field colors (colormanager|colorpicker)[]|nil
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_fontmanager]: true, [typename_fontPanel]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_fontmanager]: true, [typename_fontPanel]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_fontPanel "FontOptions"
@@ -5972,7 +6016,7 @@ end
 
 ---Create a non-GUI settingsmanager widget instance
 ---@param t settingsmanager_options Optional parameters
----@param ancestor? widget Reference to an already existing widget instance to turn into a settingsmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? widget|construct Reference to an already existing widget instance to turn into a settingsmanager instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@return settingsmanager settingsmanager Reference to the new settingsmanager widget, utility functions and more wrapped in a widget table
 function wt.CreateSettingsmanager(t, ancestor)
 
@@ -6017,7 +6061,7 @@ function wt.CreateSettingsmanager(t, ancestor)
 		---@field applied? settingsmanager_listener_applied[] Ordered list of functions to call when a "applied" event is invoked after `settingsmanager.apply(...)` was called
 		---@field reverted? settingsmanager_listener_reverted[] Ordered list of functions to call when a "reverted" event is invoked after `settingsmanager.revert(...)` was called
 		---@field reset? settingsmanager_listener_reset[] Ordered list of functions to call when a "reset" event is invoked after `settingsmanager.reset(...)` was called
-		---@field enabled? settingsmanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `settingsmanager:setEnabled(...)` was called
+		---@field enabled? settingsmanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `settingsmanager:SetEnabled(...)` was called
 
 			---@class settingsmanager_listener_loaded : indexedEventHandler
 			---@field handler settingsmanager_handler_loaded Handler function to register for call
@@ -6053,7 +6097,7 @@ function wt.CreateSettingsmanager(t, ancestor)
 			---@field handler settingsmanager_handler_enabled Handler function to register for call
 
 				---@alias settingsmanager_handler_enabled
-				---| fun(self: settingsmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `settingsmanager:setEnabled(...)` was called<p>@*param* `self` settingsmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: settingsmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `settingsmanager:SetEnabled(...)` was called<p>@*param* `self` settingsmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsmanager_listener : indexedEventHandler
 			---@field handler settingsmanager_handler Handler function to register for call
@@ -6066,10 +6110,10 @@ function wt.CreateSettingsmanager(t, ancestor)
 	---@class settingsmanager : widget
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsmanager]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_settingsmanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_settingsmanager "Settingsmanager"
@@ -6157,7 +6201,7 @@ end
 
 ---Create an new settings page and add it to the Options menu
 ---@param t? settingsPage_options Optional parameters
----@param ancestor? settingsmanager|widget Reference to an already existing settings datamanager instance to turn into a settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new settingsmanager
+---@param ancestor? settingsmanager|widget|construct Reference to an already existing settings datamanager instance to turn into a settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new settingsmanager, or a constrcut to build upon
 ---@return settingsPage|settingsmanager page Table containing references to the settings canvas [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), category page and utility functions
 function wt.CreateSettingsPage(t, ancestor)
 
@@ -6196,7 +6240,7 @@ function wt.CreateSettingsPage(t, ancestor)
 		---@field applied? settingsPage_listener_applied[] Ordered list of functions to call when a "applied" event is invoked after `settingsPage.apply(...)` was called
 		---@field reverted? settingsPage_listener_reverted[] Ordered list of functions to call when a "reverted" event is invoked after `settingsPage.revert(...)` was called
 		---@field reset? settingsPage_listener_reset[] Ordered list of functions to call when a "reset" event is invoked after `settingsPage.reset(...)` was called
-		---@field enabled? settingsPage_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `settingsPage:setEnabled(...)` was called
+		---@field enabled? settingsPage_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `settingsPage:SetEnabled(...)` was called
 
 			---@class settingsPage_listener_loaded : indexedEventHandler
 			---@field handler settingsPage_handler_loaded Handler function to register for call
@@ -6232,7 +6276,7 @@ function wt.CreateSettingsPage(t, ancestor)
 			---@field handler settingsPage_handler_enabled Handler function to register for call
 
 				---@alias settingsPage_handler_enabled
-				---| fun(self: settingsPage, state: boolean, user: boolean) Called when an "enabled" event is invoked after `settingsPage:setEnabled(...)` was called<p>@*param* `self` settingsPage ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: settingsPage, state: boolean, user: boolean) Called when an "enabled" event is invoked after `settingsPage:SetEnabled(...)` was called<p>@*param* `self` settingsPage ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class settingsPage_listener : indexedEventHandler
 			---@field handler settingsPage_handler Handler function to register for call
@@ -6268,10 +6312,10 @@ function wt.CreateSettingsPage(t, ancestor)
 		---@param state boolean? ***Default:*** `true`
 		function _:SetStatic(state) end
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_settingsmanager]: true, [typename_settingsPage]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_settingsPage "SettingsPage"
@@ -6352,10 +6396,10 @@ function wt.CreateSettingsCategory(addon, parent, pages, t)
 		---@param callListeners? boolean If `true`, call the `onDefault` listeners (if set) of each individual category page separately | ***Default:*** `true`
 		function _:Defaults(user, callListeners) end
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_settingsCategory]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_settingsCategory]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_settingsCategory "SettingsCategory"
@@ -6371,8 +6415,9 @@ end
 	--- - ***Note:*** An integer value will be created under the key `activeProfile` if it doesn't already exist in this table.
 ---@param defaultData CreateProfilemanager_param3 A static table containing all default settings values to be cloned when creating a new profile or resetting one
 ---@param t? profilemanager_options Optional parameters
+---@param ancestor? construct Reference to an already existing construct instance to turn into a widget instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return profilemanager|nil profilemanager Reference to the new profilemanager widget, utility functions and more wrapped in a widget table | ***Default:*** `nil`
-function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
+function wt.CreateProfilemanager(accountData, characterData, defaultData, t, ancestor)
 
 	--| Parameters
 
@@ -6427,7 +6472,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 		---@field renamed? profilemanager_listener_renamed[] Ordered list of functions to call when a "renamed" event is invoked after a data profile has been renamed
 		---@field deleted? profilemanager_listener_deleted[] Ordered list of functions to call when a "deleted" event is invoked after a data profile has been removed from the database
 		---@field reset? profilemanager_listener_reset[] Ordered list of functions to call when a "reset" event is invoked after a data profile has been reset to defaults
-		---@field enabled? profilemanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `profilemanager:setEnabled(...)` was called
+		---@field enabled? profilemanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `profilemanager:SetEnabled(...)` was called
 
 			---@class profilemanager_listener_loaded : indexedEventHandler
 			---@field handler profilemanager_handler_loaded Handler function to register for call
@@ -6469,7 +6514,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 			---@field handler profilemanager_handler_enabled Handler function to register for call
 
 				---@alias profilemanager_handler_enabled
-				---| fun(self: profilemanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `profilemanager:setEnabled(...)` was called<p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: profilemanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `profilemanager:SetEnabled(...)` was called<p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanager_listener : indexedEventHandler
 			---@field handler profilemanager_handler Handler function to register for call
@@ -6485,10 +6530,10 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	---@field newCharacter boolean `true` if the `characterData.activeProfile` integer did not exist yet
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_profilemanager]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_profilemanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_profilemanager "Profilemanager"
@@ -6631,7 +6676,7 @@ end
 ---@param settingsData CreateProfilesPage_param4 Reference to the SavedVariables or SavedVariablesPerCharacter table where settings specifications are to be stored and loaded from
 --- - ***Note:*** A boolean value will be created under the key `compactBackup` if it didn't already exist in this table.
 ---@param t? profilesPage_options Optional parameters
----@param ancestor? profilemanager Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? profilemanager|construct Reference to an already existing profile datamanager instance to turn into a profile management settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return profilemanager|profilesPage|nil profilesPage Table containing references to the settings page, settings widgets grouped in subtables and utility functions by category | ***Default:*** `nil`
 function wt.CreateProfilesPage(accountData, characterData, defaultData, settingsData, t, ancestor, lite)
@@ -6664,7 +6709,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		---@field renamed? profilesPage_listener_renamed[] Ordered list of functions to call when a "renamed" event is invoked after a data profile has been renamed
 		---@field deleted? profilesPage_listener_deleted[] Ordered list of functions to call when a "deleted" event is invoked after a data profile has been removed from the database
 		---@field reset? profilesPage_listener_reset[] Ordered list of functions to call when a "reset" event is invoked after a data profile has been reset to defaults
-		---@field enabled? profilesPage_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `profilesPage:setEnabled(...)` was called
+		---@field enabled? profilesPage_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `profilesPage:SetEnabled(...)` was called
 
 			---@class profilesPage_listener_loaded : indexedEventHandler
 			---@field handler profilesPage_handler_loaded Handler function to register for call
@@ -6706,7 +6751,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 			---@field handler profilesPage_handler_enabled Handler function to register for call
 
 				---@alias profilesPage_handler_enabled
-				---| fun(self: profilesPage, state: boolean, user: boolean) Called when an "enabled" event is invoked after `profilesPage:setEnabled(...)` was called<p>@*param* `self` profilesPage ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: profilesPage, state: boolean, user: boolean) Called when an "enabled" event is invoked after `profilesPage:SetEnabled(...)` was called<p>@*param* `self` profilesPage ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilesPage_listener : indexedEventHandler
 			---@field handler profilesPage_handler Handler function to register for call
@@ -6738,10 +6783,10 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 		---@field load action|actionButton
 		---@field reset action|actionButton
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_profilemanager]: true, [typename_profilesPage]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_profilemanager]: true, [typename_profilesPage]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_profilesPage "ProfilesPage"
@@ -6814,8 +6859,9 @@ end
 
 ---Create a non-GUI addonmanager instance providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---@param t? addonmanager_options Optional parameters
+---@param ancestor? construct Reference to an already existing construct instance to turn into a widget instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return addonmanager addonmanager Reference to the new addonmanager instance, utility functions and more wrapped in a construct table
-function wt.CreateAddonmanager(t)
+function wt.CreateAddonmanager(t, ancestor)
 
 	--| Parameters
 
@@ -6839,7 +6885,7 @@ function wt.CreateAddonmanager(t)
 			---@field handler addonmanager_handler_enabled Handler function to register for call
 
 				---@alias addonmanager_handler_enabled
-				---| fun(self: addonmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `addonmanager:setEnabled(...)` was called<p>@*param* `self` addonmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: addonmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `addonmanager:SetEnabled(...)` was called<p>@*param* `self` addonmanager ― Reference to the widget table</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class addonmanager_listener : indexedEventHandler
 			---@field handler addonmanager_handler Handler function to register for call
@@ -6852,10 +6898,10 @@ function wt.CreateAddonmanager(t)
 	---@class addonmanager : widget
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_addonmanager]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_addonmanager]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_addonmanager "Addonmanager"
@@ -6992,7 +7038,7 @@ end
 
 ---Create and set up a new static settings page with read-only addon about info
 ---@param t? addonPage_options Optional parameters
----@param ancestor? addonmanager Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? addonmanager|construct Reference to an already existing addonmanager instance to turn into an addon about settings page instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or a constrcut to build upon
 --- - ***Note:*** If an empty Addonmanager is provided with no addon set (even if `t.addon` is set), the settings page will not be created and `addonmanager` is returned.
 --- - ***Note:*** If the settings page is created, `addonmanager` will be turned to readn-only (along with the settings page), disabling its `SetAddon(...)` call.
 ---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
@@ -7020,7 +7066,7 @@ function wt.CreateAddonPage(t, ancestor, lite)
 			---@class addonPage_listener_enabled : indexedEventHandler
 			---@field handler addonPage_handler_enabled Handler function to register for call
 
-				---Called when an "enabled" event is invoked after `addonPage:setEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---Called when an "enabled" event is invoked after `addonPage:SetEnabled(...)` was called<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `state` ― `true` if the widget is enabled</p><p>@*param* `user` ― `true` if the event was flagged as invoked by an action taken by the user</p>
 				---@alias addonPage_handler_enabled fun(self: addonPage, state: boolean, user: boolean)
 
 			---@class addonPage_listener : indexedEventHandler
@@ -7036,10 +7082,10 @@ function wt.CreateAddonPage(t, ancestor, lite)
 	---@field SetAddon nil
 	local _ = {}
 
-		--[ Type ]
+		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_root]: true, [typename_widget]: true, [typename_addonmanager]: true, [typename_addonPage]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_addonmanager]: true, [typename_addonPage]: true, }
 		function _:GetTypes() return {} end
 
 			---@alias typename_addonPage "AddonPage"
@@ -7068,8 +7114,9 @@ end
 ---@param keywords string[] List of addon-specific keywords to register to listen to when typed as slash commands
 --- - ***Note:*** A slash character (`/`) will appended before each keyword specified here during registration, it doesn't need to be included.
 ---@param t? chatCommandManager_options Optional parameters
+---@param ancestor? construct Reference to an already existing construct instance to turn into a widget instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
 ---@return CreateChatmanager_return_chatmanager chatmanager ***Default:*** `nil`
-function wt.CreateChatmanager(keywords, t)
+function wt.CreateChatmanager(keywords, t, ancestor)
 
 	--| Parameters
 
@@ -7108,29 +7155,6 @@ function wt.CreateChatmanager(keywords, t)
 		---@class chatmanager : construct
 		local _ = {}
 
-			--[ Type ]
-
-			---Returns the type list of this widget
-			---@return { [typename_root]: true, [typename_widget]: true, [typename_chatmanager]: true, }
-			function _:GetTypes() return {} end
-
-				---@alias typename_chatmanager "Chatmanager"
-
-			--[ Events ]
-
-			---Register a listener for a custom event to call the specified handler on trigger
-			---@param event eventTag Unique event identifier tag
-			---@param handler chatmanager_handler Called when a custom event is invoked
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener(event, handler, callIndex) end
-
-			---Register a listener for an "enabled" event to call the specified handler on trigger
-			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:setEnabled(...)` was called
-			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
-			function _:AddListener_enabled(handler, callIndex) end
-
-			--[ Print ]
-
 			---Print out a formatted chat message
 			---@param message string Message content
 			---@param title? string Title to start the message with | ***Default:*** *(addon title)*<ul><li>***Note:*** If "IconTexture" is specified in the TOC file of `addon`, a logo will also be included at the start of the message.</li></ul>
@@ -7147,8 +7171,6 @@ function wt.CreateChatmanager(keywords, t)
 			--Print a welcome message with a hint about chat keywords
 			function _:Welcome() end
 
-			--| Commands
-
 			--Trigger a help command, listing all registered chat commands with their specified descriptions, calling their onHelp handlers
 			function _:Help() end
 
@@ -7159,4 +7181,25 @@ function wt.CreateChatmanager(keywords, t)
 			---***
 			---@return boolean # Whether the command was found and the handler called successfully
 			function _:Trigger(command, ...) return false end
+
+			--[ Types ]
+
+			---Returns the type list of this widget
+			---@return { [typename_construct]: true, [typename_widget]: true, [typename_chatmanager]: true, }
+			function _:GetTypes() return {} end
+
+				---@alias typename_chatmanager "Chatmanager"
+
+			--[ Events ]
+
+			---Register a listener for a custom event to call the specified handler on trigger
+			---@param event eventTag Unique event identifier tag
+			---@param handler chatmanager_handler Called when a custom event is invoked
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener(event, handler, callIndex) end
+
+			---Register a listener for an "enabled" event to call the specified handler on trigger
+			---@param handler chatmanager_handler_enabled Called when an "enabled" event is invoked after `chatmanager:SetEnabled(...)` was called
+			---@param callIndex? eventHandlerCallIndex Set when to call the handler function in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
 end
