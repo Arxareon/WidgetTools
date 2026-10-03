@@ -164,8 +164,14 @@ function baseBuilders.Construct(construct)
 	eventHandlers = {}
 
 	function construct:AddEvent(event)
-		if not eventHandlers[self] then eventHandlers[self] = {} end
-		if not eventHandlers[self][event] then eventHandlers[self][event] = {} end
+		local handlers = eventHandlers[self]
+
+		if not handlers then
+			handlers = {}
+			eventHandlers[self] = handlers
+		end
+
+		if not handlers[event] then handlers[event] = {} end
 	end
 
 	function construct:AddListener(event, handler, index)
@@ -184,11 +190,21 @@ function baseBuilders.Construct(construct)
 
 	--[ Properties ]
 
-	function construct:GetProperty(property) return properties[self][property] end
-	function construct:SetProperty(property, value)
-		properties[self][property] = value
+	function construct:GetProperty(property)
+		local bucket = properties[self]
 
-		construct_invoke_assigned(self, property, value)
+		if bucket then return bucket[property] end
+	end
+	function construct:SetProperty(property, value, silent)
+		local bucket = properties[self]
+
+		if bucket then
+			bucket[property] = value
+
+			if not next(bucket) then properties[self] = nil end
+		elseif value ~= nil then properties[self] = { [property] = value } end
+
+		if not silent then construct_invoke_assigned(self, property, value) end
 	end
 
 	construct_handlers_assigned = {}
@@ -203,8 +219,7 @@ function baseBuilders.Construct(construct)
 end
 
 function wt.CreateConstruct(t)
-	local typename = "Construct" ---@type typename_construct
-	local construct = setmetatable({}, getBase(typename)) ---@type construct
+	local construct = setmetatable({}, getRoot()) ---@type construct
 
 	--[ Initialization ]
 
@@ -248,8 +263,8 @@ local widget_handlers_enabled ---@type table<widget, widget_handler_enabled[]>
 local widget_invoke_enabled ---@type fun(self: widget, user: boolean)
 
 local widget_dependencies ---@type table<widget, dependencyType[]>
-local widget_dataDependency ---@type table<widget, table<dependencyType, true|function>>
-local widget_dependencyEvaluator ---@type table<widget, table<dependencyType, dependencyEvaluator>>
+local widget_dataDependencies ---@type table<widget, table<dependencyType, true|function>>
+local widget_dependencyEvaluators ---@type table<widget, table<dependencyType, dependencyEvaluator>>
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
@@ -382,15 +397,15 @@ function baseBuilders.Widget(widget)
 	--| Dependencies
 
 	widget_dependencies = {}
-	widget_dataDependency = {}
-	widget_dependencyEvaluator = {}
+	widget_dataDependencies = {}
+	widget_dependencyEvaluators = {}
 
 	function widget:AddDependency(rule)
 		if type(rule) ~= "table" then return false end
 
 		local dependencies = widget_dependencies[self]
-		local data = widget_dataDependency[self]
-		local evaluate = widget_dependencyEvaluator[self]
+		local data = widget_dataDependencies[self]
+		local evaluate = widget_dependencyEvaluators[self]
 
 		if not dependencies then
 			dependencies = {}
@@ -399,12 +414,12 @@ function baseBuilders.Widget(widget)
 
 		if not data then
 			data = {}
-			widget_dataDependency[self] = data
+			widget_dataDependencies[self] = data
 		end
 
 		if not evaluate then
 			evaluate = {}
-			widget_dependencyEvaluator[self] = evaluate
+			widget_dependencyEvaluators[self] = evaluate
 		end
 
 		local dependency = rule.dependency
@@ -460,15 +475,17 @@ function baseBuilders.Widget(widget)
 	end
 
 	function widget:SetDependencies(rules)
-		widget_dependencies[self] = {}
-		widget_dataDependency[self] = {}
-		widget_dependencyEvaluator[self] = {}
+		widget_dependencies[self] = nil
+		widget_dataDependencies[self] = nil
+		widget_dependencyEvaluators[self] = nil
 
 		for i = 1, #rules do widget:AddDependency(rules[i]) end
 	end
 
 	function widget:CheckDependencies()
 		local dependencies = widget_dependencies[self]
+		local dataDependencies = widget_dataDependencies[self]
+		local evaluators = widget_dependencyEvaluators[self]
 
 		if not dependencies then return true end
 
@@ -476,8 +493,8 @@ function baseBuilders.Widget(widget)
 
 		for i = 1, #dependencies do
 			local dependency = dependencies[i]
-			local data = widget_dataDependency[self][dependency]
-			local evaluate = widget_dependencyEvaluator[self][dependency]
+			local data = dataDependencies[dependency]
+			local evaluate = evaluators[dependency]
 
 			if data then
 				local value
@@ -517,6 +534,121 @@ function wt.CreateWidget(t, ancestor)
 	ds.Log(function() return progenitors[typename] .. " instance mutated into a Widget: " .. us.ToString(widget), wt.title .. ".CreateWidget" end)
 
 	return widget
+end
+
+
+--[[ LIST ]]
+
+local list_type ---@type table<list, typename>
+local list_items ---@type table<list, widget[]?>
+local list_inactive ---@type table<list, widget[]?> --CHECK if still needed
+
+local list_handlers_added ---@type table<list, list_handler_added[]>
+local list_handlers_removed ---@type table<list, list_handler_removed[]>
+local list_handlers_updated ---@type table<list, list_handler_updated[]>
+local list_invoke_added ---@type fun(self: list, item: widget)
+local list_invoke_removed ---@type fun(self: list, item: widget)
+local list_invoke_updated ---@type fun(self: list, count: integer)
+
+---@param list list
+function baseBuilders.List(list)
+	list_type = {}
+	list_items = {}
+	list_inactive = {}
+
+	function list:SetCount(count, silent)
+		if type(count) ~= "number" then count = #widget_children[self] else count = math.floor(count) end
+
+		local items = list_items[self]
+		local inactive = list_inactive[self]
+
+		if count < 1 then count = 0 else
+			local type = list_type[self]
+			local index = 1
+			local children = widget_children[self]
+
+			if not items then
+				items = {}
+				list_items[self] = items
+			end
+
+			for i = 1, #children do
+				local child = children[i]
+
+				if wt.IsType(child, type) then
+					items[index] = child
+
+					index = index + 1
+
+					if index > count then break end
+				end
+			end
+
+			while index <= count do
+				if inactive then
+					items[index] = table.remove(inactive)
+
+					if not next(inactive) then list_inactive[self] = nil end
+				else items[index] = wt["Create" .. type]({ parent = self, }) end
+
+				index = index + 1
+
+				if not silent then --[[ --ADD "added" event invoke ]] end
+			end
+		end
+
+		if items and #items > count then
+			if not inactive then
+				inactive = {}
+				list_inactive[self] = inactive
+			end
+
+			while #items > count do
+				table.insert(inactive, table.remove(items))
+
+				if not silent then --[[ --ADD "removed" event invoke ]] end
+			end
+
+			if not next(items) then list_items[self] = nil end
+		end
+
+		if not silent then --[[ --ADD "updated" event invoke ]] end
+	end
+
+	list_handlers_added = {}
+	assignAddListener(list, "added", list_handlers_added)
+	list_invoke_added = function(self, item)
+		local handlers = list_handlers_added[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, item) end
+	end
+
+	list_handlers_removed = {}
+	assignAddListener(list, "removed", list_handlers_removed)
+	list_invoke_removed = function(self, item)
+		local handlers = list_handlers_removed[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, item) end
+	end
+
+	list_handlers_updated = {}
+	assignAddListener(list, "updated", list_handlers_updated)
+	list_invoke_updated = function(self, count)
+		local handlers = list_handlers_updated[self]
+
+		if not handlers then return end
+
+		for i = 1, #handlers do handlers[i](self, count) end
+	end
+end
+
+progenitors.List = "Widget" ---@type typename_widget
+function wt.CreateList(type, count, t, ancestor)
+	--ADD List instance implementation
 end
 
 
@@ -1616,14 +1748,16 @@ end
 
 --[[ SELECTOR ]]
 
+local selector_items ---@type table<binary, true>
+
 local selector_clearable ---@type table<selector, boolean>
 
 local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
 local selector_handlers_activated ---@type table<selector, function[]>
 local selector_handlers_added ---@type table<selector, selector_handler_added[]>
 local selector_invoke_updated ---@type fun(self: selector)
-local selector_invoke_activated ---@type fun(item: selectorBinary, state: boolean)
-local selector_invoke_added ---@type fun(self: selector, item: selectorBinary)
+local selector_invoke_activated ---@type fun(item: binary, state: boolean)
+local selector_invoke_added ---@type fun(self: selector, item: binary)
 
 local itemsets = {
 	anchor = {
@@ -1693,8 +1827,8 @@ function baseBuilders.Selector(selector)
 
 	--[ Items ]
 
-	local inactive = {} ---@type selectorBinary[]
-	local typenameItem = "Binary" ---@type typename_binary
+	local inactive = {} ---@type binary[]
+	local itemTypename = "Binary" ---@type typename_binary
 
 	function selector:UpdateItems(items, silent)
 		--Update the items
@@ -1702,7 +1836,7 @@ function baseBuilders.Selector(selector)
 			local item = items[i]
 			local new = true
 
-			if wt.IsType(items[i], typenameItem) then item:SetParent(selector, nil, i)
+			if wt.IsType(items[i], itemTypename) then item:SetParent(selector, nil, i)
 			elseif i > #selector.items then
 				if #inactive > 0 then
 					item = inactive[#inactive]
