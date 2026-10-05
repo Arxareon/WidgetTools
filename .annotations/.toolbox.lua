@@ -3559,7 +3559,7 @@ function wt.CreateSelector(t, ancestor)
 
 	--| Returns
 
-	---@class selector : datamanager
+	---@class selector : datamanager, list
 	local _ = {}
 
 		--[ Types ]
@@ -6580,7 +6580,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, anc
 			---@field handler profilemanager_handler_activated Handler function to register for call
 
 				---@alias profilemanager_handler_activated
-				---| fun(self: profilemanager, success: boolean, user: boolean, index: integer, title: string) Called when an "activated" event is invoked after a profile has been activated<p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `index` integer — The index of the active profile</p><p>@*param* `title` string — The title of the active profile</p><p>@*param* `success` boolean ― `true` if the active profile was changed successfully</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: profilemanager, success: boolean, user: boolean, index?: integer, title?: string) Called when an "activated" event is invoked after a profile has been activated<p>@*param* `self` profilemanager ― Reference to the widget table</p><p>@*param* `index` integer — The index of the active profile</p><p>@*param* `title` string — The title of the active profile</p><p>@*param* `success` boolean ― `true` if the active profile was changed successfully</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class profilemanager_listener_created : indexedEventHandler
 			---@field handler profilemanager_handler_created Handler function to register for call

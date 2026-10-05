@@ -25,8 +25,7 @@ local types ---@type table<construct, table<typename, true>>
 local eventHandlers ---@type table<construct, table<eventTag, fun(self: construct, ...: any)[]>>
 local properties ---@type table<construct, table<any, any>>
 
-local construct_handlers_assigned ---@type table<construct, construct_handler_assigned[]>
-local construct_invoke_assigned ---@type fun(self: construct, property: any, value: any)
+local construct_assigned ---@type fun(self: construct, property: any, value: any)[]
 
 ---Build a root construct prototype
 ---@return construct
@@ -116,7 +115,7 @@ end
 ---`AddListener_eventTag` builder utility
 ---@param construct construct
 ---@param eventTag eventTag
----@param handlerList table<construct, function[]>
+---@param handlerList table<construct, fun(self: construct, ...: any)[]>
 local function assignAddListener(construct, eventTag, handlerList)
 	construct["addListener_" .. eventTag] = function(self, handler, callIndex)
 		if type(handler) ~= "function" then return end
@@ -149,6 +148,21 @@ local function addListeners(construct, listeners, events)
 			if type(listener) == "table" then construct["AddListener_" .. eventTag](construct, listener.handler, listener.callIndex) end
 		end end
 	end
+end
+
+---Event dispatcher utility
+---@param construct construct
+---@param lockout table<construct, true>
+---@param internal fun(self: construct, ...: any)[]
+---@param handlers? fun(self: construct, ...: any)[]
+---@param ... any
+local function invoke(construct, lockout, internal, handlers, ...)
+	lockout[construct] = true
+
+	for i = 1, #internal do internal[i](construct, ...) end
+	if handlers then for i = 1, #handlers do handlers[i](construct, ...) end end
+
+	lockout[construct] = nil
 end
 
 ---@param construct construct
@@ -190,6 +204,11 @@ function baseBuilders.Construct(construct)
 
 	--[ Properties ]
 
+	construct_assigned = {}
+	local lockout_assigned = {} ---@type table<construct, true>
+	local handlers_assigned = {} ---@type table<construct, construct_handler_assigned[]>
+	assignAddListener(construct, "assigned", handlers_assigned)
+
 	function construct:GetProperty(property)
 		local bucket = properties[self]
 
@@ -204,17 +223,7 @@ function baseBuilders.Construct(construct)
 			if not next(bucket) then properties[self] = nil end
 		elseif value ~= nil then properties[self] = { [property] = value } end
 
-		if not silent then construct_invoke_assigned(self, property, value) end
-	end
-
-	construct_handlers_assigned = {}
-	assignAddListener(construct, "assigned", construct_handlers_assigned)
-	function construct_invoke_assigned(self, property, value)
-		local handlers = construct_handlers_assigned[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, property, value) end
+		if not lockout_assigned[self] then invoke(self, lockout_assigned, construct_assigned, not silent and handlers_assigned[self], property, value) end
 	end
 end
 
@@ -259,12 +268,13 @@ local widget_independent ---@type table<widget, boolean>
 
 local widget_enabled ---@type table<widget, boolean>
 
-local widget_handlers_enabled ---@type table<widget, widget_handler_enabled[]>
-local widget_invoke_enabled ---@type fun(self: widget, user: boolean)
-
 local widget_dependencies ---@type table<widget, dependencyType[]>
 local widget_dataDependencies ---@type table<widget, table<dependencyType, true|function>>
 local widget_dependencyEvaluators ---@type table<widget, table<dependencyType, dependencyEvaluator>>
+
+local widget_parentEvent ---@type fun(self: widget, parent: widget)[]
+local widget_childEvent ---@type fun(self: widget, child: widget, removal: boolean?)[]
+local widget_enabledEvent ---@type fun(self: widget, user: boolean)[]
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
@@ -283,13 +293,24 @@ function baseBuilders.Widget(widget)
 
 	--[ Hierarchy ]
 
+	widget_parentEvent = {}
+	widget_childEvent = {}
+	widget_enabledEvent = {}
+	local lockout_parent = {} ---@type table<construct, true>
+	local lockout_child = {} ---@type table<construct, true>
+	local handlers_parent = {} ---@type table<widget, function[]>
+	local handlers_child = {} ---@type table<widget, function[]>
+	assignAddListener(widget, "parent", handlers_parent)
+	assignAddListener(widget, "child", handlers_child)
+
 	---Update the parent—child relationship of two widgets
 	---@param child widget
 	---@param parent widget|nil
 	---@param independent boolean?
 	---@param index integer?
+	---@param silent boolean?
 	---@return boolean, integer|nil
-	local function setParent(child, parent, independent, index)
+	local function setParent(child, parent, independent, index, silent)
 		local currentParent = widget_parent[child]
 
 		if currentParent == parent then return false, nil end
@@ -300,16 +321,26 @@ function baseBuilders.Widget(widget)
 		if currentParent then
 			local children = widget_children[currentParent]
 
-			for i = 1, #children do if children[i] == child then table.remove(children, i) break end end
+			for i = 1, #children do if children[i] == child then
+				table.remove(children, i)
+
+				if not lockout_child[parent] then invoke(parent, lockout_child, widget_childEvent, not silent and handlers_child[parent], child, true) end
+
+				break
+			end end
 		end
 
 		widget_parent[child] = parent
+
+		if not lockout_parent[child] then invoke(child, lockout_parent, widget_parentEvent, not silent and handlers_parent[child], parent) end
 
 		if not parent then return true, nil end
 
 		local children = widget_children[parent]
 		index = type(index) ~= "number" and #children + 1 or Clamp(math.floor(index), 1, #children + 1)
 		table.insert(children, index, child)
+
+		if not lockout_child[parent] then invoke(parent, lockout_child, widget_childEvent, not silent and handlers_child[parent], child) end
 
 		child:SetIndependent(independent)
 
@@ -362,6 +393,10 @@ function baseBuilders.Widget(widget)
 
 	widget_enabled = {}
 
+	local lockout_enabled = {} ---@type table<widget, true>
+	local handlers_enabled = {} ---@type table<widget, widget_handler_enabled[]>
+	assignAddListener(widget, "enabled", handlers_enabled)
+
 	function widget:IsEnabled() return widget_enabled[self] == true end
 	function widget:SetEnabled(state, ignoreParent, ignoreDependencies, user, silent)
 		local parent = widget_parent[self]
@@ -378,20 +413,7 @@ function baseBuilders.Widget(widget)
 			if not widget_independent[child] then child:SetEnabled(state, true, false, user, silent) end
 		end
 
-		if not silent then widget_invoke_enabled(self, user) end
-	end
-
-	widget_handlers_enabled = {}
-	assignAddListener(widget, "enabled", widget_handlers_enabled)
-	function widget_invoke_enabled(self, user)
-		local handlers = widget_handlers_enabled[self]
-
-		if not handlers then return end
-
-		local enabled = widget_enabled[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, enabled, user) end
+		if not lockout_enabled[self] then invoke(self, lockout_enabled, widget_enabledEvent, not silent and handlers_enabled[self], widget_enabled[self], user == true) end
 	end
 
 	--| Dependencies
@@ -475,9 +497,17 @@ function baseBuilders.Widget(widget)
 	end
 
 	function widget:SetDependencies(rules)
-		widget_dependencies[self] = nil
-		widget_dataDependencies[self] = nil
-		widget_dependencyEvaluators[self] = nil
+		if type(rules) ~= "table" or not next(rules) then
+			widget_dependencies[self] = nil
+			widget_dataDependencies[self] = nil
+			widget_dependencyEvaluators[self] = nil
+
+			return
+		end
+
+		widget_dependencies[self] = {}
+		widget_dataDependencies[self] = {}
+		widget_dependencyEvaluators[self] = {}
 
 		for i = 1, #rules do widget:AddDependency(rules[i]) end
 	end
@@ -541,26 +571,35 @@ end
 
 local list_type ---@type table<list, typename>
 local list_items ---@type table<list, widget[]?>
-local list_inactive ---@type table<list, widget[]?> --CHECK if still needed
+local list_indexes ---@type table<widget, integer>
 
-local list_handlers_added ---@type table<list, list_handler_added[]>
-local list_handlers_removed ---@type table<list, list_handler_removed[]>
-local list_handlers_updated ---@type table<list, list_handler_updated[]>
-local list_invoke_added ---@type fun(self: list, item: widget)
-local list_invoke_removed ---@type fun(self: list, item: widget)
-local list_invoke_updated ---@type fun(self: list, count: integer)
+local list_added ---@type fun(self: list, item: widget)[]
+local list_removed ---@type fun(self: list, item: widget)[]
+local list_updated ---@type fun(self: list, count: integer)[]
 
 ---@param list list
 function baseBuilders.List(list)
 	list_type = {}
 	list_items = {}
-	list_inactive = {}
+	list_indexes = {}
+
+	list_added = {}
+	list_removed = {}
+	list_updated = {}
+	local lockout_added ---@type table<list, true>
+	local lockout_removed ---@type table<list, true>
+	local lockout_updated ---@type table<list, true>
+	local handlers_added = {} ---@type table<list, list_handler_added[]>
+	local handlers_removed = {} ---@type table<list, list_handler_removed[]>
+	local handlers_updated = {} ---@type table<list, list_handler_updated[]>
+	assignAddListener(list, "added", handlers_added)
+	assignAddListener(list, "removed", handlers_removed)
+	assignAddListener(list, "updated", handlers_updated)
 
 	function list:SetCount(count, silent)
 		if type(count) ~= "number" then count = #widget_children[self] else count = math.floor(count) end
 
 		local items = list_items[self]
-		local inactive = list_inactive[self]
 
 		if count < 1 then count = 0 else
 			local type = list_type[self]
@@ -577,6 +616,7 @@ function baseBuilders.List(list)
 
 				if wt.IsType(child, type) then
 					items[index] = child
+					list_indexes[child] = index
 
 					index = index + 1
 
@@ -585,64 +625,29 @@ function baseBuilders.List(list)
 			end
 
 			while index <= count do
-				if inactive then
-					items[index] = table.remove(inactive)
+				local item = wt["Create" .. type]({ parent = self, })
 
-					if not next(inactive) then list_inactive[self] = nil end
-				else items[index] = wt["Create" .. type]({ parent = self, }) end
+				items[index] = item
+				list_indexes[item] = index
 
 				index = index + 1
 
-				if not silent then --[[ --ADD "added" event invoke ]] end
+				if not lockout_added[self] then invoke(self, lockout_added, list_added, not silent and handlers_added[self], item) end
 			end
 		end
 
-		if items and #items > count then
-			if not inactive then
-				inactive = {}
-				list_inactive[self] = inactive
-			end
-
+		if items then
 			while #items > count do
-				table.insert(inactive, table.remove(items))
+				local item = table.remove(items)
+				list_indexes[item] = nil
 
-				if not silent then --[[ --ADD "removed" event invoke ]] end
+				if not lockout_removed[self] then invoke(self, lockout_removed, list_removed, not silent and handlers_removed[self], item) end
 			end
 
 			if not next(items) then list_items[self] = nil end
 		end
 
-		if not silent then --[[ --ADD "updated" event invoke ]] end
-	end
-
-	list_handlers_added = {}
-	assignAddListener(list, "added", list_handlers_added)
-	list_invoke_added = function(self, item)
-		local handlers = list_handlers_added[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, item) end
-	end
-
-	list_handlers_removed = {}
-	assignAddListener(list, "removed", list_handlers_removed)
-	list_invoke_removed = function(self, item)
-		local handlers = list_handlers_removed[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, item) end
-	end
-
-	list_handlers_updated = {}
-	assignAddListener(list, "updated", list_handlers_updated)
-	list_invoke_updated = function(self, count)
-		local handlers = list_handlers_updated[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, count) end
+		if not lockout_updated[self] then invoke(self, lockout_updated, list_updated, not silent and handlers_updated[self], count) end
 	end
 end
 
@@ -815,34 +820,26 @@ end
 
 local action_call ---@type table<action, fun(self: action, user?: boolean)>
 
-local action_handlers_triggered ---@type table<action, action_handler_triggered[]>
-local action_invoke_triggered ---@type fun(self: action, user: boolean)
+local action_triggered ---@type fun(self: action, user: boolean)[]
 
 ---@param action action
 function baseBuilders.Action(action)
 	action_call = {}
+
+	action_triggered = {}
+	local lockout_triggered = {} ---@type table<action, true>
+	local handlers_triggered = {} ---@type table<action, action_handler_triggered[]>
+	assignAddListener(action, "triggered", handlers_triggered)
 
 	function action:Trigger(user, silent)
 		local call = action_call[self]
 
 		if call and widget_enabled[self] then call(action, user) end
 
-		if not silent then action_invoke_triggered(self, user) end
+		if not lockout_triggered[self] then invoke(self, lockout_triggered, action_triggered, not silent and handlers_triggered[self], user == true) end
 	end
 
 	function action:SetAction(call) if type(call) == "function" then action_call[self] = call end end
-
-	action_handlers_triggered = {}
-	assignAddListener(action, "triggered", action_handlers_triggered)
-	action_invoke_triggered = function(self, user)
-		local handlers = action_handlers_triggered[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end
 end
 
 progenitors.Action = "Widget" ---@type typename_widget
@@ -1080,12 +1077,9 @@ local datamanager_instantSave ---@type table<datamanager, boolean?>
 
 local datamanagement ---@type table<datamanager, settingsData>
 
-local datamanager_handlers_loaded ---@type table<datamanager, datamanager_handler_loaded[]>
-local datamanager_handlers_saved ---@type table<datamanager, datamanager_handler_saved[]>
-local datamanager_handlers_changed ---@type table<datamanager, datamanager_handler_changed[]>
-local datamanager_invoke_loaded ---@type fun(self: datamanager, user: boolean)
-local datamanager_invoke_saved ---@type fun(self: datamanager, user: boolean)
-local datamanager_invoke_changed ---@type fun(self: datamanager, user: boolean)
+local datamanager_changed ---@type fun(self: datamanager, user: boolean)[]
+local datamanager_loaded ---@type fun(self: datamanager, success: boolean)[]
+local datamanager_saved ---@type fun(self: datamanager, success: boolean)[]
 
 ---@param datamanager datamanager
 function baseBuilders.Datamanager(datamanager)
@@ -1093,6 +1087,11 @@ function baseBuilders.Datamanager(datamanager)
 	--[ Value ]
 
 	data_value = {}
+
+	datamanager_changed = {}
+	local lockout_changed = {} ---@type table<datamanager, true>
+	local handlers_changed = {} ---@type table<datamanager, datamanager_handler_changed[]>
+	assignAddListener(datamanager, "changed", handlers_changed)
 
 	function datamanager:Verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
 	function datamanager:Format(value) return us.ToString(datamanager:Verify(value)) end
@@ -1112,20 +1111,7 @@ function baseBuilders.Datamanager(datamanager)
 			if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 		end
 
-		if not silent then datamanager_invoke_changed(self, user) end
-	end
-
-	datamanager_handlers_changed = {}
-	assignAddListener(datamanager, "changed", datamanager_handlers_changed)
-	datamanager_invoke_changed = function(self, user)
-		local handlers = datamanager_handlers_changed[self]
-
-		if not handlers then return end
-
-		local value = data_value[self]
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, value, user) end
+		if not lockout_changed[self] then invoke(self, lockout_changed, datamanager_changed, not silent and handlers_changed[self], data_value[self], user == true) end
 	end
 
 	--| Default
@@ -1149,6 +1135,15 @@ function baseBuilders.Datamanager(datamanager)
 	datamanager_write = {}
 	datamanager_instantSave = {}
 
+	datamanager_loaded = {}
+	datamanager_saved = {}
+	local lockout_loaded = {} ---@type table<datamanager, true>
+	local lockout_saved = {} ---@type table<datamanager, true>
+	local handlers_loaded = {} ---@type table<datamanager, datamanager_handler_loaded[]>
+	local handlers_saved = {} ---@type table<datamanager, datamanager_handler_saved[]>
+	assignAddListener(datamanager, "loaded", handlers_loaded)
+	assignAddListener(datamanager, "saved", handlers_saved)
+
 	function datamanager:SetReader(read)
 		datamanager_read[self] = type(read) == "function" and read or nil
 
@@ -1166,8 +1161,8 @@ function baseBuilders.Datamanager(datamanager)
 		if read then
 			datamanager:SetValue(read(), handleChanges ~= false, silent)
 
-			if not silent then datamanager_invoke_loaded(self, true) end
-		elseif not silent then datamanager_invoke_loaded(self, false) end
+			if not lockout_loaded[self] then invoke(self, lockout_loaded, datamanager_loaded, not silent and handlers_loaded[self], true) end
+		elseif not lockout_loaded[self] then invoke(self, lockout_loaded, datamanager_loaded, not silent and handlers_loaded[self], false) end
 	end
 	function datamanager:Save(silent)
 		local write = datamanager_write[self]
@@ -1175,8 +1170,8 @@ function baseBuilders.Datamanager(datamanager)
 		if write then
 			write(data_value[self])
 
-			if not silent then datamanager_invoke_saved(self, true) end
-		elseif not silent then datamanager_invoke_saved(self, false) end
+			if not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, not silent and handlers_saved[self], true) end
+		elseif not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, not silent and handlers_saved[self], false) end
 	end
 
 	function datamanager:GetData()
@@ -1190,37 +1185,13 @@ function baseBuilders.Datamanager(datamanager)
 		if write then
 			write(datamanager:Verify(data))
 
-			if not silent then datamanager_invoke_saved(self, true) end
-		elseif not silent then datamanager_invoke_saved(self, false) end
+			if not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, not silent and handlers_saved[self], true) end
+		elseif not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, not silent and handlers_saved[self], false) end
 
 		datamanager:Load(handleChanges, silent)
 	end
 
 	function datamanager:SetInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
-
-	datamanager_handlers_loaded = {}
-	assignAddListener(datamanager, "loaded", datamanager_handlers_loaded)
-	datamanager_invoke_loaded = function(self, success)
-		local handlers = datamanager_handlers_loaded[self]
-
-		if not handlers then return end
-
-		success = success == true
-
-		for i = 1, #handlers do handlers[i](self, success) end
-	end
-
-	datamanager_handlers_saved = {}
-	assignAddListener(datamanager, "saved", datamanager_handlers_saved)
-	datamanager_invoke_saved = function(self, success)
-		local handlers = datamanager_handlers_saved[self]
-
-		if not handlers then return end
-
-		success = success == true
-
-		for i = 1, #handlers do handlers[i](self, success) end
-	end
 
 	--[ Datamanagement ]
 
@@ -1748,16 +1719,7 @@ end
 
 --[[ SELECTOR ]]
 
-local selector_items ---@type table<binary, true>
-
 local selector_clearable ---@type table<selector, boolean>
-
-local selector_handlers_updated ---@type table<selector, selector_handler_updated[]>
-local selector_handlers_activated ---@type table<selector, function[]>
-local selector_handlers_added ---@type table<selector, selector_handler_added[]>
-local selector_invoke_updated ---@type fun(self: selector)
-local selector_invoke_activated ---@type fun(item: binary, state: boolean)
-local selector_invoke_added ---@type fun(self: selector, item: binary)
 
 local itemsets = {
 	anchor = {
@@ -1801,34 +1763,31 @@ function baseBuilders.Selector(selector)
 	selector_clearable = {}
 
 	function selector:Verify(value)
-		value = type(value) == "number" and Clamp(math.floor(value), 1, #selector.items) or nil
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
 
 		return value and value or not selector_clearable[self] and value or nil
 	end
 	function selector:Format(state)
-		if type(state) ~= "boolean" then state = selector:GetValue() end
+		if type(state) ~= "boolean" then state = self:GetValue() end
 
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
 	function selector:SetValue(index, user, silent)
-		data_value[self] = selector:Verify(index)
+		data_value[self] = self:Verify(index)
 
-		for i = 1, #selector.items do selector.items[i]:SetValue(i == data_value[self], user, silent) end
+		local items = list_items[self] ---@type binary[]
+		for i = 1, #items do items[i]:SetValue(i == data_value[self], user, silent) end
 
-		if user and datamanager_instantSave[self] ~= false then selector:SaveData(nil, silent) end
+		if user and datamanager_instantSave[self] ~= false then self:SaveData(nil, silent) end
 
 		if not silent then datamanager_invoke_changed(self, user == true) end
 
 		local management = datamanagement[self]
-
 		if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 	end
 
 	--[ Items ]
-
-	local inactive = {} ---@type binary[]
-	local itemTypename = "Binary" ---@type typename_binary
 
 	function selector:UpdateItems(items, silent)
 		--Update the items
@@ -1881,25 +1840,7 @@ function baseBuilders.Selector(selector)
 		selector:SetValue(data_value[self], nil, silent)
 	end
 
-	selector_handlers_updated = {}
-	assignAddListener(selector, "updated", selector_handlers_updated)
-	selector_invoke_updated = function(self)
-		local handlers = selector_handlers_updated[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self) end
-	end
-
-	selector_handlers_added = {}
-	assignAddListener(selector, "added", selector_handlers_added)
-	selector_invoke_added = function(self, item)
-		local handlers = selector_handlers_added[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, item) end
-	end
+	selector:AddListener_updated(function (self) self:UpdateItems({}, true) end, 1)
 end
 
 ---@param specialSelector specialSelector
@@ -3934,10 +3875,8 @@ local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
 local numeric_hardStep ---@type table<numeric, boolean>
 
-local numeric_handlers_min ---@type table<numeric, numeric_handler_min[]>
-local numeric_handlers_max ---@type table<numeric, numeric_handler_max[]>
-local numeric_invoke_min ---@type fun(self: numeric)
-local numeric_invoke_max ---@type fun(self: numeric)
+local numeric_minEvent ---@type fun(self: numeric, limitMin: number)[]
+local numeric_maxEvent ---@type fun(self: numeric, limitMax: number)[]
 
 ---@param numeric numeric
 function baseBuilders.Numeric(numeric)
@@ -3966,38 +3905,27 @@ function baseBuilders.Numeric(numeric)
 	numeric_limitMin = {}
 	numeric_limitMax = {}
 
+	numeric_minEvent = {}
+	numeric_maxEvent = {}
+	local lockout_min = {} ---@type table<numeric, true>
+	local lockout_max = {} ---@type table<numeric, true>
+	local handlers_min = {} ---@type table<numeric, numeric_handler_min[]>
+	local handlers_max = {} ---@type table<numeric, numeric_handler_max[]>
+	assignAddListener(numeric, "min", handlers_min)
+	assignAddListener(numeric, "max", handlers_max)
+
 	function numeric:GetMin() return numeric_limitMin[self] end
 	function numeric:SetMin(number, silent)
 		numeric_limitMin[self] = min(number, numeric_limitMax[self])
 
-		if not silent then numeric_invoke_min(self) end
+		if not lockout_min[self] then invoke(self, lockout_min, numeric_minEvent, not silent and handlers_min[self], numeric_limitMin[self]) end
 	end
 
 	function numeric:GetMax() return numeric_limitMax[self] end
 	function numeric:SetMax(number, silent)
 		numeric_limitMax[self] = max(numeric_limitMin[self], number)
 
-		if not silent then numeric_invoke_max(self) end
-	end
-
-	numeric_handlers_min = {}
-	assignAddListener(numeric, "min", numeric_handlers_min)
-	numeric_invoke_min = function(self)
-		local handlers = numeric_handlers_min[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, numeric_limitMin[self]) end
-	end
-
-	numeric_handlers_max = {}
-	assignAddListener(numeric, "max", numeric_handlers_max)
-	numeric_invoke_max = function(self)
-		local handlers = numeric_handlers_max[self]
-
-		if not handlers then return end
-
-		for i = 1, #handlers do handlers[i](self, numeric_limitMax[self]) end
+		if not lockout_max[self] then invoke(self, lockout_max, numeric_maxEvent, not silent and handlers_max[self], numeric_limitMax[self]) end
 	end
 
 	--| Step
@@ -5980,16 +5908,11 @@ local datamanagementEntry ---
 local settingsmanager_autoLoad ---@type table<settingsmanager, true>
 local settingsmanager_autoSave ---@type table<settingsmanager, true>
 
-local settingsmanager_handlers_loaded ---@type table<settingsmanager, settingsmanager_handler_loaded>
-local settingsmanager_handlers_saved ---@type table<settingsmanager, settingsmanager_handler_saved>
-local settingsmanager_handlers_applied ---@type table<settingsmanager, settingsmanager_handler_applied>
-local settingsmanager_handlers_reverted ---@type table<settingsmanager, settingsmanager_handler_reverted>
-local settingsmanager_handlers_reset ---@type table<settingsmanager, settingsmanager_handler_reset>
-local settingsmanager_invoke_loaded ---@type fun(self: settingsmanager, user: boolean)
-local settingsmanager_invoke_saved ---@type fun(self: settingsmanager, user: boolean)
-local settingsmanager_invoke_applied ---@type fun(self: settingsmanager, user: boolean)
-local settingsmanager_invoke_reverted ---@type fun(self: settingsmanager, user: boolean)
-local settingsmanager_invoke_reset ---@type fun(self: settingsmanager, user: boolean)
+local settingsmanager_loaded ---@type fun(self: settingsmanager, user: boolean)[]
+local settingsmanager_saved ---@type fun(self: settingsmanager, user: boolean)[]
+local settingsmanager_applied ---@type fun(self: settingsmanager, user: boolean)[]
+local settingsmanager_reverted ---@type fun(self: settingsmanager, user: boolean)[]
+local settingsmanager_reset ---@type fun(self: settingsmanager, user: boolean)[]
 
 ---@param settingsmanager settingsmanager
 function baseBuilders.Settingsmanager(settingsmanager)
@@ -5999,97 +5922,58 @@ function baseBuilders.Settingsmanager(settingsmanager)
 	settingsmanager_autoLoad = {}
 	settingsmanager_autoSave = {}
 
+	settingsmanager_loaded = {}
+	settingsmanager_saved= {}
+	settingsmanager_applied = {}
+	settingsmanager_reverted = {}
+	settingsmanager_reset = {}
+	local lockout_loaded = {}  ---@type table<settingsmanager, true>
+	local lockout_saved = {}  ---@type table<settingsmanager, true>
+	local lockout_applied = {}  ---@type table<settingsmanager, true>
+	local lockout_reverted = {}  ---@type table<settingsmanager, true>
+	local lockout_reset = {}  ---@type table<settingsmanager, true>
+	local handlers_loaded = {} ---@type table<settingsmanager, settingsmanager_handler_loaded[]>
+	local handlers_saved = {} ---@type table<settingsmanager, settingsmanager_handler_saved[]>
+	local handlers_applied = {} ---@type table<settingsmanager, settingsmanager_handler_applied[]>
+	local handlers_reverted = {} ---@type table<settingsmanager, settingsmanager_handler_reverted[]>
+	local handlers_reset = {} ---@type table<settingsmanager, settingsmanager_handler_reset[]>
+	assignAddListener(settingsmanager, "loaded", handlers_loaded)
+	assignAddListener(settingsmanager, "saved", handlers_saved)
+	assignAddListener(settingsmanager, "applied", handlers_applied)
+	assignAddListener(settingsmanager, "reverted", handlers_reverted)
+	assignAddListener(settingsmanager, "reset", handlers_reset)
+
 	function settingsmanager:Load(handleChanges, user, silent)
 		if settingsmanager_autoLoad[self] then for i = 1, #datamanagementEntry[self].keys do
 			wt.LoadSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i], handleChanges)
 			wt.SnapshotSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i])
 		end end
 
-		if not silent then settingsmanager_invoke_loaded(self, user == true) end
+		if not lockout_loaded[self] then invoke(self, lockout_loaded, settingsmanager_loaded, not silent and handlers_loaded[self], user == true) end
 	end
 
 	function settingsmanager:Save(user, silent)
 		if settingsmanager_autoSave[self] then for i = 1, #datamanagementEntry[self].keys do wt.SaveSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager_invoke_saved(self, user == true) end
+		if not lockout_saved[self] then invoke(self, lockout_saved, settingsmanager_saved, not silent and handlers_saved[self], user == true) end
 	end
 
 	function settingsmanager:Apply(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ApplySettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager_invoke_applied(self, user == true) end
+		if not lockout_applied[self] then invoke(self, lockout_applied, settingsmanager_applied, not silent and handlers_applied[self], user == true) end
 	end
 
 	function settingsmanager:Revert(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.RevertSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager_invoke_reverted(self, user == true) end
+		if not lockout_reverted[self] then invoke(self, lockout_reverted, settingsmanager_reverted, not silent and handlers_reverted[self], user == true) end
 	end
 
 	function settingsmanager:Reset(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ResetSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not silent then settingsmanager_invoke_reset(self, user == true) end
-	end
-
-	settingsmanager_handlers_loaded = {}
-	assignAddListener(settingsmanager, "loaded", settingsmanager_handlers_loaded)
-	settingsmanager_invoke_loaded = function(self, user)
-		local handlers = settingsmanager_handlers_loaded[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end
-
-	settingsmanager_handlers_saved = {}
-	assignAddListener(settingsmanager, "saved", settingsmanager_handlers_saved)
-	settingsmanager_invoke_saved = function(self, user)
-		local handlers = settingsmanager_handlers_saved[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end
-
-	settingsmanager_handlers_applied = {}
-	assignAddListener(settingsmanager, "", settingsmanager_handlers_applied)
-	settingsmanager_invoke_applied = function(self, user)
-		local handlers = settingsmanager_handlers_applied[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end
-
-	settingsmanager_handlers_reverted = {}
-	assignAddListener(settingsmanager, "reverted", settingsmanager_handlers_reverted)
-	settingsmanager_invoke_reverted = function(self, user)
-		local handlers = settingsmanager_handlers_reverted[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
-	end
-
-	settingsmanager_handlers_reset = {}
-	assignAddListener(settingsmanager, "reset", settingsmanager_handlers_reset)
-	settingsmanager_invoke_reset = function(self, user)
-		local handlers = settingsmanager_handlers_reset[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, user) end
+		if not lockout_reset[self] then invoke(self, lockout_reset, settingsmanager_reset, not silent and handlers_reset[self], user == true) end
 	end
 end
 
@@ -6484,23 +6368,42 @@ local profiles_valueChecker ---@type table<profilemanager, function>
 local profiles_onRecovery ---@type table<profilemanager, function>
 local profiles_recoveryMap ---@type table<profilemanager, table>
 
-local profilemanager_handlers_activated ---@type table<profilemanager, profilemanager_handler_activated[]>
-local profilemanager_handlers_created ---@type table<profilemanager, profilemanager_handler_created[]>
-local profilemanager_handlers_renamed ---@type table<profilemanager, profilemanager_handler_renamed[]>
-local profilemanager_handlers_deleted ---@type table<profilemanager, profilemanager_handler_deleted[]>
-local profilemanager_handlers_reset ---@type table<profilemanager, profilemanager_handler_reset[]>
-local profilemanager_handlers_loaded ---@type table<profilemanager, profilemanager_handler_loaded[]>
-local profilemanager_invoke_activated ---@type fun(self: profilemanager, success: boolean, user?: boolean, index?: integer)
-local profilemanager_invoke_created ---@type fun(self: profilemanager, user?: boolean, index: integer, title: string)
-local profilemanager_invoke_renamed ---@type fun(self: profilemanager, success: boolean, user?: boolean, index: any, title?: string)
-local profilemanager_invoke_deleted ---@type fun(self: profilemanager, success: boolean, user?: boolean, index: any, title?: string)
-local profilemanager_invoke_reset ---@type fun(self: profilemanager, profilemanager, success: boolean, user?: boolean, index: any, title?: string)
-local profilemanager_invoke_loaded ---@type fun(self: profilemanager, user?: boolean)
+local profilemanager_activated ---@type fun(self: profilemanager, success: boolean, user: boolean, index?: integer, title?: string)[]
+local profilemanager_created ---@type fun(self: profilemanager, user: boolean, index: integer, title: string)[]
+local profilemanager_renamed ---@type fun(self: profilemanager, success: boolean, user: boolean, index: any, title?: string)[]
+local profilemanager_deleted ---@type fun(self: profilemanager, success: boolean, user: boolean, index: any, title?: string)[]
+local profilemanager_reset ---@type fun(self: profilemanager, success: boolean, user: boolean, index: any, title?: string)[]
+local profilemanager_loaded ---@type fun(self: profilemanager, user: boolean)[]
 
 ---@param profilemanager profilemanager
 function baseBuilders.Profilemanager(profilemanager)
 
 	--[ Profile ]
+
+	profilemanager_activated = {}
+	profilemanager_created = {}
+	profilemanager_renamed = {}
+	profilemanager_deleted = {}
+	profilemanager_reset = {}
+	profilemanager_loaded = {}
+	local lockout_activated = {} ---@type table<profilemanager, true>
+	local lockout_created = {} ---@type table<profilemanager, true>
+	local lockout_renamed = {} ---@type table<profilemanager, true>
+	local lockout_deleted = {} ---@type table<profilemanager, true>
+	local lockout_reset = {} ---@type table<profilemanager, true>
+	local lockout_loaded = {} ---@type table<profilemanager, true>
+	local handlers_activated = {} ---@type table<profilemanager, profilemanager_handler_activated[]>
+	local handlers_created = {} ---@type table<profilemanager, profilemanager_handler_created[]>
+	local handlers_renamed = {} ---@type table<profilemanager, profilemanager_handler_renamed[]>
+	local handlers_deleted = {} ---@type table<profilemanager, profilemanager_handler_deleted[]>
+	local handlers_reset = {} ---@type table<profilemanager, profilemanager_handler_reset[]>
+	local handlers_loaded = {} ---@type table<profilemanager, profilemanager_handler_loaded[]>
+	assignAddListener(profilemanager, "activated", handlers_activated)
+	assignAddListener(profilemanager, "created", handlers_created)
+	assignAddListener(profilemanager, "renamed", handlers_renamed)
+	assignAddListener(profilemanager, "deleted", handlers_deleted)
+	assignAddListener(profilemanager, "reset", handlers_reset)
+	assignAddListener(profilemanager, "loaded", handlers_loaded)
 
 	---Set the active profile
 	---@param index? integer ***Default:*** `activeIndex` or `1`
@@ -6519,14 +6422,14 @@ function baseBuilders.Profilemanager(profilemanager)
 
 	function profilemanager:Activate(index, user, silent)
 		if type(index) ~= "number" then
-			if not silent then profilemanager_invoke_activated(self, false, user) end
+			if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, not silent and handlers_activated[self], true, user == true) end
 
 			return nil
 		end
 
 		index = setActiveProfile(self, index)
 
-		if not silent then profilemanager_invoke_activated(self, true, user, index) end
+		if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, not silent and handlers_activated[self], true, user == true, index, index and profiles_accountData[self].profiles[index].title or nil) end
 
 		return index
 	end
@@ -6569,14 +6472,14 @@ function baseBuilders.Profilemanager(profilemanager)
 			data = us.Clone(d and d.data or profiles_defaultData[self])
 		})
 
-		if not silent then profilemanager_invoke_created(self, user, index, title) end
+		if not lockout_created[self] then invoke(self, lockout_created, profilemanager_created, not silent and handlers_created[self], user, index, title) end
 
 		if apply ~= false then profilemanager:Activate(index, user, silent) end
 	end
 
 	function profilemanager:Rename(index, name, number, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not silent then profilemanager_invoke_renamed(self, false, user, index) end
+			if not lockout_renamed[self] then invoke(self, lockout_renamed, profilemanager_renamed, not silent and handlers_renamed[self], user == true, index) end
 
 			return false
 		end
@@ -6586,14 +6489,14 @@ function baseBuilders.Profilemanager(profilemanager)
 
 		profiles_accountData[self].profiles[index].title = title
 
-		if not silent then profilemanager_invoke_renamed(self, true, user, index, title) end
+		if not lockout_renamed[self] then invoke(self, lockout_renamed, profilemanager_renamed, not silent and handlers_renamed[self], true, user == true, index, title) end
 
 		return true
 	end
 
 	function profilemanager:Delete(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not silent then profilemanager_invoke_deleted(self, false, user, index) end
+			if not lockout_deleted[self] then invoke(self, lockout_deleted, profilemanager_deleted, not silent and handlers_deleted[self], false, user == true, index) end
 
 			return false
 		end
@@ -6604,7 +6507,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		local function delete()
 			table.remove(profiles_accountData[self].profiles, index)
 
-			if not silent then profilemanager_invoke_deleted(self, true, user, index, title) end
+			if not lockout_deleted[self] then invoke(self, lockout_deleted, profilemanager_deleted, not silent and handlers_deleted[self], true, user == true, index, title) end
 
 			if profiles_activeIndex[self] == index then profilemanager:Activate(index, user, silent) end
 		end
@@ -6619,7 +6522,7 @@ function baseBuilders.Profilemanager(profilemanager)
 
 	function profilemanager:Reset(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not silent then profilemanager_invoke_reset(self, false, user, index) end
+			if not lockout_reset[self] then invoke(self, lockout_reset, profilemanager_reset, not silent and handlers_reset[self], false, user == true, index) end
 
 			return false
 		end
@@ -6630,7 +6533,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		local function reset()
 			us.CopyValues(self.data, profiles_defaultData[self])
 
-			if not silent then profilemanager_invoke_reset(self, true, user, index, title) end
+			if not lockout_reset[self] then invoke(self, lockout_reset, profilemanager_reset, not silent and handlers_reset[self], false, user == true, index, title) end
 		end
 
 		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_resetPopup[self], {
@@ -6720,82 +6623,9 @@ function baseBuilders.Profilemanager(profilemanager)
 		if not silent then
 			user = user == true
 
-			profilemanager_invoke_loaded(self, user)
-			profilemanager_invoke_activated(self, true, user, activeProfile)
+			if not lockout_loaded[self] then invoke(self, lockout_loaded, profilemanager_loaded, not silent and handlers_loaded[self], user) end
+			if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, not silent and handlers_activated[self], true, user, activeProfile, activeProfile and profiles_accountData[self].profiles[activeProfile].title or nil) end
 		end
-	end
-
-	profilemanager_handlers_activated = {}
-	assignAddListener(profilemanager, "activated", profilemanager_handlers_activated)
-	profilemanager_invoke_activated = function(self, success, user, index)
-		local handlers = profilemanager_handlers_activated[self]
-
-		if not handlers then return end
-
-		user = user == true
-		local title = index and profiles_accountData[self].profiles[index].title or nil
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
-	end
-
-	profilemanager_handlers_created = {}
-	assignAddListener(profilemanager, "created", profilemanager_handlers_created)
-	profilemanager_invoke_created = function(self, user, index, title)
-		local handlers = profilemanager_handlers_created[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, user, index, title) end
-	end
-
-	profilemanager_handlers_renamed = {}
-	assignAddListener(profilemanager, "renamed", profilemanager_handlers_renamed)
-	profilemanager_invoke_renamed = function(self, success, user, index, title)
-		local handlers = profilemanager_handlers_renamed[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
-	end
-
-	profilemanager_handlers_deleted = {}
-	assignAddListener(profilemanager, "deleted", profilemanager_handlers_deleted)
-	if not profilemanager_invoke_deleted then profilemanager_invoke_deleted = function(self, success, user, index, title)
-		local handlers = profilemanager_handlers_deleted[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
-	end end
-
-	profilemanager_handlers_reset = {}
-	assignAddListener(profilemanager, "reset", profilemanager_handlers_reset)
-	if not profilemanager_invoke_reset then profilemanager_invoke_reset = function(self, success, user, index, title)
-		local handlers = profilemanager_handlers_reset[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](profilemanager, success, user, index, title) end
-	end end
-
-	profilemanager_handlers_loaded = {}
-	assignAddListener(profilemanager, "loaded", profilemanager_handlers_loaded)
-	profilemanager_invoke_loaded = function(self, user)
-		local handlers = profilemanager_handlers_loaded[self]
-
-		if not handlers then return end
-
-		user = user == true
-
-		for i = 1, #handlers do	handlers[i](self, user) end
 	end
 end
 
@@ -7282,8 +7112,7 @@ end
 
 local addonmanager_addonData ---@type table<addonmanager, addonInfo>
 
-local addonmanager_invoke_changed ---@type fun(self: addonmanager, user: boolean)
-local addonmanager_handlers_changed ---@type table<addonmanager, addonmanager_handler_changed[]>
+local addonmanager_changed ---@type fun(self: addonmanager, user: boolean)[]
 
 ---@param addonmanager addonmanager
 function baseBuilders.Addonmanager(addonmanager)
@@ -7317,6 +7146,11 @@ function baseBuilders.Addonmanager(addonmanager)
 	end
 
 	--| Rebind
+
+	addonmanager_changed = {}
+	local lockout_changed = {} ---@type table<addonmanager, true>
+	local handlers_changed = {} ---@type table<addonmanager, addonmanager_handler_changed[]>
+	assignAddListener(addonmanager, "changed", handlers_changed)
 
 	function addonmanager:SetAddon(newAddon, newChangelog, user, silent)
 		if newAddon == addonmanager_addonData then return true end
@@ -7357,22 +7191,9 @@ function baseBuilders.Addonmanager(addonmanager)
 			addonmanager_addonData[self] = data
 		end
 
-		if not silent then addonmanager_invoke_changed(self, user) end
+		if not lockout_changed[self] then invoke(self, lockout_changed, addonmanager_changed, not silent and handlers_changed[self], addonmanager_addonData[self].name, user == true) end
 
 		return true
-	end
-
-	addonmanager_handlers_changed = {}
-	assignAddListener(addonmanager, "", addonmanager_handlers_changed)
-	addonmanager_invoke_changed = function(self, user)
-		local handlers = addonmanager_handlers_changed[self]
-
-		if not handlers then return end
-
-		local name = addonmanager_addonData[self].name
-		user = user == true
-
-		for i = 1, #handlers do handlers[i](self, name, user) end
 	end
 end
 
