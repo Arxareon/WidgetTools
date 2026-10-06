@@ -1,7 +1,4 @@
---| Toolbox
-
----@type toolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
@@ -39,323 +36,207 @@ wt.changelog = {
 ---English
 ---@class toolboxStrings_enUS
 wt.strings = {
-	chat = {
-		welcome = {
-			thanks = "Thank you for using #ADDON!",
-			hint = "Type #KEYWORD to see the chat command list.",
-			keywords = "#KEYWORD or #KEYWORD_ALTERNATE",
-		},
-		help = {
-			list = "#ADDON chat command list:",
-		},
-	},
-	popupInput = {
-		title = "Specify the text",
-		tooltip = "Press " .. KEY_ENTER .. " to accept the specified text or " .. KEY_ESCAPE .. " to dismiss it."
-	},
-	reload = {
-		title = "Pending Changes",
-		description = "Reload the interface to apply the pending changes.",
-		accept = {
-			label = "Reload Now",
-			tooltip = "You may choose to reload the interface now to apply the pending changes.",
-		},
-		cancel = {
-			label = "Later",
-			tooltip = "Reload the interface later with the /reload chat command or by logging out.",
-		},
-	},
-	multiSelector = {
-		locked = "Locked",
-		minLimit = "At least #MIN options must be selected.",
-		maxLimit = "Only #MAX options can be selected at once.",
-	},
-	dropdown = {
-		selected = "This is the currently selected option.",
-		none = "No option has been selected.",
-		open = "Click to view the list of options.",
-		previous = {
-			label = "Previous option",
-			tooltip = "Select the previous option.",
-		},
-		next = {
-			label = "Next option",
-			tooltip = "Select the next option.",
-		},
-		clear = "Clear selection",
-	},
-	copyBox = "Copy the text by pressing:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
-	slider = {
-		value = {
-			label = "Specify the value",
-			tooltip = "Enter any value within range.",
-		},
-		decrease = {
-			label = "Decrease",
-			tooltip = {
-				"Subtract #VALUE from the value.",
-				"Hold ALT to subtract #VALUE instead.",
-			},
-		},
-		increase = {
-			label = "Increase",
-			tooltip = {
-				"Add #VALUE to the value.",
-				"Hold ALT to add #VALUE instead.",
-			},
-		},
-	},
-	color = {
-		picker = {
-			label = "Pick a color",
-			tooltip = "Open the color picker to customize the color#ALPHA.",
-			alpha = " and change the opacity",
-		},
-		hex = {
-			label = "Add via HEX color code",
-			tooltip = "You may change the color via HEX code instead of using the color picker.",
-		}
-	},
-	settings = {
-		save = "Changes will be finalized on close.",
-		cancel = {
-			label = "Revert Changes",
-			tooltip = "Dismiss all changes made on this page, and load the saved values.",
-		},
-		defaults = {
-			label = "Restore Defaults",
-			tooltip = "Restore all settings on this page (or the whole category) to default values.",
-		},
-		warning = "Are you sure you want to reset the settings on the #PAGE page or all settings in the whole #CATEGORY category to defaults?",
-		warningSingle = "Are you sure you want to reset the settings on the #PAGE page to defaults?",
-	},
-	value = {
-		copy = "Copy Value",
-		paste = "Paste Value",
-		revert = "Revert Changes",
-		restore = "Restore Default",
-		note = "Right-click to copy or revert.",
-	},
-	points = {
-		left = "Left",
-		right = "Right",
-		center = "Center",
-		top = {
-			left = "Top Left",
-			right = "Top Right",
-			center = "Top Center",
-		},
-		bottom = {
-			left = "Bottom Left",
-			right = "Bottom Right",
-			center = "Bottom Center",
-		},
-	},
-	strata = {
-		lowest = "Low Background",
-		lower = "Middle Background",
-		low = "High Background",
-		lowMid = "Low Middle",
-		highMid = "High Middle",
-		high = "Low Foreground",
-		higher = "Middle Foreground",
-		highest = "High Foreground",
-	},
-	about = {
-		title = "About",
-		description = "Thanks for using #ADDON! Copy the links to see how to share feedback, get help & support development.",
-		version = "Version",
-		date = "Date",
-		author = "Author",
-		license = "License",
-		curseForge = "CurseForge Page",
-		wago = "Wago Page",
-		repository = "GitHub Repository",
-		issues = "Issues & Feedback",
-		changelog = {
-			label = "Update Notes",
-			tooltip = "Notes of all the changes, updates & fixes introduced with the latest version release: #VERSION.",
-		},
-		fullChangelog = {
-			label = "#ADDON Changelog",
-			tooltip = "The complete list of update notes of all addon version releases.",
-			open = {
-				label = "Changelog",
-				tooltip = "Read the full list of update notes of all addon version releases.",
-			},
-		},
-	},
-	sponsors = {
-		title = "Sponsors",
-		description = "Your continued support is greatly appreciated! Thank you!",
-	},
-	profilesPage = {
-		title = "Profiles & Backup",
-		description = "Configure #ADDON settings further by managing profiles and backups via importing, exporting options.",
-	},
-	profiles = {
-		title = "Profiles",
-		description = "Create, edit and apply unique options profiles specific to each of your characters.",
-		select = {
-			label = "Select a Profile",
-			tooltip = "Choose the options data storage profile to be used for your current character.\n\nThe data in the active profile will be overwritten automatically when settings are modified and saved!",
-			profile = "Profile",
-			main = "Main",
-		},
-		new = {
-			label = "New Profile",
-			tooltip = "Create a new default profile.",
-		},
-		duplicate = {
-			label = "Duplicate",
-			tooltip = "Create a new profile, copying the data from the currently active profile.",
-		},
-		rename = {
-			label = "Rename",
-			tooltip = "Rename the currently active profile.",
-			description = "Rename #PROFILE to:",
-		},
-		delete = {
-			tooltip = "Delete the currently active profile.",
-			warning = "Are you sure you want to remove the currently active #PROFILE #ADDON settings profile and permanently delete all settings data stored in it?"
-		},
-		reset = {
-			warning = "Are you sure you want to override the currently active #PROFILE #ADDON settings profile with default values?",
-		},
-	},
-	backup = {
-		title = "Backup",
-		description = "Import or export data in the currently active profile to save, share or move settings, or edit specific values manually.",
-		box = {
-			label = "Import or Export Current Profile",
-			tooltip = {
-				"The backup string in this box contains the currently active addon profile data.",
-				"Copy the text to save, share or load data for another account from it.",
-				"To load data from a string you have, override the text inside this box, then press " .. KEY_ENTER .. " or click the #LOAD button.",
-				"Note: If you're using custom font or texture files, those files cannot carry over with this string. They will need to be saved separately, and pasted into the addon folder to become usable.",
-				"Only load strings you have verified yourself or trust the source of!",
-			},
-		},
-		allProfiles = {
-			label = "Import or Export All Profiles",
-			tooltipLine = "The backup string in this box contains the list of all addon profiles and the data stored in each specific one as well as the name of currently active profile.",
-			open = {
-				label = "All Profiles",
-				tooltip = "Access the full profile list and backup or modify the data stored in each one.",
-			},
-		},
-		compact = {
-			label = "Compact",
-			tooltip = "Toggle between a compact, and a more readable & editable view.",
-		},
-		load = {
-			label = "Load",
-			tooltip = "Check the current string, and attempt to load the data from it.",
-		},
-		reset = {
-			tooltip = "Dismiss all changes made to the string, and reset it to contain the currently stored data.",
-		},
-		import = "Load the string",
-		warning = "Are you sure you want to attempt to load the currently inserted string?\n\nAll unsaved changes will be dismissed.\n\nIf you've copied it from an online source or someone else has sent it to you, only load it after you've checked the code inside and you know what you are doing.\n\nIf don't trust the source, you may want to cancel to prevent any unwanted actions.",
-		error = "The provided backup string could not be validated and no data was loaded. It might be missing some characters or errors may have been introduced if it was edited.",
-	},
-	position = {
-		title = "Position",
-		description = {
-			static = "Fine-tune the position of #FRAME on the screen via the options provided here.",
-			movable = "Drag & drop #FRAME while holding SHIFT to position it anywhere on the screen, fine-tune it here.",
-		},
-		relativePoint = {
-			label = "Linking Screen Point",
-			tooltip = "Attach the chosen anchor point of #FRAME to the linking point selected here.",
-		},
-		-- relativeTo = {
-		-- 	label = "Link to Frame",
-		-- 	tooltip = "Type the name of another UI element, a frame to link the position of #FRAME to.\n\nFind out the names of frames by toggling the debug UI via the /framestack chat command.",
-		-- },
-		anchor = {
-			label = "Linking Anchor Point",
-			tooltip = "Select which point #FRAME should be anchored from when linking to the chosen screen point.",
-		},
-		keepInPlace = {
-			label = "Keep in place",
-			tooltip = "Don't move #FRAME when changing the #ANCHOR, update the offset values instead.",
-		},
-		offsetX= {
-			label = "Horizontal Offset",
-			tooltip = "Set the amount of horizontal offset (X axis) of #FRAME from the selected #ANCHOR.",
-		},
-		offsetY = {
-			label = "Vertical Offset",
-			tooltip = "Set the amount of vertical offset (Y axis) of #FRAME from the selected #ANCHOR.",
-		},
-		keepInBounds = {
-			label = "Keep in screen bounds",
-			tooltip = "Make sure #FRAME cannot be moved out of screen bounds.",
-		},
-	},
-	presets = {
-		apply = {
-			label = "Apply a Preset",
-			tooltip = "Change the position of #FRAME by choosing and applying one of these presets.",
-			list = { "Under Minimap", },
-			select = "Select a preset…",
-		},
-		save = {
-			label = "Update #CUSTOM Preset",
-			tooltip = "Save the current position and visibility of #FRAME to the #CUSTOM preset.",
-			warning = "Are you sure you want to override the #CUSTOM preset with the current values?",
-		},
-		reset = {
-			label = "Reset #CUSTOM Preset",
-			tooltip = "Override currently saved #CUSTOM preset data with the default values, then apply it.",
-			warning = "Are you sure you want to override the #CUSTOM preset with the default values?",
-		},
-	},
-	layer = {
-		strata = {
-			label = "Screen Layer",
-			tooltip = "Raise or lower #FRAME to be in front of or behind other UI elements.",
-		},
-		keepOnTop = {
-			label = "Reveal on mouse interaction",
-			tooltip = "Allow #FRAME to be moved above other frames within the same #STRATA when being interacted with.",
-		},
-		level = {
-			label = "Frame Level",
-			tooltip = "The exact position of #FRAME above and under other frames within the same #STRATA stack.",
-		},
-	},
-	font = {
-		title = "Text",
-		path = {
-			label = "Font",
-			tooltip = "Select the font.",
-			default = {
-				label = "Localized Default",
-				tooltip = "This is a localized default font used by Blizzard.",
-			},
-			base = "This is a base game font.",
-			custom = "This is a custom font.",
-			otf = "OpenType Font license.",
-			file = "File path: #PATH",
-			replace = "The Custom option offers full customization by letting you use any font by replacing the #FILE_CUSTOM placeholder font file with any other TrueType Font file found in\n#FONTS_DIRECTORY\nwhile keeping its original #FILE_CUSTOM file name.",
-			reminder = "You may need to fully restart the game client after replacing the font file to apply the change.",
-		},
-		size = {
-			label = "Size",
-			tooltip = "Set the font size.",
-		},
-		alignment = {
-			label = "Alignment",
-			tooltip = "Select the horizontal text alignment.",
-		},
-		color = {
-			label = "#COLOR_TYPE Color",
-			tooltip = "Set the #COLOR_TYPE text color.",
-		},
-	},
 	date = "#MONTH/#DAY/#YEAR",
+
 	override = "Override",
 	example = "Example",
+
+	chat_welcome_thanks = "Thank you for using #ADDON!",
+	chat_welcome_hint = "Type #KEYWORD to see the chat command list.",
+	chat_welcome_keywords = "#KEYWORD or #KEYWORD_ALTERNATE",
+	chat_help_list = "#ADDON chat command list:",
+
+	popupInput_title = "Specify the text",
+	popupInput_tooltip = "Press " .. KEY_ENTER .. " to accept the specified text or " .. KEY_ESCAPE .. " to dismiss it.",
+
+	reload_title = "Pending Changes",
+	reload_description = "Reload the interface to apply the pending changes.",
+	reload_accept_label = "Reload Now",
+	reload_accept_tooltip = "You may choose to reload the interface now to apply the pending changes.",
+	reload_cancel_label = "Later",
+	reload_cancel_tooltip = "Reload the interface later with the /reload chat command or by logging out.",
+
+	multiSelector_locked = "Locked",
+	multiSelector_minLimit = "At least #MIN options must be selected.",
+	multiSelector_maxLimit = "Only #MAX options can be selected at once.",
+
+	dropdown_selected = "This is the currently selected option.",
+	dropdown_none = "No option has been selected.",
+	dropdown_open = "Click to view the list of options.",
+	dropdown_previous_label = "Previous option",
+	dropdown_previous_tooltip = "Select the previous option.",
+	dropdown_next_label = "Next option",
+	dropdown_next_tooltip = "Select the next option.",
+	dropdown_clear = "Clear selection",
+
+	copyBox_tooltip = "Copy the text by pressing:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
+
+	slider_value_label = "Specify the value",
+	slider_value_tooltip = "Enter any value within range.",
+	slider_decrease_label = "Decrease",
+	slider_decrease_tooltip = {
+		"Subtract #VALUE from the value.",
+		"Hold ALT to subtract #VALUE instead.",
+	},
+	slider_increase_label = "Increase",
+	slider_increase_tooltip = {
+		"Add #VALUE to the value.",
+		"Hold ALT to add #VALUE instead.",
+	},
+
+	color_picker_label = "Pick a color",
+	color_picker_tooltip = "Open the color picker to customize the color#ALPHA.",
+	color_picker_alpha = " and change the opacity",
+	color_hex_label = "Add via HEX color code",
+	color_hex_tooltip = "You may change the color via HEX code instead of using the color picker.",
+
+	settings_save = "Changes will be finalized on close.",
+	settings_cancel_label = "Revert Changes",
+	settings_cancel_tooltip = "Dismiss all changes made on this page, and load the saved values.",
+	settings_defaults_label = "Restore Defaults",
+	settings_defaults_tooltip = "Restore all settings on this page (or the whole category) to default values.",
+	settings_warning = "Are you sure you want to reset the settings on the #PAGE page or all settings in the whole #CATEGORY category to defaults?",
+	settings_warningSingle = "Are you sure you want to reset the settings on the #PAGE page to defaults?",
+
+	value_copy = "Copy Value",
+	value_paste = "Paste Value",
+	value_revert = "Revert Changes",
+	value_restore = "Restore Default",
+	value_note = "Right-click to copy or revert.",
+
+	points_left = "Left",
+	points_right = "Right",
+	points_center = "Center",
+	points_top_left = "Top Left",
+	points_top_right = "Top Right",
+	points_top_center = "Top Center",
+	points_bottom_left = "Bottom Left",
+	points_bottom_right = "Bottom Right",
+	points_bottom_center = "Bottom Center",
+
+	strata_lowest = "Low Background",
+	strata_lower = "Middle Background",
+	strata_low = "High Background",
+	strata_lowMid = "Low Middle",
+	strata_highMid = "High Middle",
+	strata_high = "Low Foreground",
+	strata_higher = "Middle Foreground",
+	strata_highest = "High Foreground",
+
+	about_title = "About",
+	about_description = "Thanks for using #ADDON! Copy the links to see how to share feedback, get help & support development.",
+	about_version = "Version",
+	about_date = "Date",
+	about_author = "Author",
+	about_license = "License",
+	about_curseForge = "CurseForge Page",
+	about_wago = "Wago Page",
+	about_repository = "GitHub Repository",
+	about_issues = "Issues & Feedback",
+	about_changelog_label = "Update Notes",
+	about_changelog_tooltip = "Notes of all the changes, updates & fixes introduced with the latest version release: #VERSION.",
+	about_fullChangelog_label = "#ADDON Changelog",
+	about_fullChangelog_tooltip = "The complete list of update notes of all addon version releases.",
+	about_fullChangelog_open_label = "Changelog",
+	about_fullChangelog_open_tooltip = "Read the full list of update notes of all addon version releases.",
+
+	sponsors_title = "Sponsors",
+	sponsors_description = "Your continued support is greatly appreciated! Thank you!",
+
+	profilesPage_title = "Profiles & Backup",
+	profilesPage_description = "Configure #ADDON settings further by managing profiles and backups via importing, exporting options.",
+
+	profiles_title = "Profiles",
+	profiles_description = "Create, edit and apply unique options profiles specific to each of your characters.",
+	profiles_select_label = "Select a Profile",
+	profiles_select_tooltip = "Choose the options data storage profile to be used for your current character.\n\nThe data in the active profile will be overwritten automatically when settings are modified and saved!",
+	profiles_select_profile = "Profile",
+	profiles_select_main = "Main",
+	profiles_new_label = "New Profile",
+	profiles_new_tooltip = "Create a new default profile.",
+	profiles_duplicate_label = "Duplicate",
+	profiles_duplicate_tooltip = "Create a new profile, copying the data from the currently active profile.",
+	profiles_rename_label = "Rename",
+	profiles_rename_tooltip = "Rename the currently active profile.",
+	profiles_rename_description = "Rename #PROFILE to:",
+	profiles_delete_tooltip = "Delete the currently active profile.",
+	profiles_delete_warning = "Are you sure you want to remove the currently active #PROFILE #ADDON settings profile and permanently delete all settings data stored in it?",
+	profiles_reset_warning = "Are you sure you want to override the currently active #PROFILE #ADDON settings profile with default values?",
+
+	backup_title = "Backup",
+	backup_description = "Import or export data in the currently active profile to save, share or move settings, or edit specific values manually.",
+	backup_box_label = "Import or Export Current Profile",
+	backup_box_tooltip = {
+		"The backup string in this box contains the currently active addon profile data.",
+		"Copy the text to save, share or load data for another account from it.",
+		"To load data from a string you have, override the text inside this box, then press " .. KEY_ENTER .. " or click the #LOAD button.",
+		"Note: If you're using custom font or texture files, those files cannot carry over with this string. They will need to be saved separately, and pasted into the addon folder to become usable.",
+		"Only load strings you have verified yourself or trust the source of!",
+	},
+	backup_allProfiles_label = "Import or Export All Profiles",
+	backup_allProfiles_tooltipLine = "The backup string in this box contains the list of all addon profiles and the data stored in each specific one as well as the name of currently active profile.",
+	backup_allProfiles_open_label = "All Profiles",
+	backup_allProfiles_open_tooltip = "Access the full profile list and backup or modify the data stored in each one.",
+	backup_compact_label = "Compact",
+	backup_compact_tooltip = "Toggle between a compact, and a more readable & editable view.",
+	backup_load_label = "Load",
+	backup_load_tooltip = "Check the current string, and attempt to load the data from it.",
+	backup_reset_tooltip = "Dismiss all changes made to the string, and reset it to contain the currently stored data.",
+	backup_import = "Load the string",
+	backup_warning = "Are you sure you want to attempt to load the currently inserted string?\n\nAll unsaved changes will be dismissed.\n\nIf you've copied it from an online source or someone else has sent it to you, only load it after you've checked the code inside and you know what you are doing.\n\nIf don't trust the source, you may want to cancel to prevent any unwanted actions.",
+	backup_error = "The provided backup string could not be validated and no data was loaded. It might be missing some characters or errors may have been introduced if it was edited.",
+
+	position_title = "Position",
+	position_description_static = "Fine-tune the position of #FRAME on the screen via the options provided here.",
+	position_description_movable = "Drag & drop #FRAME while holding SHIFT to position it anywhere on the screen, fine-tune it here.",
+	position_relativePoint_label = "Linking Screen Point",
+	position_relativePoint_tooltip = "Attach the chosen anchor point of #FRAME to the linking point selected here.",
+	-- position_relativeTo_label = "Link to Frame",
+	-- position_relativeTo_tooltip = "Type the name of another UI element, a frame to link the position of #FRAME to.\n\nFind out the names of frames by toggling the debug UI via the /framestack chat command.",
+	position_anchor_label = "Linking Anchor Point",
+	position_anchor_tooltip = "Select which point #FRAME should be anchored from when linking to the chosen screen point.",
+	position_keepInPlace_label = "Keep in place",
+	position_keepInPlace_tooltip = "Don't move #FRAME when changing the #ANCHOR, update the offset values instead.",
+	position_offsetX_label = "Horizontal Offset",
+	position_offsetX_tooltip = "Set the amount of horizontal offset (X axis) of #FRAME from the selected #ANCHOR.",
+	position_offsetY_label = "Vertical Offset",
+	position_offsetY_tooltip = "Set the amount of vertical offset (Y axis) of #FRAME from the selected #ANCHOR.",
+	position_keepInBounds_label = "Keep in screen bounds",
+	position_keepInBounds_tooltip = "Make sure #FRAME cannot be moved out of screen bounds.",
+
+	presets_apply_label = "Apply a Preset",
+	presets_apply_tooltip = "Change the position of #FRAME by choosing and applying one of these presets.",
+	presets_apply_list = { "Under Minimap", },
+	presets_apply_select = "Select a preset…",
+	presets_save_label = "Update #CUSTOM Preset",
+	presets_save_tooltip = "Save the current position and visibility of #FRAME to the #CUSTOM preset.",
+	presets_save_warning = "Are you sure you want to override the #CUSTOM preset with the current values?",
+	presets_reset_label = "Reset #CUSTOM Preset",
+	presets_reset_tooltip = "Override currently saved #CUSTOM preset data with the default values, then apply it.",
+	presets_reset_warning = "Are you sure you want to override the #CUSTOM preset with the default values?",
+
+	layer_strata_label = "Screen Layer",
+	layer_strata_tooltip = "Raise or lower #FRAME to be in front of or behind other UI elements.",
+	layer_keepOnTop_label = "Reveal on mouse interaction",
+	layer_keepOnTop_tooltip = "Allow #FRAME to be moved above other frames within the same #STRATA when being interacted with.",
+	layer_level_label = "Frame Level",
+	layer_level_tooltip = "The exact position of #FRAME above and under other frames within the same #STRATA stack.",
+
+	font_title = "Text",
+	font_path_label = "Font",
+	font_path_tooltip = "Select the font.",
+	font_path_default_label = "Localized Default",
+	font_path_default_tooltip = "This is a localized default font used by Blizzard.",
+	font_path_base = "This is a base game font.",
+	font_path_custom = "This is a custom font.",
+	font_path_otf = "OpenType Font license.",
+	font_path_file = "File path: #PATH",
+	font_path_replace = "The Custom option offers full customization by letting you use any font by replacing the #FILE_CUSTOM placeholder font file with any other TrueType Font file found in\n#FONTS_DIRECTORY\nwhile keeping its original #FILE_CUSTOM file name.",
+	font_path_reminder = "You may need to fully restart the game client after replacing the font file to apply the change.",
+	font_size_label = "Size",
+	font_size_tooltip = "Set the font size.",
+	font_alignment_label = "Alignment",
+	font_alignment_tooltip = "Select the horizontal text alignment.",
+	font_color_label = "#COLOR_TYPE Color",
+	font_color_tooltip = "Set the #COLOR_TYPE text color.",
 }

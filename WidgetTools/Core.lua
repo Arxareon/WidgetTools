@@ -1180,8 +1180,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							wt.CreateButton({
 								parentFrame = toolboxPanel,
 								name = "ChangelogButton",
-								title = wt.strings.about.fullChangelog.open.label,
-								tooltip = { lines = { { text = wt.strings.about.fullChangelog.open.tooltip, }, } },
+								title = wt.strings.about_fullChangelog_open_label,
+								tooltip = { lines = { { text = wt.strings.about_fullChangelog_open_tooltip, }, } },
 								position = {
 									anchor = "TOPRIGHT",
 									offset = { x = -6, y = 30 }
@@ -1191,7 +1191,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									parentFrame = canvas:GetParent():GetParent(),
 									name = name .. "FullChangelog",
 									append = false,
-									title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
+									title = wt.strings.about_fullChangelog_label:gsub("#ADDON", title),
 									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 									keepInBounds = true,
 									width = 685,
@@ -1207,9 +1207,9 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										wt.CreateMultilineEditbox({
 											parentFrame = windowPanel,
 											name = "Box",
-											title = wt.strings.about.fullChangelog.label:gsub("#ADDON", title),
+											title = wt.strings.about_fullChangelog_label:gsub("#ADDON", title),
 											label = false,
-											tooltip = { lines = { { text = wt.strings.about.fullChangelog.tooltip, }, } },
+											tooltip = { lines = { { text = wt.strings.about_fullChangelog_tooltip, }, } },
 											arrange = {},
 											width = windowPanel:GetWidth() - 32,
 											height = windowPanel:GetHeight() - 58,
@@ -1349,7 +1349,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "VersionTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about.version,
+												text = wt.strings.about_version,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1363,7 +1363,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 													offset = { x = 5 }
 												},
 												width = 140,
-												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about.date .. ": " .. cr(wt.strings.date:gsub(
+												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about_date .. ": " .. cr(wt.strings.date:gsub(
 													"#DAY", data.day
 												):gsub(
 													"#MONTH", data.month
@@ -1418,7 +1418,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "AuthorTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about.author,
+												text = wt.strings.about_author,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1449,7 +1449,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "LicenseTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about.license,
+												text = wt.strings.about_license,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1520,7 +1520,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			load = function(menu)
 				wt.CreateMenuTextline(menu, { text = rs.title, })
 				wt.CreateMenuButton(menu, {
-					title = wt.strings.about.title,
+					title = wt.strings.about_title,
 					action = function() aboutPage:Open() end
 				})
 				wt.CreateMenuButton(menu, {

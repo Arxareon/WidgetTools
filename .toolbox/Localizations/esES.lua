@@ -1,7 +1,4 @@
---| Toolbox
-
----@type toolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
@@ -39,323 +36,207 @@ wt.changelog = {
 ---Spanish (Spain)
 ---@class toolboxStrings_esES
 wt.strings = {
-	chat = {
-		welcome = {
-			thanks = "¡Gracias por usar #ADDON!",
-			hint = "Escribe #KEYWORD para ver la lista de comandos de chat.",
-			keywords = "#KEYWORD o #KEYWORD_ALTERNATE",
-		},
-		help = {
-			list = "Lista de comandos de chat de #ADDON:",
-		},
-	},
-	popupInput = {
-		title = "Especifica el texto",
-		tooltip = "Pulsa " .. KEY_ENTER .. " para aceptar el texto especificado o " .. KEY_ESCAPE .. " para descartarlo."
-	},
-	reload = {
-		title = "Cambios Pendientes",
-		description = "Recarga la interfaz para aplicar los cambios pendientes.",
-		accept = {
-			label = "Recargar Ahora",
-			tooltip = "Puedes elegir recargar la interfaz ahora para aplicar los cambios pendientes.",
-		},
-		cancel = {
-			label = "Más tarde",
-			tooltip = "Recarga la interfaz más tarde con el comando /reload o cerrando sesión.",
-		},
-	},
-	multiSelector = {
-		locked = "Bloqueado",
-		minLimit = "Debes seleccionar al menos #MIN opciones.",
-		maxLimit = "Solo se pueden seleccionar #MAX opciones a la vez.",
-	},
-	dropdown = {
-		selected = "Esta es la opción seleccionada actualmente.",
-		none = "No se ha seleccionado ninguna opción.",
-		open = "Haz clic para ver la lista de opciones.",
-		previous = {
-			label = "Opción anterior",
-			tooltip = "Seleccionar la opción anterior.",
-		},
-		next = {
-			label = "Siguiente opción",
-			tooltip = "Seleccionar la siguiente opción.",
-		},
-		clear = "Borrar selección",
-	},
-	copyBox = "Copia el texto pulsando:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
-	slider = {
-		value = {
-			label = "Especifica el valor",
-			tooltip = "Introduce cualquier valor dentro del rango.",
-		},
-		decrease = {
-			label = "Disminuir",
-			tooltip = {
-				"Resta #VALUE al valor.",
-				"Mantén ALT para restar #VALUE en su lugar.",
-			},
-		},
-		increase = {
-			label = "Aumentar",
-			tooltip = {
-				"Suma #VALUE al valor.",
-				"Mantén ALT para sumar #VALUE en su lugar.",
-			},
-		},
-	},
-	color = {
-		picker = {
-			label = "Elige un color",
-			tooltip = "Abre el selector de color para personalizar el color#ALPHA.",
-			alpha = " y cambiar la opacidad",
-		},
-		hex = {
-			label = "Añadir por código HEX",
-			tooltip = "Puedes cambiar el color usando un código HEX en vez del selector de color.",
-		}
-	},
-	settings = {
-		save = "Los cambios se aplicarán al cerrar.",
-		cancel = {
-			label = "Revertir Cambios",
-			tooltip = "Descarta todos los cambios realizados en esta página y carga los valores guardados.",
-		},
-		defaults = {
-			label = "Restaurar Valores Predeterminados",
-			tooltip = "Restaura todos los ajustes de esta página (o de toda la categoría) a los valores predeterminados.",
-		},
-		warning = "¿Seguro que quieres restablecer los ajustes de la página #PAGE o todos los ajustes de la categoría #CATEGORY a los valores predeterminados?",
-		warningSingle = "¿Seguro que quieres restablecer los ajustes de la página #PAGE a los valores predeterminados?",
-	},
-	value = {
-		copy = "Copiar valor",
-		paste = "Pegar valor",
-		revert = "Revertir Cambios",
-		restore = "Restaurar Predeterminado",
-		note = "Haz clic derecho para copiar o revertir.",
-	},
-	points = {
-		left = "Izquierda",
-		right = "Derecha",
-		center = "Centro",
-		top = {
-			left = "Arriba Izquierda",
-			right = "Arriba Derecha",
-			center = "Arriba Centro",
-		},
-		bottom = {
-			left = "Abajo Izquierda",
-			right = "Abajo Derecha",
-			center = "Abajo Centro",
-		},
-	},
-	strata = {
-		lowest = "Fondo Bajo",
-		lower = "Fondo Medio",
-		low = "Fondo Alto",
-		lowMid = "Medio Bajo",
-		highMid = "Medio Alto",
-		high = "Primer Plano Bajo",
-		higher = "Primer Plano Medio",
-		highest = "Primer Plano Alto",
-	},
-	about = {
-		title = "Acerca de",
-		description = "¡Gracias por usar #ADDON! Copia los enlaces para saber cómo enviar comentarios, obtener ayuda y apoyar el desarrollo.",
-		version = "Versión",
-		date = "Fecha",
-		author = "Autor",
-		license = "Licencia",
-		curseForge = "Página de CurseForge",
-		wago = "Página de Wago",
-		repository = "Repositorio GitHub",
-		issues = "Incidencias y Comentarios",
-		changelog = {
-			label = "Notas de Actualización",
-			tooltip = "Notas de todos los cambios, actualizaciones y correcciones introducidos en la última versión: #VERSION.",
-		},
-		fullChangelog = {
-			label = "Historial de #ADDON",
-			tooltip = "La lista completa de notas de actualización de todas las versiones del addon.",
-			open = {
-				label = "Historial",
-				tooltip = "Lee la lista completa de notas de actualización de todas las versiones del addon.",
-			},
-		},
-	},
-	sponsors = {
-		title = "Patrocinadores",
-		description = "¡Tu apoyo continuo es muy apreciado! ¡Gracias!",
-	},
-	profilesPage = {
-		title = "Perfiles & Copias de seguridad",
-		description = "Configura más opciones de #ADDON gestionando perfiles y copias de seguridad mediante importación y exportación.",
-	},
-	profiles = {
-		title = "Perfiles",
-		description = "Crea, edita y aplica perfiles de opciones únicos para cada uno de tus personajes.",
-		select = {
-			label = "Seleccionar un Perfil",
-			tooltip = "Elige el perfil de almacenamiento de opciones que se usará para tu personaje actual.\n\n¡Los datos del perfil activo se sobrescribirán automáticamente al modificar y guardar los ajustes!",
-			profile = "Perfil",
-			main = "Principal",
-		},
-		new = {
-			label = "Nuevo Perfil",
-			tooltip = "Crear un nuevo perfil predeterminado.",
-		},
-		duplicate = {
-			label = "Duplicar",
-			tooltip = "Crear un nuevo perfil copiando los datos del perfil activo.",
-		},
-		rename = {
-			label = "Renombrar",
-			tooltip = "Renombrar el perfil activo.",
-			description = "Renombrar #PROFILE a:",
-		},
-		delete = {
-			tooltip = "Eliminar el perfil activo.",
-			warning = "¿Seguro que quieres eliminar el perfil de ajustes #PROFILE #ADDON activo y borrar permanentemente todos los datos almacenados en él?"
-		},
-		reset = {
-			warning = "¿Seguro que quieres sobrescribir el perfil de ajustes #PROFILE #ADDON activo con los valores predeterminados?",
-		},
-	},
-	backup = {
-		title = "Copia de Seguridad",
-		description = "Importa o exporta los datos del perfil activo para guardar, compartir o mover ajustes, o editar valores manualmente.",
-		box = {
-			label = "Importar o Exportar Perfil Actual",
-			tooltip = {
-				"La cadena de copia de seguridad en esta caja contiene los datos del perfil activo del addon.",
-				"Copia el texto para guardar, compartir o cargar datos para otra cuenta.",
-				"Para cargar datos desde una cadena, reemplaza el texto en esta caja y pulsa " .. KEY_ENTER .. " o haz clic en el botón #LOAD.",
-				"Nota: Si usas archivos de fuentes o texturas personalizados, esos archivos no se transferirán con esta cadena. Deberás guardarlos aparte y pegarlos en la carpeta del addon para poder usarlos.",
-				"¡Solo carga cadenas que hayas verificado tú mismo o en las que confíes en la fuente!",
-			},
-		},
-		allProfiles = {
-			label = "Importar o Exportar Todos los Perfiles",
-			tooltipLine = "La cadena de copia de seguridad en esta caja contiene la lista de todos los perfiles del addon y los datos almacenados en cada uno, así como el nombre del perfil activo.",
-			open = {
-				label = "Todos los Perfiles",
-				tooltip = "Accede a la lista completa de perfiles y haz copia de seguridad o modifica los datos almacenados en cada uno.",
-			},
-		},
-		compact = {
-			label = "Compacto",
-			tooltip = "Alterna entre una vista compacta y una más legible/editable.",
-		},
-		load = {
-			label = "Cargar",
-			tooltip = "Comprueba la cadena actual e intenta cargar los datos desde ella.",
-		},
-		reset = {
-			tooltip = "Descarta todos los cambios realizados en la cadena y restáurala para que contenga los datos actualmente guardados.",
-		},
-		import = "Cargar la cadena",
-		warning = "¿Seguro que quieres intentar cargar la cadena insertada?\n\nTodos los cambios no guardados se descartarán.\n\nSi la has copiado de una fuente online o alguien te la ha enviado, solo cárgala después de revisar el código y saber lo que haces.\n\nSi no confías en la fuente, cancela para evitar acciones no deseadas.",
-		error = "La cadena de copia de seguridad proporcionada no se pudo validar y no se cargaron datos. Puede que falten caracteres o se hayan introducido errores al editarla.",
-	},
-	position = {
-		title = "Posición",
-		description = {
-			static = "Ajusta la posición de #FRAME en la pantalla con las opciones proporcionadas aquí.",
-			movable = "Arrastra y suelta #FRAME manteniendo SHIFT para colocarlo en cualquier parte de la pantalla, ajústalo aquí.",
-		},
-		relativePoint = {
-			label = "Punto de Anclaje en Pantalla",
-			tooltip = "Vincula el punto de anclaje elegido de #FRAME al punto seleccionado aquí.",
-		},
-		-- relativeTo = {
-		-- 	label = "Vincular a Marco",
-		-- 	tooltip = "Escribe el nombre de otro elemento de la interfaz, un marco al que vincular la posición de #FRAME.\n\nDescubre los nombres de los marcos activando la interfaz de depuración con el comando /framestack.",
-		-- },
-		anchor = {
-			label = "Punto de Anclaje",
-			tooltip = "Selecciona desde qué punto debe anclarse #FRAME al vincularlo al punto de pantalla elegido.",
-		},
-		keepInPlace = {
-			label = "Mantener en su sitio",
-			tooltip = "No muevas #FRAME al cambiar el #ANCHOR, actualiza los valores de desplazamiento en su lugar.",
-		},
-		offsetX= {
-			label = "Desplazamiento Horizontal",
-			tooltip = "Establece la cantidad de desplazamiento horizontal (eje X) de #FRAME desde el #ANCHOR seleccionado.",
-		},
-		offsetY = {
-			label = "Desplazamiento Vertical",
-			tooltip = "Establece la cantidad de desplazamiento vertical (eje Y) de #FRAME desde el #ANCHOR seleccionado.",
-		},
-		keepInBounds = {
-			label = "Mantener en los límites de la pantalla",
-			tooltip = "Asegúrate de que #FRAME no pueda moverse fuera de los límites de la pantalla.",
-		},
-	},
-	presets = {
-		apply = {
-			label = "Aplicar un Preajuste",
-			tooltip = "Cambia la posición de #FRAME eligiendo y aplicando uno de estos preajustes.",
-			list = { "Debajo del Minimapa", },
-			select = "Selecciona un preajuste…",
-		},
-		save = {
-			label = "Actualizar Preajuste #CUSTOM",
-			tooltip = "Guarda la posición y visibilidad actual de #FRAME en el preajuste #CUSTOM.",
-			warning = "¿Seguro que quieres sobrescribir el preajuste #CUSTOM con los valores actuales?",
-		},
-		reset = {
-			label = "Restablecer Preajuste #CUSTOM",
-			tooltip = "Sobrescribe los datos guardados del preajuste #CUSTOM con los valores predeterminados y aplícalo.",
-			warning = "¿Seguro que quieres sobrescribir el preajuste #CUSTOM con los valores predeterminados?",
-		},
-	},
-	layer = {
-		strata = {
-			label = "Capa de Pantalla",
-			tooltip = "Sube o baja #FRAME para que esté delante o detrás de otros elementos de la interfaz.",
-		},
-		keepOnTop = {
-			label = "Mostrar al interactuar con el ratón",
-			tooltip = "Permite que #FRAME se mueva por encima de otros marcos en la misma #STRATA al interactuar con él.",
-		},
-		level = {
-			label = "Nivel del Marco",
-			tooltip = "La posición exacta de #FRAME por encima o por debajo de otros marcos en la misma pila #STRATA.",
-		},
-	},
-	font = {
-		title = "Texto",
-		path = {
-			label = "Fuente",
-			tooltip = "Selecciona la fuente.",
-			default = {
-				label = "Predeterminada localizada",
-				tooltip = "Esta es una fuente predeterminada localizada utilizada por Blizzard.",
-			},
-			base = "Esta es una fuente del juego base.",
-			custom = "Esta es una fuente personalizada.",
-			otf = "Licencia de fuente OpenType.",
-			file = "Ruta del archivo: #PATH",
-			replace = "La opción Personalizada ofrece una personalización completa, permitiéndote usar cualquier fuente sustituyendo el archivo #FILE_CUSTOM por cualquier otro archivo TrueType encontrado en\n#FONTS_DIRECTORY\nmanteniendo el nombre original del archivo #FILE_CUSTOM.",
-			reminder = "Puede que necesites reiniciar completamente el cliente del juego después de reemplazar el archivo de fuente para aplicar el cambio.",
-		},
-		size = {
-			label = "Tamaño",
-			tooltip = "Establece el tamaño de la fuente.",
-		},
-		alignment = {
-			label = "Alineación",
-			tooltip = "Selecciona la alineación horizontal del texto.",
-		},
-		color = {
-			label = "Color de #COLOR_TYPE",
-			tooltip = "Establece el color del texto #COLOR_TYPE.",
-		},
-	},
 	date = "#DAY/#MONTH/#YEAR",
+
 	override = "Sobrescribir",
 	example = "Ejemplo",
+
+	chat_welcome_thanks = "¡Gracias por usar #ADDON!",
+	chat_welcome_hint = "Escribe #KEYWORD para ver la lista de comandos de chat.",
+	chat_welcome_keywords = "#KEYWORD o #KEYWORD_ALTERNATE",
+	chat_help_list = "Lista de comandos de chat de #ADDON:",
+
+	popupInput_title = "Especifica el texto",
+	popupInput_tooltip = "Pulsa " .. KEY_ENTER .. " para aceptar el texto especificado o " .. KEY_ESCAPE .. " para descartarlo.",
+
+	reload_title = "Cambios Pendientes",
+	reload_description = "Recarga la interfaz para aplicar los cambios pendientes.",
+	reload_accept_label = "Recargar Ahora",
+	reload_accept_tooltip = "Puedes elegir recargar la interfaz ahora para aplicar los cambios pendientes.",
+	reload_cancel_label = "Más tarde",
+	reload_cancel_tooltip = "Recarga la interfaz más tarde con el comando /reload o cerrando sesión.",
+
+	multiSelector_locked = "Bloqueado",
+	multiSelector_minLimit = "Debes seleccionar al menos #MIN opciones.",
+	multiSelector_maxLimit = "Solo se pueden seleccionar #MAX opciones a la vez.",
+
+	dropdown_selected = "Esta es la opción seleccionada actualmente.",
+	dropdown_none = "No se ha seleccionado ninguna opción.",
+	dropdown_open = "Haz clic para ver la lista de opciones.",
+	dropdown_previous_label = "Opción anterior",
+	dropdown_previous_tooltip = "Seleccionar la opción anterior.",
+	dropdown_next_label = "Siguiente opción",
+	dropdown_next_tooltip = "Seleccionar la siguiente opción.",
+	dropdown_clear = "Borrar selección",
+
+	copyBox_tooltip = "Copia el texto pulsando:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
+
+	slider_value_label = "Especifica el valor",
+	slider_value_tooltip = "Introduce cualquier valor dentro del rango.",
+	slider_decrease_label = "Disminuir",
+	slider_decrease_tooltip = {
+		"Resta #VALUE al valor.",
+		"Mantén ALT para restar #VALUE en su lugar.",
+	},
+	slider_increase_label = "Aumentar",
+	slider_increase_tooltip = {
+		"Suma #VALUE al valor.",
+		"Mantén ALT para sumar #VALUE en su lugar.",
+	},
+
+	color_picker_label = "Elige un color",
+	color_picker_tooltip = "Abre el selector de color para personalizar el color#ALPHA.",
+	color_picker_alpha = " y cambiar la opacidad",
+	color_hex_label = "Añadir por código HEX",
+	color_hex_tooltip = "Puedes cambiar el color usando un código HEX en vez del selector de color.",
+
+	settings_save = "Los cambios se aplicarán al cerrar.",
+	settings_cancel_label = "Revertir Cambios",
+	settings_cancel_tooltip = "Descarta todos los cambios realizados en esta página y carga los valores guardados.",
+	settings_defaults_label = "Restaurar Valores Predeterminados",
+	settings_defaults_tooltip = "Restaura todos los ajustes de esta página (o de toda la categoría) a los valores predeterminados.",
+	settings_warning = "¿Seguro que quieres restablecer los ajustes de la página #PAGE o todos los ajustes de la categoría #CATEGORY a los valores predeterminados?",
+	settings_warningSingle = "¿Seguro que quieres restablecer los ajustes de la página #PAGE a los valores predeterminados?",
+
+	value_copy = "Copiar valor",
+	value_paste = "Pegar valor",
+	value_revert = "Revertir Cambios",
+	value_restore = "Restaurar Predeterminado",
+	value_note = "Haz clic derecho para copiar o revertir.",
+
+	points_left = "Izquierda",
+	points_right = "Derecha",
+	points_center = "Centro",
+	points_top_left = "Arriba a la izquierda",
+	points_top_right = "Arriba a la derecha",
+	points_top_center = "Arriba en el centro",
+	points_bottom_left = "Abajo a la izquierda",
+	points_bottom_right = "Abajo a la derecha",
+	points_bottom_center = "Abajo en el centro",
+
+	strata_lowest = "Fondo Bajo",
+	strata_lower = "Fondo Medio",
+	strata_low = "Fondo Alto",
+	strata_lowMid = "Medio Bajo",
+	strata_highMid = "Medio Alto",
+	strata_high = "Primer Plano Bajo",
+	strata_higher = "Primer Plano Medio",
+	strata_highest = "Primer Plano Alto",
+
+	about_title = "Acerca de",
+	about_description = "¡Gracias por usar #ADDON! Copia los enlaces para saber cómo enviar comentarios, obtener ayuda y apoyar el desarrollo.",
+	about_version = "Versión",
+	about_date = "Fecha",
+	about_author = "Autor",
+	about_license = "Licencia",
+	about_curseForge = "Página de CurseForge",
+	about_wago = "Página de Wago",
+	about_repository = "Repositorio GitHub",
+	about_issues = "Incidencias y Comentarios",
+	about_changelog_label = "Notas de Actualización",
+	about_changelog_tooltip = "Notas de todos los cambios, actualizaciones y correcciones introducidos en la última versión: #VERSION.",
+	about_fullChangelog_label = "Historial de #ADDON",
+	about_fullChangelog_tooltip = "La lista completa de notas de actualización de todas las versiones del addon.",
+	about_fullChangelog_open_label = "Historial",
+	about_fullChangelog_open_tooltip = "Lee la lista completa de notas de actualización de todas las versiones del addon.",
+
+	sponsors_title = "Patrocinadores",
+	sponsors_description = "¡Tu apoyo continuo es muy apreciado! ¡Gracias!",
+
+	profilesPage_title = "Perfiles & Copias de seguridad",
+	profilesPage_description = "Configura más opciones de #ADDON gestionando perfiles y copias de seguridad mediante importación y exportación.",
+
+	profiles_title = "Perfiles",
+	profiles_description = "Crea, edita y aplica perfiles de opciones únicos para cada uno de tus personajes.",
+	profiles_select_label = "Seleccionar un Perfil",
+	profiles_select_tooltip = "Elige el perfil de almacenamiento de opciones que se usará para tu personaje actual.\n\n¡Los datos del perfil activo se sobrescribirán automáticamente al modificar y guardar los ajustes!",
+	profiles_select_profile = "Perfil",
+	profiles_select_main = "Principal",
+	profiles_new_label = "Nuevo Perfil",
+	profiles_new_tooltip = "Crear un nuevo perfil predeterminado.",
+	profiles_duplicate_label = "Duplicar",
+	profiles_duplicate_tooltip = "Crear un nuevo perfil copiando los datos del perfil activo.",
+	profiles_rename_label = "Renombrar",
+	profiles_rename_tooltip = "Renombrar el perfil activo.",
+	profiles_rename_description = "Renombrar #PROFILE a:",
+	profiles_delete_tooltip = "Eliminar el perfil activo.",
+	profiles_delete_warning = "¿Seguro que quieres eliminar el perfil de ajustes #PROFILE #ADDON activo y borrar permanentemente todos los datos almacenados en él?",
+	profiles_reset_warning = "¿Seguro que quieres sobrescribir el perfil de ajustes #PROFILE #ADDON activo con los valores predeterminados?",
+
+	backup_title = "Copia de Seguridad",
+	backup_description = "Importa o exporta los datos del perfil activo para guardar, compartir o mover ajustes, o editar valores manualmente.",
+	backup_box_label = "Importar o Exportar Perfil Actual",
+	backup_box_tooltip = {
+		"La cadena de copia de seguridad de este campo contiene los datos del perfil activo del addon.",
+		"Copia el texto para guardar, compartir o cargar datos para otra cuenta.",
+		"Para cargar datos desde una cadena, reemplaza el texto de este campo y pulsa " .. KEY_ENTER .. " o haz clic en el botón #LOAD.",
+		"Nota: Si usas archivos de fuentes o texturas personalizados, esos archivos no se transferirán con esta cadena. Deberás guardarlos aparte y pegarlos en la carpeta del addon para poder usarlos.",
+		"¡Carga solo cadenas que hayas verificado tú mismo o que procedan de una fuente de confianza!",
+	},
+	backup_allProfiles_label = "Importar o Exportar Todos los Perfiles",
+	backup_allProfiles_tooltipLine = "La cadena de copia de seguridad de este campo contiene la lista de todos los perfiles del addon y los datos almacenados en cada uno, así como el nombre del perfil activo.",
+	backup_allProfiles_open_label = "Todos los Perfiles",
+	backup_allProfiles_open_tooltip = "Accede a la lista completa de perfiles y haz copia de seguridad o modifica los datos almacenados en cada uno.",
+	backup_compact_label = "Compacto",
+	backup_compact_tooltip = "Alterna entre una vista compacta y una más legible/editable.",
+	backup_load_label = "Cargar",
+	backup_load_tooltip = "Comprueba la cadena actual e intenta cargar los datos desde ella.",
+	backup_reset_tooltip = "Descarta todos los cambios realizados en la cadena y restáurala para que contenga los datos actualmente guardados.",
+	backup_import = "Cargar la cadena",
+	backup_warning = "¿Seguro que quieres intentar cargar la cadena insertada?\n\nTodos los cambios no guardados se descartarán.\n\nSi la has copiado de una fuente online o alguien te la ha enviado, solo cárgala después de revisar el código y saber lo que haces.\n\nSi no confías en la fuente, cancela para evitar acciones no deseadas.",
+	backup_error = "La cadena de copia de seguridad proporcionada no se pudo validar y no se cargaron datos. Puede que falten caracteres o se hayan introducido errores al editarla.",
+
+	position_title = "Posición",
+	position_description_static = "Ajusta la posición de #FRAME en la pantalla con las opciones proporcionadas aquí.",
+	position_description_movable = "Arrastra y suelta #FRAME manteniendo SHIFT para colocarlo en cualquier parte de la pantalla, ajústalo aquí.",
+	position_relativePoint_label = "Punto de referencia en pantalla",
+	position_relativePoint_tooltip = "Vincula el punto de anclaje elegido de #FRAME al punto de referencia seleccionado aquí.",
+	-- position_relativeTo_label = "Vincular a Marco",
+	-- position_relativeTo_tooltip = "Escribe el nombre de otro elemento de la interfaz, un marco al que vincular la posición de #FRAME.\n\nDescubre los nombres de los marcos activando la interfaz de depuración con el comando /framestack.",
+	position_anchor_label = "Punto de Anclaje",
+	position_anchor_tooltip = "Selecciona desde qué punto debe anclarse #FRAME al vincularlo al punto de pantalla elegido.",
+	position_keepInPlace_label = "Mantener en su sitio",
+	position_keepInPlace_tooltip = "No muevas #FRAME al cambiar el #ANCHOR, actualiza los valores de desplazamiento en su lugar.",
+	position_offsetX_label = "Desplazamiento Horizontal",
+	position_offsetX_tooltip = "Establece la cantidad de desplazamiento horizontal (eje X) de #FRAME desde el #ANCHOR seleccionado.",
+	position_offsetY_label = "Desplazamiento Vertical",
+	position_offsetY_tooltip = "Establece la cantidad de desplazamiento vertical (eje Y) de #FRAME desde el #ANCHOR seleccionado.",
+	position_keepInBounds_label = "Mantener en los límites de la pantalla",
+	position_keepInBounds_tooltip = "Asegúrate de que #FRAME no pueda moverse fuera de los límites de la pantalla.",
+
+	presets_apply_label = "Aplicar un Preajuste",
+	presets_apply_tooltip = "Cambia la posición de #FRAME eligiendo y aplicando uno de estos preajustes.",
+	presets_apply_list = { "Debajo del Minimapa", },
+	presets_apply_select = "Selecciona un preajuste…",
+	presets_save_label = "Actualizar Preajuste #CUSTOM",
+	presets_save_tooltip = "Guarda la posición y visibilidad actual de #FRAME en el preajuste #CUSTOM.",
+	presets_save_warning = "¿Seguro que quieres sobrescribir el preajuste #CUSTOM con los valores actuales?",
+	presets_reset_label = "Restablecer Preajuste #CUSTOM",
+	presets_reset_tooltip = "Sobrescribe los datos guardados del preajuste #CUSTOM con los valores predeterminados y aplícalo.",
+	presets_reset_warning = "¿Seguro que quieres sobrescribir el preajuste #CUSTOM con los valores predeterminados?",
+
+	layer_strata_label = "Capa de Pantalla",
+	layer_strata_tooltip = "Sube o baja #FRAME para que esté delante o detrás de otros elementos de la interfaz.",
+	layer_keepOnTop_label = "Traer al frente al interactuar con el ratón",
+	layer_keepOnTop_tooltip = "Permite que #FRAME se mueva por encima de otros marcos en la misma #STRATA al interactuar con él.",
+	layer_level_label = "Nivel del Marco",
+	layer_level_tooltip = "La posición exacta de #FRAME por encima o por debajo de otros marcos en la misma pila #STRATA.",
+
+	font_title = "Texto",
+	font_path_label = "Fuente",
+	font_path_tooltip = "Selecciona la fuente.",
+	font_path_default_label = "Predeterminada localizada",
+	font_path_default_tooltip = "Esta es una fuente predeterminada localizada utilizada por Blizzard.",
+	font_path_base = "Esta es una fuente del juego base.",
+	font_path_custom = "Esta es una fuente personalizada.",
+	font_path_otf = "Licencia de fuente OpenType.",
+	font_path_file = "Ruta del archivo: #PATH",
+	font_path_replace = "La opción Personalizada ofrece una personalización completa, permitiéndote usar cualquier fuente sustituyendo el archivo #FILE_CUSTOM por cualquier otro archivo TrueType encontrado en\n#FONTS_DIRECTORY\nmanteniendo el nombre original del archivo #FILE_CUSTOM.",
+	font_path_reminder = "Puede que necesites reiniciar completamente el cliente del juego después de reemplazar el archivo de fuente para aplicar el cambio.",
+	font_size_label = "Tamaño",
+	font_size_tooltip = "Establece el tamaño de la fuente.",
+	font_alignment_label = "Alineación",
+	font_alignment_tooltip = "Selecciona la alineación horizontal del texto.",
+	font_color_label = "Color de #COLOR_TYPE",
+	font_color_tooltip = "Establece el color del texto #COLOR_TYPE.",
 }

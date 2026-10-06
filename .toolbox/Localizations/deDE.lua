@@ -1,7 +1,4 @@
---| Toolbox
-
----@type toolbox
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")]
+local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
@@ -39,323 +36,207 @@ wt.changelog = {
 ---German
 ---@class toolboxStrings_deDE
 wt.strings = {
-	chat = {
-		welcome = {
-			thanks = "Danke, dass du #ADDON verwendest!",
-			hint = "Gib #KEYWORD ein, um die Liste der Chatbefehle anzuzeigen.",
-			keywords = "#KEYWORD oder #KEYWORD_ALTERNATE",
-		},
-		help = {
-			list = "#ADDON Chatbefehlsliste:",
-		},
-	},
-	popupInput = {
-		title = "Text angeben",
-		tooltip = "Drücke " .. KEY_ENTER .. ", um den angegebenen Text zu übernehmen, oder " .. KEY_ESCAPE .. ", um abzubrechen."
-	},
-	reload = {
-		title = "Ausstehende Änderungen",
-		description = "Lade das Interface neu, um die ausstehenden Änderungen anzuwenden.",
-		accept = {
-			label = "Jetzt neu laden",
-			tooltip = "Du kannst das Interface jetzt neu laden, um die ausstehenden Änderungen anzuwenden.",
-		},
-		cancel = {
-			label = "Später",
-			tooltip = "Lade das Interface später mit dem Chatbefehl /reload oder durch Ausloggen neu.",
-		},
-	},
-	multiSelector = {
-		locked = "Gesperrt",
-		minLimit = "Mindestens #MIN Optionen müssen ausgewählt werden.",
-		maxLimit = "Es können nur #MAX Optionen gleichzeitig ausgewählt werden.",
-	},
-	dropdown = {
-		selected = "Dies ist die aktuell ausgewählte Option.",
-		none = "Es wurde keine Option ausgewählt.",
-		open = "Klicke, um die Liste der Optionen anzuzeigen.",
-		previous = {
-			label = "Vorherige Option",
-			tooltip = "Vorherige Option auswählen.",
-		},
-		next = {
-			label = "Nächste Option",
-			tooltip = "Nächste Option auswählen.",
-		},
-		clear = "Auswahl löschen",
-	},
-	copyBox = "Kopiere den Text mit:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
-	slider = {
-		value = {
-			label = "Wert angeben",
-			tooltip = "Gib einen Wert im gültigen Bereich ein.",
-		},
-		decrease = {
-			label = "Verringern",
-			tooltip = {
-				"Subtrahiere #VALUE vom Wert.",
-				"Halte ALT, um stattdessen #VALUE zu subtrahieren.",
-			},
-		},
-		increase = {
-			label = "Erhöhen",
-			tooltip = {
-				"Addiere #VALUE zum Wert.",
-				"Halte ALT, um stattdessen #VALUE zu addieren.",
-			},
-		},
-	},
-	color = {
-		picker = {
-			label = "Farbe auswählen",
-			tooltip = "Öffne den Farbwähler, um die Farbe#ALPHA anzupassen.",
-			alpha = " und die Transparenz zu ändern",
-		},
-		hex = {
-			label = "Per HEX-Farbcode hinzufügen",
-			tooltip = "Du kannst die Farbe auch per HEX-Code ändern, anstatt den Farbwähler zu benutzen.",
-		}
-	},
-	settings = {
-		save = "Änderungen werden beim Schließen übernommen.",
-		cancel = {
-			label = "Änderungen verwerfen",
-			tooltip = "Alle auf dieser Seite vorgenommenen Änderungen verwerfen und gespeicherte Werte laden.",
-		},
-		defaults = {
-			label = "Standard wiederherstellen",
-			tooltip = "Alle Einstellungen auf dieser Seite (oder der gesamten Kategorie) auf Standardwerte zurücksetzen.",
-		},
-		warning = "Bist du sicher, dass du die Einstellungen der Seite #PAGE oder alle Einstellungen der Kategorie #CATEGORY auf Standard zurücksetzen möchtest?",
-		warningSingle = "Bist du sicher, dass du die Einstellungen der Seite #PAGE auf Standard zurücksetzen möchtest?",
-	},
-	value = {
-		copy = "Wert kopieren",
-		paste = "Wert einfügen",
-		revert = "Änderungen verwerfen",
-		restore = "Standard wiederherstellen",
-		note = "Rechtsklick, um zu kopieren oder rückgängig zu machen.",
-	},
-	points = {
-		left = "Links",
-		right = "Rechts",
-		center = "Mitte",
-		top = {
-			left = "Oben Links",
-			right = "Oben Rechts",
-			center = "Oben Mitte",
-		},
-		bottom = {
-			left = "Unten Links",
-			right = "Unten Rechts",
-			center = "Unten Mitte",
-		},
-	},
-	strata = {
-		lowest = "Niedrigster Hintergrund",
-		lower = "Mittlerer Hintergrund",
-		low = "Höchster Hintergrund",
-		lowMid = "Niedriges Mittel",
-		highMid = "Hohes Mittel",
-		high = "Niedriger Vordergrund",
-		higher = "Mittlerer Vordergrund",
-		highest = "Höchster Vordergrund",
-	},
-	about = {
-		title = "Über",
-		description = "Danke, dass du #ADDON verwendest! Kopiere die Links, um Feedback zu geben, Hilfe zu erhalten oder die Entwicklung zu unterstützen.",
-		version = "Version",
-		date = "Datum",
-		author = "Autor",
-		license = "Lizenz",
-		curseForge = "CurseForge-Seite",
-		wago = "Wago-Seite",
-		repository = "GitHub-Repository",
-		issues = "Probleme & Feedback",
-		changelog = {
-			label = "Update-Hinweise",
-			tooltip = "Hinweise zu allen Änderungen, Updates & Fehlerbehebungen der neuesten Version: #VERSION.",
-		},
-		fullChangelog = {
-			label = "#ADDON Changelog",
-			tooltip = "Die vollständige Liste aller Update-Hinweise zu allen Addon-Versionen.",
-			open = {
-				label = "Changelog",
-				tooltip = "Lies die vollständige Liste aller Update-Hinweise zu allen Addon-Versionen.",
-			},
-		},
-	},
-	sponsors = {
-		title = "Sponsoren",
-		description = "Deine fortlaufende Unterstützung wird sehr geschätzt! Vielen Dank!",
-	},
-	profilesPage = {
-		title = "Profile & Sicherung",
-		description = "Konfiguriere #ADDON weiter, indem du Profile und Backups verwaltest, importierst oder exportierst.",
-	},
-	profiles = {
-		title = "Profile",
-		description = "Erstelle, bearbeite und verwende individuelle Optionsprofile für jeden deiner Charaktere.",
-		select = {
-			label = "Profil auswählen",
-			tooltip = "Wähle das Optionsdaten-Profil, das für deinen aktuellen Charakter verwendet werden soll.\n\nDie Daten im aktiven Profil werden automatisch überschrieben, wenn Einstellungen geändert und gespeichert werden!",
-			profile = "Profil",
-			main = "Haupt",
-		},
-		new = {
-			label = "Neues Profil",
-			tooltip = "Ein neues Standardprofil erstellen.",
-		},
-		duplicate = {
-			label = "Duplizieren",
-			tooltip = "Ein neues Profil erstellen, das die Daten des aktuell aktiven Profils kopiert.",
-		},
-		rename = {
-			label = "Umbenennen",
-			tooltip = "Das aktuell aktive Profil umbenennen.",
-			description = "#PROFILE umbenennen in:",
-		},
-		delete = {
-			tooltip = "Das aktuell aktive Profil löschen.",
-			warning = "Bist du sicher, dass du das aktuell aktive #PROFILE #ADDON-Einstellungsprofil entfernen und alle darin gespeicherten Daten dauerhaft löschen möchtest?"
-		},
-		reset = {
-			warning = "Bist du sicher, dass du das aktuell aktive #PROFILE #ADDON-Einstellungsprofil mit Standardwerten überschreiben möchtest?",
-		},
-	},
-	backup = {
-		title = "Backup",
-		description = "Importiere oder exportiere Daten des aktuell aktiven Profils, um Einstellungen zu speichern, zu teilen, zu übertragen oder Werte manuell zu bearbeiten.",
-		box = {
-			label = "Aktuelles Profil importieren oder exportieren",
-			tooltip = {
-				"Der Backup-String in diesem Feld enthält die Daten des aktuell aktiven Addon-Profils.",
-				"Kopiere den Text, um Daten zu speichern, zu teilen oder für einen anderen Account zu laden.",
-				"Um Daten aus einem String zu laden, ersetze den Text in diesem Feld und drücke " .. KEY_ENTER .. " oder klicke auf die #LOAD Schaltfläche.",
-				"Hinweis: Wenn du eigene Schriftarten oder Texturen verwendest, werden diese Dateien nicht mit diesem String übertragen. Sie müssen separat gespeichert und in den Addon-Ordner eingefügt werden.",
-				"Lade nur Strings, die du selbst überprüft hast oder deren Quelle du vertraust!",
-			},
-		},
-		allProfiles = {
-			label = "Alle Profile importieren oder exportieren",
-			tooltipLine = "Der Backup-String in diesem Feld enthält die Liste aller Addon-Profile und die darin gespeicherten Daten sowie den Namen des aktuell aktiven Profils.",
-			open = {
-				label = "Alle Profile",
-				tooltip = "Greife auf die vollständige Profilliste zu und sichere oder bearbeite die darin gespeicherten Daten.",
-			},
-		},
-		compact = {
-			label = "Kompakt",
-			tooltip = "Zwischen einer kompakten und einer besser lesbaren/bearbeitbaren Ansicht umschalten.",
-		},
-		load = {
-			label = "Laden",
-			tooltip = "Überprüfe den aktuellen String und versuche, die Daten daraus zu laden.",
-		},
-		reset = {
-			tooltip = "Alle Änderungen am String verwerfen und ihn auf die aktuell gespeicherten Daten zurücksetzen.",
-		},
-		import = "String laden",
-		warning = "Bist du sicher, dass du versuchst, den aktuell eingefügten String zu laden?\n\nAlle nicht gespeicherten Änderungen werden verworfen.\n\nWenn du ihn aus einer Online-Quelle kopiert hast oder jemand ihn dir geschickt hat, lade ihn nur, nachdem du den Code überprüft hast und weißt, was du tust.\n\nWenn du der Quelle nicht vertraust, solltest du abbrechen, um unerwünschte Aktionen zu vermeiden.",
-		error = "Der bereitgestellte Backup-String konnte nicht validiert werden und es wurden keine Daten geladen. Es könnten Zeichen fehlen oder Fehler wurden beim Bearbeiten eingefügt.",
-	},
-	position = {
-		title = "Position",
-		description = {
-			static = "Feinabstimmung der Position von #FRAME auf dem Bildschirm über die hier bereitgestellten Optionen.",
-			movable = "Ziehe #FRAME mit gedrückter SHIFT-Taste, um es beliebig zu positionieren, und passe es hier an.",
-		},
-		relativePoint = {
-			label = "Verknüpfungspunkt Bildschirm",
-			tooltip = "Verbinde den gewählten Ankerpunkt von #FRAME mit dem hier ausgewählten Verknüpfungspunkt.",
-		},
-		-- relativeTo = {
-		-- 	label = "Mit Frame verknüpfen",
-		-- 	tooltip = "Gib den Namen eines anderen UI-Elements ein, um die Position von #FRAME daran zu verknüpfen.\n\nDie Namen von Frames findest du über das Debug-UI mit dem Chatbefehl /framestack.",
-		-- },
-		anchor = {
-			label = "Verknüpfungs-Ankerpunkt",
-			tooltip = "Wähle, von welchem Punkt #FRAME verankert werden soll, wenn er mit dem gewählten Bildschirm-Punkt verknüpft wird.",
-		},
-		keepInPlace = {
-			label = "Position beibehalten",
-			tooltip = "#FRAME nicht verschieben, wenn der #ANCHOR geändert wird, sondern nur die Offset-Werte anpassen.",
-		},
-		offsetX= {
-			label = "Horizontaler Versatz",
-			tooltip = "Lege den horizontalen Versatz (X-Achse) von #FRAME zum gewählten #ANCHOR fest.",
-		},
-		offsetY = {
-			label = "Vertikaler Versatz",
-			tooltip = "Lege den vertikalen Versatz (Y-Achse) von #FRAME zum gewählten #ANCHOR fest.",
-		},
-		keepInBounds = {
-			label = "Im Bildschirm halten",
-			tooltip = "Stelle sicher, dass #FRAME nicht außerhalb des Bildschirms verschoben werden kann.",
-		},
-	},
-	presets = {
-		apply = {
-			label = "Voreinstellung anwenden",
-			tooltip = "Ändere die Position von #FRAME, indem du eine dieser Voreinstellungen auswählst und anwendest.",
-			list = { "Unter der Minimap", },
-			select = "Voreinstellung auswählen…",
-		},
-		save = {
-			label = "#CUSTOM Voreinstellung aktualisieren",
-			tooltip = "Speichere die aktuelle Position und Sichtbarkeit von #FRAME in der #CUSTOM Voreinstellung.",
-			warning = "Bist du sicher, dass du die #CUSTOM Voreinstellung mit den aktuellen Werten überschreiben möchtest?",
-		},
-		reset = {
-			label = "#CUSTOM Voreinstellung zurücksetzen",
-			tooltip = "Überschreibe die gespeicherten #CUSTOM Voreinstellungsdaten mit den Standardwerten und wende sie an.",
-			warning = "Bist du sicher, dass du die #CUSTOM Voreinstellung mit den Standardwerten überschreiben möchtest?",
-		},
-	},
-	layer = {
-		strata = {
-			label = "Bildschirmebene",
-			tooltip = "#FRAME vor oder hinter anderen UI-Elementen anzeigen.",
-		},
-		keepOnTop = {
-			label = "Bei Mausinteraktion hervorheben",
-			tooltip = "Erlaube, dass #FRAME bei Interaktion über anderen Frames derselben #STRATA angezeigt wird.",
-		},
-		level = {
-			label = "Frame-Level",
-			tooltip = "Die genaue Position von #FRAME über oder unter anderen Frames im selben #STRATA-Stack.",
-		},
-	},
-	font = {
-		title = "Text",
-		path = {
-			label = "Schriftart",
-			tooltip = "Wähle die Schriftart aus.",
-			default = {
-				label = "Lokalisierte Standardschrift",
-				tooltip = "Dies ist eine lokalisierte Standardschriftart, die von Blizzard verwendet wird.",
-			},
-			base = "Dies ist eine Grundspiel-Schriftart.",
-			custom = "Dies ist eine benutzerdefinierte Schriftart.",
-			otf = "OpenType-Schriftlizenz.",
-			file = "Dateipfad: #PATH",
-			replace = "Die Option Benutzerdefiniert bietet vollständige Anpassung, indem Sie die Schriftdatei #FILE_CUSTOM durch eine andere TrueType-Schriftdatei ersetzen, die in\n#FONTS_DIRECTORY\ngefunden wird, während der ursprüngliche Dateiname #FILE_CUSTOM beibehalten wird.",
-			reminder = "Möglicherweise müssen Sie den Spielclient vollständig neu starten, nachdem Sie die Schriftdatei ersetzt haben, damit die Änderung wirksam wird.",
-		},
-		size = {
-			label = "Größe",
-			tooltip = "Stelle die Schriftgröße ein.",
-		},
-		alignment = {
-			label = "Ausrichtung",
-			tooltip = "Wähle die horizontale Textausrichtung.",
-		},
-		color = {
-			label = "#COLOR_TYPE-Farbe",
-			tooltip = "Lege die #COLOR_TYPE-Textfarbe fest.",
-		},
-	},
 	date = "#DAY.#MONTH.#YEAR",
+
 	override = "Überschreiben",
 	example = "Beispiel",
+
+	chat_welcome_thanks = "Danke, dass du #ADDON verwendest!",
+	chat_welcome_hint = "Gib #KEYWORD ein, um die Liste der Chatbefehle anzuzeigen.",
+	chat_welcome_keywords = "#KEYWORD oder #KEYWORD_ALTERNATE",
+	chat_help_list = "#ADDON Chatbefehlsliste:",
+
+	popupInput_title = "Text angeben",
+	popupInput_tooltip = "Drücke " .. KEY_ENTER .. ", um den angegebenen Text zu übernehmen, oder " .. KEY_ESCAPE .. ", um abzubrechen.",
+
+	reload_title = "Ausstehende Änderungen",
+	reload_description = "Lade das Interface neu, um die ausstehenden Änderungen anzuwenden.",
+	reload_accept_label = "Jetzt neu laden",
+	reload_accept_tooltip = "Du kannst das Interface jetzt neu laden, um die ausstehenden Änderungen anzuwenden.",
+	reload_cancel_label = "Später",
+	reload_cancel_tooltip = "Lade das Interface später mit dem Chatbefehl /reload oder durch Ausloggen neu.",
+
+	multiSelector_locked = "Gesperrt",
+	multiSelector_minLimit = "Mindestens #MIN Optionen müssen ausgewählt werden.",
+	multiSelector_maxLimit = "Es können nur #MAX Optionen gleichzeitig ausgewählt werden.",
+
+	dropdown_selected = "Dies ist die aktuell ausgewählte Option.",
+	dropdown_none = "Es wurde keine Option ausgewählt.",
+	dropdown_open = "Klicke, um die Liste der Optionen anzuzeigen.",
+	dropdown_previous_label = "Vorherige Option",
+	dropdown_previous_tooltip = "Vorherige Option auswählen.",
+	dropdown_next_label = "Nächste Option",
+	dropdown_next_tooltip = "Nächste Option auswählen.",
+	dropdown_clear = "Auswahl löschen",
+
+	copyBox_tooltip = "Kopiere den Text mit:\n" .. CTRL_KEY_TEXT .." + C (Windows)\n" .. COMMAND .. " + C (Mac)",
+
+	slider_value_label = "Wert angeben",
+	slider_value_tooltip = "Gib einen Wert im gültigen Bereich ein.",
+	slider_decrease_label = "Verringern",
+	slider_decrease_tooltip = {
+		"Subtrahiere #VALUE vom Wert.",
+		"Halte ALT, um stattdessen #VALUE zu subtrahieren.",
+	},
+	slider_increase_label = "Erhöhen",
+	slider_increase_tooltip = {
+		"Addiere #VALUE zum Wert.",
+		"Halte ALT, um stattdessen #VALUE zu addieren.",
+	},
+
+	color_picker_label = "Farbe auswählen",
+	color_picker_tooltip = "Öffne den Farbwähler, um die Farbe#ALPHA anzupassen.",
+	color_picker_alpha = " und die Transparenz zu ändern",
+	color_hex_label = "Per HEX-Farbcode hinzufügen",
+	color_hex_tooltip = "Du kannst die Farbe auch per HEX-Code ändern, anstatt den Farbwähler zu benutzen.",
+
+	settings_save = "Änderungen werden beim Schließen übernommen.",
+	settings_cancel_label = "Änderungen verwerfen",
+	settings_cancel_tooltip = "Alle auf dieser Seite vorgenommenen Änderungen verwerfen und gespeicherte Werte laden.",
+	settings_defaults_label = "Standard wiederherstellen",
+	settings_defaults_tooltip = "Alle Einstellungen auf dieser Seite (oder der gesamten Kategorie) auf Standardwerte zurücksetzen.",
+	settings_warning = "Bist du sicher, dass du die Einstellungen der Seite #PAGE oder alle Einstellungen der Kategorie #CATEGORY auf Standard zurücksetzen möchtest?",
+	settings_warningSingle = "Bist du sicher, dass du die Einstellungen der Seite #PAGE auf Standard zurücksetzen möchtest?",
+
+	value_copy = "Wert kopieren",
+	value_paste = "Wert einfügen",
+	value_revert = "Änderungen verwerfen",
+	value_restore = "Standard wiederherstellen",
+	value_note = "Rechtsklick, um zu kopieren oder rückgängig zu machen.",
+
+	points_left = "Links",
+	points_right = "Rechts",
+	points_center = "Mitte",
+	points_top_left = "Oben Links",
+	points_top_right = "Oben Rechts",
+	points_top_center = "Oben Mitte",
+	points_bottom_left = "Unten Links",
+	points_bottom_right = "Unten Rechts",
+	points_bottom_center = "Unten Mitte",
+
+	strata_lowest = "Niedrigster Hintergrund",
+	strata_lower = "Mittlerer Hintergrund",
+	strata_low = "Höchster Hintergrund",
+	strata_lowMid = "Untere Mitte",
+	strata_highMid = "Obere Mitte",
+	strata_high = "Niedriger Vordergrund",
+	strata_higher = "Mittlerer Vordergrund",
+	strata_highest = "Höchster Vordergrund",
+
+	about_title = "Über",
+	about_description = "Danke, dass du #ADDON verwendest! Kopiere die Links, um Feedback zu geben, Hilfe zu erhalten oder die Entwicklung zu unterstützen.",
+	about_version = "Version",
+	about_date = "Datum",
+	about_author = "Autor",
+	about_license = "Lizenz",
+	about_curseForge = "CurseForge-Seite",
+	about_wago = "Wago-Seite",
+	about_repository = "GitHub-Repository",
+	about_issues = "Probleme & Feedback",
+	about_changelog_label = "Update-Hinweise",
+	about_changelog_tooltip = "Hinweise zu allen Änderungen, Updates & Fehlerbehebungen der neuesten Version: #VERSION.",
+	about_fullChangelog_label = "#ADDON Changelog",
+	about_fullChangelog_tooltip = "Die vollständige Liste aller Update-Hinweise zu allen Addon-Versionen.",
+	about_fullChangelog_open_label = "Changelog",
+	about_fullChangelog_open_tooltip = "Lies die vollständige Liste aller Update-Hinweise zu allen Addon-Versionen.",
+
+	sponsors_title = "Sponsoren",
+	sponsors_description = "Deine fortlaufende Unterstützung wird sehr geschätzt! Vielen Dank!",
+
+	profilesPage_title = "Profile & Sicherung",
+	profilesPage_description = "Konfiguriere #ADDON weiter, indem du Profile und Backups verwaltest, importierst oder exportierst.",
+
+	profiles_title = "Profile",
+	profiles_description = "Erstelle, bearbeite und verwende individuelle Optionsprofile für jeden deiner Charaktere.",
+	profiles_select_label = "Profil auswählen",
+	profiles_select_tooltip = "Wähle das Optionsdaten-Profil, das für deinen aktuellen Charakter verwendet werden soll.\n\nDie Daten im aktiven Profil werden automatisch überschrieben, wenn Einstellungen geändert und gespeichert werden!",
+	profiles_select_profile = "Profil",
+	profiles_select_main = "Haupt",
+	profiles_new_label = "Neues Profil",
+	profiles_new_tooltip = "Ein neues Standardprofil erstellen.",
+	profiles_duplicate_label = "Duplizieren",
+	profiles_duplicate_tooltip = "Ein neues Profil erstellen, das die Daten des aktuell aktiven Profils kopiert.",
+	profiles_rename_label = "Umbenennen",
+	profiles_rename_tooltip = "Das aktuell aktive Profil umbenennen.",
+	profiles_rename_description = "#PROFILE umbenennen in:",
+	profiles_delete_tooltip = "Das aktuell aktive Profil löschen.",
+	profiles_delete_warning = "Bist du sicher, dass du das aktuell aktive #PROFILE #ADDON-Einstellungsprofil entfernen und alle darin gespeicherten Daten dauerhaft löschen möchtest?",
+	profiles_reset_warning = "Bist du sicher, dass du das aktuell aktive #PROFILE #ADDON-Einstellungsprofil mit Standardwerten überschreiben möchtest?",
+
+	backup_title = "Backup",
+	backup_description = "Importiere oder exportiere Daten des aktuell aktiven Profils, um Einstellungen zu speichern, zu teilen, zu übertragen oder Werte manuell zu bearbeiten.",
+	backup_box_label = "Aktuelles Profil importieren oder exportieren",
+	backup_box_tooltip = {
+		"Der Backup-String in diesem Feld enthält die Daten des aktuell aktiven Addon-Profils.",
+		"Kopiere den Text, um Daten zu speichern, zu teilen oder für einen anderen Account zu laden.",
+		"Um Daten aus einem String zu laden, ersetze den Text in diesem Feld und drücke " .. KEY_ENTER .. " oder klicke auf die #LOAD Schaltfläche.",
+		"Hinweis: Wenn du eigene Schriftarten oder Texturen verwendest, werden diese Dateien nicht mit diesem String übertragen. Sie müssen separat gespeichert und in den Addon-Ordner eingefügt werden.",
+		"Lade nur Strings, die du selbst überprüft hast oder deren Quelle du vertraust!",
+	},
+	backup_allProfiles_label = "Alle Profile importieren oder exportieren",
+	backup_allProfiles_tooltipLine = "Der Backup-String in diesem Feld enthält die Liste aller Addon-Profile und die darin gespeicherten Daten sowie den Namen des aktuell aktiven Profils.",
+	backup_allProfiles_open_label = "Alle Profile",
+	backup_allProfiles_open_tooltip = "Greife auf die vollständige Profilliste zu und sichere oder bearbeite die darin gespeicherten Daten.",
+	backup_compact_label = "Kompakt",
+	backup_compact_tooltip = "Zwischen einer kompakten und einer besser lesbaren/bearbeitbaren Ansicht umschalten.",
+	backup_load_label = "Laden",
+	backup_load_tooltip = "Überprüfe den aktuellen String und versuche, die Daten daraus zu laden.",
+	backup_reset_tooltip = "Alle Änderungen am String verwerfen und ihn auf die aktuell gespeicherten Daten zurücksetzen.",
+	backup_import = "String laden",
+	backup_warning = "Bist du sicher, dass du versuchst, den aktuell eingefügten String zu laden?\n\nAlle nicht gespeicherten Änderungen werden verworfen.\n\nWenn du ihn aus einer Online-Quelle kopiert hast oder jemand ihn dir geschickt hat, lade ihn nur, nachdem du den Code überprüft hast und weißt, was du tust.\n\nWenn du der Quelle nicht vertraust, solltest du abbrechen, um unerwünschte Aktionen zu vermeiden.",
+	backup_error = "Der bereitgestellte Backup-String konnte nicht validiert werden und es wurden keine Daten geladen. Es könnten Zeichen fehlen oder Fehler wurden beim Bearbeiten eingefügt.",
+
+	position_title = "Position",
+	position_description_static = "Feinabstimmung der Position von #FRAME auf dem Bildschirm über die hier bereitgestellten Optionen.",
+	position_description_movable = "Ziehe #FRAME mit gedrückter SHIFT-Taste, um es beliebig zu positionieren, und passe es hier an.",
+	position_relativePoint_label = "Verknüpfungspunkt auf dem Bildschirm",
+	position_relativePoint_tooltip = "Verbinde den gewählten Ankerpunkt von #FRAME mit dem hier ausgewählten Verknüpfungspunkt.",
+	-- position_relativeTo_label = "Mit Frame verknüpfen",
+	-- position_relativeTo_tooltip = "Gib den Namen eines anderen UI-Elements ein, um die Position von #FRAME daran zu verknüpfen.\n\nDie Namen von Frames findest du über das Debug-UI mit dem Chatbefehl /framestack.",
+	position_anchor_label = "Verknüpfungs-Ankerpunkt",
+	position_anchor_tooltip = "Wähle, von welchem Punkt #FRAME verankert werden soll, wenn er mit dem gewählten Bildschirm-Punkt verknüpft wird.",
+	position_keepInPlace_label = "Position beibehalten",
+	position_keepInPlace_tooltip = "#FRAME nicht verschieben, wenn der #ANCHOR geändert wird, sondern nur die Offset-Werte anpassen.",
+	position_offsetX_label = "Horizontaler Versatz",
+	position_offsetX_tooltip = "Lege den horizontalen Versatz (X-Achse) von #FRAME zum gewählten #ANCHOR fest.",
+	position_offsetY_label = "Vertikaler Versatz",
+	position_offsetY_tooltip = "Lege den vertikalen Versatz (Y-Achse) von #FRAME zum gewählten #ANCHOR fest.",
+	position_keepInBounds_label = "Im Bildschirm halten",
+	position_keepInBounds_tooltip = "Stelle sicher, dass #FRAME nicht außerhalb des Bildschirms verschoben werden kann.",
+
+	presets_apply_label = "Voreinstellung anwenden",
+	presets_apply_tooltip = "Ändere die Position von #FRAME, indem du eine dieser Voreinstellungen auswählst und anwendest.",
+	presets_apply_list = { "Unter der Minimap", },
+	presets_apply_select = "Voreinstellung auswählen…",
+	presets_save_label = "#CUSTOM Voreinstellung aktualisieren",
+	presets_save_tooltip = "Speichere die aktuelle Position und Sichtbarkeit von #FRAME in der #CUSTOM Voreinstellung.",
+	presets_save_warning = "Bist du sicher, dass du die #CUSTOM Voreinstellung mit den aktuellen Werten überschreiben möchtest?",
+	presets_reset_label = "#CUSTOM Voreinstellung zurücksetzen",
+	presets_reset_tooltip = "Überschreibe die gespeicherten #CUSTOM Voreinstellungsdaten mit den Standardwerten und wende sie an.",
+	presets_reset_warning = "Bist du sicher, dass du die #CUSTOM Voreinstellung mit den Standardwerten überschreiben möchtest?",
+
+	layer_strata_label = "Bildschirmebene",
+	layer_strata_tooltip = "#FRAME vor oder hinter anderen UI-Elementen anzeigen.",
+	layer_keepOnTop_label = "Bei Mausinteraktion hervorheben",
+	layer_keepOnTop_tooltip = "Erlaube, dass #FRAME bei Interaktion über anderen Frames derselben #STRATA angezeigt wird.",
+	layer_level_label = "Frame-Level",
+	layer_level_tooltip = "Die genaue Position von #FRAME über oder unter anderen Frames im selben #STRATA-Stack.",
+
+	font_title = "Text",
+	font_path_label = "Schriftart",
+	font_path_tooltip = "Wähle die Schriftart aus.",
+	font_path_default_label = "Lokalisierte Standardschrift",
+	font_path_default_tooltip = "Dies ist eine lokalisierte Standardschriftart, die von Blizzard verwendet wird.",
+	font_path_base = "Dies ist eine Grundspiel-Schriftart.",
+	font_path_custom = "Dies ist eine benutzerdefinierte Schriftart.",
+	font_path_otf = "OpenType-Schriftlizenz.",
+	font_path_file = "Dateipfad: #PATH",
+	font_path_replace = "Die Option Benutzerdefiniert bietet vollständige Anpassung, indem du die Schriftdatei #FILE_CUSTOM durch eine beliebige andere TrueType-Schriftdatei aus\n#FONTS_DIRECTORY\nersetzt und dabei den ursprünglichen Dateinamen #FILE_CUSTOM beibehält.",
+	font_path_reminder = "Du musst den Spielclient möglicherweise vollständig neu starten, nachdem du die Schriftdatei ersetzt hast, damit die Änderung wirksam wird.",
+	font_size_label = "Größe",
+	font_size_tooltip = "Stelle die Schriftgröße ein.",
+	font_alignment_label = "Ausrichtung",
+	font_alignment_tooltip = "Wähle die horizontale Textausrichtung.",
+	font_color_label = "#COLOR_TYPE-Farbe",
+	font_color_tooltip = "Lege die #COLOR_TYPE-Textfarbe fest.",
 }

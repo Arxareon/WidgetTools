@@ -2150,22 +2150,22 @@ function wt.CreateList(type, count, t, ancestor)
 		---@field [1]? table<string, list_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 
 			---@class list_listener_added : indexedEventHandler
-			---@field handler selector_handler_updated Handler function to register for call
+			---@field handler list_handler_added Handler function to register for call
 
 				---@alias list_handler_added
 				---| fun(self: list, item: widget) Called when an "added" event is invoked after a child widget got list membership<p>@*param* `self` list ― Reference to the list widget instance</p><p>@*param* `item` widget ― Reference to the child widget item instance</p>
 
 			---@class list_listener_removed : indexedEventHandler
-			---@field handler selector_handler_updated Handler function to register for call
+			---@field handler list_handler_removed Handler function to register for call
 
 				---@alias list_handler_removed
 				---| fun(self: list, item: widget) Called when a "removed" event is invoked after a child widget lost list membership<p>@*param* `self` list ― Reference to the list widget instance</p><p>@*param* `item` widget ― Reference to the child widget item instance</p>
 
 			---@class list_listener_updated : indexedEventHandler
-			---@field handler selector_handler_updated Handler function to register for call
+			---@field handler list_handler_recounted Handler function to register for call
 
-				---@alias list_handler_updated
-				---| fun(self: list, count: integer) Called when an "updated" event is invoked after `list:SetCount(...)` was called<p>@*param* `self` list ― Reference to the list widget instance</p>
+				---@alias list_handler_recounted
+				---| fun(self: list, count: integer) Called when an "recounted" event is invoked after `list:SetCount(...)` was called<p>@*param* `self` list ― Reference to the list widget instance</p>
 
 			---@class list_listener_enabled : indexedEventHandler
 			---@field handler list_handler_enabled Handler function to register for call
