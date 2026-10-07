@@ -168,7 +168,7 @@ local us = {
 	isKeyDown = setmetatable({}, {
 		__index = function (_, k) return modifierKeyDownCheckers[k] or IsModifierKeyDown end,
 		__newindex = noop,
-		__metatable = "protected",
+		__metatable = "Protected",
 	}),
 	applyColorMarkup = {
 		V = function(s) return crc("• " .. s, "FFFFFFFF") end,
@@ -366,7 +366,7 @@ local protectionProxies = {}
 ---@param proxy table
 ---@return table
 local function expose(proxy)
-	if getmetatable(proxy) == "protected" then for key, value in pairs(protectionProxies) do if value == proxy then return key end end end
+	if getmetatable(proxy) == "Protected" then for key, value in pairs(protectionProxies) do if value == proxy then return key end end end
 
 	return proxy
 end
@@ -379,7 +379,7 @@ local function infect(t, p) for k, v in pairs(t) do if type(v) == "table" then i
 function us.Protect(t)
 	local metatable = getmetatable(t)
 
-	if type(t) ~= "table" or metatable == "protected" or metatable == "public" or us.IsFrame(t) then return t end
+	if type(t) ~= "table" or metatable == "Protected" or metatable == "Public" or us.IsFrame(t) then return t end
 
 	local proxy = protectionProxies[t]
 
@@ -388,7 +388,7 @@ function us.Protect(t)
 			__index = function(_, k)
 				local v = t[k]
 
-				if type(v) ~= "table" or getmetatable(v) == "public" or us.IsFrame(v) then return v end
+				if type(v) ~= "table" or getmetatable(v) == "Public" or us.IsFrame(v) then return v end
 
 				local subproxy = protectionProxies[v]
 
@@ -400,15 +400,15 @@ function us.Protect(t)
 
 				return subproxy
 			end,
-			__newindex = function(_, k, v)
-				ds.Log(function() return "Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v), "Readonly protection" end)
-			end,
-			__metatable = "protected",
+			__newindex = function(_, k, v) ds.Log(function() return
+				"Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v),
+				"WidgetTools.utilities.Protect"
+			end) end,
+			__metatable = "Protected",
 		})
 
 		protectionProxies[t] = proxy
 
-		--Trigger the protection on subtables recursively by indexing them
 		infect(t, proxy)
 	end
 
@@ -833,7 +833,7 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 
 		ds.Log(function() return
 			"Registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. us.ToString(version) .. ".",
-			"Widget Toolbox registration"
+			"WidgetTools.toolboxes.Register"
 		end)
 
 		return protectedToolboxRegistry[version].toolbox
@@ -850,7 +850,7 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 
 		ds.Log(function() return
 			"Added Toolbox version " .. us.ToString(version) .. " to the registry and registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
-			"Widget Toolbox registration"
+			"WidgetTools.toolboxes.Register"
 		end)
 
 		return protectedToolboxRegistry[version].toolbox
@@ -865,7 +865,7 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 	if not C_AddOns.DoesAddOnExist(toolboxAddon) then
 		ds.Log(function() return
 			"Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.",
-			"Widget Toolbox registration"
+			"WidgetTools.toolboxes.Register"
 		end)
 
 		return false
@@ -894,15 +894,15 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 
 	--| Initialization
 
-	ts.initialization[version] = setmetatable({}, { __metatable = "public" })
+	ts.initialization[version] = setmetatable({}, { __metatable = "Public" })
 
 	ds.Log(function() return
 		"New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
-		"Widget Toolbox registration"
+		"WidgetTools.toolboxes.Register"
 	end)
 	ds.Log(function() return
 		"Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.",
-		"Widget Toolbox registration"
+		"WidgetTools.toolboxes.Register"
 	end)
 
 	C_AddOns.LoadAddOn(toolboxAddon)

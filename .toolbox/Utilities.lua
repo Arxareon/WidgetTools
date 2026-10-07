@@ -42,8 +42,6 @@ wt.strings.about_fullChangelog_tooltip = wt.strings.about_fullChangelog_tooltip 
 
 --[[ TABLE MANAGEMENT ]]
 
-wt.clipboard = {}
-
 function wt.HarmonizeData(targetTable, tableToSample)
 	if type(targetTable) ~= "table" then return tableToSample end
 

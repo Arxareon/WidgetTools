@@ -1755,9 +1755,81 @@ function wt.CreateMenuButton(menu, t)
 end
 
 
---[[ CONSTRUCT ]]
+--[[ CONSTRUCTS ]]
 
----@alias rootType typename_construct
+---@alias rootTypename typename_construct
+
+--[ Utilities ]
+
+---Check if an object is a recognizable construct instance and it is of the specific type
+---@param object IsType_param_object Reference to the object to check
+---@param typename IsType_param_typename WidgetTools typename to check if `object` is an instance of this specific type
+---@return IsWidget_return # `true` if the object is a widget (and optionally also of `typename`)
+function wt.IsType(object, typename)
+
+	--| Parameters
+
+	---Reference to the object to check
+	---@alias IsType_param_object any
+
+	---WidgetTools typename to check if `object` is an instance of this specific type
+	---@alias IsType_param_typename typename
+
+		---@alias typename
+		---| typename_construct
+		---| typename_widget
+		---| typename_list
+		---| typename_container
+		---| typename_panel
+		---| typename_chatmanager
+		---| typename_customContainer
+		---| typename_action
+		---| typename_button
+		---| typename_customButton
+		---| typename_datamanager
+		---| typename_binary
+		---| typename_radiobutton
+		---| typename_checkbox
+		---| typename_classicCheckbox
+		---| typename_selectorItem
+		---| typename_selector
+		---| typename_radiogroup
+		---| typename_dropdownRadiogroup
+		---| typename_specialSelector
+		---| typename_specialRadiogroup
+		---| typename_multiselector
+		---| typename_checkgroup
+		---| typename_textual
+		---| typename_editbox
+		---| typename_customEditbox
+		---| typename_multilineEditbox
+		---| typename_numeric
+		---| typename_slider
+		---| typename_classicSlider
+		---| typename_colormanager
+		---| typename_colorpicker
+		---| typename_positionmanager
+		---| typename_positionPanel
+		---| typename_fontmanager
+		---| typename_fontPanel
+		---| typename_settingsmanager
+		---| typename_settingsPage
+		---| typename_profilemanager
+		---| typename_profilesPage
+		---| typename_addonmanager
+		---| typename_addonPage
+		---| typename_settingsCategory
+
+	--| Returns
+
+	---Return the `true` if the object is a widget (and optionally also of `typename`)
+	---@alias IsWidget_return boolean
+
+	return false
+end
+
+
+--[[ CONSTRUCT ]]
 
 function wt.CreateConstruct(t)
 
@@ -1853,74 +1925,6 @@ function wt.CreateConstruct(t)
 		---Get the value of a custom instance property
 		---@param property any
 		function _:GetProperty(property) end
-end
-
---| Management
-
----Check if an object is a recognizable construct instance and it is of the specific type
----@param object IsType_param_object Reference to the object to check
----@param typename IsType_param_typename WidgetTools typename to check if `object` is an instance of this specific type
----@return IsWidget_return # `true` if the object is a widget (and optionally also of `typename`)
-function wt.IsType(object, typename)
-
-	--| Parameters
-
-	---Reference to the object to check
-	---@alias IsType_param_object any
-
-	---WidgetTools typename to check if `object` is an instance of this specific type
-	---@alias IsType_param_typename typename
-
-		---@alias typename
-		---| typename_construct
-		---| typename_widget
-		---| typename_list
-		---| typename_container
-		---| typename_panel
-		---| typename_chatmanager
-		---| typename_customContainer
-		---| typename_action
-		---| typename_button
-		---| typename_customButton
-		---| typename_datamanager
-		---| typename_binary
-		---| typename_radiobutton
-		---| typename_checkbox
-		---| typename_classicCheckbox
-		---| typename_selector
-		---| typename_radiogroup
-		---| typename_dropdownRadiogroup
-		---| typename_specialSelector
-		---| typename_specialRadiogroup
-		---| typename_multiselector
-		---| typename_checkgroup
-		---| typename_textual
-		---| typename_editbox
-		---| typename_customEditbox
-		---| typename_multilineEditbox
-		---| typename_numeric
-		---| typename_slider
-		---| typename_classicSlider
-		---| typename_colormanager
-		---| typename_colorpicker
-		---| typename_positionmanager
-		---| typename_positionPanel
-		---| typename_fontmanager
-		---| typename_fontPanel
-		---| typename_settingsmanager
-		---| typename_settingsPage
-		---| typename_profilemanager
-		---| typename_profilesPage
-		---| typename_addonmanager
-		---| typename_addonPage
-		---| typename_settingsCategory
-
-	--| Returns
-
-	---Return the `true` if the object is a widget (and optionally also of `typename`)
-	---@alias IsWidget_return boolean
-
-	return false
 end
 
 
@@ -3472,6 +3476,8 @@ end
 
 
 --[[ SELECTOR ]]
+
+---@alias typename_selectorItem "SelectorItem"
 
 ---Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
