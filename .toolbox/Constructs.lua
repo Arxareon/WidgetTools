@@ -74,22 +74,24 @@ local function getBase(typename)
 		_, base = getRoot()
 	end
 
+	--| Types
+
+	types[typename] = us.Fill({ [typename] = true }, types[progenitor])
+
+	--| Initialization
+
 	local builder = baseBuilders and baseBuilders[typename]
 
 	if builder then
 		base = us.Fill({}, base)
 
+		bases[typename] = base
+
 		builder(base, typename)
 		baseBuilders[typename] = nil
 
 		if not next(baseBuilders) then baseBuilders = nil end
-	end
-
-	bases[typename] = base
-
-	--| Types
-
-	types[typename] = us.Fill({ [typename] = true }, types[progenitor])
+	else bases[typename] = base end
 
 	--| Proxy
 
@@ -182,6 +184,25 @@ local function addListeners(construct, listeners, events)
 	end
 end
 
+---Initiate an internal event bucket
+---@generic T
+---@param typename typename
+---@param handlerList table<typename, T>
+---@return T
+local function assignInternal(typename, handlerList)
+	local handlers = handlerList[typename]
+
+	if not handlers then
+		handlers = {}
+		handlerList[typename] = handlers
+	end
+
+	return handlers
+end
+
+local k = assignInternal("Construct", construct_assigned)
+local s = k[1]
+
 ---Event dispatcher utility
 ---@param construct construct
 ---@param lockout table<construct, true>
@@ -240,7 +261,6 @@ function baseBuilders.Construct(construct, typename)
 
 	--[ Properties ]
 
-	construct_assigned = { [typename] = {} }
 	local lockout_assigned = {} ---@type table<construct, true>
 	local handlers_assigned = {} ---@type table<construct, construct_handler_assigned[]>
 	assignAddListener(construct, "assigned", handlers_assigned)
@@ -322,9 +342,6 @@ function baseBuilders.Widget(widget, typename)
 
 	--[ Hierarchy ]
 
-	widget_parentEvent = { [typename] = {} }
-	widget_childEvent = { [typename] = {} }
-	widget_enabledEvent = { [typename] = {} }
 	local lockout_parent = {} ---@type table<construct, true>
 	local lockout_child = {} ---@type table<construct, true>
 	local handlers_parent = {} ---@type table<widget, function[]>
@@ -612,9 +629,6 @@ function baseBuilders.List(list, typename)
 	list_items = {}
 	list_indexes = {}
 
-	list_added = { [typename] = {} }
-	list_removed = { [typename] = {} }
-	list_recounted = { [typename] = {} }
 	local lockout_added ---@type table<list, true>
 	local lockout_removed ---@type table<list, true>
 	local lockout_recounted ---@type table<list, true>
@@ -861,7 +875,6 @@ local action_triggered ---@type table<typename, fun(self: action, silent?: boole
 function baseBuilders.Action(action, typename)
 	action_call = {}
 
-	action_triggered = { [typename] = {} }
 	local lockout_triggered = {} ---@type table<action, true>
 	local handlers_triggered = {} ---@type table<action, action_handler_triggered[]>
 	assignAddListener(action, "triggered", handlers_triggered)
@@ -1123,7 +1136,6 @@ function baseBuilders.Datamanager(datamanager, typename)
 
 	data_value = {}
 
-	datamanager_changed = { [typename] = {} }
 	local lockout_changed = {} ---@type table<datamanager, true>
 	local handlers_changed = {} ---@type table<datamanager, datamanager_handler_changed[]>
 	assignAddListener(datamanager, "changed", handlers_changed)
@@ -1172,8 +1184,6 @@ function baseBuilders.Datamanager(datamanager, typename)
 	datamanager_write = {}
 	datamanager_instantSave = {}
 
-	datamanager_loaded = { [typename] = {} }
-	datamanager_saved = { [typename] = {} }
 	local lockout_loaded = {} ---@type table<datamanager, true>
 	local lockout_saved = {} ---@type table<datamanager, true>
 	local handlers_loaded = {} ---@type table<datamanager, datamanager_handler_loaded[]>
@@ -1800,23 +1810,24 @@ function baseBuilders.Selector(selector, typename)
 	local typenameMixin = "List" ---@type typename_list
 	mergeBase(typename, typenameMixin)
 
+	list_added[typename] = {}
+
 	--[ Items ]
 
-	local typenameItem = "SelectorItem"
+	local typenameItem = "SelectorBinary" ---@type typename_selectorBinary
 	progenitors[typenameItem] = "Binary" ---@type typename_binary
 
-	list_added[#list_added + 1] = function(self, _, _, _, new)
-		if new then datamanager_changed[#datamanager_changed + 1] = function(item, silent, value, user)
-			local index = list_indexes[item]
-			local onSelect = selector_items[self--[[ @as selector ]]][index].onSelect
+	local internal = assignInternal(typenameItem, datamanager_changed)
+	internal[#internal + 1] = function(item, silent, value, user)
+		local index = list_indexes[item]
+		local onSelect = selector_items[selector][index].onSelect
 
-			self--[[ @as selector ]]:SetValue(index, user, silent)
+		selector:SetValue(index, user, silent)
 
-			if value and user and type(onSelect) == "function" then onSelect() end
-		end end
+		if value and user and type(onSelect) == "function" then onSelect() end
 	end
 
-	list_recounted[#list_recounted + 1] = function(self, silent) self--[[ @as selector ]]:UpdateItems(selector_items[self], silent) end
+	list_recounted[typename][#list_recounted + 1] = function(self, silent) self--[[ @as selector ]]:UpdateItems(selector_items[self], silent) end
 
 	function selector:UpdateItems(items, silent) --TODO clean up, remove unnecessary code handled by List
 		if type(items) ~= "table" then items = {} end

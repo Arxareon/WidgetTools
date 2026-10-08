@@ -1791,7 +1791,7 @@ function wt.IsType(object, typename)
 		---| typename_radiobutton
 		---| typename_checkbox
 		---| typename_classicCheckbox
-		---| typename_selectorItem
+		---| typename_selectorBinary
 		---| typename_selector
 		---| typename_radiogroup
 		---| typename_dropdownRadiogroup
@@ -3477,7 +3477,7 @@ end
 
 --[[ SELECTOR ]]
 
----@alias typename_selectorItem "SelectorItem"
+---@alias typename_selectorBinary "SelectorBinary"
 
 ---Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
