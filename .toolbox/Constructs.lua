@@ -144,7 +144,7 @@ end
 local eventHandlers ---@type table<construct, table<eventTag, fun(self: construct, ...: any)[]>>
 local properties ---@type table<construct, table<any, any>>
 
-local construct_assigned ---@type table<typename, fun(self: construct, silent?: boolean, property: any, value: any)[]>
+local construct_assigned ---@type table<typename, fun(self: construct, silent?: boolean, property: any, value: any)[]>?
 
 ---`AddListener_eventTag` builder utility
 ---@param construct construct
@@ -184,37 +184,32 @@ local function addListeners(construct, listeners, events)
 	end
 end
 
----Initiate an internal event bucket
----@generic T
+---Add an internal event handler
 ---@param typename typename
----@param handlerList table<typename, T>
----@return T
-local function assignInternal(typename, handlerList)
-	local handlers = handlerList[typename]
+---@param internalsList table<typename, fun(self: construct, silent?: boolean, ...: any)[]>
+---@param handler fun(self: construct, silent?: boolean, ...: any)
+local function addInternal(typename, internalsList, handler)
+	local internals = internalsList[typename]
 
-	if not handlers then
-		handlers = {}
-		handlerList[typename] = handlers
-	end
+	if not internals then internals = {} end
 
-	return handlers
+	table.insert(internals, handler)
 end
-
-local k = assignInternal("Construct", construct_assigned)
-local s = k[1]
 
 ---Event dispatcher utility
 ---@param construct construct
 ---@param lockout table<construct, true>
----@param internals table<typename, fun(self: construct, ...: any)[]>
+---@param internals? table<typename, fun(self: construct, silent?: boolean, ...: any)[]>
 ---@param silent? boolean
----@param handlerList table<construct, fun(self: construct, ...: any)[]>
+---@param handlerList? table<construct, fun(self: construct, ...: any)[]>
 ---@param ... any
 local function invoke(construct, lockout, internals, silent, handlerList, ...)
-	lockout[construct] = true
+	local internal = internals and internals[getmetatable(construct)]
+	local handlers = handlerList and not silent and handlerList[construct]
 
-	local internal = internals[getmetatable(construct)]
-	local handlers = not silent and handlerList[construct]
+	if lockout[construct] or (not internal and not handlers) then return end
+
+	lockout[construct] = true
 
 	if internal then for i = 1, #internal do internal[i](construct, silent, ...) end end
 	if handlers then for i = 1, #handlers do handlers[i](construct, ...) end end
@@ -222,8 +217,17 @@ local function invoke(construct, lockout, internals, silent, handlerList, ...)
 	lockout[construct] = nil
 end
 
+---Add construct "assigned" internal listener
+---@param typename typename
+---@param handler fun(self: construct, silent?: boolean, property: any, value: any)
+local function addInternal_construct_assigned(typename, handler)
+	if not construct_assigned then construct_assigned = {} end
+
+	addInternal(typename, construct_assigned, handler)
+end
+
 ---@param construct construct
-function baseBuilders.Construct(construct, typename)
+function baseBuilders.Construct(construct)
 
 	--[ Types ]
 
@@ -279,7 +283,7 @@ function baseBuilders.Construct(construct, typename)
 			if not next(bucket) then properties[self] = nil end
 		elseif value ~= nil then properties[self] = { [property] = value } end
 
-		if not lockout_assigned[self] then invoke(self, lockout_assigned, construct_assigned, silent, handlers_assigned, property, value) end
+		invoke(self, lockout_assigned, construct_assigned, silent, handlers_assigned, property, value)
 	end
 end
 
@@ -321,9 +325,36 @@ local widget_dependencies ---@type table<widget, dependencyType[]>
 local widget_dataDependencies ---@type table<widget, table<dependencyType, true|function>>
 local widget_dependencyEvaluators ---@type table<widget, table<dependencyType, dependencyEvaluator>>
 
-local widget_parentEvent ---@type table<typename, fun(self: widget, silent?: boolean, parent: widget)[]>
-local widget_childEvent ---@type table<typename, fun(self: widget, silent?: boolean, child: widget, removal: boolean?)[]>
-local widget_enabledEvent ---@type table<typename, fun(self: widget, silent?: boolean, user: boolean)[]>
+local widget_parentEvent ---@type table<typename, fun(self: widget, silent?: boolean, parent: widget)[]>?
+local widget_childEvent ---@type table<typename, fun(self: widget, silent?: boolean, child: widget, removal: boolean?)[]>?
+local widget_enabledEvent ---@type table<typename, fun(self: widget, silent?: boolean, user: boolean)[]>?
+
+---Add widget "parent" internal listener
+---@param typename typename
+---@param handler fun(self: widget, silent?: boolean, parent: widget)
+local function addInternal_widget_parentEvent(typename, handler)
+	if not widget_parentEvent then widget_parentEvent = {} end
+
+	addInternal(typename, widget_parentEvent, handler)
+end
+
+---Add widget "child" internal listener
+---@param typename typename
+---@param handler fun(self: widget, silent?: boolean, child: widget, removal: boolean?)
+local function addInternal_widget_childEvent(typename, handler)
+	if not widget_childEvent then widget_childEvent = {} end
+
+	addInternal(typename, widget_childEvent, handler)
+end
+
+---Add widget "enabled" internal listener
+---@param typename typename
+---@param handler fun(self: widget, silent?: boolean, user: boolean)
+local function addInternal_widget_enabledEvent(typename, handler)
+	if not widget_enabledEvent then widget_enabledEvent = {} end
+
+	addInternal(typename, widget_enabledEvent, handler)
+end
 
 local dataObjectScriptType = {
 	CheckButton = "OnClick",
@@ -370,7 +401,7 @@ function baseBuilders.Widget(widget, typename)
 			for i = 1, #children do if children[i] == child then
 				table.remove(children, i)
 
-				if not lockout_child[parent] then invoke(parent, lockout_child, widget_childEvent, silent, handlers_child, child, true) end
+				invoke(parent, lockout_child, widget_childEvent, silent, handlers_child, child, true)
 
 				break
 			end end
@@ -378,7 +409,7 @@ function baseBuilders.Widget(widget, typename)
 
 		widget_parent[child] = parent
 
-		if not lockout_parent[child] then invoke(child, lockout_parent, widget_parentEvent, silent, handlers_parent, parent) end
+		invoke(child, lockout_parent, widget_parentEvent, silent, handlers_parent, parent)
 
 		if not parent then return true, nil end
 
@@ -386,7 +417,7 @@ function baseBuilders.Widget(widget, typename)
 		index = type(index) ~= "number" and #children + 1 or Clamp(math.floor(index), 1, #children + 1)
 		table.insert(children, index, child)
 
-		if not lockout_child[parent] then invoke(parent, lockout_child, widget_childEvent, silent, handlers_child, child) end
+		invoke(parent, lockout_child, widget_childEvent, silent, handlers_child, child)
 
 		child:SetIndependent(independent)
 
@@ -459,7 +490,7 @@ function baseBuilders.Widget(widget, typename)
 			if not widget_independent[child] then child:SetEnabled(state, true, false, user, silent) end
 		end
 
-		if not lockout_enabled[self] then invoke(self, lockout_enabled, widget_enabledEvent, silent, handlers_enabled, widget_enabled[self], user == true) end
+		invoke(self, lockout_enabled, widget_enabledEvent, silent, handlers_enabled, widget_enabled[self], user == true)
 	end
 
 	--| Dependencies
@@ -619,9 +650,36 @@ local list_type ---@type table<list, typename>
 local list_items ---@type table<list, widget[]?>
 local list_indexes ---@type table<widget, integer>
 
-local list_added ---@type table<typename, fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)[]>
-local list_removed ---@type table<typename, fun(self: list, silent?: boolean, item: widget)[]>
-local list_recounted ---@type table<typename, fun(self: list, silent?: boolean, count: integer)[]>
+local list_added ---@type table<typename, fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)[]>?
+local list_removed ---@type table<typename, fun(self: list, silent?: boolean, item: widget)[]>?
+local list_recounted ---@type table<typename, fun(self: list, silent?: boolean, count: integer)[]>?
+
+---Add list "added" internal listener
+---@param typename typename
+---@param handler fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)
+local function addInternal_list_added(typename, handler)
+	if not list_added then list_added = {} end
+
+	addInternal(typename, list_added, handler)
+end
+
+---Add list "removed" internal listener
+---@param typename typename
+---@param handler fun(self: list, silent?: boolean, item: widget)
+local function addInternal_list_removed(typename, handler)
+	if not list_removed then list_removed = {} end
+
+	addInternal(typename, list_removed, handler)
+end
+
+---Add list "recounted" internal listener
+---@param typename typename
+---@param handler fun(self: list, silent?: boolean, count: integer)
+local function addInternal_list_recounted(typename, handler)
+	if not list_recounted then list_recounted = {} end
+
+	addInternal(typename, list_recounted, handler)
+end
 
 ---@param list list
 function baseBuilders.List(list, typename)
@@ -663,7 +721,7 @@ function baseBuilders.List(list, typename)
 					items[index] = child
 					list_indexes[child] = index
 
-					if not lockout_added[self] then invoke(self, lockout_added, list_added, silent, handlers_added, child, index, false) end
+					invoke(self, lockout_added, list_added, silent, handlers_added, child, index, false)
 
 					index = index + 1
 
@@ -678,7 +736,7 @@ function baseBuilders.List(list, typename)
 				items[index] = item
 				list_indexes[item] = index
 
-				if not lockout_added[self] then invoke(self, lockout_added, list_added, silent, handlers_added, item, index, true) end
+				invoke(self, lockout_added, list_added, silent, handlers_added, item, index, true)
 
 				index = index + 1
 			end
@@ -690,13 +748,13 @@ function baseBuilders.List(list, typename)
 				local item = table.remove(items)
 				list_indexes[item] = nil
 
-				if not lockout_removed[self] then invoke(self, lockout_removed, list_removed, silent, handlers_removed, item) end
+				invoke(self, lockout_removed, list_removed, silent, handlers_removed, item)
 			end
 
 			if not next(items) then list_items[self] = nil end
 		end
 
-		if not lockout_recounted[self] then invoke(self, lockout_recounted, list_recounted, silent, handlers_recounted, count) end
+		invoke(self, lockout_recounted, list_recounted, silent, handlers_recounted, count)
 	end
 end
 
@@ -869,7 +927,16 @@ end
 
 local action_call ---@type table<action, fun(self: action, user?: boolean)>
 
-local action_triggered ---@type table<typename, fun(self: action, silent?: boolean, user: boolean)[]>
+local action_triggered ---@type table<typename, fun(self: action, silent?: boolean, user: boolean)[]>?
+
+---Add action "triggered" internal listener
+---@param typename typename
+---@param handler fun(self: action, silent?: boolean, user: boolean)
+local function addInternal_action_triggered(typename, handler)
+	if not action_triggered then action_triggered = {} end
+
+	addInternal(typename, action_triggered, handler)
+end
 
 ---@param action action
 function baseBuilders.Action(action, typename)
@@ -884,7 +951,7 @@ function baseBuilders.Action(action, typename)
 
 		if call and widget_enabled[self] then call(action, user) end
 
-		if not lockout_triggered[self] then invoke(self, lockout_triggered, action_triggered, silent, handlers_triggered, user == true) end
+		invoke(self, lockout_triggered, action_triggered, silent, handlers_triggered, user == true)
 	end
 
 	function action:SetAction(call) if type(call) == "function" then action_call[self] = call end end
@@ -1125,9 +1192,36 @@ local datamanager_instantSave ---@type table<datamanager, boolean?>
 
 local datamanagement ---@type table<datamanager, settingsData>
 
-local datamanager_changed ---@type table<typename, fun(self: datamanager, silent?: boolean, value: any, user: boolean)[]>
-local datamanager_loaded ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>
-local datamanager_saved ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>
+local datamanager_changed ---@type table<typename, fun(self: datamanager, silent?: boolean, value: any, user: boolean)[]>?
+local datamanager_loaded ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>?
+local datamanager_saved ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>?
+
+---Add datamanager "changed" internal listener
+---@param typename typename
+---@param handler fun(self: datamanager, silent?: boolean, value: any, user: boolean)
+local function addInternal_datamanager_changed(typename, handler)
+	if not datamanager_changed then datamanager_changed = {} end
+
+	addInternal(typename, datamanager_changed, handler)
+end
+
+---Add datamanager "loaded" internal listener
+---@param typename typename
+---@param handler fun(self: datamanager, silent?: boolean, success: boolean)
+local function addInternal_datamanager_loaded(typename, handler)
+	if not datamanager_loaded then datamanager_loaded = {} end
+
+	addInternal(typename, datamanager_loaded, handler)
+end
+
+---Add datamanager "saved" internal listener
+---@param typename typename
+---@param handler fun(self: datamanager, silent?: boolean, success: boolean)
+local function addInternal_datamanager_saved(typename, handler)
+	if not datamanager_saved then datamanager_saved = {} end
+
+	addInternal(typename, datamanager_saved, handler)
+end
 
 ---@param datamanager datamanager
 function baseBuilders.Datamanager(datamanager, typename)
@@ -1160,7 +1254,7 @@ function baseBuilders.Datamanager(datamanager, typename)
 			if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
 		end
 
-		if not lockout_changed[self] then invoke(self, lockout_changed, datamanager_changed, silent, handlers_changed, data, user == true) end
+		invoke(self, lockout_changed, datamanager_changed, silent, handlers_changed, data, user == true)
 	end
 
 	--| Default
@@ -1208,8 +1302,8 @@ function baseBuilders.Datamanager(datamanager, typename)
 		if read then
 			datamanager:SetValue(read(), handleChanges ~= false, silent)
 
-			if not lockout_loaded[self] then invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, true) end
-		elseif not lockout_loaded[self] then invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, false) end
+			invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, true)
+		else invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, false) end
 	end
 	function datamanager:Save(silent)
 		local write = datamanager_write[self]
@@ -1217,8 +1311,8 @@ function baseBuilders.Datamanager(datamanager, typename)
 		if write then
 			write(data_value[self])
 
-			if not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true) end
-		elseif not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
+			invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true)
+		else invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
 	end
 
 	function datamanager:GetData()
@@ -1232,8 +1326,8 @@ function baseBuilders.Datamanager(datamanager, typename)
 		if write then
 			write(datamanager:Verify(data))
 
-			if not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true) end
-		elseif not lockout_saved[self] then invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
+			invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true)
+		else invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
 
 		datamanager:Load(handleChanges, silent)
 	end
@@ -1769,7 +1863,16 @@ end
 local selector_clearable ---@type table<selector, boolean>
 local selector_items ---@type table<selector, selectorItemData[]>
 
-local selector_updated ---@type table<typename, fun(self: selector, silent?: boolean)[]>
+local selector_updated ---@type table<typename, fun(self: selector, silent?: boolean)[]>?
+
+---Add selector "updated" internal listener
+---@param typename typename
+---@param handler fun(self: selector, silent?: boolean)
+local function addInternal_selector_updated(typename, handler)
+	if not selector_updated then selector_updated = {} end
+
+	addInternal(typename, selector_updated, handler)
+end
 
 local itemsets = {
 	anchor = {
@@ -1817,53 +1920,51 @@ function baseBuilders.Selector(selector, typename)
 	local typenameItem = "SelectorBinary" ---@type typename_selectorBinary
 	progenitors[typenameItem] = "Binary" ---@type typename_binary
 
-	local internal = assignInternal(typenameItem, datamanager_changed)
-	internal[#internal + 1] = function(item, silent, value, user)
+	local lockout_updated = {} ---@type table<datamanager, true>
+	local handlers_updated = {} ---@type table<datamanager, selector_handler_updated[]>
+	assignAddListener(selector, "updated", handlers_updated)
+
+	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user)
+		local parent = widget_parent[item] ---@cast parent selector
 		local index = list_indexes[item]
-		local onSelect = selector_items[selector][index].onSelect
+		local onSelect = selector_items[parent][index].onSelect
 
-		selector:SetValue(index, user, silent)
+		parent:SetValue(index, user, silent)
 
-		if value and user and type(onSelect) == "function" then onSelect() end
-	end
+		if value and user and onSelect then onSelect() end
+	end)
 
-	list_recounted[typename][#list_recounted + 1] = function(self, silent) self--[[ @as selector ]]:UpdateItems(selector_items[self], silent) end
+	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @as selectorBinary ]]):SetValue(false, false, silent) end)
 
-	function selector:UpdateItems(items, silent) --TODO clean up, remove unnecessary code handled by List
-		if type(items) ~= "table" then items = {} end
+	addInternal_list_recounted(typename, function(self, silent)
+		local count = #selector_items[self]
 
-		local binaries = list_items[selector] ---@type binary[]
+		if #list_items[self] ~= count then self:SetCount(count, silent) end
+	end)
 
-		for i = 1, #binaries do
+	function selector:UpdateItems(items, silent)
+		if type(items) ~= "table" then return end
 
-			wt.CreateBinary({
-				parent = selector,
-				childIndex = i,
-				listeners = { changed = { { handler = function (_, state, user)
-					if state and user and type(binaries[item.index].onSelect) == "function" then binaries[item.index].onSelect() end --REPLACE with different solution for handling onSelect calls
-				end, }, }, },
-			})
+		local count = #items
+		local selectorItems = selector_items[self]
+
+		if not selectorItems then
+			selectorItems = {}
+			selector_items[self] = selectorItems
 		end
 
-		--Deactivate extra items
-		while #binaries < #selector.items do
-			local item = selector.items[#selector.items]
+		for i = 1, count do
+			local onSelect = items[i].onSelect
 
-			item:SetValue(false)
-			item:SetParent()
-
-			if not silent then item:Invoke("activated", false) end
-
-			table.insert(inactive, item)
-			table.remove(selector.items, #selector.items)
+			if type(onSelect) == "function" then selectorItems[i].onSelect = onSelect end
 		end
 
-		if not silent then selector_invoke_updated(self) end
+		if #list_items[self] ~= count then self:SetCount(count, silent) end
 
-		selector:SetValue(data_value[self], nil, silent)
+		invoke(self, lockout_updated, selector_updated, silent, handlers_updated)
+
+		selector:SetValue(data_value[self], false, silent)
 	end
-
-	selector:AddListener_updated(function (self) self:UpdateItems({}, true) end, 1)
 
 	--[ Value ]
 
@@ -3925,8 +4026,26 @@ local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
 local numeric_hardStep ---@type table<numeric, boolean>
 
-local numeric_minEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMin: number)[]>
-local numeric_maxEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMax: number)[]>
+local numeric_minEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMin: number)[]>?
+local numeric_maxEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMax: number)[]>?
+
+---Add numeric "min" internal listener
+---@param typename typename
+---@param handler fun(self: numeric, silent?: boolean, limitMin: number)
+local function addInternal_numeric_minEvent(typename, handler)
+	if not numeric_minEvent then numeric_minEvent = {} end
+
+	addInternal(typename, numeric_minEvent, handler)
+end
+
+---Add numeric "max" internal listener
+---@param typename typename
+---@param handler fun(self: numeric, silent?: boolean, limitMax: number)
+local function addInternal_numeric_maxEvent(typename, handler)
+	if not numeric_maxEvent then numeric_maxEvent = {} end
+
+	addInternal(typename, numeric_maxEvent, handler)
+end
 
 ---@param numeric numeric
 function baseBuilders.Numeric(numeric)
@@ -3968,14 +4087,14 @@ function baseBuilders.Numeric(numeric)
 	function numeric:SetMin(number, silent)
 		numeric_limitMin[self] = min(number, numeric_limitMax[self])
 
-		if not lockout_min[self] then invoke(self, lockout_min, numeric_minEvent, silent, handlers_min, numeric_limitMin[self]) end
+		invoke(self, lockout_min, numeric_minEvent, silent, handlers_min, numeric_limitMin[self])
 	end
 
 	function numeric:GetMax() return numeric_limitMax[self] end
 	function numeric:SetMax(number, silent)
 		numeric_limitMax[self] = max(numeric_limitMin[self], number)
 
-		if not lockout_max[self] then invoke(self, lockout_max, numeric_maxEvent, silent, handlers_max, numeric_limitMax[self]) end
+		invoke(self, lockout_max, numeric_maxEvent, silent, handlers_max, numeric_limitMax[self])
 	end
 
 	--| Step
@@ -5129,7 +5248,6 @@ function wt.CreateColorpicker(t, ancestor, lite)
 end
 
 
-
 --[[ POSITION ]]
 
 
@@ -5958,11 +6076,56 @@ local datamanagementEntry ---
 local settingsmanager_autoLoad ---@type table<settingsmanager, true>
 local settingsmanager_autoSave ---@type table<settingsmanager, true>
 
-local settingsmanager_loaded ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>
-local settingsmanager_saved ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>
-local settingsmanager_applied ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>
-local settingsmanager_reverted ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>
-local settingsmanager_reset ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>
+local settingsmanager_loaded ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+local settingsmanager_saved ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+local settingsmanager_applied ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+local settingsmanager_reverted ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+local settingsmanager_reset ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+
+---Add settingsmanager "loaded" internal listener
+---@param typename typename
+---@param handler fun(self: settingsmanager, silent?: boolean, user: boolean)
+local function addInternal_settingsmanager_loaded(typename, handler)
+	if not settingsmanager_loaded then settingsmanager_loaded = {} end
+
+	addInternal(typename, settingsmanager_loaded, handler)
+end
+
+---Add settingsmanager "saved" internal listener
+---@param typename typename
+---@param handler fun(self: settingsmanager, silent?: boolean, user: boolean)
+local function addInternal_settingsmanager_saved(typename, handler)
+	if not settingsmanager_saved then settingsmanager_saved = {} end
+
+	addInternal(typename, settingsmanager_saved, handler)
+end
+
+---Add settingsmanager "applied" internal listener
+---@param typename typename
+---@param handler fun(self: settingsmanager, silent?: boolean, user: boolean)
+local function addInternal_settingsmanager_applied(typename, handler)
+	if not settingsmanager_applied then settingsmanager_applied = {} end
+
+	addInternal(typename, settingsmanager_applied, handler)
+end
+
+---Add settingsmanager "reverted" internal listener
+---@param typename typename
+---@param handler fun(self: settingsmanager, silent?: boolean, user: boolean)
+local function addInternal_settingsmanager_reverted(typename, handler)
+	if not settingsmanager_reverted then settingsmanager_reverted = {} end
+
+	addInternal(typename, settingsmanager_reverted, handler)
+end
+
+---Add settingsmanager "reset" internal listener
+---@param typename typename
+---@param handler fun(self: settingsmanager, silent?: boolean, user: boolean)
+local function addInternal_settingsmanager_reset(typename, handler)
+	if not settingsmanager_reset then settingsmanager_reset = {} end
+
+	addInternal(typename, settingsmanager_reset, handler)
+end
 
 ---@param settingsmanager settingsmanager
 function baseBuilders.Settingsmanager(settingsmanager)
@@ -5999,31 +6162,31 @@ function baseBuilders.Settingsmanager(settingsmanager)
 			wt.SnapshotSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i])
 		end end
 
-		if not lockout_loaded[self] then invoke(self, lockout_loaded, settingsmanager_loaded, silent, handlers_loaded, user == true) end
+		invoke(self, lockout_loaded, settingsmanager_loaded, silent, handlers_loaded, user == true)
 	end
 
 	function settingsmanager:Save(user, silent)
 		if settingsmanager_autoSave[self] then for i = 1, #datamanagementEntry[self].keys do wt.SaveSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not lockout_saved[self] then invoke(self, lockout_saved, settingsmanager_saved, silent, handlers_saved, user == true) end
+		invoke(self, lockout_saved, settingsmanager_saved, silent, handlers_saved, user == true)
 	end
 
 	function settingsmanager:Apply(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ApplySettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not lockout_applied[self] then invoke(self, lockout_applied, settingsmanager_applied, silent, handlers_applied, user == true) end
+		invoke(self, lockout_applied, settingsmanager_applied, silent, handlers_applied, user == true)
 	end
 
 	function settingsmanager:Revert(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.RevertSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not lockout_reverted[self] then invoke(self, lockout_reverted, settingsmanager_reverted, silent, handlers_reverted, user == true) end
+		invoke(self, lockout_reverted, settingsmanager_reverted, silent, handlers_reverted, user == true)
 	end
 
 	function settingsmanager:Reset(user, silent)
 		if datamanagementEntry[self] then for i = 1, #datamanagementEntry[self].keys do wt.ResetSettingsData(datamanagementEntry[self].category, datamanagementEntry[self].keys[i]) end end
 
-		if not lockout_reset[self] then invoke(self, lockout_reset, settingsmanager_reset, silent, handlers_reset, user == true) end
+		invoke(self, lockout_reset, settingsmanager_reset, silent, handlers_reset, user == true)
 	end
 end
 
@@ -6418,12 +6581,66 @@ local profiles_valueChecker ---@type table<profilemanager, function>
 local profiles_onRecovery ---@type table<profilemanager, function>
 local profiles_recoveryMap ---@type table<profilemanager, table>
 
-local profilemanager_activated ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index?: integer, title?: string)[]>
-local profilemanager_created ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean, index: integer, title: string)[]>
-local profilemanager_renamed ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>
-local profilemanager_deleted ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>
-local profilemanager_reset ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>
-local profilemanager_loaded ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean)[]>
+local profilemanager_activated ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index?: integer, title?: string)[]>?
+local profilemanager_created ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean, index: integer, title: string)[]>?
+local profilemanager_renamed ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
+local profilemanager_deleted ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
+local profilemanager_reset ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
+local profilemanager_loaded ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean)[]>?
+
+---Add profilemanager "activated" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index?: integer, title?: string)
+local function addInternal_profilemanager_activated(typename, handler)
+	if not profilemanager_activated then profilemanager_activated = {} end
+
+	addInternal(typename, profilemanager_activated, handler)
+end
+
+---Add profilemanager "created" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, user: boolean, index: integer, title: string)
+local function addInternal_profilemanager_created(typename, handler)
+	if not profilemanager_created then profilemanager_created = {} end
+
+	addInternal(typename, profilemanager_created, handler)
+end
+
+---Add profilemanager "renamed" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)
+local function addInternal_profilemanager_renamed(typename, handler)
+	if not profilemanager_renamed then profilemanager_renamed = {} end
+
+	addInternal(typename, profilemanager_renamed, handler)
+end
+
+---Add profilemanager "deleted" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)
+local function addInternal_profilemanager_deleted(typename, handler)
+	if not profilemanager_deleted then profilemanager_deleted = {} end
+
+	addInternal(typename, profilemanager_deleted, handler)
+end
+
+---Add profilemanager "reset" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)
+local function addInternal_profilemanager_reset(typename, handler)
+	if not profilemanager_reset then profilemanager_reset = {} end
+
+	addInternal(typename, profilemanager_reset, handler)
+end
+
+---Add profilemanager "loaded" internal listener
+---@param typename typename
+---@param handler fun(self: profilemanager, silent?: boolean, user: boolean)
+local function addInternal_profilemanager_loaded(typename, handler)
+	if not profilemanager_loaded then profilemanager_loaded = {} end
+
+	addInternal(typename, profilemanager_loaded, handler)
+end
 
 ---@param profilemanager profilemanager
 function baseBuilders.Profilemanager(profilemanager)
@@ -6472,14 +6689,14 @@ function baseBuilders.Profilemanager(profilemanager)
 
 	function profilemanager:Activate(index, user, silent)
 		if type(index) ~= "number" then
-			if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user == true) end
+			invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user == true)
 
 			return nil
 		end
 
 		index = setActiveProfile(self, index)
 
-		if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user == true, index, index and profiles_accountData[self].profiles[index].title or nil) end
+		invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user == true, index, index and profiles_accountData[self].profiles[index].title or nil)
 
 		return index
 	end
@@ -6522,14 +6739,14 @@ function baseBuilders.Profilemanager(profilemanager)
 			data = us.Clone(d and d.data or profiles_defaultData[self])
 		})
 
-		if not lockout_created[self] then invoke(self, lockout_created, profilemanager_created, silent, handlers_created, user, index, title) end
+		invoke(self, lockout_created, profilemanager_created, silent, handlers_created, user, index, title)
 
 		if apply ~= false then profilemanager:Activate(index, user, silent) end
 	end
 
 	function profilemanager:Rename(index, name, number, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not lockout_renamed[self] then invoke(self, lockout_renamed, profilemanager_renamed, silent, handlers_renamed, user == true, index) end
+			invoke(self, lockout_renamed, profilemanager_renamed, silent, handlers_renamed, user == true, index)
 
 			return false
 		end
@@ -6539,14 +6756,14 @@ function baseBuilders.Profilemanager(profilemanager)
 
 		profiles_accountData[self].profiles[index].title = title
 
-		if not lockout_renamed[self] then invoke(self, lockout_renamed, profilemanager_renamed, silent, handlers_renamed, true, user == true, index, title) end
+		invoke(self, lockout_renamed, profilemanager_renamed, silent, handlers_renamed, true, user == true, index, title)
 
 		return true
 	end
 
 	function profilemanager:Delete(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not lockout_deleted[self] then invoke(self, lockout_deleted, profilemanager_deleted, silent, handlers_deleted, false, user == true, index) end
+			invoke(self, lockout_deleted, profilemanager_deleted, silent, handlers_deleted, false, user == true, index)
 
 			return false
 		end
@@ -6557,7 +6774,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		local function delete()
 			table.remove(profiles_accountData[self].profiles, index)
 
-			if not lockout_deleted[self] then invoke(self, lockout_deleted, profilemanager_deleted, silent, handlers_deleted, true, user == true, index, title) end
+			invoke(self, lockout_deleted, profilemanager_deleted, silent, handlers_deleted, true, user == true, index, title)
 
 			if profiles_activeIndex[self] == index then profilemanager:Activate(index, user, silent) end
 		end
@@ -6572,7 +6789,7 @@ function baseBuilders.Profilemanager(profilemanager)
 
 	function profilemanager:Reset(index, unsafe, user, silent)
 		if index and not profiles_accountData[self].profiles[index] then
-			if not lockout_reset[self] then invoke(self, lockout_reset, profilemanager_reset, silent, handlers_reset, false, user == true, index) end
+			invoke(self, lockout_reset, profilemanager_reset, silent, handlers_reset, false, user == true, index)
 
 			return false
 		end
@@ -6583,7 +6800,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		local function reset()
 			us.CopyValues(self.data, profiles_defaultData[self])
 
-			if not lockout_reset[self] then invoke(self, lockout_reset, profilemanager_reset, silent, handlers_reset, false, user == true, index, title) end
+			invoke(self, lockout_reset, profilemanager_reset, silent, handlers_reset, false, user == true, index, title)
 		end
 
 		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_resetPopup[self], {
@@ -6673,8 +6890,8 @@ function baseBuilders.Profilemanager(profilemanager)
 		if not silent then
 			user = user == true
 
-			if not lockout_loaded[self] then invoke(self, lockout_loaded, profilemanager_loaded, silent, handlers_loaded, user) end
-			if not lockout_activated[self] then invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user, activeProfile, activeProfile and profiles_accountData[self].profiles[activeProfile].title or nil) end
+			invoke(self, lockout_loaded, profilemanager_loaded, silent, handlers_loaded, user)
+			invoke(self, lockout_activated, profilemanager_activated, silent, handlers_activated, true, user, activeProfile, activeProfile and profiles_accountData[self].profiles[activeProfile].title or nil)
 		end
 	end
 end
@@ -7162,7 +7379,16 @@ end
 
 local addonmanager_addonData ---@type table<addonmanager, addonInfo>
 
-local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>
+local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>?
+
+---Add addonmanager "changed" internal listener
+---@param typename typename
+---@param handler fun(self: addonmanager, silent?: boolean, user: boolean)
+local function addInternal_addonmanager_changed(typename, handler)
+	if not addonmanager_changed then addonmanager_changed = {} end
+
+	addInternal(typename, addonmanager_changed, handler)
+end
 
 ---@param addonmanager addonmanager
 function baseBuilders.Addonmanager(addonmanager)
@@ -7241,7 +7467,7 @@ function baseBuilders.Addonmanager(addonmanager)
 			addonmanager_addonData[self] = data
 		end
 
-		if not lockout_changed[self] then invoke(self, lockout_changed, addonmanager_changed, silent, handlers_changed, addonmanager_addonData[self].name, user == true) end
+		invoke(self, lockout_changed, addonmanager_changed, silent, handlers_changed, addonmanager_addonData[self].name, user == true)
 
 		return true
 	end

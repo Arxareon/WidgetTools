@@ -1757,6 +1757,8 @@ end
 
 --[[ CONSTRUCTS ]]
 
+--[ Base ]
+
 ---@alias rootTypename typename_construct
 
 --[ Utilities ]
@@ -3477,13 +3479,24 @@ end
 
 --[[ SELECTOR ]]
 
----@alias typename_selectorBinary "SelectorBinary"
-
 ---Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
 ---@param t? selector_options Optional parameters
 ---@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
 ---@return selector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
 function wt.CreateSelector(t, ancestor)
+
+	--| Items
+
+	---@class selectorBinary : binary
+	local i = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_selectorBinary]: true }
+		function _:GetTypes() return {} end
+
+			---@alias typename_selectorBinary "SelectorBinary"
 
 	--| Parameters
 
