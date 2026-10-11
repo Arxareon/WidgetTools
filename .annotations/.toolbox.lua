@@ -1797,7 +1797,11 @@ function wt.IsType(object, typename)
 		---| typename_selector
 		---| typename_radiogroup
 		---| typename_dropdownRadiogroup
-		---| typename_specialSelector
+		---| typename_anchorSelector
+		---| typename_horizontalitySelector
+		---| typename_verticalitySelector
+		---| typename_strataSelector
+		---| typename_fontSelector
 		---| typename_specialRadiogroup
 		---| typename_multiselector
 		---| typename_checkgroup
@@ -3685,12 +3689,11 @@ function wt.CreateSelector(t, ancestor)
 	return _
 end
 
----Create a non-GUI special selector datamanager widget instance (managing a set of binary datamanager child widgets) with specific pre-defined `itemset` data management logic
----@param itemset CreateSpecialSelector_param1 Specify what type of selector should be created
----@param t? specialSelector_options Optional parameters
----@param ancestor? datamanager|widget|construct Reference to an already existing datamanager instance to turn into a special selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing widget instance for creating the new datamanager, or a constrcut to build upon
----@return specialSelector specialSelector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateSpecialSelector(itemset, t, ancestor)
+---Create a non-GUI anchor selector datamanager widget instance (managing a set of binary datamanager child widgets) with anchor point data management logic
+---@param t? anchorSelector_options Optional parameters
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into an anchor selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
+---@return anchorSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
+function wt.CreateAnchorSelector(t, ancestor)
 
 	--| Parameters
 
@@ -3704,109 +3707,90 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 		---@param data? boolean
 		local function writer(data) end ---@cast writer +?
 
-	--Specify what type of selector should be created
-	---@alias CreateSpecialSelector_param1 # itemset
-	---| SpecialSelectorItemset
-
-		---@alias SpecialSelectorItemset
-		---| "anchor" Using the set of [AnchorPoint](https://warcraft.wiki.gg/wiki/Anchors) items
-		---| "justifyH" Using the set of horizontal text alignment items (JustifyH)
-		---| "justifyV" Using the set of vertical text alignment items (JustifyV)
-		---| "strata" Using the set of [FrameStrata](https://warcraft.wiki.gg/wiki/Frame_Strata) items (excluding "WORLD")
-
 	---Optional parameters
-	---@class specialSelector_options : datamanager_options, selector_options_base
-	---@field listeners? specialSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): value: integer|specialSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
-	---@field saveData? fun(value?: specialSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
-	---@field value? integer|specialSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
-	---@field default? integer|specialSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
+	---@class anchorSelector_options : datamanager_options, selector_options_base
+	---@field listeners? anchorSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): value: integer|anchorSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
+	---@field saveData? fun(value?: anchorSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
+	---@field value? integer|anchorSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field default? integer|anchorSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
 	t = { reader = reader, writer = writer, }
 
-		---@alias specialSelectorValueTypes
+		---@alias anchorSelectorValueTypes
 		---| FramePoint
 		---| JustifyHorizontal
 		---| JustifyVertical
 		---| FrameStrata
 
-		---@class specialSelector_listeners : datamanager_listeners
-		---@field [1]? table<string, specialSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? specialSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `specialSelector:SetEnabled(...)` was called
-		---@field loaded? specialSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? specialSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? specialSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `specialSelector:SetSelected(...)` was called or an option was clicked or cleared
+		---@class anchorSelector_listeners : datamanager_listeners
+		---@field [1]? table<string, anchorSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? anchorSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `anchorSelector:SetEnabled(...)` was called
+		---@field loaded? anchorSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? anchorSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? anchorSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `anchorSelector:SetSelected(...)` was called or an option was clicked or cleared
 
-			---@class specialSelector_listener_loaded : indexedEventHandler
-			---@field handler specialSelector_handler_loaded Handler function to register for call
+			---@class anchorSelector_listener_loaded : indexedEventHandler
+			---@field handler anchorSelector_handler_loaded Handler function to register for call
 
-				---@alias specialSelector_handler_loaded
-				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---@alias anchorSelector_handler_loaded
+				---| fun(self: anchorSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
-			---@class specialSelector_listener_saved : indexedEventHandler
-			---@field handler specialSelector_handler_saved Handler function to register for call
+			---@class anchorSelector_listener_saved : indexedEventHandler
+			---@field handler anchorSelector_handler_saved Handler function to register for call
 
-				---@alias specialSelector_handler_saved
-				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---@alias anchorSelector_handler_saved
+				---| fun(self: anchorSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
-			---@class specialSelector_listener_changed : indexedEventHandler
-			---@field handler specialSelector_handler_changed Handler function to register for call
+			---@class anchorSelector_listener_changed : indexedEventHandler
+			---@field handler anchorSelector_handler_changed Handler function to register for call
 
-				---@alias specialSelector_handler_changed
-				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `specialSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias anchorSelector_handler_changed
+				---| fun(self: anchorSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `anchorSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class specialSelector_listener_enabled : indexedEventHandler
-			---@field handler specialSelector_handler_enabled Handler function to register for call
+			---@class anchorSelector_listener_enabled : indexedEventHandler
+			---@field handler anchorSelector_handler_enabled Handler function to register for call
 
-				---@alias specialSelector_handler_enabled
-				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialSelector:SetEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias anchorSelector_handler_enabled
+				---| fun(self: anchorSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `anchorSelector:SetEnabled(...)` was called<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class specialSelector_listener : indexedEventHandler
-			---@field handler specialSelector_handler Handler function to register for call
+			---@class anchorSelector_listener : indexedEventHandler
+			---@field handler anchorSelector_handler Handler function to register for call
 
-				---@alias specialSelector_handler
-				---| fun(self: specialSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` specialSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias anchorSelector_handler
+				---| fun(self: anchorSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` anchorSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class specialSelector : datamanager
-	---@field items selectorBinary[]
+	---@class anchorSelector : selector
 	local _ = {}
-
-		---Return the itemset type specified for this special selector on creation
-		---@return SpecialSelectorItemset itemset
-		function _:GetItemset() return "anchor" end
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_specialSelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_anchorSelector]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_specialSelector "SpecialSelector"
+			---@alias typename_anchorSelector "AnchorSelector"
 
 		--[ Events ]
 
-		---@class specialSelector_addListener : datamanager_addListener
-		---@field [string] fun(handler: specialSelector_handler, callIndex?: integer) Register a listener for a custom widget event
-		local addListener = {}
-
 			---Register a listener for a "loaded" widget event
-			---@param handler specialSelector_handler_loaded Handler function to call on trigger
+			---@param handler anchorSelector_handler_loaded Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_loaded(handler, callIndex) end
 
 			---Register a listener for a "saved" widget event
-			---@param handler specialSelector_handler_saved Handler function to call on trigger
+			---@param handler anchorSelector_handler_saved Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_saved(handler, callIndex) end
 
 			---Register a listener for a "changed" widget event
-			---@param handler specialSelector_handler_changed Handler function to call on trigger
+			---@param handler anchorSelector_handler_changed Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_changed(handler, callIndex) end
 
 			---Register a listener for an "enabled" widget event
-			---@param handler specialSelector_handler_enabled Handler function to call on trigger
+			---@param handler anchorSelector_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_enabled(handler, callIndex) end
 
@@ -3816,10 +3800,10 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 		---***
 		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(data, silent) end
+		function _:SaveData(data, silent) end
 
 		---Get the currently stored data via the specified reader utility
-		---@return specialSelectorValueTypes|nil
+		---@return anchorSelectorValueTypes|nil
 		function _:GetData() end
 
 		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
@@ -3830,23 +3814,627 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 		function _:SetData(data, handleChanges, silent) end
 
 		---Get the currently set default value
-		---@return specialSelectorValueTypes|nil default
+		---@return anchorSelectorValueTypes|nil default
 		function _:GetDefault() end
 
 		---Set the default value
 		---***
-		---@param selected integer|specialSelectorValueTypes|nil | ***Default:*** *no change*
+		---@param selected integer|anchorSelectorValueTypes|nil | ***Default:*** *no change*
 		---<p></p>
 		function _:SetDefault(selected) end
 
 		---Returns the value of the currently selected item or nil if there is no selection
-		---@return specialSelectorValueTypes|nil selected
+		---@return anchorSelectorValueTypes|nil selected
 		---<p></p>
 		function _:GetValue() end
 
 		---Set the specified item as selected
 		---***
-		---@param selected integer|specialSelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
+		---@param selected integer|anchorSelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
+		---<p></p>
+		function _:SetValue(selected, user, silent) end
+
+	return _
+end
+
+---Create a non-GUI verticality selector datamanager widget instance (managing a set of binary datamanager child widgets) with vertical text justification data management logic
+---@param t? verticalitySelector_options Optional parameters
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a verticality selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
+---@return verticalitySelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
+function wt.CreateVerticalitySelector(t, ancestor)
+
+	--| Parameters
+
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
+		---***
+		---@return boolean data
+		local function reader() return false end ---@cast reader +?
+
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
+		---***
+		---@param data? boolean
+		local function writer(data) end ---@cast writer +?
+
+	---Optional parameters
+	---@class verticalitySelector_options : datamanager_options, selector_options_base
+	---@field listeners? verticalitySelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): value: integer|verticalitySelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
+	---@field saveData? fun(value?: verticalitySelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
+	---@field value? integer|verticalitySelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field default? integer|verticalitySelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
+	t = { reader = reader, writer = writer, }
+
+		---@alias verticalitySelectorValueTypes
+		---| FramePoint
+		---| JustifyHorizontal
+		---| JustifyVertical
+		---| FrameStrata
+
+		---@class verticalitySelector_listeners : datamanager_listeners
+		---@field [1]? table<string, verticalitySelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? verticalitySelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `verticalitySelector:SetEnabled(...)` was called
+		---@field loaded? verticalitySelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? verticalitySelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? verticalitySelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `verticalitySelector:SetSelected(...)` was called or an option was clicked or cleared
+
+			---@class verticalitySelector_listener_loaded : indexedEventHandler
+			---@field handler verticalitySelector_handler_loaded Handler function to register for call
+
+				---@alias verticalitySelector_handler_loaded
+				---| fun(self: verticalitySelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+
+			---@class verticalitySelector_listener_saved : indexedEventHandler
+			---@field handler verticalitySelector_handler_saved Handler function to register for call
+
+				---@alias verticalitySelector_handler_saved
+				---| fun(self: verticalitySelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+
+			---@class verticalitySelector_listener_changed : indexedEventHandler
+			---@field handler verticalitySelector_handler_changed Handler function to register for call
+
+				---@alias verticalitySelector_handler_changed
+				---| fun(self: verticalitySelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `verticalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class verticalitySelector_listener_enabled : indexedEventHandler
+			---@field handler verticalitySelector_handler_enabled Handler function to register for call
+
+				---@alias verticalitySelector_handler_enabled
+				---| fun(self: verticalitySelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `verticalitySelector:SetEnabled(...)` was called<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class verticalitySelector_listener : indexedEventHandler
+			---@field handler verticalitySelector_handler Handler function to register for call
+
+				---@alias verticalitySelector_handler
+				---| fun(self: verticalitySelector, ...: any) Called when a custom event is invoked<p>@*param* `self` verticalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class verticalitySelector : datamanager
+	---@field items selectorBinary[]
+	local _ = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_verticalitySelector]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_verticalitySelector "VerticalitySelector"
+
+		--[ Events ]
+
+			---Register a listener for a "loaded" widget event
+			---@param handler verticalitySelector_handler_loaded Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler verticalitySelector_handler_saved Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler verticalitySelector_handler_changed Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_changed(handler, callIndex) end
+
+			---Register a listener for an "enabled" widget event
+			---@param handler verticalitySelector_handler_enabled Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+		--[ Data ]
+
+		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _:SaveData(data, silent) end
+
+		---Get the currently stored data via the specified reader utility
+		---@return verticalitySelectorValueTypes|nil
+		function _:GetData() end
+
+		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:SetData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return verticalitySelectorValueTypes|nil default
+		function _:GetDefault() end
+
+		---Set the default value
+		---***
+		---@param selected integer|verticalitySelectorValueTypes|nil | ***Default:*** *no change*
+		---<p></p>
+		function _:SetDefault(selected) end
+
+		---Returns the value of the currently selected item or nil if there is no selection
+		---@return verticalitySelectorValueTypes|nil selected
+		---<p></p>
+		function _:GetValue() end
+
+		---Set the specified item as selected
+		---***
+		---@param selected integer|verticalitySelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
+		---<p></p>
+		function _:SetValue(selected, user, silent) end
+
+	return _
+end
+
+---Create a non-GUI horizontality selector datamanager widget instance (managing a set of binary datamanager child widgets) with horizontal text justification data management logic
+---@param t? horizontalitySelector_options Optional parameters
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a horizontality selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
+---@return horizontalitySelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
+function wt.CreateHorizontalitySelector(t, ancestor)
+
+	--| Parameters
+
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
+		---***
+		---@return boolean data
+		local function reader() return false end ---@cast reader +?
+
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
+		---***
+		---@param data? boolean
+		local function writer(data) end ---@cast writer +?
+
+	---Optional parameters
+	---@class horizontalitySelector_options : datamanager_options, selector_options_base
+	---@field listeners? horizontalitySelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): value: integer|horizontalitySelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
+	---@field saveData? fun(value?: horizontalitySelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
+	---@field value? integer|horizontalitySelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field default? integer|horizontalitySelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
+	t = { reader = reader, writer = writer, }
+
+		---@alias horizontalitySelectorValueTypes
+		---| FramePoint
+		---| JustifyHorizontal
+		---| JustifyVertical
+		---| FrameStrata
+
+		---@class horizontalitySelector_listeners : datamanager_listeners
+		---@field [1]? table<string, horizontalitySelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? horizontalitySelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `horizontalitySelector:SetEnabled(...)` was called
+		---@field loaded? horizontalitySelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? horizontalitySelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? horizontalitySelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `horizontalitySelector:SetSelected(...)` was called or an option was clicked or cleared
+
+			---@class horizontalitySelector_listener_loaded : indexedEventHandler
+			---@field handler horizontalitySelector_handler_loaded Handler function to register for call
+
+				---@alias horizontalitySelector_handler_loaded
+				---| fun(self: horizontalitySelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+
+			---@class horizontalitySelector_listener_saved : indexedEventHandler
+			---@field handler horizontalitySelector_handler_saved Handler function to register for call
+
+				---@alias horizontalitySelector_handler_saved
+				---| fun(self: horizontalitySelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+
+			---@class horizontalitySelector_listener_changed : indexedEventHandler
+			---@field handler horizontalitySelector_handler_changed Handler function to register for call
+
+				---@alias horizontalitySelector_handler_changed
+				---| fun(self: horizontalitySelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `horizontalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class horizontalitySelector_listener_enabled : indexedEventHandler
+			---@field handler horizontalitySelector_handler_enabled Handler function to register for call
+
+				---@alias horizontalitySelector_handler_enabled
+				---| fun(self: horizontalitySelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `horizontalitySelector:SetEnabled(...)` was called<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class horizontalitySelector_listener : indexedEventHandler
+			---@field handler horizontalitySelector_handler Handler function to register for call
+
+				---@alias horizontalitySelector_handler
+				---| fun(self: horizontalitySelector, ...: any) Called when a custom event is invoked<p>@*param* `self` horizontalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class horizontalitySelector : datamanager
+	---@field items selectorBinary[]
+	local _ = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_horizontalitySelector]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_horizontalitySelector "HorizontalitySelector"
+
+		--[ Events ]
+
+			---Register a listener for a "loaded" widget event
+			---@param handler horizontalitySelector_handler_loaded Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler horizontalitySelector_handler_saved Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler horizontalitySelector_handler_changed Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_changed(handler, callIndex) end
+
+			---Register a listener for an "enabled" widget event
+			---@param handler horizontalitySelector_handler_enabled Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+		--[ Data ]
+
+		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _:SaveData(data, silent) end
+
+		---Get the currently stored data via the specified reader utility
+		---@return horizontalitySelectorValueTypes|nil
+		function _:GetData() end
+
+		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:SetData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return horizontalitySelectorValueTypes|nil default
+		function _:GetDefault() end
+
+		---Set the default value
+		---***
+		---@param selected integer|horizontalitySelectorValueTypes|nil | ***Default:*** *no change*
+		---<p></p>
+		function _:SetDefault(selected) end
+
+		---Returns the value of the currently selected item or nil if there is no selection
+		---@return horizontalitySelectorValueTypes|nil selected
+		---<p></p>
+		function _:GetValue() end
+
+		---Set the specified item as selected
+		---***
+		---@param selected integer|horizontalitySelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
+		---<p></p>
+		function _:SetValue(selected, user, silent) end
+
+	return _
+end
+
+---Create a non-GUI strata selector datamanager widget instance (managing a set of binary datamanager child widgets) with frame strata data management logic
+---@param t? strataSelector_options Optional parameters
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a strata selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
+---@return strataSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
+function wt.CreateStrataSelector(t, ancestor)
+
+	--| Parameters
+
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
+		---***
+		---@return boolean data
+		local function reader() return false end ---@cast reader +?
+
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
+		---***
+		---@param data? boolean
+		local function writer(data) end ---@cast writer +?
+
+	---Optional parameters
+	---@class strataSelector_options : datamanager_options, selector_options_base
+	---@field listeners? strataSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): value: integer|strataSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
+	---@field saveData? fun(value?: strataSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
+	---@field value? integer|strataSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field default? integer|strataSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
+	t = { reader = reader, writer = writer, }
+
+		---@alias strataSelectorValueTypes
+		---| FramePoint
+		---| JustifyHorizontal
+		---| JustifyVertical
+		---| FrameStrata
+
+		---@class strataSelector_listeners : datamanager_listeners
+		---@field [1]? table<string, strataSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? strataSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `strataSelector:SetEnabled(...)` was called
+		---@field loaded? strataSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? strataSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? strataSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `strataSelector:SetSelected(...)` was called or an option was clicked or cleared
+
+			---@class strataSelector_listener_loaded : indexedEventHandler
+			---@field handler strataSelector_handler_loaded Handler function to register for call
+
+				---@alias strataSelector_handler_loaded
+				---| fun(self: strataSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+
+			---@class strataSelector_listener_saved : indexedEventHandler
+			---@field handler strataSelector_handler_saved Handler function to register for call
+
+				---@alias strataSelector_handler_saved
+				---| fun(self: strataSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+
+			---@class strataSelector_listener_changed : indexedEventHandler
+			---@field handler strataSelector_handler_changed Handler function to register for call
+
+				---@alias strataSelector_handler_changed
+				---| fun(self: strataSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `strataSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class strataSelector_listener_enabled : indexedEventHandler
+			---@field handler strataSelector_handler_enabled Handler function to register for call
+
+				---@alias strataSelector_handler_enabled
+				---| fun(self: strataSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `strataSelector:SetEnabled(...)` was called<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class strataSelector_listener : indexedEventHandler
+			---@field handler strataSelector_handler Handler function to register for call
+
+				---@alias strataSelector_handler
+				---| fun(self: strataSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` strataSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class strataSelector : datamanager
+	---@field items selectorBinary[]
+	local _ = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_strataSelector]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_strataSelector "StrataSelector"
+
+		--[ Events ]
+
+			---Register a listener for a "loaded" widget event
+			---@param handler strataSelector_handler_loaded Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler strataSelector_handler_saved Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler strataSelector_handler_changed Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_changed(handler, callIndex) end
+
+			---Register a listener for an "enabled" widget event
+			---@param handler strataSelector_handler_enabled Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+		--[ Data ]
+
+		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _:SaveData(data, silent) end
+
+		---Get the currently stored data via the specified reader utility
+		---@return strataSelectorValueTypes|nil
+		function _:GetData() end
+
+		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:SetData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return strataSelectorValueTypes|nil default
+		function _:GetDefault() end
+
+		---Set the default value
+		---***
+		---@param selected integer|strataSelectorValueTypes|nil | ***Default:*** *no change*
+		---<p></p>
+		function _:SetDefault(selected) end
+
+		---Returns the value of the currently selected item or nil if there is no selection
+		---@return strataSelectorValueTypes|nil selected
+		---<p></p>
+		function _:GetValue() end
+
+		---Set the specified item as selected
+		---***
+		---@param selected integer|strataSelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
+		---<p></p>
+		function _:SetValue(selected, user, silent) end
+
+	return _
+end
+
+---Create a non-GUI font selector datamanager widget instance (managing a set of binary datamanager child widgets) with font path data management logic
+---@param t? fontSelector_options Optional parameters
+---@param ancestor? selector|datamanager|widget|construct Reference to an already existing selector instance to turn into a font selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values), or an existing datamanager instance for creating the new selector, or widget instance to create its datamanager from, or a constrcut to build upon
+---@return fontSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
+function wt.CreateFontSelector(t, ancestor)
+
+	--| Parameters
+
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
+		---***
+		---@return boolean data
+		local function reader() return false end ---@cast reader +?
+
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
+		---***
+		---@param data? boolean
+		local function writer(data) end ---@cast writer +?
+
+	---Optional parameters
+	---@class fontSelector_options : datamanager_options, selector_options_base
+	---@field listeners? fontSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): value: integer|fontSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
+	---@field saveData? fun(value?: fontSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
+	---@field value? integer|fontSelectorValueTypes The item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or *option 1* if `t.clearable` is `false`
+	---@field default? integer|fontSelectorValueTypes Default value of the widget | ***Default:*** *option 1* or nil *(no selection)* if `t.clearable` is `true`
+	t = { reader = reader, writer = writer, }
+
+		---@alias fontSelectorValueTypes
+		---| FramePoint
+		---| JustifyHorizontal
+		---| JustifyVertical
+		---| FrameStrata
+
+		---@class fontSelector_listeners : datamanager_listeners
+		---@field [1]? table<string, fontSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? fontSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `fontSelector:SetEnabled(...)` was called
+		---@field loaded? fontSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? fontSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? fontSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `fontSelector:SetSelected(...)` was called or an option was clicked or cleared
+
+			---@class fontSelector_listener_loaded : indexedEventHandler
+			---@field handler fontSelector_handler_loaded Handler function to register for call
+
+				---@alias fontSelector_handler_loaded
+				---| fun(self: fontSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+
+			---@class fontSelector_listener_saved : indexedEventHandler
+			---@field handler fontSelector_handler_saved Handler function to register for call
+
+				---@alias fontSelector_handler_saved
+				---| fun(self: fontSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+
+			---@class fontSelector_listener_changed : indexedEventHandler
+			---@field handler fontSelector_handler_changed Handler function to register for call
+
+				---@alias fontSelector_handler_changed
+				---| fun(self: fontSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `fontSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class fontSelector_listener_enabled : indexedEventHandler
+			---@field handler fontSelector_handler_enabled Handler function to register for call
+
+				---@alias fontSelector_handler_enabled
+				---| fun(self: fontSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `fontSelector:SetEnabled(...)` was called<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class fontSelector_listener : indexedEventHandler
+			---@field handler fontSelector_handler Handler function to register for call
+
+				---@alias fontSelector_handler
+				---| fun(self: fontSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` fontSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class fontSelector : datamanager
+	---@field items selectorBinary[]
+	local _ = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_fontSelector]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_fontSelector "FontSelector"
+
+		--[ Events ]
+
+			---Register a listener for a "loaded" widget event
+			---@param handler fontSelector_handler_loaded Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler fontSelector_handler_saved Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler fontSelector_handler_changed Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_changed(handler, callIndex) end
+
+			---Register a listener for an "enabled" widget event
+			---@param handler fontSelector_handler_enabled Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+		--[ Data ]
+
+		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _:SaveData(data, silent) end
+
+		---Get the currently stored data via the specified reader utility
+		---@return fontSelectorValueTypes|nil
+		function _:GetData() end
+
+		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
+		---***
+		---@param data? wrappedInteger|wrappedAnchor|wrappedJustifyH|wrappedJustifyV|wrappedStrata If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:SetData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return fontSelectorValueTypes|nil default
+		function _:GetDefault() end
+
+		---Set the default value
+		---***
+		---@param selected integer|fontSelectorValueTypes|nil | ***Default:*** *no change*
+		---<p></p>
+		function _:SetDefault(selected) end
+
+		---Returns the value of the currently selected item or nil if there is no selection
+		---@return fontSelectorValueTypes|nil selected
+		---<p></p>
+		function _:GetValue() end
+
+		---Set the specified item as selected
+		---***
+		---@param selected integer|fontSelectorValueTypes|nil The index or the value of the item to be set as selected | ***Default:*** *no selection:* `nil`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "selected" event and call registered listeners | ***Default:*** `false`
 		---<p></p>
@@ -4020,7 +4608,7 @@ function wt.CreateMultiselector(t, ancestor)
 		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
 		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *current value*
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _.saveData(data, silent) end
+		function _:SaveData(data, silent) end
 
 		---Get the currently stored data via the specified reader utility
 		---@return boolean[]|nil

@@ -1875,17 +1875,6 @@ local function addInternal_selector_updated(typename, handler)
 end
 
 local itemsets = {
-	anchor = {
-		{ name = wt.strings.points_top_left, value = "TOPLEFT" },
-		{ name = wt.strings.points_top_center, value = "TOP" },
-		{ name = wt.strings.points_top_right, value = "TOPRIGHT" },
-		{ name = wt.strings.points_left, value = "LEFT" },
-		{ name = wt.strings.points_center, value = "CENTER" },
-		{ name = wt.strings.points_right, value = "RIGHT" },
-		{ name = wt.strings.points_bottom_left, value = "BOTTOMLEFT" },
-		{ name = wt.strings.points_bottom_center, value = "BOTTOM" },
-		{ name = wt.strings.points_bottom_right, value = "BOTTOMRIGHT" },
-	},
 	justifyH = {
 		{ name = wt.strings.points_left, value = "LEFT" },
 		{ name = wt.strings.points_center, value = "CENTER" },
@@ -1913,28 +1902,10 @@ function baseBuilders.Selector(selector, typename)
 	local typenameMixin = "List" ---@type typename_list
 	mergeBase(typename, typenameMixin)
 
-	list_added[typename] = {}
-
 	--[ Items ]
 
 	local typenameItem = "SelectorBinary" ---@type typename_selectorBinary
 	progenitors[typenameItem] = "Binary" ---@type typename_binary
-
-	local lockout_updated = {} ---@type table<datamanager, true>
-	local handlers_updated = {} ---@type table<datamanager, selector_handler_updated[]>
-	assignAddListener(selector, "updated", handlers_updated)
-
-	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user)
-		local parent = widget_parent[item] ---@cast parent selector
-		local index = list_indexes[item]
-		local onSelect = selector_items[parent][index].onSelect
-
-		parent:SetValue(index, user, silent)
-
-		if value and user and onSelect then onSelect() end
-	end)
-
-	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @as selectorBinary ]]):SetValue(false, false, silent) end)
 
 	addInternal_list_recounted(typename, function(self, silent)
 		local count = #selector_items[self]
@@ -1942,29 +1913,143 @@ function baseBuilders.Selector(selector, typename)
 		if #list_items[self] ~= count then self:SetCount(count, silent) end
 	end)
 
-	function selector:UpdateItems(items, silent)
-		if type(items) ~= "table" then return end
+	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @as selectorBinary ]]):SetValue(false, false, silent) end)
 
-		local count = #items
-		local selectorItems = selector_items[self]
+	addInternal_datamanager_changed(typename, function(self, silent, value, user)
+		local items = list_items[self] ---@type selectorBinary[]
 
-		if not selectorItems then
-			selectorItems = {}
-			selector_items[self] = selectorItems
-		end
+		for i = 1, #items do items[i]:SetValue(i == value, user, silent) end
+	end)
 
-		for i = 1, count do
-			local onSelect = items[i].onSelect
+	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user)
+		local parent = widget_parent[item] ---@cast parent selector
+		local index = list_indexes[item]
 
-			if type(onSelect) == "function" then selectorItems[i].onSelect = onSelect end
-		end
+		if value then parent:SetValue(index, user, silent) end
+	end)
+
+	--[ Value ]
+
+	selector_clearable = {}
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+end
+
+---@param selector anchorSelector
+function baseBuilders.AnchorSelector(selector, typename)
+	local values = {
+		"TOPLEFT",
+		"TOP",
+		"TOPRIGHT",
+		"LEFT",
+		"CENTER",
+		"RIGHT",
+		"BOTTOMLEFT",
+		"BOTTOM",
+		"BOTTOMRIGHT",
+	}
+
+	--[ Value ]
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+
+	--ADD special selector init
+end
+
+---@param selector horizontalitySelector
+function baseBuilders.HorizontalitySelector(selector, typename)
+
+	--[ Value ]
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+
+	--ADD special selector init
+end
+
+---@param selector verticalitySelector
+function baseBuilders.VerticalitySelector(selector, typename)
+
+	--[ Value ]
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+
+	--ADD special selector init
+end
+
+---@param selector strataSelector
+function baseBuilders.StrataSelector(selector, typename)
+
+	--[ Value ]
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+
+	--ADD special selector init
+end
+
+---@param selector fontSelector
+function baseBuilders.FontSelector(selector, typename)
+
+	--[ Value ]
+
+	function selector:Verify(value)
+		value = type(value) == "number" and Clamp(math.floor(value), 1, #list_items[self]) or nil
+
+		return value and value or not selector_clearable[self] and value or nil
+	end
+
+	--ADD special selector init
+end
+
+---@param multiselector multiselector
+function baseBuilders.Multiselector(multiselector, typename)
+	local typenameMixin = "List" ---@type typename_list
+	mergeBase(typename, typenameMixin)
+
+	--[ Items ]
+
+	local typenameItem = "SelectorBinary" ---@type typename_selectorBinary
+	progenitors[typenameItem] = "Binary" ---@type typename_binary
+
+	addInternal_list_recounted(typename, function(self, silent)
+		local count = #selector_items[self]
 
 		if #list_items[self] ~= count then self:SetCount(count, silent) end
+	end)
 
-		invoke(self, lockout_updated, selector_updated, silent, handlers_updated)
+	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @as selectorBinary ]]):SetValue(false, false, silent) end)
 
-		selector:SetValue(data_value[self], false, silent)
-	end
+	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user)
+		local parent = widget_parent[item] ---@cast parent selector
+		local index = list_indexes[item]
+
+		parent:SetValue(index, user, silent)
+	end)
+
+	addInternal_datamanager_changed(typename, function(self, silent, value, user)
+		local items = list_items[self] ---@type selectorBinary[]
+
+		for i = 1, #items do items[i]:SetValue(i == value, user, silent) end
+	end)
 
 	--[ Value ]
 
@@ -1976,30 +2061,10 @@ function baseBuilders.Selector(selector, typename)
 		return value and value or not selector_clearable[self] and value or nil
 	end
 	function selector:Format(state)
-		if type(state) ~= "boolean" then state = self:GetValue() end
+		if type(state) ~= "boolean" then state = data_value[self] end
 
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
 	end
-
-	datamanager_changed[#datamanager_changed + 1] = function(self, silent, value, user)
-		local items = list_items[self] ---@type binary[]
-
-		for i = 1, #items do items[i]:SetValue(i == value, user, silent) end
-	end
-end
-
----@param specialSelector specialSelector
-function baseBuilders.SpecialSelector(specialSelector, typename)
-	local typenameMixin = "List" ---@type typename_list
-	mergeBase(typename, typenameMixin)
-
-	--ADD special selector init
-end
-
----@param multiselector multiselector
-function baseBuilders.Multiselector(multiselector, typename)
-	local typenameMixin = "List" ---@type typename_list
-	mergeBase(typename, typenameMixin)
 
 	--ADD multiselector init
 end
@@ -2031,7 +2096,7 @@ function wt.CreateSelector(t, ancestor)
 	return selector
 end
 
-progenitors.SpecialSelector = "Datamanager" ---@type typename_datamanager
+progenitors.SpecialSelector = "Selector" ---@type typename_selector
 function wt.CreateSpecialSelector(itemset, t, ancestor)
 	local typename = "SpecialSelector" ---@type typename_specialSelector
 	local specialSelector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast specialSelector specialSelector
@@ -2432,6 +2497,33 @@ function wt.CreateRadiogroup(t, selector)
 	local typename = "Radiogroup" ---@type typename_radiogroup
 
 	widget_types[radiogroup][typename] = true
+
+	
+
+	local lockout_updated = {} ---@type table<datamanager, true>
+	local handlers_updated = {} ---@type table<datamanager, selector_handler_updated[]>
+	assignAddListener(selector, "updated", handlers_updated)
+
+	function selector:UpdateItems(items, silent)
+		if type(items) ~= "table" then return end
+
+		local count = #items
+		local selectorItems = selector_items[self]
+
+		selector_items[self] = us.Clone(items)
+
+		for i = 1, count do
+			local onSelect = items[i].onSelect
+
+			if type(onSelect) == "function" then selectorItems[i].onSelect = onSelect end
+		end
+
+		if #list_items[self] ~= count then self:SetCount(count, silent) end
+
+		invoke(self, lockout_updated, selector_updated, silent, handlers_updated)
+
+		selector:SetValue(data_value[self], false, silent)
+	end
 
 	--| Shared setup
 
@@ -3111,6 +3203,82 @@ function wt.CreateDropdownRadiogroup(t, selector)
 	return dropdown
 end
 
+function wt.CreateAnchorRadiogroup(itemset, t, selector)
+	t = type(t) == "table" and t or {}
+
+	local typename = "SpecialRadiogroup" ---@type typename_specialRadiogroup
+	local typenameBase = "SpecialSelector" ---@type typename_specialSelector
+
+	if wt.IsType(selector, typenameBase) then itemset = selector:GetItemset() else selector = wt.CreateSpecialSelector(itemset, t) end
+
+	local showDefault = t.showDefault ~= false
+	local utilityMenu = t.utilityMenu ~= false
+
+	t = us.Pull(t, {
+		labels = false,
+		columns = itemset == "strata" and 8 or 3,
+		showDefault = false,
+		utilityMenu = false,
+	}) ---@cast t radiogroup_options
+
+	---@type specialRadiogroup|radiogroup
+	local specialRadiogroup = wt.CreateRadiogroup(t, selector) ---@cast specialRadiogroup -radiogroup
+
+	widget_types[specialRadiogroup][typename] = true
+
+	local labels = {
+		wt.strings.points_top_left,
+		wt.strings.points_top_center,
+		wt.strings.points_top_right,
+		wt.strings.points_left,
+		wt.strings.points_center,
+		wt.strings.points_right,
+		wt.strings.points_bottom_left,
+		wt.strings.points_bottom_center,
+		wt.strings.points_bottom_right,
+	}
+
+	--[ UX ]
+
+	--| Tooltip
+
+	if type(t.tooltip) == "table" then
+		local defaultValue
+		if showDefault then defaultValue = crc(data_default[specialRadiogroup], "FFFFFFFF") end
+
+		local frames = { specialRadiogroup.frame }
+		for i = 1, #specialRadiogroup.items do table.insert(frames, specialRadiogroup.items[i].frame) end
+
+		wt.AddWidgetTooltipLines(frames, defaultValue, utilityMenu)
+	end
+
+	--| Utility menu
+
+	local title = type(t.title) == "string" and t.title or type(t.name) == "string" and t.name or typename
+
+	if utilityMenu then wt.CreateContextMenu({
+		triggers = { {
+			frame = specialRadiogroup.frame,
+			condition = function() return widget_enabled[specialRadiogroup] end,
+		}, },
+		load = function(menu)
+			wt.CreateMenuTextline(menu, { text = title })
+			wt.CreateMenuButton(menu, {
+				title = wt.strings.value_copy,
+				action = function() wt.clipboard[specialRadiogroup:GetItemset()] = { value = data_value[specialRadiogroup] } end
+			})
+			wt.CreateMenuButton(menu, {
+				title = wt.strings.value_paste,
+				action = function() specialRadiogroup:SetValue(wt.clipboard[specialRadiogroup:GetItemset()].value, true) end
+			}):SetEnabled(wt.clipboard[specialRadiogroup:GetItemset()] ~= nil)
+			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() specialRadiogroup:Revert() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() specialRadiogroup:Reset() end }) end
+		end
+	}) end
+
+	return specialRadiogroup
+end
+
 function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	t = type(t) == "table" and t or {}
 
@@ -3133,6 +3301,18 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	local specialRadiogroup = wt.CreateRadiogroup(t, selector) ---@cast specialRadiogroup -radiogroup
 
 	widget_types[specialRadiogroup][typename] = true
+
+	local labels = {
+		wt.strings.points_top_left,
+		wt.strings.points_top_center,
+		wt.strings.points_top_right,
+		wt.strings.points_left,
+		wt.strings.points_center,
+		wt.strings.points_right,
+		wt.strings.points_bottom_left,
+		wt.strings.points_bottom_center,
+		wt.strings.points_bottom_right,
+	}
 
 	--[ UX ]
 
