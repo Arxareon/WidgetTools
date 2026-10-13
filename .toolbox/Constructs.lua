@@ -2,6 +2,8 @@ local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "
 
 if not wt then return end
 
+local s = wt.strings
+
 local rs = WidgetTools.resources
 local us = WidgetTools.utilities
 local ds = WidgetTools.debugging
@@ -1384,7 +1386,7 @@ function baseBuilders.Binary(binary)
 	function binary:Format(state)
 		if type(state) ~= "boolean" then state = binary:GetValue() end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
 	function binary:Flip(user, silent) binary:SetValue(not binary:GetValue(), user, silent) end
@@ -1584,13 +1586,13 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.binary = checkbox:GetValue() end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.binary = checkbox:GetValue() end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() checkbox:SetValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() checkbox:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() checkbox:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() checkbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() checkbox:Reset() end }) end
 		end
 	}) end
 
@@ -1704,13 +1706,13 @@ local function setUpClassicToggle(toggle, template, frame, height, typeTag, labe
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.binary = data_value[toggle] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.binary = data_value[toggle] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() toggle:SetValue(wt.clipboard.binary, true) end
 			}):SetEnabled(wt.clipboard.binary ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() toggle:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() toggle:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() toggle:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() toggle:Reset() end }) end
 		end
 	}) end
 
@@ -1876,24 +1878,24 @@ end
 
 local itemsets = {
 	justifyH = {
-		{ name = wt.strings.points_left, value = "LEFT" },
-		{ name = wt.strings.points_center, value = "CENTER" },
-		{ name = wt.strings.points_right, value = "RIGHT" },
+		{ name = s.points_left, value = "LEFT" },
+		{ name = s.points_center, value = "CENTER" },
+		{ name = s.points_right, value = "RIGHT" },
 	},
 	justifyV = {
-		{ name = wt.strings.points_top_center, value = "TOP" },
-		{ name = wt.strings.points_center, value = "MIDDLE" },
-		{ name = wt.strings.points_bottom_center, value = "BOTTOM" },
+		{ name = s.points_top_center, value = "TOP" },
+		{ name = s.points_center, value = "MIDDLE" },
+		{ name = s.points_bottom_center, value = "BOTTOM" },
 	},
 	strata = {
-		{ name = wt.strings.strata_lowest, value = "BACKGROUND" },
-		{ name = wt.strings.strata_lower, value = "LOW" },
-		{ name = wt.strings.strata_low, value = "MEDIUM" },
-		{ name = wt.strings.strata_lowMid, value = "HIGH" },
-		{ name = wt.strings.strata_highMid, value = "DIALOG" },
-		{ name = wt.strings.strata_high, value = "FULLSCREEN" },
-		{ name = wt.strings.strata_higher, value = "FULLSCREEN_DIALOG" },
-		{ name = wt.strings.strata_highest, value = "TOOLTIP" },
+		{ name = s.strata_lowest, value = "BACKGROUND" },
+		{ name = s.strata_lower, value = "LOW" },
+		{ name = s.strata_low, value = "MEDIUM" },
+		{ name = s.strata_lowMid, value = "HIGH" },
+		{ name = s.strata_highMid, value = "DIALOG" },
+		{ name = s.strata_high, value = "FULLSCREEN" },
+		{ name = s.strata_higher, value = "FULLSCREEN_DIALOG" },
+		{ name = s.strata_highest, value = "TOOLTIP" },
 	}
 }
 
@@ -2063,7 +2065,7 @@ function baseBuilders.Multiselector(multiselector, typename)
 	function selector:Format(state)
 		if type(state) ~= "boolean" then state = data_value[self] end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), state and "FFAAAAFF" or "FFFFAA66")
+		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
 	--ADD multiselector init
@@ -2648,13 +2650,13 @@ function wt.CreateRadiogroup(t, selector)
 		triggers = openTriggers,
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.selection = { index = data_value[radiogroup] } end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.selection = { index = data_value[radiogroup] } end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() radiogroup:SetValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() radiogroup:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() radiogroup:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() radiogroup:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() radiogroup:Reset() end }) end
 		end
 	}) end
 
@@ -2785,8 +2787,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		append = t.append,
 		title = "…",
 		tooltip = { lines = {
-			{ text = wt.strings.dropdown_selected, },
-			{ text = "\n" .. wt.strings.dropdown_open, },
+			{ text = s.dropdown_selected, },
+			{ text = "\n" .. s.dropdown_open, },
 		} },
 		position = { anchor = "BOTTOM", offset = { y = 2 }, },
 		width = t.width - (t.cycleButtons ~= false and 46 or 0),
@@ -2921,8 +2923,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			title = "◄",
 			titleOffset = { x = -1, },
 			tooltip = {
-				title = wt.strings.dropdown_previous_label,
-				lines = { { text = wt.strings.dropdown_previous_tooltip, }, },
+				title = s.dropdown_previous_label,
+				lines = { { text = s.dropdown_previous_tooltip, }, },
 			},
 			position = { anchor = "BOTTOMLEFT", offset = { x = 2, y = 2 }, },
 			width = 24,
@@ -3000,8 +3002,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 			title = "►",
 			titleOffset = { x = 1, },
 			tooltip = {
-				title = wt.strings.dropdown_next_label,
-				lines = { { text = wt.strings.dropdown_next_tooltip, }, }
+				title = s.dropdown_next_label,
+				lines = { { text = s.dropdown_next_tooltip, }, }
 			},
 			position = { anchor = "BOTTOMRIGHT", offset = { x = -2, y = 2 }, },
 			width = 24,
@@ -3166,14 +3168,14 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.selection = { index = data_value[dropdown] } end })
-			if clearable then wt.CreateMenuButton(menu, { title = wt.strings.dropdown_clear, action = function() dropdown:SetText(nil, true) end }) end
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.selection = { index = data_value[dropdown] } end })
+			if clearable then wt.CreateMenuButton(menu, { title = s.dropdown_clear, action = function() dropdown:SetText(nil, true) end }) end
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() dropdown:SetValue(wt.clipboard.selection.index, true) end
 			}):SetEnabled(wt.clipboard.selection ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() dropdown:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() dropdown:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() dropdown:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() dropdown:Reset() end }) end
 		end
 	}) end
 
@@ -3227,15 +3229,15 @@ function wt.CreateAnchorRadiogroup(itemset, t, selector)
 	widget_types[specialRadiogroup][typename] = true
 
 	local labels = {
-		wt.strings.points_top_left,
-		wt.strings.points_top_center,
-		wt.strings.points_top_right,
-		wt.strings.points_left,
-		wt.strings.points_center,
-		wt.strings.points_right,
-		wt.strings.points_bottom_left,
-		wt.strings.points_bottom_center,
-		wt.strings.points_bottom_right,
+		s.points_top_left,
+		s.points_top_center,
+		s.points_top_right,
+		s.points_left,
+		s.points_center,
+		s.points_right,
+		s.points_bottom_left,
+		s.points_bottom_center,
+		s.points_bottom_right,
 	}
 
 	--[ UX ]
@@ -3264,15 +3266,15 @@ function wt.CreateAnchorRadiogroup(itemset, t, selector)
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_copy,
+				title = s.value_copy,
 				action = function() wt.clipboard[specialRadiogroup:GetItemset()] = { value = data_value[specialRadiogroup] } end
 			})
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() specialRadiogroup:SetValue(wt.clipboard[specialRadiogroup:GetItemset()].value, true) end
 			}):SetEnabled(wt.clipboard[specialRadiogroup:GetItemset()] ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() specialRadiogroup:Revert() end })
-			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() specialRadiogroup:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() specialRadiogroup:Revert() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() specialRadiogroup:Reset() end }) end
 		end
 	}) end
 
@@ -3303,15 +3305,15 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	widget_types[specialRadiogroup][typename] = true
 
 	local labels = {
-		wt.strings.points_top_left,
-		wt.strings.points_top_center,
-		wt.strings.points_top_right,
-		wt.strings.points_left,
-		wt.strings.points_center,
-		wt.strings.points_right,
-		wt.strings.points_bottom_left,
-		wt.strings.points_bottom_center,
-		wt.strings.points_bottom_right,
+		s.points_top_left,
+		s.points_top_center,
+		s.points_top_right,
+		s.points_left,
+		s.points_center,
+		s.points_right,
+		s.points_bottom_left,
+		s.points_bottom_center,
+		s.points_bottom_right,
 	}
 
 	--[ UX ]
@@ -3340,15 +3342,15 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_copy,
+				title = s.value_copy,
 				action = function() wt.clipboard[specialRadiogroup:GetItemset()] = { value = data_value[specialRadiogroup] } end
 			})
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() specialRadiogroup:SetValue(wt.clipboard[specialRadiogroup:GetItemset()].value, true) end
 			}):SetEnabled(wt.clipboard[specialRadiogroup:GetItemset()] ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() specialRadiogroup:Revert() end })
-			if showDefault then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() specialRadiogroup:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() specialRadiogroup:Revert() end })
+			if showDefault then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() specialRadiogroup:Reset() end }) end
 		end
 	}) end
 
@@ -3479,7 +3481,7 @@ function wt.CreateCheckgroup(t, selector)
 
 			for i = 1, #t.items do
 				defaultValue = defaultValue .. "\n" .. crc(t.items[i].title, "FFFFFFFF") .. crc(": ", "FF999999") .. crc(
-					(default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):Lower(), default[i] and "FFAAAAFF" or "FFFFAA66"
+					(default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), default[i] and "FFAAAAFF" or "FFFFAA66"
 				)
 			end
 		end
@@ -3508,13 +3510,13 @@ function wt.CreateCheckgroup(t, selector)
 		triggers = openTriggers,
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.selections = { states = data_value[checkgroup] } end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.selections = { states = data_value[checkgroup] } end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() checkgroup:SetValue(wt.clipboard.selections.states, true) end
 			}):SetEnabled(wt.clipboard.selections ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() checkgroup:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() checkgroup:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() checkgroup:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() checkgroup:Reset() end }) end
 		end
 	}) end
 
@@ -3719,13 +3721,13 @@ local function setUpSinglelineEditbox(editbox, title, t)
 		}, },
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.textual = data_value[editbox] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.textual = data_value[editbox] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() editbox:SetValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() editbox:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() editbox:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() editbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() editbox:Reset() end }) end
 		end
 	}) end
 end
@@ -3959,13 +3961,13 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.textual = data_value[editbox] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.textual = data_value[editbox] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() editbox:SetValue(wt.clipboard.textual, true) end
 			}):SetEnabled(wt.clipboard.textual ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() editbox:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() editbox:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() editbox:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() editbox:Reset() end }) end
 		end
 	}) end
 
@@ -4030,7 +4032,7 @@ function wt.CreateCopybox(t) --FIX lite
 		name = "Textline",
 		title = title,
 		label = false,
-		tooltip = { lines = { { text = wt.strings.copyBox_tooltip, }, } },
+		tooltip = { lines = { { text = s.copyBox_tooltip, }, } },
 		position = { anchor = "BOTTOMLEFT", },
 		width = width,
 		height = height,
@@ -4150,7 +4152,7 @@ function wt.CreatePopupInputbox(t) --FIX lite
 				name = "TextInputBox",
 				title = t.title,
 				label = t.title ~= nil,
-				tooltip = { title = wt.strings.popupInput_title, lines = { { text = wt.strings.popupInput_tooltip }, } },
+				tooltip = { title = s.popupInput_title, lines = { { text = s.popupInput_tooltip }, } },
 				width = panel:GetWidth() - 24,
 				focusOnShow = true,
 				events = {
@@ -4404,10 +4406,10 @@ function wt.CreateSlider(t, ancestor, lite)
 	--| Decrease button
 
 	wt.AddTooltip(template.Back, {
-		title = wt.strings.slider_decrease_label,
+		title = s.slider_decrease_label,
 		lines = {
-			{ text = wt.strings.slider_decrease_tooltip[1]:gsub("#VALUE", step), },
-			altStep and { text = wt.strings.slider_decrease_tooltip[2]:gsub("#VALUE", altStep), } or nil,
+			{ text = s.slider_decrease_tooltip[1]:gsub("#VALUE", step), },
+			altStep and { text = s.slider_decrease_tooltip[2]:gsub("#VALUE", altStep), } or nil,
 		},
 		anchor = "ANCHOR_TOPLEFT",
 	})
@@ -4417,10 +4419,10 @@ function wt.CreateSlider(t, ancestor, lite)
 	--| Increase button
 
 	wt.AddTooltip(template.Forward, {
-		title = wt.strings.slider_increase_label,
+		title = s.slider_increase_label,
 		lines = {
-			{ text = wt.strings.slider_increase_tooltip[1]:gsub("#VALUE", step), },
-			altStep and { text = wt.strings.slider_increase_tooltip[2]:gsub("#VALUE", altStep), } or nil,
+			{ text = s.slider_increase_tooltip[1]:gsub("#VALUE", step), },
+			altStep and { text = s.slider_increase_tooltip[2]:gsub("#VALUE", altStep), } or nil,
 		},
 		anchor = "ANCHOR_TOPLEFT",
 	})
@@ -4447,8 +4449,8 @@ function wt.CreateSlider(t, ancestor, lite)
 			name = "Valuebox",
 			label = false,
 			tooltip = {
-				title = wt.strings.slider_value_label,
-				lines = { { text = wt.strings.slider_value_tooltip, }, }
+				title = s.slider_value_label,
+				lines = { { text = s.slider_value_tooltip, }, }
 			},
 			position = {
 				anchor = "TOP",
@@ -4585,13 +4587,13 @@ function wt.CreateSlider(t, ancestor, lite)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.numeric = data_value[slider] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() slider:SetValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() slider:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() slider:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() slider:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() slider:Reset() end }) end
 		end
 	}) end
 
@@ -4727,10 +4729,10 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 			name = "SelectPrevious",
 			title = "-",
 			tooltip = {
-				title = wt.strings.slider_decrease_label,
+				title = s.slider_decrease_label,
 				lines = {
-					{ text = wt.strings.slider_decrease_tooltip[1]:gsub("#VALUE", step), },
-					altStep and { text = wt.strings.slider_decrease_tooltip[2]:gsub("#VALUE", altStep), } or nil,
+					{ text = s.slider_decrease_tooltip[1]:gsub("#VALUE", step), },
+					altStep and { text = s.slider_decrease_tooltip[2]:gsub("#VALUE", altStep), } or nil,
 				}
 			},
 			position = {
@@ -4804,10 +4806,10 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 			name = "SelectNext",
 			title = "+",
 			tooltip = {
-				title = wt.strings.slider_increase_label,
+				title = s.slider_increase_label,
 				lines = {
-					{ text = wt.strings.slider_increase_tooltip[1]:gsub("#VALUE", step), },
-					altStep and { text = wt.strings.slider_increase_tooltip[2]:gsub("#VALUE", altStep), } or nil,
+					{ text = s.slider_increase_tooltip[1]:gsub("#VALUE", step), },
+					altStep and { text = s.slider_increase_tooltip[2]:gsub("#VALUE", altStep), } or nil,
 				}
 			},
 			position = {
@@ -4895,8 +4897,8 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 			name = "Valuebox",
 			label = false,
 			tooltip = {
-				title = wt.strings.slider_value_label,
-				lines = { { text = wt.strings.slider_value_tooltip, }, }
+				title = s.slider_value_label,
+				lines = { { text = s.slider_value_tooltip, }, }
 			},
 			position = {
 				anchor = "TOP",
@@ -4999,13 +5001,13 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 		}, },
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.numeric = data_value[slider] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.numeric = data_value[slider] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() slider:SetValue(wt.clipboard.numeric, true) end
 			}):SetEnabled(wt.clipboard.numeric ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() slider:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() slider:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() slider:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() slider:Reset() end }) end
 		end
 	}) end
 
@@ -5209,8 +5211,8 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		name = "PickerButton",
 		label = false,
 		tooltip = {
-			title = wt.strings.color_picker_label,
-			lines = { { text = wt.strings.color_picker_tooltip:gsub("#ALPHA", t.value.a and wt.strings.color_picker_alpha or ""), }, }
+			title = s.color_picker_label,
+			lines = { { text = s.color_picker_tooltip:gsub("#ALPHA", t.value.a and s.color_picker_alpha or ""), }, }
 		},
 		position = { offset = { y = -14 } },
 		width = 34,
@@ -5284,10 +5286,10 @@ function wt.CreateColorpicker(t, ancestor, lite)
 	colorpicker.hexBox = wt.CreateCustomEditbox({
 		parentFrame = frame,
 		name = "HEXBox",
-		title = wt.strings.color_hex_label,
+		title = s.color_hex_label,
 		label = false,
 		tooltip = { lines = { {
-			text = wt.strings.color_hex_tooltip .. "\n\n" .. crc(wt.strings.example .. ": ", "FF66FF66") .. crc(
+			text = s.color_hex_tooltip .. "\n\n" .. crc(s.example .. ": ", "FF66FF66") .. crc(
 				"#2266BB" .. (t.value.a and "AA" or ""), "FFFFFFFF"
 			),
 		}, } },
@@ -5378,13 +5380,13 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		},
 		load = function(menu)
 			wt.CreateMenuTextline(menu, { text = title })
-			wt.CreateMenuButton(menu, { title = wt.strings.value_copy, action = function() wt.clipboard.color = data_value[colorpicker] end })
+			wt.CreateMenuButton(menu, { title = s.value_copy, action = function() wt.clipboard.color = data_value[colorpicker] end })
 			wt.CreateMenuButton(menu, {
-				title = wt.strings.value_paste,
+				title = s.value_paste,
 				action = function() colorpicker:SetValue(wt.clipboard.color, true) end
 			}):SetEnabled(wt.clipboard.color ~= nil)
-			wt.CreateMenuButton(menu, { title = wt.strings.value_revert, action = function() colorpicker:Revert() end })
-			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = wt.strings.value_restore, action = function() colorpicker:Reset() end }) end
+			wt.CreateMenuButton(menu, { title = s.value_revert, action = function() colorpicker:Revert() end })
+			if t.showDefault ~= false then wt.CreateMenuButton(menu, { title = s.value_restore, action = function() colorpicker:Reset() end }) end
 		end
 	}) end
 
@@ -5557,8 +5559,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 	panel.panel = wt.CreatePanel({
 		parentFrame = t.canvas,
 		name = "Position",
-		title = wt.strings.position_title,
-		description = wt.strings.position_description[t.setMovable and "movable" or "static"]:gsub("#FRAME", t.name),
+		title = s.position_title,
+		description = s.position_description[t.setMovable and "movable" or "static"]:gsub("#FRAME", t.name),
 		arrange = {},
 		arrangement = {},
 		initialize = function(_, panelFrame)
@@ -5646,11 +5648,11 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				local applyButton, applyMenu = wt.CreatePopupMenu({
 					parentFrame = panelFrame,
 					name = "ApplyPreset",
-					title = wt.strings.presets_apply_label,
-					tooltip = { lines = { { text = wt.strings.presets_apply_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.presets_apply_label,
+					tooltip = { lines = { { text = s.presets_apply_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = {},
 					load = function(menu)
-						wt.CreateMenuTextline(menu, { text = wt.strings.presets_apply_select, })
+						wt.CreateMenuTextline(menu, { text = s.presets_apply_select, })
 
 						for i = 1, #panel.presets do wt.CreateMenuButton(menu, {
 							title = panel.presets[i].title,
@@ -5705,17 +5707,17 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					--| Widgets
 
 					local savePopup = wt.RegisterPopupDialog(addon .. "_SAVE_PRESET", {
-						text = wt.strings.presets_save_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
-						accept = wt.strings.override,
+						text = s.presets_save_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						accept = s.override,
 						onAccept = panel.SaveCustomPreset,
 					})
 
 					panel.widgets.presets.save = wt.CreateButton({
 						parentFrame = panelFrame,
 						name = "SavePreset",
-						title = wt.strings.presets_save_label:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title),
+						title = s.presets_save_label:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title),
 						tooltip = { lines = {
-							{ text = wt.strings.presets_save_tooltip:gsub("#FRAME", t.name):gsub("#CUSTOM", panel.presets[t.presets.custom.index].title), },
+							{ text = s.presets_save_tooltip:gsub("#FRAME", t.name):gsub("#CUSTOM", panel.presets[t.presets.custom.index].title), },
 						} },
 						arrange = { wrap = false, },
 						width = 170,
@@ -5725,16 +5727,16 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					})
 
 					local resetPopup = wt.RegisterPopupDialog(addon .. "_RESET_PRESET_" .. panelFrame:GetName(), {
-						text = wt.strings.presets_reset_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
-						accept = wt.strings.override,
+						text = s.presets_reset_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						accept = s.override,
 						onAccept = panel.ResetCustomPreset,
 					})
 
 					panel.widgets.presets.reset = wt.CreateButton({
 						parentFrame = panelFrame,
 						name = "ResetPreset",
-						title = wt.strings.presets_reset_label:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title),
-						tooltip = { lines = { { text = wt.strings.presets_reset_tooltip:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title), }, } },
+						title = s.presets_reset_label:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title),
+						tooltip = { lines = { { text = s.presets_reset_tooltip:gsub("#CUSTOM", panel.presets[t.presets.custom.index].title), }, } },
 						arrange = { wrap = false, },
 						width = 170,
 						height = 26,
@@ -5749,8 +5751,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				relativePoint = wt.CreateSpecialRadiogroup("anchor", {
 					parentFrame = panelFrame,
 					name = "RelativePoint",
-					title = wt.strings.position_relativePoint_label,
-					tooltip = { lines = { { text = wt.strings.position_relativePoint_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.position_relativePoint_label,
+					tooltip = { lines = { { text = s.position_relativePoint_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = {},
 					width = 140,
 					dependencies = t.dependencies,
@@ -5770,8 +5772,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				anchor = wt.CreateSpecialRadiogroup("anchor", {
 					parentFrame = panelFrame,
 					name = "AnchorPoint",
-					title = wt.strings.position_anchor_label,
-					tooltip = { lines = { { text = wt.strings.position_anchor_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.position_anchor_label,
+					tooltip = { lines = { { text = s.position_anchor_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = { wrap = false, },
 					width = 140,
 					dependencies = t.dependencies,
@@ -5798,8 +5800,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				keepInPlace = wt.CreateCheckbox({
 					parentFrame = panelFrame,
 					name = "KeepInPlace",
-					title = wt.strings.position_keepInPlace_label,
-					tooltip = { lines = { { text = wt.strings.position_keepInPlace_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.position_keepInPlace_label,
+					tooltip = { lines = { { text = s.position_keepInPlace_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = { wrap = false, },
 					dependencies = t.dependencies,
 					getData = function() return settingsData.keepInPlace end,
@@ -5816,8 +5818,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					x = wt.CreateSlider({
 						parentFrame = panelFrame,
 						name = "OffsetX",
-						title = wt.strings.position_offsetX_label,
-						tooltip = { lines = { { text = wt.strings.position_offsetX_tooltip:gsub("#FRAME", t.name), }, } },
+						title = s.position_offsetX_label,
+						tooltip = { lines = { { text = s.position_offsetX_tooltip:gsub("#FRAME", t.name), }, } },
 						arrange = {},
 						min = -500,
 						max = 500,
@@ -5842,8 +5844,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					y = wt.CreateSlider({
 						parentFrame = panelFrame,
 						name = "OffsetY",
-						title = wt.strings.position_offsetY_label,
-						tooltip = { lines = { { text = wt.strings.position_offsetY_tooltip:gsub("#FRAME", t.name), }, } },
+						title = s.position_offsetY_label,
+						tooltip = { lines = { { text = s.position_offsetY_tooltip:gsub("#FRAME", t.name), }, } },
 						arrange = { wrap = false, },
 						min = -500,
 						max = 500,
@@ -5869,8 +5871,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				keepInBounds = getData().keepInBounds ~= nil and wt.CreateCheckbox({
 					parentFrame = panelFrame,
 					name = "KeepInBounds",
-					title = wt.strings.position_keepInBounds_label,
-					tooltip = { lines = { { text = wt.strings.position_keepInBounds_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.position_keepInBounds_label,
+					tooltip = { lines = { { text = s.position_keepInBounds_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = { wrap = false, },
 					dependencies = t.dependencies,
 					getData = function() return getData().keepInBounds end,
@@ -5893,8 +5895,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				strata = getData().layer.strata and wt.CreateSpecialRadiogroup("strata", {
 					parentFrame = panelFrame,
 					name = "FrameStrata",
-					title = wt.strings.layer_strata_label,
-					tooltip = { lines = { { text = wt.strings.layer_strata_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.layer_strata_label,
+					tooltip = { lines = { { text = s.layer_strata_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = {},
 					width = 140,
 					dependencies = t.dependencies,
@@ -5913,8 +5915,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				keepOnTop = getData().layer.keepOnTop ~= nil and wt.CreateCheckbox({
 					parentFrame = panelFrame,
 					name = "KeepOnTop",
-					title = wt.strings.layer_keepOnTop_label,
-					tooltip = { lines = { { text = wt.strings.layer_keepOnTop_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.layer_keepOnTop_label,
+					tooltip = { lines = { { text = s.layer_keepOnTop_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = { wrap = false, },
 					dependencies = t.dependencies,
 					getData = function() return getData().layer.keepOnTop end,
@@ -5932,8 +5934,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				level = getData().layer.level and wt.CreateSlider({
 					parentFrame = panelFrame,
 					name = "FrameLevel",
-					title = wt.strings.layer_level_label,
-					tooltip = { lines = { { text = wt.strings.layer_level_tooltip:gsub("#FRAME", t.name), }, } },
+					title = s.layer_level_label,
+					tooltip = { lines = { { text = s.layer_level_tooltip:gsub("#FRAME", t.name), }, } },
 					arrange = { wrap = false, },
 					min = 0,
 					max = 10000,
@@ -6036,7 +6038,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 	fontPanel.panel = wt.CreatePanel({
 		parentFrame = t.canvas,
 		name = "Font",
-		title = wt.strings.font_title,
+		title = s.font_title,
 		arrange = {},
 		arrangement = {},
 		initialize = function(_, panelFrame)
@@ -6051,7 +6053,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				fonts = us.Clone(rs.fonts)
 
 				table.insert(fonts, 1, {
-					name = wt.strings.font_path_default_label,
+					name = s.font_path_default_label,
 					path = STANDARD_TEXT_FONT:gsub("\\", "/"),
 				})
 
@@ -6061,12 +6063,12 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 					fontItems[i].tooltip = {
 						title = fonts[i].name,
 						lines = {
-							{ text = fonts[i].path:match(rs.addon) and wt.strings.font_path_otf or wt.strings.font_path_base },
-							{ text = "\n" .. wt.strings.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+							{ text = fonts[i].path:match(rs.addon) and s.font_path_otf or s.font_path_base },
+							{ text = "\n" .. s.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
 						}
 					}
 				end
-				fontItems[1].tooltip.lines[1] = { text = wt.strings.font_path_default_tooltip, }
+				fontItems[1].tooltip.lines[1] = { text = s.font_path_default_tooltip, }
 
 				--| Add custom fonts
 
@@ -6082,12 +6084,12 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 						fontItems[i].tooltip = {
 							title = fonts[i].name,
 							lines = {
-								{ text = wt.strings.font_path_custom, },
-								{ text = "\n" .. wt.strings.font_path_replace:gsub( --TODO update the tooltip when full custom font management support is added
+								{ text = s.font_path_custom, },
+								{ text = "\n" .. s.font_path_replace:gsub( --TODO update the tooltip when full custom font management support is added
 									"#FONTS_DIRECTORY", cr("[WoW]\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
 								):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
-								{ text = "\n" .. wt.strings.font_path_reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, }, --TODO update the tooltip when full custom font management support is added
-								{ text = "\n" .. wt.strings.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+								{ text = "\n" .. s.font_path_reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, }, --TODO update the tooltip when full custom font management support is added
+								{ text = "\n" .. s.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
 							}
 						}
 					end
@@ -6100,8 +6102,8 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				path = wt.CreateDropdownRadiogroup({
 					parentFrame = panelFrame,
 					name = "Path",
-					title = wt.strings.font_path_label,
-					tooltip = { lines = { { text = wt.strings.font_path_tooltip, }, } },
+					title = s.font_path_label,
+					tooltip = { lines = { { text = s.font_path_tooltip, }, } },
 					width = 184,
 					arrange = {},
 					items = fontItems,
@@ -6135,8 +6137,8 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				size = wt.CreateSlider({
 					parentFrame = panelFrame,
 					name = "Size",
-					title = wt.strings.font_size_label,
-					tooltip = { lines = { { text = wt.strings.font_size_tooltip, }, } },
+					title = s.font_size_label,
+					tooltip = { lines = { { text = s.font_size_tooltip, }, } },
 					arrange = { wrap = false, },
 					min = 8,
 					max = 64,
@@ -6158,8 +6160,8 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				alignment = wt.CreateSpecialRadiogroup("justifyH", {
 					parentFrame = panelFrame,
 					name = "Alignment",
-					title = wt.strings.font_alignment_label,
-					tooltip = { lines = { { text = wt.strings.font_alignment_tooltip, }, } },
+					title = s.font_alignment_label,
+					tooltip = { lines = { { text = s.font_alignment_tooltip, }, } },
 					arrange = { wrap = false, },
 					width = 140,
 					dependencies = t.dependencies,
@@ -6219,14 +6221,14 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 				fontPanel.widgets.colors = {}
 
 				for k, v in pairs(t.colors) do if type(v) == "table" then
-					local name = type(v.name) == "string" and v.name or (k:sub(1,1):Upper() .. k:sub(2))
+					local name = type(v.name) == "string" and v.name or (k:sub(1,1):upper() .. k:sub(2))
 					local index = type(v.index) == "number" and math.floor(v.index) + 3 or nil
 
 					fontPanel.widgets.colors[k] = wt.CreateColorpicker({
 						parentFrame = panelFrame,
 						name = name .. "Colorpicker",
-						title = wt.strings.font_color_label:gsub("#COLOR_TYPE", name),
-						tooltip = { lines = { { text = wt.strings.font_color_tooltip:gsub("#COLOR_TYPE", name), }, } },
+						title = s.font_color_label:gsub("#COLOR_TYPE", name),
+						tooltip = { lines = { { text = s.font_color_tooltip:gsub("#COLOR_TYPE", name), }, } },
 						arrange = { wrap = v.wrap or v.index == 1, index = index },
 						dependencies = t.dependencies,
 						getData = function() return getData().colors[k] end,
@@ -6451,7 +6453,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 
 	--Override defaults warning and add all defaults option to dialog
 	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
-		text = wt.strings.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
+		text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category:Defaults(true) end,
@@ -6469,7 +6471,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 
 		--Override defaults warning and add all defaults option to dialog
 		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
-			text = wt.strings.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
+			text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
 				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
@@ -6615,7 +6617,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		--| Defaults button
 
 		resetWarning = wt.RegisterPopupDialog(addon .. "_" .. (t.name or "") .. "DEFAULT", {
-			text = wt.strings.settings_warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
+			text = s.settings_warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
 			accept = ACCEPT,
 			onAccept = function() page:Reset(true) end,
 		})
@@ -6624,7 +6626,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 			parentFrame = page.canvas,
 			name = "Defaults",
 			title = DEFAULTS,
-			tooltip = { lines = { { text = wt.strings.settings_defaults_tooltip, }, } },
+			tooltip = { lines = { { text = s.settings_defaults_tooltip, }, } },
 			position = {
 				anchor = "TOPRIGHT",
 				offset = { x = -36, y = -16 }
@@ -6639,8 +6641,8 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		revertButton = wt.CreateButton({
 			parentFrame = page.canvas,
 			name = "Cancel",
-			title = wt.strings.settings_cancel_label,
-			tooltip = { lines = { { text = wt.strings.settings_cancel_tooltip, }, } },
+			title = s.settings_cancel_label,
+			tooltip = { lines = { { text = s.settings_cancel_tooltip, }, } },
 			position = {
 				anchor = "BOTTOMLEFT",
 				offset = { x = -18, y = -31 }
@@ -6658,7 +6660,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 				anchor = "BOTTOMRIGHT",
 				offset = { x = -96, y = -26.75 }
 			},
-			text = wt.strings.settings_save,
+			text = s.settings_save,
 			justify = { h = "RIGHT", },
 		})
 
@@ -6712,7 +6714,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 	--Override defaults warning and add all defaults option to dialog
 	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
-		text = wt.strings.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
+		text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category:Defaults(true) end,
@@ -6731,7 +6733,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 		--Override defaults warning and add all defaults option to dialog
 		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
-			text = wt.strings.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
+			text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
 				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
@@ -6893,7 +6895,7 @@ function baseBuilders.Profilemanager(profilemanager)
 	---@param skipFirst? boolean ***Default:*** `false`
 	---@return string title
 	local function checkName(name, number, skipFirst)
-		name = name or wt.strings.profiles_select_profile
+		name = name or s.profiles_select_profile
 		local title = name .. (number and (" " .. number) or "")
 
 		if profilemanager:FindIndex(title, skipFirst) then
@@ -6960,7 +6962,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		end
 
 		if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_deletePopup[self], {
-			text = wt.strings.profiles_delete_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+			text = s.profiles_delete_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
 			onAccept = function() delete() end,
 		})) end
 
@@ -6984,7 +6986,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		end
 
 		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_resetPopup[self], {
-			text = wt.strings.profiles_reset_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+			text = s.profiles_reset_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
 			onAccept = reset,
 		})) end
 
@@ -7018,7 +7020,7 @@ function baseBuilders.Profilemanager(profilemanager)
 			index = index + 1
 		end
 
-		if not list[1] then list[1] = { title = wt.strings.profiles_select_main, data = us.Clone(profiles_defaultData[self]) } end
+		if not list[1] then list[1] = { title = s.profiles_select_main, data = us.Clone(profiles_defaultData[self]) } end
 
 		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
@@ -7141,8 +7143,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 	profilesPage.settings = wt.CreateSettingsPage({
 		register = t.register,
 		name = t.name or "DataManagement",
-		title = t.title or wt.strings.profilesPage_title,
-		description = t.description or wt.strings.profilesPage_description:gsub("#ADDON", addonTitle),
+		title = t.title or s.profilesPage_title,
+		description = t.description or s.profilesPage_description:gsub("#ADDON", addonTitle),
 		dataManagement = {
 			category = addon,
 			keys = { "Backup" },
@@ -7163,15 +7165,15 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 			local profilesPanel = wt.CreatePanel({
 				parentFrame = canvas,
 				name = "Profiles",
-				title = wt.strings.profiles_title,
-				description = wt.strings.profiles_description:gsub("#ADDON", addonTitle),
+				title = s.profiles_title,
+				description = s.profiles_description:gsub("#ADDON", addonTitle),
 				arrange = {},
 				arrangement = {},
 				initialize = function(_, panel)
 					local activate = wt.CreateDropdownRadiogroup({
 						parentFrame = panel,
-						title = wt.strings.profiles_select_label,
-						tooltip = { lines = { { text = wt.strings.profiles_select_tooltip, }, } },
+						title = s.profiles_select_label,
+						tooltip = { lines = { { text = s.profiles_select_tooltip, }, } },
 						arrange = {},
 						width = 180,
 						items = accountData.profiles,
@@ -7184,8 +7186,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						create = wt.CreateButton({
 							parentFrame = panel,
 							name = "New",
-							title = wt.strings.profiles_new_label,
-							tooltip = { lines = { { text = wt.strings.profiles_new_tooltip, }, } },
+							title = s.profiles_new_label,
+							tooltip = { lines = { { text = s.profiles_new_tooltip, }, } },
 							position = {
 								anchor = "TOPRIGHT",
 								offset = { x = -312, y = -21 }
@@ -7197,8 +7199,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						duplicate = wt.CreateButton({
 							parentFrame = panel,
 							name = "Duplicate",
-							title = wt.strings.profiles_duplicate_label,
-							tooltip = { lines = { { text = wt.strings.profiles_duplicate_tooltip, }, } },
+							title = s.profiles_duplicate_label,
+							tooltip = { lines = { { text = s.profiles_duplicate_tooltip, }, } },
 							position = {
 								anchor = "TOPRIGHT",
 								offset = { x = -192, y = -21 }
@@ -7210,8 +7212,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						rename = wt.CreateButton({
 							parentFrame = panel,
 							name = "Rename",
-							title = wt.strings.profiles_rename_label,
-							tooltip = { lines = { { text = wt.strings.profiles_rename_tooltip, }, } },
+							title = s.profiles_rename_label,
+							tooltip = { lines = { { text = s.profiles_rename_tooltip, }, } },
 							position = {
 								anchor = "TOPRIGHT",
 								offset = { x = -92, y = -21 }
@@ -7222,7 +7224,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								local title = accountData.profiles[characterData.activeProfile].title
 
 								wt.CreatePopupInputbox({
-									title = wt.strings.profiles_rename_description:gsub("#PROFILE", crc(title, "FFFFFFFF")),
+									title = s.profiles_rename_description:gsub("#PROFILE", crc(title, "FFFFFFFF")),
 									position = {
 										anchor = "TOPRIGHT",
 										offset = { x = -92, y = -21 },
@@ -7237,7 +7239,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							parentFrame = panel,
 							name = "Delete",
 							title = DELETE,
-							tooltip = { lines = { { text = wt.strings.profiles_delete_tooltip, }, } },
+							tooltip = { lines = { { text = s.profiles_delete_tooltip, }, } },
 							position = {
 								anchor = "TOPRIGHT",
 								offset = { x = -12, y = -21 }
@@ -7265,8 +7267,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 			wt.CreatePanel({
 				parentFrame = canvas,
 				name = keys[1],
-				title = wt.strings.backup_title,
-				description = wt.strings.backup_description:gsub("#ADDON", addonTitle),
+				title = s.backup_title,
+				description = s.backup_description:gsub("#ADDON", addonTitle),
 				arrange = {},
 				height = canvas:GetHeight() - profilesPanel.frame:GetHeight() - 118,
 				arrangement = { resize = false, },
@@ -7285,13 +7287,13 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					local box = wt.CreateMultilineEditbox({
 						parentFrame = panel,
 						name = "ImportExport",
-						title = wt.strings.backup_box_label,
+						title = s.backup_box_label,
 						tooltip = { lines = {
-							{ text = wt.strings.backup_box_tooltip[1], },
-							{ text = "\n" .. wt.strings.backup_box_tooltip[2], },
-							{ text = "\n" .. wt.strings.backup_box_tooltip[3], },
-							{ text = wt.strings.backup_box_tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-							{ text = "\n" .. wt.strings.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+							{ text = s.backup_box_tooltip[1], },
+							{ text = "\n" .. s.backup_box_tooltip[2], },
+							{ text = "\n" .. s.backup_box_tooltip[3], },
+							{ text = s.backup_box_tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+							{ text = "\n" .. s.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
 						}, },
 						arrange = {},
 						width = panel:GetWidth() - 24,
@@ -7309,8 +7311,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					})
 
 					local importPopup = wt.RegisterPopupDialog(addon .. "_IMPORT", {
-						text = wt.strings.backup_warning,
-						accept = wt.strings.backup_import,
+						text = s.backup_warning,
+						accept = s.backup_import,
 						onAccept = function()
 							local success, load = pcall(loadstring("return " .. wt.Clear(data_value[profilesPage.backup.box])))
 							success = success and type(load) == "table"
@@ -7327,10 +7329,10 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					local load = wt.CreateButton({
 						parentFrame = panel,
 						name = "Load",
-						title = wt.strings.backup_load_label,
+						title = s.backup_load_label,
 						tooltip = { lines = {
-							{ text = wt.strings.backup_load_tooltip, },
-							{ text = "\n" .. wt.strings.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+							{ text = s.backup_load_tooltip, },
+							{ text = "\n" .. s.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
 						} },
 						position = {
 							anchor = "TOPRIGHT",
@@ -7348,8 +7350,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						compact = wt.CreateCheckbox({
 							parentFrame = panel,
 							name = "Compact",
-							title = wt.strings.backup_compact_label,
-							tooltip = { lines = { { text = wt.strings.backup_compact_tooltip, }, } },
+							title = s.backup_compact_label,
+							tooltip = { lines = { { text = s.backup_compact_tooltip, }, } },
 							arrange = {},
 							getData = function() return settingsData.compactBackup end,
 							saveData = function(state) settingsData.compactBackup = state end,
@@ -7368,7 +7370,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							parentFrame = panel,
 							name = "Reset",
 							title = RESET,
-							tooltip = { lines = { { text = wt.strings.backup_reset_tooltip, }, } },
+							tooltip = { lines = { { text = s.backup_reset_tooltip, }, } },
 							position = {
 								anchor = "RIGHT",
 								relativeTo = load.template,
@@ -7386,7 +7388,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						parentFrame = canvas:GetParent(),
 						name = addon .. "AllProfilesBackup",
 						append = false,
-						title = wt.strings.backup_allProfiles_label,
+						title = s.backup_allProfiles_label,
 						position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 						keepInBounds = true,
 						width = 685,
@@ -7413,14 +7415,14 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							local boxAll = wt.CreateMultilineEditbox({
 								parentFrame = windowPanel,
 								name = "ImportExportAllProfiles",
-								title = wt.strings.backup_allProfiles_label,
+								title = s.backup_allProfiles_label,
 								label = false,
 								tooltip = { lines = {
-									{ text = wt.strings.backup_allProfiles_tooltipLine, },
-									{ text = "\n" .. wt.strings.backup_box_tooltip[2], },
-									{ text = "\n" .. wt.strings.backup_box_tooltip[3], },
-									{ text = wt.strings.backup_box_tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
-									{ text = "\n" .. wt.strings.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+									{ text = s.backup_allProfiles_tooltipLine, },
+									{ text = "\n" .. s.backup_box_tooltip[2], },
+									{ text = "\n" .. s.backup_box_tooltip[3], },
+									{ text = s.backup_box_tooltip[4], color = { r = 0.89, g = 0.65, b = 0.40 }, },
+									{ text = "\n" .. s.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
 								}, },
 								arrange = {},
 								width = windowPanel:GetWidth() - 32,
@@ -7438,8 +7440,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							})
 
 							local importPopupAll = wt.RegisterPopupDialog(addon .. "_IMPORT_ALL", {
-								text = wt.strings.backup_warning,
-								accept = wt.strings.backup_import,
+								text = s.backup_warning,
+								accept = s.backup_import,
 								onAccept = function()
 									local success, data = pcall(loadstring("return " .. wt.Clear(data_value[profilesPage.backupAll.box])))
 									data = type(data) == "table" and data or {}
@@ -7453,10 +7455,10 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 							local loadAll = wt.CreateButton({
 								parentFrame = windowPanel,
 								name = "Load",
-								title = wt.strings.backup_load_label,
+								title = s.backup_load_label,
 								tooltip = { lines = {
-									{ text = wt.strings.backup_load_tooltip, },
-									{ text = "\n" .. wt.strings.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
+									{ text = s.backup_load_tooltip, },
+									{ text = "\n" .. s.backup_box_tooltip[5], color = { r = 0.92, g = 0.34, b = 0.23 }, },
 								} },
 								position = {
 									anchor = "TOPRIGHT",
@@ -7474,8 +7476,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								compact = wt.CreateCheckbox({
 									parentFrame = windowPanel,
 									name = "Compact",
-									title = wt.strings.backup_compact_label,
-									tooltip = { lines = { { text = wt.strings.backup_compact_tooltip, }, } },
+									title = s.backup_compact_label,
+									tooltip = { lines = { { text = s.backup_compact_tooltip, }, } },
 									arrange = {},
 									events = { OnClick = function()
 										profilesPage.backup.compact:Flip(true)
@@ -7489,7 +7491,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 									parentFrame = windowPanel,
 									name = "Reset",
 									title = RESET,
-									tooltip = { lines = { { text = wt.strings.backup_reset_tooltip, }, } },
+									tooltip = { lines = { { text = s.backup_reset_tooltip, }, } },
 									position = {
 										anchor = "RIGHT",
 										relativeTo = loadAll.template,
@@ -7523,8 +7525,8 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					wt.CreateButton({
 						parentFrame = panel,
 						name = "AllProfilesButton",
-						title = wt.strings.backup_allProfiles_open_label,
-						tooltip = { lines = { { text = wt.strings.backup_allProfiles_open_tooltip, }, } },
+						title = s.backup_allProfiles_open_label,
+						tooltip = { lines = { { text = s.backup_allProfiles_open_tooltip, }, } },
 						position = {
 							anchor = "TOPRIGHT",
 							relativeTo = profilesPage.backup.box.frame,
@@ -7557,7 +7559,11 @@ end
 
 --[[ ADDON ]]
 
-local addonmanager_addonData ---@type table<addonmanager, addonInfo>
+local addonmanager_addon ---@type table<addonmanager, string>
+local addonmanager_date ---@type table<addonmanager, string>
+local addonmanager_changelog ---@type table<addonmanager, { [table[]]: string[] }>
+local addonmanager_changelogLatest ---@type table<addonmanager, string>
+local addonmanager_changelogHistory ---@type table<addonmanager, string>
 
 local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>?
 
@@ -7575,30 +7581,78 @@ function baseBuilders.Addonmanager(addonmanager)
 
 	--[ Metadata ]
 
-	addonmanager_addonData = {}
+	addonmanager_addon = {}
+	addonmanager_date = {}
+	addonmanager_changelog = {}
+	addonmanager_changelogLatest = {}
+	addonmanager_changelogHistory = {}
 
-	function addonmanager:GetName() return addonmanager_addonData[self].name end
-	function addonmanager:GetTitle() return addonmanager_addonData[self].title end
-	function addonmanager:GetNotes() return addonmanager_addonData[self].notes end
-	function addonmanager:GetLogo() return addonmanager_addonData[self].logo end
-	function addonmanager:GetCategory() return addonmanager_addonData[self].category end
-	function addonmanager:GetAuthor() return addonmanager_addonData[self].author end
-	function addonmanager:GetVersion() return addonmanager_addonData[self].version end
+	local getTitle, getNotes, getMeta = C_AddOns.GetAddOnTitle, C_AddOns.GetAddOnNotes, C_AddOns.GetAddOnMetadata
+
+	function addonmanager:GetName() return addonmanager_addon[self] end
+	function addonmanager:GetTitle() return getTitle(addonmanager_addon[self]) end
+	function addonmanager:GetNotes() return getNotes(addonmanager_addon[self]) end
+	function addonmanager:GetLogo() return getMeta(addonmanager_addon[self], "IconTexture") end
+	function addonmanager:GetCategory() return getMeta(addonmanager_addon[self], "Category") end
+	function addonmanager:GetAuthor() return getMeta(addonmanager_addon[self], "Author") end
+	function addonmanager:GetVersion() return getMeta(addonmanager_addon[self], "Version") end
 	function addonmanager:GetDate()
-		local data = addonmanager_addonData[self]
+		local date = addonmanager_date[self]
 
-		return data.date, data.day, data.month, data.year
+		if not date then
+			local day, month, year = self:GetDateValues()
+
+			date = day and month and year and s.date:gsub("#DAY", day):gsub("#MONTH", month):gsub("#YEAR", year) or nil
+
+			addonmanager_date[self] = date
+		end
+
+		return date
 	end
-	function addonmanager:GetLicense() return addonmanager_addonData[self].license end
-	function addonmanager:GetCurseForgeLink() return addonmanager_addonData[self].curse end
-	function addonmanager:GetWagoLink() return addonmanager_addonData[self].wago end
-	function addonmanager:GetRepositoryLink() return addonmanager_addonData[self].repo end
-	function addonmanager:GetIssuesLink() return addonmanager_addonData[self].issues end
-	function addonmanager:GetSponsors() return addonmanager_addonData[self].sponsors end
-	function addonmanager:GetChangelog()
-		local data = addonmanager_addonData[self]
+	function addonmanager:GetDateValues()
+		local addon = addonmanager_addon[self]
 
-		return data.changelog_latest, data.changelog_full
+		return tonumber(getMeta(addon, "X-Day")), tonumber(getMeta(addon, "X-Month")), tonumber(getMeta(addon, "X-Year"))
+	end
+	function addonmanager:GetLicense() return getMeta(addonmanager_addon[self], "X-License") end
+	function addonmanager:GetCurseForgeLink() return getMeta(addonmanager_addon[self], "X-CurseForge") end
+	function addonmanager:GetWagoLink() return getMeta(addonmanager_addon[self], "X-Wago") end
+	function addonmanager:GetRepositoryLink() return getMeta(addonmanager_addon[self], "X-Repository") end
+	function addonmanager:GetIssuesLink() return getMeta(addonmanager_addon[self], "X-Issues") end
+	function addonmanager:GetSponsors()
+		local sponsors = getMeta(addonmanager_addon[self], "X-Sponsors")
+
+		if not sponsors then return end
+
+		local tiers = { strsplit(";", sponsors) } ---@type any[]
+
+		for i = 1, #tiers do tiers[i] = { strsplit(",", tiers[i]) } end
+
+		return tiers
+	end
+	function addonmanager:GetChangelog()
+		local changelog = addonmanager_changelog[self]
+		local latest = addonmanager_changelogLatest[self]
+
+		if not latest and changelog then
+			latest = us.FormatChangelog(changelog, true)
+
+			addonmanager_changelogLatest[self] = latest
+		end
+
+		return latest
+	end
+	function addonmanager:GetChangelogHistory()
+		local changelog = addonmanager_changelog[self]
+		local history = addonmanager_changelogHistory[self]
+
+		if not history and changelog then
+			history = us.FormatChangelog(changelog)
+
+			addonmanager_changelogHistory[self] = history
+		end
+
+		return history
 	end
 
 	--| Rebind
@@ -7608,46 +7662,22 @@ function baseBuilders.Addonmanager(addonmanager)
 	local handlers_changed = {} ---@type table<addonmanager, addonmanager_handler_changed[]>
 	assignAddListener(addonmanager, "changed", handlers_changed)
 
-	function addonmanager:SetAddon(newAddon, newChangelog, user, silent)
-		if newAddon == addonmanager_addonData then return true end
+	function addonmanager:SetAddon(addon, changelog, user, silent)
+		if addon == addonmanager_addon[self] then return true end
 
-		local addon_type = type(newAddon)
+		local addon_type = type(addon)
 
-		if addon_type ~= "string" then
-			if not C_AddOns.IsAddOnLoaded(newAddon) then return false end
-			if addon_type ~= "number" then return false else newAddon = C_AddOns.GetAddOnName(newAddon) end
-		end
+		if (addon_type ~= "string" and addon_type ~= "number") or not C_AddOns.IsAddOnLoaded(addon) then return false end
 
-		local data = addonmanager_addonData[self]
+		if addon_type == "number" then addon = C_AddOns.GetAddOnName(addon) end
 
-		if not data then
-			data = {
-				name = newAddon,
-				title = C_AddOns.GetAddOnTitle(newAddon),
-				notes = C_AddOns.GetAddOnNotes(newAddon),
-				logo = C_AddOns.GetAddOnMetadata(newAddon, "IconTexture"),
-				category = C_AddOns.GetAddOnMetadata(newAddon, "Category"),
-				author = C_AddOns.GetAddOnMetadata(newAddon, "Author"),
-				version = C_AddOns.GetAddOnMetadata(newAddon, "Version"),
-				day = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Day")),
-				month = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Month")),
-				year = tonumber(C_AddOns.GetAddOnMetadata(newAddon, "X-Year")),
-				license = C_AddOns.GetAddOnMetadata(newAddon, "X-License"),
-				curse = C_AddOns.GetAddOnMetadata(newAddon, "X-CurseForge"),
-				wago = C_AddOns.GetAddOnMetadata(newAddon, "X-Wago"),
-				repo = C_AddOns.GetAddOnMetadata(newAddon, "X-Repository"),
-				issues = C_AddOns.GetAddOnMetadata(newAddon, "X-Issues"),
-				sponsors = C_AddOns.GetAddOnMetadata(newAddon, "X-Sponsors"),
-			}
+		addonmanager_addon[self] = addon
+		addonmanager_date[self] = nil
+		addonmanager_changelog[self] = changelog
+		addonmanager_changelogLatest[self] = nil
+		addonmanager_changelogHistory[self] = nil
 
-			data.date = data.day and data.month and data.year and wt.strings.date:gsub("#DAY", data.day):gsub("#MONTH", data.month):gsub("#YEAR", data.year) or nil
-
-			if newChangelog then data.changelog_latest, data.changelog_full = us.FormatChangelog(newChangelog, true), us.FormatChangelog(newChangelog) end
-
-			addonmanager_addonData[self] = data
-		end
-
-		invoke(self, lockout_changed, addonmanager_changed, silent, handlers_changed, addonmanager_addonData[self].name, user == true)
+		invoke(self, lockout_changed, addonmanager_changed, silent, handlers_changed, addon, user == true)
 
 		return true
 	end
@@ -7708,8 +7738,8 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 			wt.CreatePanel({
 				parentFrame = canvas,
 				name = "About",
-				title = wt.strings.about_title,
-				description = wt.strings.about_description:gsub("#ADDON", data.title),
+				title = s.about_title,
+				description = s.about_description:gsub("#ADDON", data.title),
 				arrange = {},
 				height = 240,
 				arrangement = {
@@ -7728,7 +7758,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 							name = "VersionTitle",
 							position = position,
 							width = 48,
-							text = wt.strings.about_version,
+							text = s.about_version,
 							font = "GameFontHighlightSmall",
 							justify = { h = "RIGHT", },
 							wrap = false,
@@ -7743,7 +7773,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.version .. data.date and (crc(" ( " .. wt.strings.about_date .. ": " .. cr(data.date, NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
+							text = data.version .. data.date and (crc(" ( " .. s.about_date .. ": " .. cr(data.date, NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 							wrap = false,
@@ -7793,7 +7823,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 							name = "AuthorTitle",
 							position = position,
 							width = 48,
-							text = wt.strings.about_author,
+							text = s.about_author,
 							font = "GameFontHighlightSmall",
 							justify = { h = "RIGHT", },
 						})
@@ -7825,7 +7855,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 							name = "LicenseTitle",
 							position = position,
 							width = 48,
-							text = wt.strings.about_license,
+							text = s.about_license,
 							font = "GameFontHighlightSmall",
 							justify = { h = "RIGHT", },
 							wrap = false,
@@ -7859,7 +7889,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 						local curseLink = wt.CreateCopybox({
 							parentFrame = panel,
 							name = "CurseForge",
-							title = wt.strings.about_curseForge,
+							title = s.about_curseForge,
 							position = position,
 							width = 190,
 							value = data.curse,
@@ -7875,7 +7905,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 						local wagoLink = wt.CreateCopybox({
 							parentFrame = panel,
 							name = "Wago",
-							title = wt.strings.about_wago,
+							title = s.about_wago,
 							position = position,
 							width = 190,
 							value = data.wago,
@@ -7891,7 +7921,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 						local repoLink = wt.CreateCopybox({
 							parentFrame = panel,
 							name = "Repository",
-							title = wt.strings.about_repository,
+							title = s.about_repository,
 							position = position,
 							width = 190,
 							value = data.repo,
@@ -7906,7 +7936,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 					if data.issues then wt.CreateCopybox({
 						parentFrame = panel,
 						name = "Issues",
-						title = wt.strings.about_issues,
+						title = s.about_issues,
 						position = position,
 						width = 190,
 						value = data.issues,
@@ -7919,8 +7949,8 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 					local changelogTextbox = wt.CreateMultilineEditbox({
 						parentFrame = panel,
 						name = "ChangelogBox",
-						title = wt.strings.about_changelog_label,
-						tooltip = { lines = { { text = wt.strings.about_changelog_tooltip:gsub("#VERSION", crc(data.version or "?", "FFFFFFFF")), }, } },
+						title = s.about_changelog_label,
+						tooltip = { lines = { { text = s.about_changelog_tooltip:gsub("#VERSION", crc(data.version or "?", "FFFFFFFF")), }, } },
 						arrange = {},
 						width = panel:GetWidth() - 225,
 						height = panel:GetHeight() - 25,
@@ -7937,8 +7967,8 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 					wt.CreateButton({
 						parentFrame = panel,
 						name = "ChangelogButton",
-						title = wt.strings.about_fullChangelog_open_label,
-						tooltip = { lines = { { text = wt.strings.about_fullChangelog_open_tooltip, }, } },
+						title = s.about_fullChangelog_open_label,
+						tooltip = { lines = { { text = s.about_fullChangelog_open_tooltip, }, } },
 						position = {
 							anchor = "TOPRIGHT",
 							relativeTo = changelogTextbox.frame,
@@ -7956,7 +7986,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 							parentFrame = canvas:GetParent(),
 							name = name .. "FullChangelog",
 							append = false,
-							title = wt.strings.about_fullChangelog_label:gsub("#ADDON", data.title),
+							title = s.about_fullChangelog_label:gsub("#ADDON", data.title),
 							position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 							keepInBounds = true,
 							width = 685,
@@ -7972,9 +8002,9 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 								wt.CreateMultilineEditbox({
 									parentFrame = windowPanel,
 									name = "Box",
-									title = wt.strings.about_fullChangelog_label:gsub("#ADDON", data.title),
+									title = s.about_fullChangelog_label:gsub("#ADDON", data.title),
 									label = false,
-									tooltip = { lines = { { text = wt.strings.about_fullChangelog_tooltip, }, } },
+									tooltip = { lines = { { text = s.about_fullChangelog_tooltip, }, } },
 									arrange = {},
 									width = windowPanel:GetWidth() - 32,
 									height = windowPanel:GetHeight() - 58,
@@ -8014,8 +8044,8 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 				local sponsorsPanel = wt.CreatePanel({
 					parentFrame = canvas,
 					name = "Sponsors",
-					title = wt.strings.sponsors_title,
-					description = wt.strings.sponsors_description,
+					title = s.sponsors_title,
+					description = s.sponsors_description,
 					arrange = {},
 					height = 46 + (topSponsors and sponsors and 24 or 0),
 					initialize = function(_, panel)
@@ -8083,6 +8113,20 @@ function baseBuilders.Chatmanager(chatmanager)
 	if not chatmanager_icon then chatmanager_icon = {} end
 	if not chatmanager_branding then chatmanager_branding = {} end
 
+	function chatmanager:SetCommands(commands)
+		if type(commands) ~= "table" then commands = {} else
+			for i = 1, commands do
+				local command = commands[i]
+
+				if type(command.onSuccess) ~= "function" then command.onError = nil end
+				if type(command.onError) ~= "function" then command.onError = nil end
+				if type(command.onHelp) ~= "function" then command.onError = nil end
+			end
+		end
+
+		chatmanager_commands[self] = commands
+	end
+
 	function chatmanager:Print(message, title, titleColor, contentColor)
 		local colors = chatmanager_colors[self]
 
@@ -8096,65 +8140,71 @@ function baseBuilders.Chatmanager(chatmanager)
 	function chatmanager:Welcome()
 		local keywords = chatmanager_keywords[self]
 		local colors = chatmanager_colors[self]
-
 		local keyword = cr(keywords[1], colors.command)
+
 		if #keywords > 1 then
 			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
-			keyword = wt.strings.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
+			keyword = s.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
 		end
 
-		print(cr(chatmanager_icon[self] .. wt.strings.chat_welcome_thanks:gsub("#ADDON", cr(chatmanager_title[self], colors.title)), colors.content))
-		print(cr(wt.strings.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
+		print(cr(chatmanager_icon[self] .. s.chat_welcome_thanks:gsub("#ADDON", cr(chatmanager_title[self], colors.title)), colors.content))
+		print(cr(s.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
 
 		if chatmanager_onWelcome[self] then chatmanager_onWelcome[self]() end
 	end
 
 	function chatmanager:Help()
-		local commands = chatmanager_commands[self]
 		local keywords = chatmanager_keywords[self]
+		local commands = chatmanager_commands[self]
 		local colors = chatmanager_colors[self]
 
-		print(cr(wt.strings.chat_help_list:gsub("#ADDON", cr(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
+		print(cr(s.chat_help_list:gsub("#ADDON", cr(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
 
 		for i = 1, #commands do
-			if not commands[i].hidden then
-				local description = type(commands[i].description) == "function" and commands[i].description() or commands[i].description
+			local command = commands[i]
 
-				print(cr("    " .. keywords[1] .. " ".. commands[i].command, colors.command) .. (
-					type(description) == "string" and cr(" • " .. description, colors.description) or ""
-				))
+			if not command.hidden then
+				local description = command.description
+				if type(description) == "function" then description = description() end
+				description = type(description) == "string" and cr(" • " .. description, colors.description) or ""
+
+				print(cr("    " .. keywords[1] .. " ".. command.command, colors.command) .. description)
 			end
 
-			if type(commands[i].onHelp) == "function" then commands[i].onHelp() end
+			if command.onHelp then command.onHelp() end
 		end
 	end
 
-	function chatmanager:Trigger(commandName, ...)
+	function chatmanager:Trigger(c, ...)
 		local commands = chatmanager_commands[self]
 
 		for i = 1, #commands do
 			local command = commands[i]
 
-			if commandName == command.command then
-				if type(command.handler) == "function" then
-					local results = { command.handler(chatmanager, ...) }
+			if c == command.command then
+				local handler = command.handler
+
+				if type(handler) == "function" then
+					local results = { handler(self, ...) }
 
 					if results[1] == true then
-						local message = type(command.success) == "function" and command.success(unpack(results, 2)) or command.success
+						local success = command.success
+						local message = type(success) == "function" and success(unpack(results, 2)) or success
 
 						if type(message) == "string" then chatmanager:Print(message) end
 
-						if type(command.onSuccess) == "function" then command.onSuccess(chatmanager, unpack(results, 2)) end
+						if command.onSuccess then command.onSuccess(self, unpack(results, 2)) end
 					elseif results[1] == false then
-						local message = type(command.error) == "function" and command.error(unpack(results, 2)) or command.error
+						local error = command.error
+						local message = type(error) == "function" and error(unpack(results, 2)) or error
 
 						if type(message) == "string" then chatmanager:Print(message) end
 
-						if type(command.onError) == "function" then command.onError(chatmanager, unpack(results, 2)) end
+						if command.onError then command.onError(self, unpack(results, 2)) end
 					end
 				end
 
-				if commands[i].help then chatmanager:Help() end
+				if command.help then chatmanager:Help() end
 
 				return true
 			end
@@ -8173,36 +8223,37 @@ function wt.CreateChatmanager(keywords, t, ancestor)
 
 	t = type(t) == "table" and t or {}
 
-	--| Color palette
-
-	t.colors = t.colors or {}
-
-	chatmanager_colors[chatmanager] = {
-		title = wt.IsColor(t.colors.title) or YELLOW_FONT_COLOR,
-		content = wt.IsColor(t.colors.content) or WHITE_FONT_COLOR,
-		command = wt.IsColor(t.colors.command) or LIGHTBLUE_FONT_COLOR,
-		description = wt.IsColor(t.colors.description) or LIGHTGRAY_FONT_COLOR,
-	}
-
-	chatmanager_commands[chatmanager] = type(t.commands) == "table" and t.commands or {}
+	chatmanager:SetCommands(t.commands)
 
 	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
 
+	--| Color palette
+
+	local colors = t.colors or {}
+
+	chatmanager_colors[chatmanager] = {
+		title = wt.IsColor(colors.title) or YELLOW_FONT_COLOR,
+		content = wt.IsColor(colors.content) or WHITE_FONT_COLOR,
+		command = wt.IsColor(colors.command) or LIGHTBLUE_FONT_COLOR,
+		description = wt.IsColor(colors.description) or LIGHTGRAY_FONT_COLOR,
+	}
+
 	--| Addon branding
 
-	local addon, title, icon
+	local title, icon
+	local addon = t.addon
 
-	if wt.IsType(t.addon, "Addonmanager") then
-		addon = t.addon:GetName()
-		title = t.addon:GetTitle()
-		icon = t.addon:GetLogo()
+	if wt.IsType(addon, "Addonmanager") then ---@cast addon addonmanager
+		title = addon:GetTitle()
+		icon = addon:GetLogo()
+		addon = addon:GetName()
 	else
 		local addon_type = type(addon)
 
 		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
-			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):Upper()
 			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
 			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
 		end
 	end
 
@@ -8218,21 +8269,22 @@ function wt.CreateChatmanager(keywords, t, ancestor)
 	--| Keywords
 
 	if type(keywords) == "table" then
-		--Register the keywords
+		local slash = "SLASH_" .. addon
+
 		for i = 1, #keywords do
-			keywords[i] = "/" .. keywords[i]
-			_G["SLASH_" .. addon .. i] = keywords[i]
+			local keyword = "/" .. keywords[i]
+
+			keywords[i] = keyword
+			_G[slash .. i] = keyword
 		end
 
 		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
 
-		--Set global keyword handler
 		SlashCmdList[addon] = function(line)
 			local payload = { strsplit(" ", line) }
-			local command = payload[1]
 
-			if not chatmanager:Trigger(command, unpack(payload, 2)) then
-				if defaultHandler then defaultHandler(chatmanager, command, unpack(payload, 2)) end
+			if not chatmanager:Trigger(unpack(payload)) then
+				if defaultHandler then defaultHandler(chatmanager, unpack(payload)) end
 
 				chatmanager:Help()
 			end

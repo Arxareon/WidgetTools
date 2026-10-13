@@ -2,6 +2,8 @@ local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "
 
 if not wt then return end
 
+local s = wt.strings
+
 local rs = WidgetTools.resources
 local us = WidgetTools.utilities
 local ds = WidgetTools.debugging
@@ -29,15 +31,15 @@ wt.textures = {
 
 --| Fill static & internal localization references
 
-wt.strings.backup_box_tooltip[3] = wt.strings.backup_box_tooltip[3]:gsub("#LOAD", wt.strings.backup_load_label)
-wt.strings.position_keepInPlace_tooltip = wt.strings.position_keepInPlace_tooltip:gsub("#ANCHOR", wt.strings.position_anchor_label)
-wt.strings.position_offsetX_tooltip = wt.strings.position_offsetX_tooltip:gsub("#ANCHOR", wt.strings.position_anchor_label)
-wt.strings.position_offsetY_tooltip = wt.strings.position_offsetY_tooltip:gsub("#ANCHOR", wt.strings.position_anchor_label)
-wt.strings.position_relativePoint_tooltip = wt.strings.position_relativePoint_tooltip:gsub("#ANCHOR", wt.strings.position_anchor_label)
-wt.strings.layer_keepOnTop_tooltip = wt.strings.layer_keepOnTop_tooltip:gsub("#STRATA", wt.strings.layer_strata_label)
-wt.strings.layer_level_tooltip = wt.strings.layer_level_tooltip:gsub("#STRATA", wt.strings.layer_strata_label)
-wt.strings.about_changelog_tooltip = wt.strings.about_changelog_tooltip .. "\n\nThe changelog is only available in English for now."
-wt.strings.about_fullChangelog_tooltip = wt.strings.about_fullChangelog_tooltip .. "\n\nThe changelog is only available in English for now."
+s.backup_box_tooltip[3] = s.backup_box_tooltip[3]:gsub("#LOAD", s.backup_load_label)
+s.position_keepInPlace_tooltip = s.position_keepInPlace_tooltip:gsub("#ANCHOR", s.position_anchor_label)
+s.position_offsetX_tooltip = s.position_offsetX_tooltip:gsub("#ANCHOR", s.position_anchor_label)
+s.position_offsetY_tooltip = s.position_offsetY_tooltip:gsub("#ANCHOR", s.position_anchor_label)
+s.position_relativePoint_tooltip = s.position_relativePoint_tooltip:gsub("#ANCHOR", s.position_anchor_label)
+s.layer_keepOnTop_tooltip = s.layer_keepOnTop_tooltip:gsub("#STRATA", s.layer_strata_label)
+s.layer_level_tooltip = s.layer_level_tooltip:gsub("#STRATA", s.layer_strata_label)
+s.about_changelog_tooltip = s.about_changelog_tooltip .. "\n\nThe changelog is only available in English for now."
+s.about_fullChangelog_tooltip = s.about_fullChangelog_tooltip .. "\n\nThe changelog is only available in English for now."
 
 
 --[[ TABLE MANAGEMENT ]]
@@ -1387,7 +1389,7 @@ function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 	local tooltip = { lines = { { text = " ", }, } } ---@type tooltipData
 
 	if type(default) == "string" then table.insert(tooltip.lines, { text = crc(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
-	if utilityNote ~= false then table.insert(tooltip.lines, { text = wt.strings.value_note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
+	if utilityNote ~= false then table.insert(tooltip.lines, { text = s.value_note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
 
 	for i = 1, #frames do wt.UpdateTooltipData(frames[i], tooltip, false) end
 end
@@ -1458,7 +1460,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 	reloadFrame = wt.CreatePanel({
 		parentFrame = UIParent,
 		name = "WidgetToolsReloadNotice",
-		title = t.title or wt.strings.reload_title,
+		title = t.title or s.reload_title,
 		position = t.position or {
 			anchor = "TOPRIGHT",
 			offset = { x = -300, y = -100 }
@@ -1489,7 +1491,7 @@ function wt.CreateReloadNotice(t) --FIX lite
 		},
 		width = 214,
 		justify = { h = "LEFT", },
-		text = t.message or wt.strings.reload_description,
+		text = t.message or s.reload_description,
 	})
 
 	--| Buttons
@@ -1497,8 +1499,8 @@ function wt.CreateReloadNotice(t) --FIX lite
 	wt.CreateButton({
 		parentFrame = reloadFrame.frame,
 		name = "ReloadButton",
-		title = wt.strings.reload_accept_label,
-		tooltip = { lines = { { text = wt.strings.reload_accept_tooltip, }, } },
+		title = s.reload_accept_label,
+		tooltip = { lines = { { text = s.reload_accept_tooltip, }, } },
 		position = {
 			anchor = "BOTTOMLEFT",
 			offset = { x = 12, y = 12 }
@@ -1511,8 +1513,8 @@ function wt.CreateReloadNotice(t) --FIX lite
 	wt.CreateButton({
 		parentFrame = reloadFrame.frame,
 		name = "CancelButton",
-		title = wt.strings.reload_cancel_label,
-		tooltip = { lines = { { text = wt.strings.reload_cancel_tooltip, }, } },
+		title = s.reload_cancel_label,
+		tooltip = { lines = { { text = s.reload_cancel_tooltip, }, } },
 		position = {
 			anchor = "BOTTOMRIGHT",
 			offset = { x = -12, y = 12 }

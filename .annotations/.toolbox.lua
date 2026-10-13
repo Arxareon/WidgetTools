@@ -7539,27 +7539,6 @@ end
 
 --[[ ADDON ]]
 
----@class addonInfo
----@field name string Namespace name of the addon
----@field title string Displayed title
----@field notes string? Description notes
----@field logo string? Logo texture file path
----@field category string? Addon list category name
----@field author string? Author name
----@field version string? Latest version number text
----@field date string? Formatted date text of the latest release
----@field day integer? Day of the month of the latest release
----@field month integer? Month number of the latest release
----@field year integer? Year of the latest release
----@field license string? License description
----@field curse string? CurseForge link
----@field wago string? Wago link
----@field repo string? Repository link
----@field issues string? Contact link for feedback & bug reports
----@field sponsors string? Sponsor names
----@field changelog_latest string? Formatted changelog text of the latest release
----@field changelog_full string? Formatted changelog text of the entire version history
-
 ---Create a non-GUI addonmanager instance providing extended utility on top of Blizzard's [C_AddOns](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOns) & [C_AddOnProfiler](https://warcraft.wiki.gg/wiki/World_of_Warcraft_API#AddOnProfiler) API collections
 ---@param t? addonmanager_options Optional parameters
 ---@param ancestor? construct Reference to an already existing construct instance to turn into a widget instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
@@ -7658,12 +7637,15 @@ function wt.CreateAddonmanager(t, ancestor)
 		---@return string? ***Default:*** `nil`
 		function _:GetVersion() end
 
-		---Date of the latest release
-		---@return string? date Formatted date text
-		---@return integer? day Day of the month
-		---@return integer? month Month number
-		---@return integer? year
+		---Formatted date string of the latest release
+		---@return string? date
 		function _:GetDate() end
+
+		---Raw day, month and year values of the date of the latest release
+		---@return integer? day
+		---@return integer? month
+		---@return integer? year
+		function _:GetDateValues() end
 
 		---License description
 		---@return string? ***Default:*** `nil`
@@ -7685,14 +7667,17 @@ function wt.CreateAddonmanager(t, ancestor)
 		---@return string? ***Default:*** `nil`
 		function _:GetIssuesLink() end
 
-		---Sponsor names
-		---@return string? # Semicolon separated tiers of comma separated lists of sponsor names | ***Default:*** `nil`
+		---Sponsor names by tiers
+		---@return string[][]? # Semicolon separated tiers of comma separated lists of sponsor names split into a nested array of tiers and names | ***Default:*** `nil`
 		function _:GetSponsors() end
 
-		---Formatted changelog text of the latest release & the entire version history
-		---@return string? latest ***Default:*** `nil`
-		---@return string? full ***Default:*** `nil`
+		---Formatted changelog text of the latest release
+		---@return string? # ***Default:*** `nil`
 		function _:GetChangelog() end
+
+		---Formatted changelog text of the entire version history
+		---@return string? # ***Default:*** `nil`
+		function _:GetChangelogHistory() end
 
 		--[ Rebind ]
 
@@ -7857,6 +7842,14 @@ function wt.CreateChatmanager(keywords, t, ancestor)
 		---`Chatmanager` WidgetTools constrcut instance table
 		---@class chatmanager : construct
 		local _ = {}
+
+			---comment
+			---@return string
+			function GetKeywords() return "" end
+
+			---Set the command list of this chatmanager
+			---@param commands chatCommandData[] Array of commands to register under the chat keyword managed by this chatmanager
+			function _:SetCommands(commands) end
 
 			---Print out a formatted chat message
 			---@param message string Message content

@@ -37,6 +37,9 @@ local addon = ...
 local title = select(2, C_AddOns.GetAddOnInfo(addon)):gsub("^%s*(.-)%s*$", "%1")
 local root = "Interface/AddOns/" .. addon .. "/"
 
+local strings = ns.strings
+local changelog = ns.changelog
+
 ---@type widgetToolsResources
 local rs = {
 	addon = addon,
@@ -143,8 +146,8 @@ local rs = {
 			path =  root .. "Fonts/CUSTOM.ttf",
 		},
 	},
-	strings = ns.strings,
-	changelog = ns.changelog,
+	strings = strings,
+	changelog = changelog,
 }
 
 
@@ -261,12 +264,12 @@ function us.Thousands(value, decimals, round, trim)
 	value = round == false and value or us.Round(value, decimals)
 	local sign = value < 0 and "-" or ""
 	local fraction = math.abs(value) % 1
-	local integer = tostring(math.abs(value) - fraction):reverse():gsub("(%d%d%d)", "%1" .. rs.strings.separator):reverse()
+	local integer = tostring(math.abs(value) - fraction):reverse():gsub("(%d%d%d)", "%1" .. strings.separator):reverse()
 	local decimalText = tostring(fraction):sub(3, (decimals or 0) + 2)
 
 	if trim == false then for i = 1, (decimals or 0) - #decimalText do decimalText = decimalText .. "0" end end
 
-	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and rs.strings.decimal .. decimalText or "")
+	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and strings.decimal .. decimalText or "")
 end
 
 function us.ToString(object)
@@ -329,14 +332,14 @@ function us.TableToString(table, compact)
 	return formatTableString(table, compact, compact and "" or " ", compact and "" or "\n", "    ")
 end
 
-function us.FormatChangelog(changelog, latest, apply)
-	if type(changelog) ~= "table" then return "" end
+function us.FormatChangelog(log, latest, apply)
+	if type(log) ~= "table" then return "" end
 
 	local c = ""
 
-	for i = 1, #changelog do
+	for i = 1, #log do
 		local firstLine = latest and 2 or 1
-		local version = changelog[i]
+		local version = log[i]
 
 		if type(version) ~= "table" then return c end
 
@@ -923,13 +926,15 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--| Toolbox
 
-	local wt = ns[C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-AddToNamespace")] ---@type toolbox
+	local wt = ns[C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")] ---@type toolbox
 
 	if not wt then
 		ds.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
 
 		return
 	end
+
+	local s = wt.strings
 
 	--| Locals
 
@@ -943,8 +948,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local addonPage = wt.CreateAddonPage({
 		register = true,
 		name = "About",
-		addon = rs.addon,
-		changelog = ns.changelog
+		addon = addon,
+		changelog = changelog
 	}) ---@cast addonPage -nil
 
 	local aboutPage = addonPage.settings
@@ -957,47 +962,47 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local specificationsPage = wt.CreateSettingsPage({
 		register = aboutPage,
 		name = "Specifications",
-		title = rs.strings.specifications.title,
-		description = rs.strings.specifications.description,
+		title = strings.specifications.title,
+		description = strings.specifications.description,
 		dataManagement = {},
 		arrangement = {},
 		initialize = function(canvas, _, _, category, keys)
 			wt.CreatePanel({
 				parentFrame = canvas,
 				name = "General",
-				title = rs.strings.specifications.general.title,
-				description = rs.strings.specifications.general.description,
+				title = strings.specifications.general.title,
+				description = strings.specifications.general.description,
 				arrange = {},
 				arrangement = {},
 				initialize = function(_, panel)
 					local silentSave = false
 
-					local enableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_ENABLE_LITE_MODE", {
-						text = rs.strings.lite.enable.warning:gsub("#ADDON", rs.title),
-						accept = rs.strings.lite.enable.accept,
+					local enableLitePopup = wt.RegisterPopupDialog(addon .. "_ENABLE_LITE_MODE", {
+						text = strings.lite.enable.warning:gsub("#ADDON", title),
+						accept = strings.lite.enable.accept,
 						onAccept = function()
 							liteToggle:SetValue(true)
 							liteToggle:SaveData(nil, silentSave)
 
-							chatCommands:Print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
+							chatCommands:Print(strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_ENABLED:lower()))
 						end,
 					})
-					local disableLitePopup = wt.RegisterPopupDialog(rs.addon .. "_DISABLE_LITE_MODE", {
-						text = rs.strings.lite.disable.warning:gsub("#ADDON", rs.title),
-						accept = rs.strings.lite.disable.accept,
+					local disableLitePopup = wt.RegisterPopupDialog(addon .. "_DISABLE_LITE_MODE", {
+						text = strings.lite.disable.warning:gsub("#ADDON", title),
+						accept = strings.lite.disable.accept,
 						onAccept = function()
 							liteToggle:SetValue(false)
 							liteToggle:SaveData(nil, silentSave)
 
-							chatCommands:Print(rs.strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
+							chatCommands:Print(strings.chat.lite.response:gsub("#STATE", VIDEO_OPTIONS_DISABLED:lower()))
 						end,
 					})
 
 					liteToggle = wt.CreateCheckbox({
 						parentFrame = panel,
 						name = "LiteMode",
-						title = rs.strings.specifications.general.lite.label,
-						tooltip = { lines = { { text = rs.strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
+						title = strings.specifications.general.lite.label,
+						tooltip = { lines = { { text = strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.lite end,
 						saveData = function(state) WidgetToolsDB.lite = state end,
@@ -1027,8 +1032,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					wt.CreateCheckbox({
 						parentFrame = panel,
 						name = "PositioningAids",
-						title = rs.strings.specifications.general.positioningAids.label,
-						tooltip = { lines = { { text = rs.strings.specifications.general.positioningAids.tooltip, }, } },
+						title = strings.specifications.general.positioningAids.label,
+						tooltip = { lines = { { text = strings.specifications.general.positioningAids.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.positioningAids end,
 						saveData = function(state) WidgetToolsDB.positioningAids = state end,
@@ -1046,15 +1051,15 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			wt.CreatePanel({
 				parentFrame = canvas,
 				name = "DevTools",
-				title = rs.strings.specifications.dev.title,
+				title = strings.specifications.dev.title,
 				arrange = {},
 				arrangement = {},
 				initialize = function(_, panel)
 					debugToggle = wt.CreateCheckbox({
 						parentFrame = panel,
 						name = "ToggleDebugging",
-						title = rs.strings.specifications.dev.debugging.enabled.label,
-						tooltip = { lines = { { text = rs.strings.specifications.dev.debugging.enabled.tooltip, }, } },
+						title = strings.specifications.dev.debugging.enabled.label,
+						tooltip = { lines = { { text = strings.specifications.dev.debugging.enabled.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.debugging end,
 						saveData = function(state) WidgetToolsDB.debugging = state end,
@@ -1063,7 +1068,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							changed = { { handler = function (self, state, user)
 								if not user then return end
 
-								chatCommands:Print(rs.strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
+								chatCommands:Print(strings.chat.debug.response:gsub("#STATE", (state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED):lower()))
 							end, }, },
 						},
 						instantSave = false,
@@ -1077,8 +1082,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					local toggle = wt.CreateCheckbox({
 						parentFrame = panel,
 						name = "ToggleWideFrameAttributes",
-						title = rs.strings.specifications.dev.frameAttributes.enabled.label,
-						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
+						title = strings.specifications.dev.frameAttributes.enabled.label,
+						tooltip = { lines = { { text = strings.specifications.dev.frameAttributes.enabled.tooltip, }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.frameAttributes.enabled end,
 						saveData = function(state) WidgetToolsDB.frameAttributes.enabled = state end,
@@ -1116,8 +1121,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 					wt.CreateSlider({
 						parentFrame = panel,
 						name = "FrameAttributesWidth",
-						title = rs.strings.specifications.dev.frameAttributes.width.label,
-						tooltip = { lines = { { text = rs.strings.specifications.dev.frameAttributes.width.tooltip, }, } },
+						title = strings.specifications.dev.frameAttributes.width.label,
+						tooltip = { lines = { { text = strings.specifications.dev.frameAttributes.width.tooltip, }, } },
 						arrange = { wrap = false, },
 						min = 200,
 						max = 1400,
@@ -1146,8 +1151,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	local toolboxesPage = wt.CreateSettingsPage({
 		register = aboutPage,
 		name = "Addons",
-		title = rs.strings.toolboxes.title,
-		description = rs.strings.toolboxes.description:gsub("#ADDON", rs.title),
+		title = strings.toolboxes.title,
+		description = strings.toolboxes.description:gsub("#ADDON", title),
 		scroll = { speed = 0.2 },
 		static = true,
 		dataManagement = {},
@@ -1158,7 +1163,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 			for version, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do
 				local title = entry.toolbox.name
-				if type(title) ~= "string" then title = rs.strings.toolboxes.toolbox:gsub("#VERSION", rs.strings.about.version:gsub("#VERSION", version)) end
+				if type(title) ~= "string" then title = strings.toolboxes.toolbox:gsub("#VERSION", strings.about.version:gsub("#VERSION", version)) end
 
 				wt.CreatePanel({
 					parentFrame = canvas,
@@ -1180,8 +1185,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 							wt.CreateButton({
 								parentFrame = toolboxPanel,
 								name = "ChangelogButton",
-								title = wt.strings.about_fullChangelog_open_label,
-								tooltip = { lines = { { text = wt.strings.about_fullChangelog_open_tooltip, }, } },
+								title = s.about_fullChangelog_open_label,
+								tooltip = { lines = { { text = s.about_fullChangelog_open_tooltip, }, } },
 								position = {
 									anchor = "TOPRIGHT",
 									offset = { x = -6, y = 30 }
@@ -1191,7 +1196,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									parentFrame = canvas:GetParent():GetParent(),
 									name = name .. "FullChangelog",
 									append = false,
-									title = wt.strings.about_fullChangelog_label:gsub("#ADDON", title),
+									title = s.about_fullChangelog_label:gsub("#ADDON", title),
 									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 									keepInBounds = true,
 									width = 685,
@@ -1207,9 +1212,9 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										wt.CreateMultilineEditbox({
 											parentFrame = windowPanel,
 											name = "Box",
-											title = wt.strings.about_fullChangelog_label:gsub("#ADDON", title),
+											title = s.about_fullChangelog_label:gsub("#ADDON", title),
 											label = false,
-											tooltip = { lines = { { text = wt.strings.about_fullChangelog_tooltip, }, } },
+											tooltip = { lines = { { text = s.about_fullChangelog_tooltip, }, } },
 											arrange = {},
 											width = windowPanel:GetWidth() - 32,
 											height = windowPanel:GetHeight() - 58,
@@ -1306,8 +1311,8 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										local toggle = wt.CreateCheckbox({
 											parentFrame = addonPanel,
 											name = "Toggle",
-											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. rs.strings.about.toggle.label .. ")",
-											tooltip = { lines = { { text = rs.strings.about.toggle.tooltip, }, } },
+											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. strings.about.toggle.label .. ")",
+											tooltip = { lines = { { text = strings.about.toggle.tooltip, }, } },
 											arrange = {},
 											width = 300,
 											font = { normal = "GameFontNormalMed1", },
@@ -1349,7 +1354,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "VersionTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about_version,
+												text = s.about_version,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1363,7 +1368,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 													offset = { x = 5 }
 												},
 												width = 140,
-												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. wt.strings.about_date .. ": " .. cr(wt.strings.date:gsub(
+												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. s.about_date .. ": " .. cr(s.date:gsub(
 													"#DAY", data.day
 												):gsub(
 													"#MONTH", data.month
@@ -1418,7 +1423,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "AuthorTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about_author,
+												text = s.about_author,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1449,7 +1454,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 												name = "LicenseTitle",
 												position = position,
 												width = 48,
-												text = wt.strings.about_license,
+												text = s.about_license,
 												font = "GameFontHighlightSmall",
 												justify = { h = "RIGHT", },
 											})
@@ -1485,17 +1490,17 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		commands = {
 			{
 				command = rs.chat.commands.about,
-				description = rs.strings.chat.about.description,
+				description = strings.chat.about.description,
 				handler = function() aboutPage:Open() end,
 			},
 			{
 				command = rs.chat.commands.lite,
-				description = rs.strings.chat.lite.description,
+				description = strings.chat.lite.description,
 				handler = function() liteToggle:SetValue(not WidgetToolsDB.lite, true) end,
 			},
 			{
 				command = rs.chat.commands.debug,
-				description = rs.strings.chat.debug.description,
+				description = strings.chat.debug.description,
 				handler = function()
 					debugToggle:SetValue(not WidgetToolsDB.debugging, true)
 
@@ -1515,41 +1520,41 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[[ ADDON COMPARTMENT ]]
 
-	wt.SetUpAddonCompartment(rs.addon, {
+	wt.SetUpAddonCompartment(addon, {
 		onClick = function() if WidgetToolsDB.lite then liteToggle:SetValue(false, true) else wt.CreateContextMenu({
 			load = function(menu)
-				wt.CreateMenuTextline(menu, { text = rs.title, })
+				wt.CreateMenuTextline(menu, { text = title, })
 				wt.CreateMenuButton(menu, {
-					title = wt.strings.about_title,
+					title = s.about_title,
 					action = function() aboutPage:Open() end
 				})
 				wt.CreateMenuButton(menu, {
-					title = rs.strings.specifications.title,
+					title = strings.specifications.title,
 					action = function() specificationsPage:Open() end
 				})
 				wt.CreateMenuButton(menu, {
-					title = rs.strings.toolboxes.title,
+					title = strings.toolboxes.title,
 					action =  function() toolboxesPage:Open() end
 				})
 			end,
 			rightClickMenu = false,
 		}):Open() end end,
 	}, { lines = {
-		{ text = rs.strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Version") or "?", "FFFFFFFF")), },
-		{ text = rs.strings.about.date:gsub(
-			"#DATE", crc(wt.strings.date:gsub(
-				"#DAY", C_AddOns.GetAddOnMetadata(rs.addon, "X-Day") or "?"
+		{ text = strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(addon, "Version") or "?", "FFFFFFFF")), },
+		{ text = strings.about.date:gsub(
+			"#DATE", crc(s.date:gsub(
+				"#DAY", C_AddOns.GetAddOnMetadata(addon, "X-Day") or "?"
 			):gsub(
-				"#MONTH", C_AddOns.GetAddOnMetadata(rs.addon, "X-Month") or "?"
+				"#MONTH", C_AddOns.GetAddOnMetadata(addon, "X-Month") or "?"
 			):gsub(
-				"#YEAR", C_AddOns.GetAddOnMetadata(rs.addon, "X-Year") or "?"
+				"#YEAR", C_AddOns.GetAddOnMetadata(addon, "X-Year") or "?"
 			), "FFFFFFFF")
 		), },
-		{ text = rs.strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(rs.addon, "Author") or "?", "FFFFFFFF")), },
-		{ text = rs.strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(rs.addon, "X-License") or "?", "FFFFFFFF")), },
+		{ text = strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(addon, "Author") or "?", "FFFFFFFF")), },
+		{ text = strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(addon, "X-License") or "?", "FFFFFFFF")), },
 		{ text = " ", },
 		{
-			text = (WidgetToolsDB.lite and rs.strings.compartment.lite or rs.strings.compartment.open),
+			text = (WidgetToolsDB.lite and strings.compartment.lite or strings.compartment.open),
 			font = GameFontNormalSmall,
 			color = rs.colors.grey[1],
 		},
