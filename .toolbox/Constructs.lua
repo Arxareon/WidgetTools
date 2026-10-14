@@ -371,14 +371,14 @@ local dataObjectValueGetterKeys = {
 }
 
 ---@param widget widget
-function baseBuilders.Widget(widget, typename)
+function baseBuilders.Widget(widget)
 
 	--[ Hierarchy ]
 
 	local lockout_parent = {} ---@type table<construct, true>
 	local lockout_child = {} ---@type table<construct, true>
-	local handlers_parent = {} ---@type table<widget, function[]>
-	local handlers_child = {} ---@type table<widget, function[]>
+	local handlers_parent = {} ---@type table<widget, widget_handler_parent[]>
+	local handlers_child = {} ---@type table<widget, widget_handler_child[]>
 	assignAddListener(widget, "parent", handlers_parent)
 	assignAddListener(widget, "child", handlers_child)
 
@@ -684,7 +684,7 @@ local function addInternal_list_recounted(typename, handler)
 end
 
 ---@param list list
-function baseBuilders.List(list, typename)
+function baseBuilders.List(list)
 	list_type = {}
 	list_items = {}
 	list_indexes = {}
@@ -762,7 +762,16 @@ end
 
 progenitors.List = "Widget" ---@type typename_widget
 function wt.CreateList(type, count, t, ancestor)
-	--ADD List instance implementation
+	local typename = "List" ---@type typename_list
+	local list = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor), getBase(typename)) ---@cast list list
+
+	--[ Initialization ]
+
+	list_type[list] = type
+
+	list:SetCount(count)
+
+	return list
 end
 
 
@@ -941,7 +950,7 @@ local function addInternal_action_triggered(typename, handler)
 end
 
 ---@param action action
-function baseBuilders.Action(action, typename)
+function baseBuilders.Action(action)
 	action_call = {}
 
 	local lockout_triggered = {} ---@type table<action, true>
@@ -1226,7 +1235,7 @@ local function addInternal_datamanager_saved(typename, handler)
 end
 
 ---@param datamanager datamanager
-function baseBuilders.Datamanager(datamanager, typename)
+function baseBuilders.Datamanager(datamanager)
 
 	--[ Value ]
 
@@ -7561,9 +7570,8 @@ end
 
 local addonmanager_addon ---@type table<addonmanager, string>
 local addonmanager_date ---@type table<addonmanager, string>
-local addonmanager_changelog ---@type table<addonmanager, { [table[]]: string[] }>
-local addonmanager_changelogLatest ---@type table<addonmanager, string>
-local addonmanager_changelogHistory ---@type table<addonmanager, string>
+local addonmanager_changelog ---@type table<addonmanager, string[][]|string>
+local addonmanager_changelogHistory ---@type table<addonmanager, string[][]|string>
 
 local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>?
 
@@ -7584,7 +7592,6 @@ function baseBuilders.Addonmanager(addonmanager)
 	addonmanager_addon = {}
 	addonmanager_date = {}
 	addonmanager_changelog = {}
-	addonmanager_changelogLatest = {}
 	addonmanager_changelogHistory = {}
 
 	local getTitle, getNotes, getMeta = C_AddOns.GetAddOnTitle, C_AddOns.GetAddOnNotes, C_AddOns.GetAddOnMetadata
@@ -7632,22 +7639,20 @@ function baseBuilders.Addonmanager(addonmanager)
 	end
 	function addonmanager:GetChangelog()
 		local changelog = addonmanager_changelog[self]
-		local latest = addonmanager_changelogLatest[self]
 
-		if not latest and changelog then
-			latest = us.FormatChangelog(changelog, true)
+		if type(changelog) ~= "string" then
+			changelog = us.FormatChangelog(changelog, true)
 
-			addonmanager_changelogLatest[self] = latest
+			addonmanager_changelog[self] = changelog
 		end
 
-		return latest
+		return changelog
 	end
 	function addonmanager:GetChangelogHistory()
-		local changelog = addonmanager_changelog[self]
 		local history = addonmanager_changelogHistory[self]
 
-		if not history and changelog then
-			history = us.FormatChangelog(changelog)
+		if type(history) ~= "string" then
+			history = us.FormatChangelog(history)
 
 			addonmanager_changelogHistory[self] = history
 		end
@@ -7674,8 +7679,7 @@ function baseBuilders.Addonmanager(addonmanager)
 		addonmanager_addon[self] = addon
 		addonmanager_date[self] = nil
 		addonmanager_changelog[self] = changelog
-		addonmanager_changelogLatest[self] = nil
-		addonmanager_changelogHistory[self] = nil
+		addonmanager_changelogHistory[self] = changelog
 
 		invoke(self, lockout_changed, addonmanager_changed, silent, handlers_changed, addon, user == true)
 

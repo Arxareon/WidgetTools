@@ -1973,6 +1973,8 @@ function wt.CreateWidget(t, ancestor)
 		---@class widget_listeners
 		---@field [1]? table<eventTag, widget_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
 		---@field enabled? widget_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `widget:SetEnabled(...)` was called
+		---@field parent? widget_listener_parent[]
+		---@field child? widget_listener_child[]
 
 			---@class widget_listener : indexedEventHandler
 			---@field handler widget_handler Handler function to register for call
@@ -1994,6 +1996,19 @@ function wt.CreateWidget(t, ancestor)
 
 					---`true` if the event was flagged as invoked by an action taken by the user
 					---@alias widget_handler_enabled_user boolean
+
+			---@class widget_listener_parent : indexedEventHandler
+			---@field handler widget_handler_parent Handler function to register for call
+
+				---Called when an "parent" event is invoked after `widget:SetParent(...)` was called
+				---@alias widget_handler_parent fun(self: widget_self, parent: widget)
+
+			---@class widget_listener_child : indexedEventHandler
+			---@field handler widget_handler_child Handler function to register for call
+
+				---Called when a "child" event is invoked after `widget:AddChild(...)` or `widget:RemoveChild(...)` was called
+				---@alias widget_handler_child fun(self: widget_self, child: widget, removal: boolean?)
+
 
 	--| Returns
 
