@@ -1,12 +1,11 @@
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
+local wt = WidgetTools.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
 local s = wt.strings
 
-local rs = WidgetTools.resources
-local us = WidgetTools.utilities
-local ds = WidgetTools.debugging
+local w = WidgetTools
+local log = w.Log
 
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
@@ -53,7 +52,7 @@ local function getRoot()
 	baseBuilders[typename](root, typename)
 	baseBuilders[typename] = nil
 
-	ds.Log(function() return "Created the root " .. typename .. " base: " .. us.ToString(root), wt.title .. " getRoot" end)
+	log(function() return "Created the root " .. typename .. " base: " .. w.ToString(root), wt.title .. " getRoot" end)
 
 	return proxy, root
 end
@@ -78,14 +77,14 @@ local function getBase(typename)
 
 	--| Types
 
-	types[typename] = us.Fill({ [typename] = true }, types[progenitor])
+	types[typename] = w.Fill({ [typename] = true }, types[progenitor])
 
 	--| Initialization
 
 	local builder = baseBuilders and baseBuilders[typename]
 
 	if builder then
-		base = us.Fill({}, base)
+		base = w.Fill({}, base)
 
 		bases[typename] = base
 
@@ -104,7 +103,7 @@ local function getBase(typename)
 
 	baseProxies[typename] = proxy
 
-	ds.Log(function() return "Created the main " .. typename .. " base: " .. us.ToString(base), wt.title .. " getBase" end)
+	log(function() return "Created the main " .. typename .. " base: " .. w.ToString(base), wt.title .. " getBase" end)
 
 	return proxy, base
 end
@@ -122,13 +121,13 @@ local function mergeBase(typename, typenameMixin)
 
 	--| Types
 
-	us.Fill(types[typename], types[typenameMixin])
+	w.Fill(types[typename], types[typenameMixin])
 
 	--| Prototype
 
-	us.Fill(base, mixin)
+	w.Fill(base, mixin)
 
-	ds.Log(function() return typenameMixin .. " base merged into the main " .. typename .. " base: " .. us.ToString(base), wt.title .. " mergeBase" end)
+	log(function() return typenameMixin .. " base merged into the main " .. typename .. " base: " .. w.ToString(base), wt.title .. " mergeBase" end)
 end
 
 --[ Utilities ]
@@ -233,7 +232,7 @@ function baseBuilders.Construct(construct)
 
 	--[ Types ]
 
-	function construct:GetTypes() return us.Clone(types[getmetatable(self)]) end
+	function construct:GetTypes() return w.Clone(types[getmetatable(self)]) end
 	function construct:IsType(type) return types[getmetatable(self)][type] == true end
 
 	--[ Events ]
@@ -309,7 +308,7 @@ function wt.CreateConstruct(t)
 	local propertyList = t.properties
 	if type(propertyList) == "table" then for property, value in pairs(propertyList) do construct:SetProperty(property, value) end end
 
-	ds.Log(function() return "Construct instance created: " .. us.ToString(construct), wt.title .. ".CreateConstruct" end)
+	log(function() return "Construct instance created: " .. w.ToString(construct), wt.title .. ".CreateConstruct" end)
 
 	return construct
 end
@@ -547,7 +546,7 @@ function baseBuilders.Widget(widget)
 
 				return true
 			end
-		elseif us.IsFrame(dependency) then
+		elseif w.IsFrame(dependency) then
 			if isData then
 				local objectType = dependency:GetObjectType()
 				local scriptType = dataObjectScriptType[objectType]
@@ -640,7 +639,7 @@ function wt.CreateWidget(t, ancestor)
 	widget:SetDependencies(t.dependencies)
 	widget:SetEnabled(t.disabled ~= true)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Widget: " .. us.ToString(widget), wt.title .. ".CreateWidget" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Widget: " .. w.ToString(widget), wt.title .. ".CreateWidget" end)
 
 	return widget
 end
@@ -767,6 +766,10 @@ function wt.CreateList(type, count, t, ancestor)
 
 	--[ Initialization ]
 
+	t = type(t) == "table" and t or {}
+
+	addListeners(list, t.listeners, { "added", "removed", "updated" })
+
 	list_type[list] = type
 
 	list:SetCount(count)
@@ -850,7 +853,7 @@ function wt.CreateContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Container: " .. us.ToString(container), wt.title .. ".CreateContainer" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Container: " .. w.ToString(container), wt.title .. ".CreateContainer" end)
 
 	return container
 end
@@ -879,7 +882,7 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a CustomContainer: " .. us.ToString(container), wt.title .. ".CreateCustomContainer" end)
+	log(function() return progenitors[typename] .. " instance mutated into a CustomContainer: " .. w.ToString(container), wt.title .. ".CreateCustomContainer" end)
 
 	return container
 end
@@ -915,22 +918,224 @@ function wt.CreatePanel(t, ancestor, lite)
 	--| Backdrop
 
 	wt.SetBackdrop(panel.frame, {
-		background = us.Fill(t.background, {
+		background = w.Fill(t.background, {
 			texture = {
 				size = 5,
 				insets = { l = 4, r = 4, t = 4, b = 4 },
 			},
 			color = { r = 0.175, g = 0.175, b = 0.175, a = 0.65 }
 		}),
-		border = us.Fill(t.border, {
+		border = w.Fill(t.border, {
 			texture = { width = 16, },
 			color = { r = 0.75, g = 0.75, b = 0.75, a = 0.5 }
 		})
 	})
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Panel: " .. us.ToString(panel), wt.title .. ".CreatePanel" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Panel: " .. w.ToString(panel), wt.title .. ".CreatePanel" end)
 
 	return panel
+end
+
+
+--[[ CHAT COMMANDS ]]
+
+local chatmanager_keywords ---@type table<chatmanager, string[]>
+local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
+local chatmanager_colors ---@type table<chatmanager, table>
+local chatmanager_title ---@type table<chatmanager, string>
+local chatmanager_icon ---@type table<chatmanager, string>
+local chatmanager_branding ---@type table<chatmanager, string>
+
+local chatmanager_onWelcome ---@type table<chatmanager, function>
+
+---@param chatmanager chatmanager
+function baseBuilders.Chatmanager(chatmanager)
+	if not chatmanager_keywords then chatmanager_keywords = {} end
+	if not chatmanager_commands then chatmanager_commands = {} end
+	if not chatmanager_colors then chatmanager_colors = {} end
+	if not chatmanager_title then chatmanager_title = {} end
+	if not chatmanager_icon then chatmanager_icon = {} end
+	if not chatmanager_branding then chatmanager_branding = {} end
+
+	function chatmanager:SetCommands(commands)
+		if type(commands) ~= "table" then commands = {} else
+			for i = 1, commands do
+				local command = commands[i]
+
+				if type(command.onSuccess) ~= "function" then command.onError = nil end
+				if type(command.onError) ~= "function" then command.onError = nil end
+				if type(command.onHelp) ~= "function" then command.onError = nil end
+			end
+		end
+
+		chatmanager_commands[self] = commands
+	end
+
+	function chatmanager:Print(message, title, titleColor, contentColor)
+		local colors = chatmanager_colors[self]
+
+		title = type(title) == "string" and title or chatmanager_branding[self]
+		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
+		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
+
+		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
+	end
+
+	function chatmanager:Welcome()
+		local keywords = chatmanager_keywords[self]
+		local colors = chatmanager_colors[self]
+		local keyword = cr(keywords[1], colors.command)
+
+		if #keywords > 1 then
+			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
+			keyword = s.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
+		end
+
+		print(cr(chatmanager_icon[self] .. s.chat_welcome_thanks:gsub("#ADDON", cr(chatmanager_title[self], colors.title)), colors.content))
+		print(cr(s.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
+
+		if chatmanager_onWelcome[self] then chatmanager_onWelcome[self]() end
+	end
+
+	function chatmanager:Help()
+		local keywords = chatmanager_keywords[self]
+		local commands = chatmanager_commands[self]
+		local colors = chatmanager_colors[self]
+
+		print(cr(s.chat_help_list:gsub("#ADDON", cr(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
+
+		for i = 1, #commands do
+			local command = commands[i]
+
+			if not command.hidden then
+				local description = command.description
+				if type(description) == "function" then description = description() end
+				description = type(description) == "string" and cr(" • " .. description, colors.description) or ""
+
+				print(cr("    " .. keywords[1] .. " ".. command.command, colors.command) .. description)
+			end
+
+			if command.onHelp then command.onHelp() end
+		end
+	end
+
+	function chatmanager:Trigger(c, ...)
+		local commands = chatmanager_commands[self]
+
+		for i = 1, #commands do
+			local command = commands[i]
+
+			if c == command.command then
+				local handler = command.handler
+
+				if type(handler) == "function" then
+					local results = { handler(self, ...) }
+
+					if results[1] == true then
+						local success = command.success
+						local message = type(success) == "function" and success(unpack(results, 2)) or success
+
+						if type(message) == "string" then chatmanager:Print(message) end
+
+						if command.onSuccess then command.onSuccess(self, unpack(results, 2)) end
+					elseif results[1] == false then
+						local error = command.error
+						local message = type(error) == "function" and error(unpack(results, 2)) or error
+
+						if type(message) == "string" then chatmanager:Print(message) end
+
+						if command.onError then command.onError(self, unpack(results, 2)) end
+					end
+				end
+
+				if command.help then chatmanager:Help() end
+
+				return true
+			end
+		end
+
+		return false
+	end
+end
+
+progenitors.Chatmanager = "Construct" ---@type typename_construct
+function wt.CreateChatmanager(keywords, t, ancestor)
+	local typename = "Chatmanager" ---@type typename_chatmanager
+	local chatmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast chatmanager chatmanager
+
+	--[ Initialization ]
+
+	t = type(t) == "table" and t or {}
+
+	chatmanager:SetCommands(t.commands)
+
+	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
+
+	--| Color palette
+
+	local colors = t.colors or {}
+
+	chatmanager_colors[chatmanager] = {
+		title = wt.IsColor(colors.title) or YELLOW_FONT_COLOR,
+		content = wt.IsColor(colors.content) or WHITE_FONT_COLOR,
+		command = wt.IsColor(colors.command) or LIGHTBLUE_FONT_COLOR,
+		description = wt.IsColor(colors.description) or LIGHTGRAY_FONT_COLOR,
+	}
+
+	--| Addon branding
+
+	local title, icon
+	local addon = t.addon
+
+	if wt.IsType(addon, "Addonmanager") then ---@cast addon addonmanager
+		title = addon:GetTitle()
+		icon = addon:GetLogo()
+		addon = addon:GetName()
+	else
+		local addon_type = type(addon)
+
+		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
+			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+		end
+	end
+
+	if not addon then
+		addon = tostring(chatmanager)
+		title = addon
+	end
+
+	chatmanager_title[chatmanager] = title
+	chatmanager_icon[chatmanager] = icon and (wt.Texture(icon, 11, 11) .. " ") or ""
+	chatmanager_branding[chatmanager] = icon .. title .. ": "
+
+	--| Keywords
+
+	if type(keywords) == "table" then
+		local slash = "SLASH_" .. addon
+
+		for i = 1, #keywords do
+			local keyword = "/" .. keywords[i]
+
+			keywords[i] = keyword
+			_G[slash .. i] = keyword
+		end
+
+		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+
+		SlashCmdList[addon] = function(line)
+			local payload = { strsplit(" ", line) }
+
+			if not chatmanager:Trigger(unpack(payload)) then
+				if defaultHandler then defaultHandler(chatmanager, unpack(payload)) end
+
+				chatmanager:Help()
+			end
+		end
+	end
+
+	return chatmanager
 end
 
 
@@ -981,7 +1186,7 @@ function wt.CreateAction(t, ancestor)
 
 	action:SetAction(t.action)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into an Action: " .. us.ToString(action), wt.title .. ".CreateAction" end)
+	log(function() return progenitors[typename] .. " instance mutated into an Action: " .. w.ToString(action), wt.title .. ".CreateAction" end)
 
 	return action
 end
@@ -1147,7 +1352,7 @@ function wt.CreateButton(t, ancestor, lite)
 
 	setUpButton(button, template, t, name)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Button: " .. us.ToString(button), wt.title .. ".CreateButton" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Button: " .. w.ToString(button), wt.title .. ".CreateButton" end)
 
 	return button
 end
@@ -1185,7 +1390,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 
 	wt.SetBackdrop(template, t.backdrop, t.backdropUpdates)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a CustomButton: " .. us.ToString(button), wt.title .. ".CreateCustomButton" end)
+	log(function() return progenitors[typename] .. " instance mutated into a CustomButton: " .. w.ToString(button), wt.title .. ".CreateCustomButton" end)
 
 	return button
 end
@@ -1197,9 +1402,9 @@ local data_value ---@type table<datamanager, any>
 local data_default ---@type table<datamanager, any>
 local data_snapshot ---@type table<datamanager, any>
 
-local datamanager_read ---@type table<datamanager, fun(): data: any>
-local datamanager_write ---@type table<datamanager, fun(data: any)>
-local datamanager_instantSave ---@type table<datamanager, boolean?>
+local data_reader ---@type table<datamanager, fun(): data: any>
+local data_writer ---@type table<datamanager, fun(data: any)>
+local data_instantSave ---@type table<datamanager, boolean?>
 
 local datamanagement ---@type table<datamanager, settingsData>
 
@@ -1245,21 +1450,21 @@ function baseBuilders.Datamanager(datamanager)
 	local handlers_changed = {} ---@type table<datamanager, datamanager_handler_changed[]>
 	assignAddListener(datamanager, "changed", handlers_changed)
 
-	function datamanager:Verify(value) if value == nil then return us.Clone(data_value[self]) else return us.Clone(value) end end
-	function datamanager:Format(value) return us.ToString(datamanager:Verify(value)) end
+	function datamanager:Verify(value) if value == nil then return w.Clone(data_value[self]) else return w.Clone(value) end end
+	function datamanager:Format(value) return w.ToString(datamanager:Verify(value)) end
 
 	function datamanager:GetValue() return data_value[self] end
-	function datamanager:SetValue(value, user, silent)
+	function datamanager:SetValue(value, handleChanges, user, silent)
 		local data = datamanager:Verify(value)
 
-		if data == nil and datamanager_read[self] then data = datamanager_read[self]() end
+		if data == nil and data_reader[self] then data = data_reader[self]() end
 		if data == nil then data = data_default[self] end
 
 		data_value[self] = data
 
-		if user then
-			if datamanager_instantSave[self] then datamanager:Save(silent) end
+		if data_instantSave[self] then datamanager:Save(silent) end
 
+		if handleChanges ~= false then
 			local management = datamanagement[self]
 
 			if management then wt.HandleWidgetChanges(management.index, management.category, management.key) end
@@ -1274,20 +1479,30 @@ function baseBuilders.Datamanager(datamanager)
 
 	function datamanager:GetDefault() return data_default[self] end
 	function datamanager:SetDefault(newDefault) data_default[self] = datamanager:Verify(newDefault) end
-	function datamanager:Reset(handleChanges, silent) datamanager:SetData(data_default[self], handleChanges, silent) end
+	function datamanager:Reset(handleChanges, silent)
+		datamanager:SetValue(data_default[self], handleChanges, false, silent)
+		datamanager:Save(nil, silent)
+	end
 
 	--| Snapshot
 
 	data_snapshot = {}
 
-	function datamanager:Snapshot(stored) if stored == true then data_snapshot[self] = datamanager:GetData() else data_snapshot[self] = data_value[self] end end
-	function datamanager:Revert(handleChanges, silent) datamanager:SetData(data_snapshot[self], handleChanges, silent) end
+	function datamanager:Snapshot(stored)
+		local reader = data_reader[self]
+
+		if stored == true then data_snapshot[self] = reader and reader[self]() or nil else data_snapshot[self] = data_value[self] end
+	end
+	function datamanager:Revert(handleChanges, silent)
+		datamanager:SetValue(data_snapshot[self], handleChanges, false, silent)
+		datamanager:Save(nil, silent)
+	end
 
 	--[ Storage ]
 
-	datamanager_read = {}
-	datamanager_write = {}
-	datamanager_instantSave = {}
+	data_reader = {}
+	data_writer = {}
+	data_instantSave = {}
 
 	local lockout_loaded = {} ---@type table<datamanager, true>
 	local lockout_saved = {} ---@type table<datamanager, true>
@@ -1296,54 +1511,26 @@ function baseBuilders.Datamanager(datamanager)
 	assignAddListener(datamanager, "loaded", handlers_loaded)
 	assignAddListener(datamanager, "saved", handlers_saved)
 
-	function datamanager:SetReader(read)
-		datamanager_read[self] = type(read) == "function" and read or nil
+	function datamanager:Load(reader, handleChanges, silent)
+		if reader == false then data_reader[self] = nil elseif type(reader) == "function" then data_reader[self] = reader else reader = data_reader[self] end
 
-		datamanager:Load()
-	end
-	function datamanager:SetWriter(write)
-		datamanager_write[self] = type(write) == "function" and write or nil
-
-		datamanager:Load()
-	end
-
-	function datamanager:Load(handleChanges, silent)
-		local read = datamanager_read[self]
-
-		if read then
-			datamanager:SetValue(read(), handleChanges ~= false, silent)
+		if reader then
+			datamanager:SetValue(reader(), handleChanges ~= false, false, silent)
 
 			invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, true)
 		else invoke(self, lockout_loaded, datamanager_loaded, silent, handlers_loaded, false) end
 	end
-	function datamanager:Save(silent)
-		local write = datamanager_write[self]
+	function datamanager:Save(writer, silent)
+		if writer == false then data_writer[self] = nil elseif type(writer) == "function" then data_writer[self] = writer else writer = data_writer[self] end
 
-		if write then
-			write(data_value[self])
-
-			invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true)
-		else invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
-	end
-
-	function datamanager:GetData()
-		local read = datamanager_read[self]
-
-		if read then return read[self]() end
-	end
-	function datamanager:SetData(data, handleChanges, silent)
-		local write = datamanager_write[self]
-
-		if write then
-			write(datamanager:Verify(data))
+		if writer then
+			writer(data_value[self])
 
 			invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, true)
 		else invoke(self, lockout_saved, datamanager_saved, silent, handlers_saved, false) end
-
-		datamanager:Load(handleChanges, silent)
 	end
 
-	function datamanager:SetInstantSave(instantSave) datamanager_instantSave[self] = instantSave ~= false and true or nil end
+	function datamanager:SetInstantSave(instantSave) data_instantSave[self] = instantSave ~= false and true or nil end
 
 	--[ Datamanagement ]
 
@@ -1363,8 +1550,8 @@ function wt.CreateDatamanager(t, ancestor)
 
 	addListeners(datamanager, t.listeners, { "loaded", "saved", "changed", })
 
-	datamanager:SetReader(t.read)
-	datamanager:SetWriter(t.write)
+	datamanager:Load(t.reader)
+	datamanager:Save(t.writer)
 
 	datamanager:SetInstantSave(t.instantSave)
 
@@ -1378,7 +1565,7 @@ function wt.CreateDatamanager(t, ancestor)
 
 	if datamanagement[datamanager] then wt.AddSettingsDataManagementEntry(datamanager, datamanagement[datamanager]) end --TODO update
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Datamanager: " .. us.ToString(datamanager), wt.title .. ".CreateDatamanager" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Datamanager: " .. w.ToString(datamanager), wt.title .. ".CreateDatamanager" end)
 
 	return datamanager
 end
@@ -1398,7 +1585,7 @@ function baseBuilders.Binary(binary)
 		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
-	function binary:Flip(user, silent) binary:SetValue(not binary:GetValue(), user, silent) end
+	function binary:Flip(handleChanges, user, silent) binary:SetValue(not binary:GetValue(), handleChanges, user, silent) end
 end
 
 progenitors.Binary = "Datamanager" ---@type typename_datamanager
@@ -1410,14 +1597,11 @@ function wt.CreateBinary(t, ancestor)
 
 	t = type(t) == "table" and t or {}
 
-	binary:SetReader(t.read)
-	binary:SetWriter(t.write)
-
 	binary:SetDefault(t.default)
 	binary:SetValue(t.value)
 	binary:Snapshot()
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Binary: " .. us.ToString(binary), wt.title .. ".CreateBinary" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Binary: " .. w.ToString(binary), wt.title .. ".CreateBinary" end)
 
 	return binary
 end
@@ -1605,7 +1789,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		end
 	}) end
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. us.ToString(checkbox), wt.title .. ".CreateCheckbox" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. w.ToString(checkbox), wt.title .. ".CreateCheckbox" end)
 
 	return checkbox
 end
@@ -1794,7 +1978,7 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 		if isInside and button == "LeftButton" or button == "RightButton" then template:Click(button) end
 	end end)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. us.ToString(checkbox), wt.title .. ".CreateClassicCheckbox" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. w.ToString(checkbox), wt.title .. ".CreateClassicCheckbox" end)
 
 	return checkbox
 end
@@ -1863,7 +2047,7 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 		if isInside and button == "LeftButton" or (clearable and button == "RightButton") then template:Click(button) end
 	end end)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Radiobutton: " .. us.ToString(radiobutton), wt.title .. ".CreateRadiobutton" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Radiobutton: " .. w.ToString(radiobutton), wt.title .. ".CreateRadiobutton" end)
 
 	return radiobutton
 end
@@ -2089,12 +2273,10 @@ function wt.CreateSelector(t, ancestor)
 
 	t = type(t) == "table" and t or {}
 
-	addListeners(selector, t.listeners, { "updated", "added", })
+	addListeners(selector, t.listeners, { "added", "removed", "updated" })
 
-	selector:UpdateItems(t.items)
-
-	selector:SetReader(t.read)
-	selector:SetWriter(t.write)
+	list_type[selector] = "SelectorBinary" ---@type typename_selectorBinary
+	selector:SetCount(t.items)
 
 	selector:SetDefault(t.default)
 	selector:SetValue(t.value)
@@ -2102,7 +2284,7 @@ function wt.CreateSelector(t, ancestor)
 
 	selector_clearable[selector] = t.clearable
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Selector: " .. us.ToString(selector), wt.title .. ".CreateSelector" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Selector: " .. w.ToString(selector), wt.title .. ".CreateSelector" end)
 
 	return selector
 end
@@ -2217,7 +2399,7 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 	--Set starting value
 	specialSelector.setValue(value, false, true)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a SpecialSelector: " .. us.ToString(specialSelector), wt.title .. ".CreateSpecialSelector" end)
+	log(function() return progenitors[typename] .. " instance mutated into a SpecialSelector: " .. w.ToString(specialSelector), wt.title .. ".CreateSpecialSelector" end)
 
 	return specialSelector
 end
@@ -2241,7 +2423,7 @@ function wt.CreateMultiselector(t, ancestor)
 
 	multiselector.items = {}
 
-	t.items = type(t.items) == "table" and us.Clone(t.items) or {}
+	t.items = type(t.items) == "table" and w.Clone(t.items) or {}
 	t.limits = t.limits or {}
 	local limitMin = t.limits.min or 1
 	local limitMax = t.limits.max or #t.items
@@ -2322,14 +2504,14 @@ function wt.CreateMultiselector(t, ancestor)
 	---@param v any
 	---@return boolean[]
 	local function verify(v)
-		return us.Fill(us.Prune(type(v) == "table" and us.Clone(v) or {}, function(_, itemValue) return type(itemValue) == "boolean" end), default)
+		return w.Fill(w.Prune(type(v) == "table" and w.Clone(v) or {}, function(_, itemValue) return type(itemValue) == "boolean" end), default)
 	end
 
 	default = verify(t.default)
 	local value = verify(t.value or type(t.getData) == "function" and t.getData() or nil)
 
 	---@type boolean[]
-	local snapshot = us.Clone(value)
+	local snapshot = w.Clone(value)
 
 	function multiselector.load(handleChanges, silent)
 		handleChanges = handleChanges ~= false
@@ -2361,12 +2543,12 @@ function wt.CreateMultiselector(t, ancestor)
 
 	function multiselector.getDefault() return default end
 	function multiselector.setDefault(selections) default = verify(selections) end
-	function multiselector.revert(handleChanges, silent) multiselector.setData({ states = us.Clone(snapshot) }, handleChanges, silent) end
+	function multiselector.revert(handleChanges, silent) multiselector.setData({ states = w.Clone(snapshot) }, handleChanges, silent) end
 
-	function multiselector.snapshot(stored) us.CopyValues(snapshot, stored and multiselector.getData() or value) end
-	function multiselector.reset(handleChanges, silent) multiselector.setData({ states = us.Clone(default) }, handleChanges, silent) end
+	function multiselector.snapshot(stored) w.CopyValues(snapshot, stored and multiselector.getData() or value) end
+	function multiselector.reset(handleChanges, silent) multiselector.setData({ states = w.Clone(default) }, handleChanges, silent) end
 
-	function multiselector.getValue() return us.Clone(value) end
+	function multiselector.getValue() return w.Clone(value) end
 	function multiselector.setValue(selections, user, silent)
 		value = verify(selections)
 
@@ -2421,7 +2603,7 @@ function wt.CreateMultiselector(t, ancestor)
 	--Set starting value
 	multiselector.setValue(value, false, true)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Multiselector: " .. us.ToString(multiselector), wt.title .. ".CreateMultiselector" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Multiselector: " .. w.ToString(multiselector), wt.title .. ".CreateMultiselector" end)
 
 	return multiselector
 end
@@ -2521,7 +2703,7 @@ function wt.CreateRadiogroup(t, selector)
 		local count = #items
 		local selectorItems = selector_items[self]
 
-		selector_items[self] = us.Clone(items)
+		selector_items[self] = w.Clone(items)
 
 		for i = 1, count do
 			local onSelect = items[i].onSelect
@@ -3095,14 +3277,14 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--[ UX ]
 
-	us.SetListener(dropdown.menu, "GLOBAL_MOUSE_DOWN", function(f)
+	w.SetListener(dropdown.menu, "GLOBAL_MOUSE_DOWN", function(f)
 		if dropdown.toggle.template:IsMouseOver() then return end
 
 		f:UnregisterEvent("GLOBAL_MOUSE_DOWN")
 		f:RegisterEvent("GLOBAL_MOUSE_UP")
 	end)
 
-	us.SetListener(dropdown.menu, "GLOBAL_MOUSE_UP", function(f, button)
+	w.SetListener(dropdown.menu, "GLOBAL_MOUSE_UP", function(f, button)
 		if (button ~= "LeftButton" and button ~= "RightButton") or f:IsMouseOver() then return end
 
 		dropdown:ToggleMenu(false)
@@ -3225,7 +3407,7 @@ function wt.CreateAnchorRadiogroup(itemset, t, selector)
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
 
-	t = us.Pull(t, {
+	t = w.Pull(t, {
 		labels = false,
 		columns = itemset == "strata" and 8 or 3,
 		showDefault = false,
@@ -3301,7 +3483,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 	local showDefault = t.showDefault ~= false
 	local utilityMenu = t.utilityMenu ~= false
 
-	t = us.Pull(t, {
+	t = w.Pull(t, {
 		labels = false,
 		columns = itemset == "strata" and 8 or 3,
 		showDefault = false,
@@ -3562,16 +3744,13 @@ function wt.CreateTextual(t, ancestor)
 
 	t = type(t) == "table" and t or {}
 
-	textual:SetReader(t.read)
-	textual:SetWriter(t.write)
-
 	textual:SetDefault(t.default)
 	textual:SetValue(t.value)
 	textual:Snapshot()
 
 	if wt.IsColor(t.color) then textual_color = t.color end
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Textual: " .. us.ToString(textual), wt.title .. ".CreateTextual" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Textual: " .. w.ToString(textual), wt.title .. ".CreateTextual" end)
 
 	return textual
 end
@@ -4314,14 +4493,11 @@ function wt.CreateNumeric(t, ancestor)
 	numeric_altStep[numeric] = type(t.altStep) == "number" and max(t.altStep, 0) or nil
 	numeric_hardStep[numeric] = t.hardStep ~= false
 
-	numeric:SetReader(t.read)
-	numeric:SetWriter(t.write)
-
 	numeric:SetDefault(t.default or numeric_limitMin[numeric])
 	numeric:SetValue(t.value)
 	numeric:Snapshot()
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Numeric: " .. us.ToString(numeric), wt.title .. ".CreateNumeric" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Numeric: " .. w.ToString(numeric), wt.title .. ".CreateNumeric" end)
 
 	return numeric
 end
@@ -4496,14 +4672,14 @@ function wt.CreateSlider(t, ancestor, lite)
 			events = {
 				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
 				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
-				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(w.Round(template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
 			showDefault = false,
 			utilityMenu = false,
 		})
 
-		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(w.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
@@ -4941,7 +5117,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 			events = {
 				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
 				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
-				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(us.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(w.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -4950,7 +5126,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 
 		--| UX
 
-		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(us.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
+		slider:AddListener_changed(function(_, number) slider.valuebox:SetValue(tostring(w.Round(number, decimals)):gsub(matchPattern, replacePattern)) end)
 	end
 
 	--[ Events ] --REPLACE script events
@@ -5064,16 +5240,16 @@ function baseBuilders.Colormanager(colormanager)
 
 	function colormanager:Verify(color) wt.PackColor(wt.UnpackColor(color)) end
 
-	function colormanager:GetValue() return us.Clone(data_value[self]) end
+	function colormanager:GetValue() return w.Clone(data_value[self]) end
 
 	--| Default
 
-	function colormanager:GetDefault() return us.Clone(data_default[self]) end
-	function colormanager:SetDefault(color) data_default[self] = us.Clone(color) end
+	function colormanager:GetDefault() return w.Clone(data_default[self]) end
+	function colormanager:SetDefault(color) data_default[self] = w.Clone(color) end
 
 	--| Snapshot
 
-	function colormanager:Snapshot(stored) us.CopyValues(data_snapshot[self], stored and colormanager:GetData() or data_value[self]) end
+	function colormanager:Snapshot(stored) w.CopyValues(data_snapshot[self], stored and data_reader[self] and data_reader[self]() or data_value[self]) end
 
 	--[ Color Wheel ]
 
@@ -5125,9 +5301,6 @@ function wt.CreateColormanager(t, ancestor)
 
 	t = type(t) == "table" and t or {}
 
-	colormanager:SetReader(t.read)
-	colormanager:SetWriter(t.write)
-
 	colormanager:SetDefault(t.default)
 	colormanager:SetValue(t.value)
 	colormanager:Snapshot()
@@ -5137,7 +5310,7 @@ function wt.CreateColormanager(t, ancestor)
 
 	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[colormanager] = false end)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Colormanager: " .. us.ToString(colormanager), wt.title .. ".CreateColormanager" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Colormanager: " .. w.ToString(colormanager), wt.title .. ".CreateColormanager" end)
 
 	return colormanager
 end
@@ -5213,7 +5386,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		colorpicker.hexBox.template:SetAlpha(opacity)
 	end
 
-	if not t.value and t.read then t.value = us.Clone(t.read()) else t.value = {} end
+	if not t.value and t.read then t.value = w.Clone(t.read()) else t.value = {} end
 
 	colorpicker.button = wt.CreateCustomButton({
 		parentFrame = frame,
@@ -5450,7 +5623,7 @@ end
 local positioningVisualAids = {}
 
 function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsData, t) --FIX lite
-	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not us.IsFrame(frame) or type(t) ~= "table" then return end
+	if not addon or not C_AddOns.IsAddOnLoaded(addon) or not w.IsFrame(frame) or type(t) ~= "table" then return end
 
 	---@type typename_positionPanel
 	local typename = "PositionOptions"
@@ -5557,7 +5730,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 
 		--[ Update Size ]
 
-		us.SetListener(positioningVisualAids.frame, "UI_SCALE_CHANGED", function(f)
+		w.SetListener(positioningVisualAids.frame, "UI_SCALE_CHANGED", function(f)
 			f:SetSize(GetScreenWidth() - 14, GetScreenHeight() - 14)
 			f:SetScale(UIParent:GetScale())
 		end)
@@ -5577,7 +5750,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 			--[ Presets ]
 
 			if t.presets then
-				panel.presets = us.Clone(t.presets.items)
+				panel.presets = w.Clone(t.presets.items)
 
 				--| Utilities
 
@@ -5595,7 +5768,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 						wt.SetPosition(frame, panel.presets[i].data.position, true)
 
 						--Update the storage
-						us.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
+						w.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
 
 						--Update the settings widgets
 						panel.widgets.position.anchor:Load(false)
@@ -5696,17 +5869,17 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							panel.presets[t.presets.custom.index].data.layer.level = frame:GetFrameLevel()
 						end
 
-						us.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
-						if t.presets.custom.getData() then us.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
+						w.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
+						if t.presets.custom.getData() then w.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
 						if t.presets.custom.onSave then t.presets.custom.onSave() end
 					end
 
 					function panel:ResetCustomPreset()
-						panel.presets[t.presets.custom.index].data = us.Clone(t.presets.custom.defaultsTable)
+						panel.presets[t.presets.custom.index].data = w.Clone(t.presets.custom.defaultsTable)
 
-						us.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
-						if t.presets.custom.getData() then us.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
+						w.CopyValues(t.presets.custom.getData(), panel.presets[t.presets.custom.index].data)
+						if t.presets.custom.getData() then w.CopyValues(t.presets.custom.getData(), t.presets.custom.getData()) end
 
 						if t.presets.custom.onReset then t.presets.custom.onReset() end
 
@@ -5798,9 +5971,8 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 							UpdateFrameOffsetsAndPosition = function() if not settingsData.keepInPlace then wt.SetPosition(frame, getData().position, true) else
 								local x, y = wt.SetAnchor(frame, getData().position.anchor)
 
-								--Update offsets
-								panel.widgets.position.offset.x:SetData(x, false)
-								panel.widgets.position.offset.y:SetData(y, false)
+								panel.widgets.position.offset.x:SetValue(x, false)
+								panel.widgets.position.offset.y:SetValue(y, false)
 							end end,
 							"UpdatePositioningVisualAids"
 						},
@@ -5980,7 +6152,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 				onMove = t.setMovable.events.onMove,
 				onStop = function()
 					--Update the storage
-					us.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
+					w.CopyValues(getData().position, wt.PackPosition(frame:GetPoint()))
 
 					--Update the settings widgets
 					panel.widgets.position.anchor:Load(false)
@@ -6059,7 +6231,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 
 				--| Add base fonts
 
-				fonts = us.Clone(rs.fonts)
+				fonts = w.Clone(w.fonts)
 
 				table.insert(fonts, 1, {
 					name = s.font_path_default_label,
@@ -6072,7 +6244,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 					fontItems[i].tooltip = {
 						title = fonts[i].name,
 						lines = {
-							{ text = fonts[i].path:match(rs.addon) and s.font_path_otf or s.font_path_base },
+							{ text = fonts[i].path:match(w.addon) and s.font_path_otf or s.font_path_base },
 							{ text = "\n" .. s.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
 						}
 					}
@@ -6117,9 +6289,9 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 					arrange = {},
 					items = fontItems,
 					dependencies = t.dependencies,
-					getData = function() return us.FindIndex(fonts, getData().path) end,
+					getData = function() return w.FindIndex(fonts, getData().path) end,
 					saveData = function(value) getData().path = fonts[value].path end,
-					default = us.FindIndex(fonts, defaultData.path),
+					default = w.FindIndex(fonts, defaultData.path),
 					dataManagement = {
 						category = t.dataManagement.category,
 						key = t.dataManagement.key,
@@ -6406,7 +6578,7 @@ function wt.CreateSettingsmanager(t, ancestor)
 		end
 	end
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Settingsmanager: " .. us.ToString(settingsmanager), wt.title .. ".CreateSettingsmanager" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Settingsmanager: " .. w.ToString(settingsmanager), wt.title .. ".CreateSettingsmanager" end)
 
 	return settingsmanager
 end
@@ -6539,11 +6711,11 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	function page:Open()
 		if WidgetToolsDB.lite or not page.category then
-			print(cr(wt.Texture(rs.textures.logo, 9) .. " " .. rs.title, rs.colors.gold[1]) .. " " .. cr(rs.strings.chat.lite.reminder:gsub(
-				"#HINT", cr(rs.strings.chat.lite.hint:gsub(
-					"#COMMAND", cr("/" .. rs.chat.keyword .. " " .. rs.chat.commands.lite, { r = 1, g = 1, b = 1, })
-				), rs.colors.grey[1])
-			), rs.colors.gold[2]))
+			print(cr(wt.Texture(w.textures.logo, 9) .. " " .. w.title, w.colors.gold[1]) .. " " .. cr(w.strings.chat.lite.reminder:gsub(
+				"#HINT", cr(w.strings.chat.lite.hint:gsub(
+					"#COMMAND", cr("/" .. w.chat.keyword .. " " .. w.chat.commands.lite, { r = 1, g = 1, b = 1, })
+				), w.colors.grey[1])
+			), w.colors.gold[2]))
 
 			return
 		end
@@ -6693,7 +6865,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		t.initialize(page.content, width, height, (t.dataManagement or {}).category, (t.dataManagement or {}).keys, t.name or addon)
 
 		--Arrange content
-		if t.arrangement and page.content then wt.ArrangeContent(page.content, us.Fill(t.arrangement, {
+		if t.arrangement and page.content then wt.ArrangeContent(page.content, w.Fill(t.arrangement, {
 			margins = { l = 10, r = 10, t = 54, b = 10 },
 			gaps = 54,
 			resize = t.scroll ~= nil
@@ -6927,7 +7099,7 @@ function baseBuilders.Profilemanager(profilemanager)
 
 		table.insert(profiles_accountData[self].profiles, index, {
 			title = title,
-			data = us.Clone(d and d.data or profiles_defaultData[self])
+			data = w.Clone(d and d.data or profiles_defaultData[self])
 		})
 
 		invoke(self, lockout_created, profilemanager_created, silent, handlers_created, user, index, title)
@@ -6989,7 +7161,7 @@ function baseBuilders.Profilemanager(profilemanager)
 		local title = profiles_accountData[self].profiles[index].title
 
 		local function reset()
-			us.CopyValues(self.data, profiles_defaultData[self])
+			w.CopyValues(self.data, profiles_defaultData[self])
 
 			invoke(self, lockout_reset, profilemanager_reset, silent, handlers_reset, false, user == true, index, title)
 		end
@@ -7007,9 +7179,9 @@ function baseBuilders.Profilemanager(profilemanager)
 
 		compareWith = type(compareWith) == "table" and compareWith or profiles_defaultData[self]
 
-		us.Prune(profileData, profiles_valueChecker[self])
-		us.Fill(profileData, compareWith)
-		us.Filter(profileData, compareWith, profiles_recoveryMap[self], profiles_onRecovery[self])
+		w.Prune(profileData, profiles_valueChecker[self])
+		w.Fill(profileData, compareWith)
+		w.Filter(profileData, compareWith, profiles_recoveryMap[self], profiles_onRecovery[self])
 
 		return profileData
 	end
@@ -7021,15 +7193,15 @@ function baseBuilders.Profilemanager(profilemanager)
 		local index = 1
 
 		--Check profile list
-		for key, value in us.SortedPairs(list) do
+		for key, value in w.SortedPairs(list) do
 			if key == index and type(value) == "table" then
-				if type(list[index].data) == "table" then profilemanager:Validate(list[index].data) else list[index].data = us.Clone(profiles_defaultData[self]) end
+				if type(list[index].data) == "table" then profilemanager:Validate(list[index].data) else list[index].data = w.Clone(profiles_defaultData[self]) end
 			else list[key] = nil end
 
 			index = index + 1
 		end
 
-		if not list[1] then list[1] = { title = s.profiles_select_main, data = us.Clone(profiles_defaultData[self]) } end
+		if not list[1] then list[1] = { title = s.profiles_select_main, data = w.Clone(profiles_defaultData[self]) } end
 
 		for i = 1, #list do list[i].title = checkName(list[i].title, nil, true) end
 	end
@@ -7046,7 +7218,7 @@ function baseBuilders.Profilemanager(profilemanager)
 			--Update the profile list in storage (without breaking table references)
 			for i = 1, #p.profiles do
 				profiles_accountData[self].profiles[i].title = p.profiles[i].title
-				us.CopyValues(profiles_accountData[self].profiles[i].data, p.profiles[i].data)
+				w.CopyValues(profiles_accountData[self].profiles[i].data, p.profiles[i].data)
 			end
 		else
 			profiles_accountData[self].profiles = type(profiles_accountData[self].profiles) == "table" and profiles_accountData[self].profiles or {}
@@ -7069,11 +7241,11 @@ function baseBuilders.Profilemanager(profilemanager)
 		end end
 
 		if next(recovered) then
-			us.Pull(self.data, recovered)
+			w.Pull(self.data, recovered)
 
 			profilemanager:Validate(self.data)
 
-			ds.Log(function() return "Recovered misplaced data:" .. us.TableToString(recovered), wt.title .. " • Profilemanager (" .. profiles_category[self] .. "):Load" end)
+			log(function() return "Recovered misplaced data:" .. w.TableToString(recovered), wt.title .. " • Profilemanager (" .. profiles_category[self] .. "):Load" end)
 		end
 
 		--| Call listeners
@@ -7123,7 +7295,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, anc
 
 	profilemanager:Load(nil, nil, false, true)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Profilemanager: " .. us.ToString(profilemanager), wt.title .. ".CreateProfilemanager" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Profilemanager: " .. w.ToString(profilemanager), wt.title .. ".CreateProfilemanager" end)
 
 	return profilemanager
 end
@@ -7286,7 +7458,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 					--[ Active Profile ]
 
 					local function refresh()
-						profilesPage.backup.box:SetValue(us.TableToString(profilesPage.data, settingsData.compactBackup))
+						profilesPage.backup.box:SetValue(w.TableToString(profilesPage.data, settingsData.compactBackup))
 
 						--Set focus after text change to set the scroll to the top and refresh the position character counter
 						profilesPage.backup.box.scrollframe.EditBox:SetFocus()
@@ -7328,7 +7500,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 							if success then
 								profilesPage:Validate(load, profilesPage.data)
-								us.CopyValues(profilesPage.data, load)
+								w.CopyValues(profilesPage.data, load)
 							end
 
 							t.onImport(success, load)
@@ -7411,7 +7583,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 						},
 						initialize = function(_, windowPanel)
 							local function refreshAll()
-								profilesPage.backupAll.box:SetValue(us.TableToString({
+								profilesPage.backupAll.box:SetValue(w.TableToString({
 									activeProfile = characterData.activeProfile,
 									profiles = accountData.profiles
 								}, settingsData.compactBackup))
@@ -7638,10 +7810,10 @@ function baseBuilders.Addonmanager(addonmanager)
 		return tiers
 	end
 	function addonmanager:GetChangelog()
-		local changelog = addonmanager_changelog[self]
+		local changelog = addonmanager_changelog[self] ---@type any
 
 		if type(changelog) ~= "string" then
-			changelog = us.FormatChangelog(changelog, true)
+			changelog = w.FormatChangelog(changelog, true)
 
 			addonmanager_changelog[self] = changelog
 		end
@@ -7649,10 +7821,10 @@ function baseBuilders.Addonmanager(addonmanager)
 		return changelog
 	end
 	function addonmanager:GetChangelogHistory()
-		local history = addonmanager_changelogHistory[self]
+		local history = addonmanager_changelogHistory[self] ---@type any
 
 		if type(history) ~= "string" then
-			history = us.FormatChangelog(history)
+			history = w.FormatChangelog(history)
 
 			addonmanager_changelogHistory[self] = history
 		end
@@ -7700,7 +7872,7 @@ function wt.CreateAddonmanager(t, ancestor)
 
 	addonmanager:SetAddon(t.addon, t.changelog)
 
-	ds.Log(function() return progenitors[typename] .. " instance mutated into a Addonmanager: " .. us.ToString(addonmanager), wt.title .. ".CreateAddonmanager" end)
+	log(function() return progenitors[typename] .. " instance mutated into a Addonmanager: " .. w.ToString(addonmanager), wt.title .. ".CreateAddonmanager" end)
 
 	return addonmanager
 end
@@ -7959,7 +8131,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 						width = panel:GetWidth() - 225,
 						height = panel:GetHeight() - 25,
 						font = { normal = "GameFontDisableSmall", },
-						color = rs.colors.grey[1],
+						color = w.colors.grey[1],
 						value = data.changelog_latest,
 						readOnly = true,
 					})
@@ -8013,7 +8185,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 									width = windowPanel:GetWidth() - 32,
 									height = windowPanel:GetHeight() - 58,
 									font = { normal = "GameFontDisable", },
-									color = rs.colors.grey[1],
+									color = w.colors.grey[1],
 									value = data.changelog_full,
 									readOnly = true,
 									scrollSpeed = 0.2,
@@ -8091,209 +8263,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 		end,
 	})
 
-	ds.Log(function() return "Addonmanager instance mutated into AddonPage GUI instance: " .. us.ToString(addonPage), wt.title .. ".CreateAddonPage" end)
+	log(function() return "Addonmanager instance mutated into AddonPage GUI instance: " .. w.ToString(addonPage), wt.title .. ".CreateAddonPage" end)
 
 	return addonPage
-end
-
-
---[[ CHAT COMMANDS ]]
-
-local chatmanager_keywords ---@type table<chatmanager, string[]>
-local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
-local chatmanager_colors ---@type table<chatmanager, table>
-local chatmanager_title ---@type table<chatmanager, string>
-local chatmanager_icon ---@type table<chatmanager, string>
-local chatmanager_branding ---@type table<chatmanager, string>
-
-local chatmanager_onWelcome ---@type table<chatmanager, function>
-
----@param chatmanager chatmanager
-function baseBuilders.Chatmanager(chatmanager)
-	if not chatmanager_keywords then chatmanager_keywords = {} end
-	if not chatmanager_commands then chatmanager_commands = {} end
-	if not chatmanager_colors then chatmanager_colors = {} end
-	if not chatmanager_title then chatmanager_title = {} end
-	if not chatmanager_icon then chatmanager_icon = {} end
-	if not chatmanager_branding then chatmanager_branding = {} end
-
-	function chatmanager:SetCommands(commands)
-		if type(commands) ~= "table" then commands = {} else
-			for i = 1, commands do
-				local command = commands[i]
-
-				if type(command.onSuccess) ~= "function" then command.onError = nil end
-				if type(command.onError) ~= "function" then command.onError = nil end
-				if type(command.onHelp) ~= "function" then command.onError = nil end
-			end
-		end
-
-		chatmanager_commands[self] = commands
-	end
-
-	function chatmanager:Print(message, title, titleColor, contentColor)
-		local colors = chatmanager_colors[self]
-
-		title = type(title) == "string" and title or chatmanager_branding[self]
-		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
-		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
-
-		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
-	end
-
-	function chatmanager:Welcome()
-		local keywords = chatmanager_keywords[self]
-		local colors = chatmanager_colors[self]
-		local keyword = cr(keywords[1], colors.command)
-
-		if #keywords > 1 then
-			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
-			keyword = s.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
-		end
-
-		print(cr(chatmanager_icon[self] .. s.chat_welcome_thanks:gsub("#ADDON", cr(chatmanager_title[self], colors.title)), colors.content))
-		print(cr(s.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
-
-		if chatmanager_onWelcome[self] then chatmanager_onWelcome[self]() end
-	end
-
-	function chatmanager:Help()
-		local keywords = chatmanager_keywords[self]
-		local commands = chatmanager_commands[self]
-		local colors = chatmanager_colors[self]
-
-		print(cr(s.chat_help_list:gsub("#ADDON", cr(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
-
-		for i = 1, #commands do
-			local command = commands[i]
-
-			if not command.hidden then
-				local description = command.description
-				if type(description) == "function" then description = description() end
-				description = type(description) == "string" and cr(" • " .. description, colors.description) or ""
-
-				print(cr("    " .. keywords[1] .. " ".. command.command, colors.command) .. description)
-			end
-
-			if command.onHelp then command.onHelp() end
-		end
-	end
-
-	function chatmanager:Trigger(c, ...)
-		local commands = chatmanager_commands[self]
-
-		for i = 1, #commands do
-			local command = commands[i]
-
-			if c == command.command then
-				local handler = command.handler
-
-				if type(handler) == "function" then
-					local results = { handler(self, ...) }
-
-					if results[1] == true then
-						local success = command.success
-						local message = type(success) == "function" and success(unpack(results, 2)) or success
-
-						if type(message) == "string" then chatmanager:Print(message) end
-
-						if command.onSuccess then command.onSuccess(self, unpack(results, 2)) end
-					elseif results[1] == false then
-						local error = command.error
-						local message = type(error) == "function" and error(unpack(results, 2)) or error
-
-						if type(message) == "string" then chatmanager:Print(message) end
-
-						if command.onError then command.onError(self, unpack(results, 2)) end
-					end
-				end
-
-				if command.help then chatmanager:Help() end
-
-				return true
-			end
-		end
-
-		return false
-	end
-end
-
-progenitors.Chatmanager = "Construct" ---@type typename_construct
-function wt.CreateChatmanager(keywords, t, ancestor)
-	local typename = "Chatmanager" ---@type typename_chatmanager
-	local chatmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast chatmanager chatmanager
-
-	--[ Initialization ]
-
-	t = type(t) == "table" and t or {}
-
-	chatmanager:SetCommands(t.commands)
-
-	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
-
-	--| Color palette
-
-	local colors = t.colors or {}
-
-	chatmanager_colors[chatmanager] = {
-		title = wt.IsColor(colors.title) or YELLOW_FONT_COLOR,
-		content = wt.IsColor(colors.content) or WHITE_FONT_COLOR,
-		command = wt.IsColor(colors.command) or LIGHTBLUE_FONT_COLOR,
-		description = wt.IsColor(colors.description) or LIGHTGRAY_FONT_COLOR,
-	}
-
-	--| Addon branding
-
-	local title, icon
-	local addon = t.addon
-
-	if wt.IsType(addon, "Addonmanager") then ---@cast addon addonmanager
-		title = addon:GetTitle()
-		icon = addon:GetLogo()
-		addon = addon:GetName()
-	else
-		local addon_type = type(addon)
-
-		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
-			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
-		end
-	end
-
-	if not addon then
-		addon = tostring(chatmanager)
-		title = addon
-	end
-
-	chatmanager_title[chatmanager] = title
-	chatmanager_icon[chatmanager] = icon and (wt.Texture(icon, 11, 11) .. " ") or ""
-	chatmanager_branding[chatmanager] = icon .. title .. ": "
-
-	--| Keywords
-
-	if type(keywords) == "table" then
-		local slash = "SLASH_" .. addon
-
-		for i = 1, #keywords do
-			local keyword = "/" .. keywords[i]
-
-			keywords[i] = keyword
-			_G[slash .. i] = keyword
-		end
-
-		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
-
-		SlashCmdList[addon] = function(line)
-			local payload = { strsplit(" ", line) }
-
-			if not chatmanager:Trigger(unpack(payload)) then
-				if defaultHandler then defaultHandler(chatmanager, unpack(payload)) end
-
-				chatmanager:Help()
-			end
-		end
-	end
-
-	return chatmanager
 end

@@ -2824,8 +2824,8 @@ function wt.CreateDatamanager(t, ancestor)
 	---@field listeners? datamanager_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field value? any The starting state of the widget to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
 	---@field default? any Default value of the widget | ***Default:*** `nil`
-	---@field read datamanager_storage_read
-	---@field write datamanager_storage_write
+	---@field reader? datamanager_reader
+	---@field writer? datamanager_writer
 	---@field instantSave? boolean Immediately commit the data to storage whenever it's changed via the widget | ***Default:*** `true`
 	---@field dataManagement? settingsData If set, register this widget to settings data management for batched data saving & loading and handling data changes
 
@@ -2866,20 +2866,14 @@ function wt.CreateDatamanager(t, ancestor)
 				---Called when a custom event is invoked<p>@*param* `self` ― Reference to the widget table</p><p>@*param* `...` — Any leftover arguments</p>
 				---@alias datamanager_handler fun(self: datamanager, ...: any)
 
-		---Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-		---@alias datamanager_storage_read datamanager_read|nil
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
+		---@alias datamanager_reader fun(): data: datamanager_data
 
-			---Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `data` — ***Default:*** `nil`</p>
-			---@alias datamanager_read fun(): data: datamanager_data
+			---***Default:*** `nil`
+			---@alias datamanager_data any
 
-				---***Default:*** `nil`
-				---@alias datamanager_data any
-
-		---Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-		---@alias datamanager_storage_write datamanager_writer|nil
-
-			---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
-			---@alias datamanager_writer fun(data: datamanager_data)
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `data` — ***Default:*** `nil`</p>
+		---@alias datamanager_writer fun(data: datamanager_data)
 
 		---@class settingsData
 		---@field category? string A unique string used for categorizing settings data management rules & change handler scripts | ***Default:*** `"WidgetTools"` *(register as a global rule)*
@@ -2951,9 +2945,10 @@ function wt.CreateDatamanager(t, ancestor)
 
 		---Verify and set the value of the widget
 		---@param value? datamanager_value_readDefault ***Default:*** `t.data.read()` or *current default value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "changed" event and call registered listeners | ***Default:*** `false`
-		function _:SetValue(value, user, silent) end
+		function _:SetValue(value, handleChanges, user, silent) end
 
 			---***Default:*** `t.data.read()` or *current default value*
 			---@alias datamanager_value_readDefault any?
@@ -2989,32 +2984,16 @@ function wt.CreateDatamanager(t, ancestor)
 
 		--[ Storage ]
 
-		---Set the reader utility called to pull data from storage
-		---@param read datamanager_storage_read Utility function called to read the data from storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from reading storage data
-		function _:SetReader(read) end
-
-		---Set the writer utility called to commit data to storage
-		---@param write datamanager_storage_write Utility called to write the data to storage (and convert, evaluate or modify it as needed), or `nil` to unset it and disconnect this widget from writing storage data
-		function _:SetWriter(write) end
-
-		---Read the data from storage via the currently set reader utility then verify and load it to the widget
+		---Read the data from storage via the provided or the currently set reader utility then verify and load it to the widget
+		---@param reader? datamanager_reader|false If set, call this funciton to read the data from storage (and convert, evaluate or modify it as needed), and set it as the default reader, or if `false`, clear the currently set reader to disconnect this widget from reading storage data | ***Default:*** *last used reader*
 		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:Load(handleChanges, silent) end
+		function _:Load(reader, handleChanges, silent) end
 
-		---Save the current value of the widget to storage via the currently set writer utility
+		---Save the current value of the widget to storage via the provided or the currently set writer utility
+		---@param writer? datamanager_writer|false If set, call this function to write the data to storage (and convert, evaluate or modify it as needed), and set it as the default writer, or if `false`, clear the currently set writer to disconnect this widget from writing storage data | ***Default:*** *last used writer*
 		---@param silent? boolean If `false`, invoke a "saved" event and call registered listeners | ***Default:*** `false`
-		function _:Save(silent) end
-
-		---Get the currently stored data via the specified reader utility
-		---@return datamanager_data # ***Default:*** `nil`
-		function _:GetData() end
-
-		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via the specified reader utility
-		---@param value? datamanager_value_currentDefault ***Default:*** *current value*
-		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
-		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:SetData(value, handleChanges, silent) end
+		function _:Save(writer, silent) end
 
 		---Set whether to immediately commit the data to storage whenever it's changed via the widget
 		---@param instantSave boolean? ***Default:*** `true`
@@ -3165,17 +3144,17 @@ function wt.CreateBinary(t, ancestor)
 		function _:GetValue() return false end
 
 		---Verify and set the logical state of the widget to the provided state
-		---***
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param state? boolean ***Default:*** `false`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _:SetValue(state, user, silent) end
+		function _:SetValue(state, handleChanges, user, silent) end
 
 		---Flip the current logical state of the widget
-		---***
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
 		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke a "flipped" event and call registered listeners | ***Default:*** `false`
-		function _:Flip(user, silent) end
+		function _:Flip(handleChanges, user, silent) end
 
 	return _
 end
@@ -3531,7 +3510,7 @@ function wt.CreateSelector(t, ancestor)
 
 	---Optional parameters
 	---@class selector_options : datamanager_options, selector_options_base
-	---@field items? selectorItemData[] Ordered set of item data used to set up binary datamanager children of the selector group, representing all selectable options
+	---@field items? integer Number of binary datamanager children of the selector group to set up, representing all selectable options
 	---@field listeners? selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun() Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selected`? integer</p>
@@ -3540,9 +3519,6 @@ function wt.CreateSelector(t, ancestor)
 
 		---@class selector_options_base
 		---@field clearable? boolean If `true`, the value of the selector input should be clearable and allowed to be set to nil | ***Default:*** `false`
-
-		---@class selectorItemData
-		---@field onSelect? function The function to be called when the item is selected by the user
 
 		---@class selector_listeners : datamanager_listeners
 		---@field [1]? table<string, selector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
@@ -4676,7 +4652,7 @@ function wt.CreateRadiogroup(t, ancestor)
 	---Optional parameters
 	---@class radiogroup_options : selector_options, selectorFrame_options, radiogroup_options_base
 	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 180 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
-	---@field items? selectorItemData_radioButton[] Ordered set of item data used to set up radio button children of the selector group and the container frame, representing all selectable options
+	---@field items? selectorItemData[] Ordered set of item data used to set up radio button children of the selector group and the container frame, representing all selectable options
 	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
 	---@field listeners? radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
@@ -4687,9 +4663,9 @@ function wt.CreateRadiogroup(t, ancestor)
 		---@class radiogroup_options_base : tooltipDescribableSettingsWidget
 		---@field clearable? boolean If `true`, the selector input should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
 
-		---@class selectorItemData_radioButton : selectorItemData
-		---@field title? string Text to be shown as on the label of the radio button representing the item within the selector container frame (if `t.labels` is `true`)
-		---@field tooltip? itemTooltipTextData List of textlines to be added to the tooltip of the item displayed when mousing over the radio button
+		---@class selectorItemData
+		---@field title? string Text to be shown as on the label of the toggle button representing the item within the selector container frame (if `t.labels` is `true`)
+		---@field tooltip? itemTooltipTextData List of textlines to be added to the tooltip of the item displayed when mousing over the toggle button
 
 			---@class itemTooltipTextData : tooltipTextData
 			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** <code>t.items[<i>index</i>].title</code>
@@ -5060,14 +5036,10 @@ function wt.CreateCheckgroup(t, ancestor)
 	---Optional parameters
 	---@class checkgroup_options : multiselector_options, selectorFrame_options, tooltipDescribableSettingsWidget
 	---@field width? number The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
-	---@field items? selectorItemData_checkbox[] Ordered set of item data used to set up checkbox children of the selector group and the conteiner frame, representing all selectable options
+	---@field items? selectorItemData[] Ordered set of item data used to set up checkbox children of the selector group and the conteiner frame, representing all selectable options
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
 	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
 	---@field listeners? checkgroup_listeners|multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-
-		---@class selectorItemData_checkbox : selectorItemData
-		---@field title? string Text to be shown as on the label of the checkbox representing the item within the selector container frame (if `t.labels` is `true`)
-		---@field tooltip? itemTooltipTextData List of textlines to be added to the tooltip of the item displayed when mousing over the checkbox
 
 		---@class checkgroup_listeners : multiselector_listeners
 		---@field [1]? table<string, checkgroup_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked

@@ -17,16 +17,7 @@ end
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
 
---| Locals
-
 local noop = function() end
-
----@type widgetToolsDebugging
-local ds = {
-	Log = noop,
-	LogRaw = noop,
-	history = {} --ADD an option to save logs across sessions
-}
 
 local eventFrame = CreateFrame("Frame")
 
@@ -40,8 +31,21 @@ local root = "Interface/AddOns/" .. addon .. "/"
 local strings = ns.strings
 local changelog = ns.changelog
 
----@type widgetToolsResources
-local rs = {
+--Modifier key down checking function lookup table
+local modifierKeyDownCheckers = {
+	CTRL = IsControlKeyDown,
+	SHIFT = IsShiftKeyDown,
+	ALT = IsAltKeyDown,
+	LCTRL = IsLeftControlKeyDown,
+	RCTRL = IsRightControlKeyDown,
+	LSHIFT = IsLeftShiftKeyDown,
+	RSHIFT = IsRightShiftKeyDown,
+	LALT = IsLeftAltKeyDown,
+	RALT = IsRightAltKeyDown,
+}
+
+---@type widgetTools
+local w = {
 	addon = addon,
 	title = title,
 	root = root,
@@ -148,26 +152,6 @@ local rs = {
 	},
 	strings = strings,
 	changelog = changelog,
-}
-
-
---[[ UTILITIES ]]
-
---Modifier key down checking function lookup table
-local modifierKeyDownCheckers = {
-	CTRL = IsControlKeyDown,
-	SHIFT = IsShiftKeyDown,
-	ALT = IsAltKeyDown,
-	LCTRL = IsLeftControlKeyDown,
-	RCTRL = IsRightControlKeyDown,
-	LSHIFT = IsLeftShiftKeyDown,
-	RSHIFT = IsRightShiftKeyDown,
-	LALT = IsLeftAltKeyDown,
-	RALT = IsRightAltKeyDown,
-}
-
----@type widgetToolsUtilities
-local us = {
 	isKeyDown = setmetatable({}, {
 		__index = function (_, k) return modifierKeyDownCheckers[k] or IsModifierKeyDown end,
 		__newindex = noop,
@@ -181,7 +165,14 @@ local us = {
 		C = function(s) return crc(s, "FF8888EE") end,
 		O = function(s) return crc(s, "FFEEEE66") end,
 	},
+	Log = noop,
+	LogRaw = noop,
+	history = {}, --ADD an option to save logs across sessions
+	initialization = {},
 }
+
+
+--[[ UTILITIES ]]
 
 --[ General ]
 
@@ -190,7 +181,7 @@ local function compare(x, y)
 	return tostring(x) < tostring(y)
 end
 
-function us.SortedPairs(t)
+function w.SortedPairs(t)
 	if type(t) ~= "table" then return noop end
 
 	local s = {}
@@ -211,7 +202,7 @@ end
 
 --[ Math ]
 
-function us.Round(number, decimals)
+function w.Round(number, decimals)
 	if type(number) ~= "number" then number = 0 end
 	if type(decimals) ~= "number" then decimals = 0 end
 
@@ -224,26 +215,26 @@ end
 
 --| Frame
 
-function us.IsFrame(o)
+function w.IsFrame(o)
 	if type(o) ~= "table" then return false end
 
 	return o.GetObjectType and o.IsObjectType, o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or nil
 end
 
-function us.ToFrame(s)
+function w.ToFrame(s)
 	local frame = nil
 
 	--Find the global reference
 	if type(s) == "string" then for name in s:gmatch("[^.]+") do frame = frame and frame[name] or _G[name] end end
 
-	return us.IsFrame(frame) and frame or nil
+	return w.IsFrame(frame) and frame or nil
 end
 
 --| Font path
 
 local fontTestDummy
 
-function us.TryFont(path, object, size, flags)
+function w.TryFont(path, object, size, flags)
 	if type(path) ~= "string" then return false end
 
 	if type(object) ~= "table" or type(object.SetFont) ~= "function" then
@@ -258,10 +249,10 @@ end
 
 --[ Formatting ]
 
-function us.Thousands(value, decimals, round, trim)
+function w.Thousands(value, decimals, round, trim)
 	if type(value) ~= "number" then return "" end
 
-	value = round == false and value or us.Round(value, decimals)
+	value = round == false and value or w.Round(value, decimals)
 	local sign = value < 0 and "-" or ""
 	local fraction = math.abs(value) % 1
 	local integer = tostring(math.abs(value) - fraction):reverse():gsub("(%d%d%d)", "%1" .. strings.separator):reverse()
@@ -272,11 +263,11 @@ function us.Thousands(value, decimals, round, trim)
 	return sign .. integer .. (((decimals or 0) > 0 and (fraction ~= 0 or trim == false)) and strings.decimal .. decimalText or "")
 end
 
-function us.ToString(object)
+function w.ToString(object)
 	local t = type(object)
 
 	if t == "table" then
-		local f, s = us.IsFrame(object)
+		local f, s = w.IsFrame(object)
 
 		if f then
 			if type(s) == "string" then return crc(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
@@ -301,11 +292,11 @@ end
 ---@param indentation string Chain of characters to use as the indentation for subtables
 ---@return string
 local function formatTableString(table, compact, space, newLine, indentation)
-	if us.IsFrame(table) then return (us.ToString(table)) end
+	if w.IsFrame(table) then return (w.ToString(table)) end
 
 	local tableString = "{"
 
-	for key, value in us.SortedPairs(table) do
+	for key, value in w.SortedPairs(table) do
 		--Key
 		tableString = tableString .. newLine .. (compact and "" or indentation) .. (
 			type(key) == "string" and (
@@ -314,7 +305,7 @@ local function formatTableString(table, compact, space, newLine, indentation)
 		) .. space .. "="
 
 		--Value
-		local valueString, valueType = us.ToString(value)
+		local valueString, valueType = w.ToString(value)
 		if valueType == "table" then valueString = formatTableString(value, compact, space, newLine, indentation .. (compact and "" or "    ")) end
 
 		tableString = tableString .. space .. valueString
@@ -326,13 +317,13 @@ local function formatTableString(table, compact, space, newLine, indentation)
 	return crc((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
 end
 
-function us.TableToString(table, compact)
-	if type(table) ~= "table" then return (us.ToString(table)) end
+function w.TableToString(table, compact)
+	if type(table) ~= "table" then return (w.ToString(table)) end
 
 	return formatTableString(table, compact, compact and "" or " ", compact and "" or "\n", "    ")
 end
 
-function us.FormatChangelog(log, latest, apply)
+function w.FormatChangelog(log, latest, apply)
 	if type(log) ~= "table" then return "" end
 
 	local c = ""
@@ -347,7 +338,7 @@ function us.FormatChangelog(log, latest, apply)
 			local line = version[j]
 
 			if type(line) == "string" then
-				line = line:gsub("#([A-Z])_(.-)_#", function(markup, s) return us.applyColorMarkup[markup](s) end)
+				line = line:gsub("#([A-Z])_(.-)_#", function(markup, s) return w.applyColorMarkup[markup](s) end)
 				c = c .. (j > firstLine and "\n\n" or "") .. (i > 1 and "\n\n\n" or "") .. line
 
 				if apply ~= false then version[j] = line end
@@ -379,10 +370,10 @@ end
 ---@param p table
 local function infect(t, p) for k, v in pairs(t) do if type(v) == "table" then infect(v, p[k]) else return end end end
 
-function us.Protect(t)
+function w.Protect(t)
 	local metatable = getmetatable(t)
 
-	if type(t) ~= "table" or metatable == "Protected" or metatable == "Public" or us.IsFrame(t) then return t end
+	if type(t) ~= "table" or metatable == "Protected" or metatable == "Public" or w.IsFrame(t) then return t end
 
 	local proxy = protectionProxies[t]
 
@@ -391,20 +382,20 @@ function us.Protect(t)
 			__index = function(_, k)
 				local v = t[k]
 
-				if type(v) ~= "table" or getmetatable(v) == "Public" or us.IsFrame(v) then return v end
+				if type(v) ~= "table" or getmetatable(v) == "Public" or w.IsFrame(v) then return v end
 
 				local subproxy = protectionProxies[v]
 
 				if not subproxy then
-					subproxy = us.Protect(v)
+					subproxy = w.Protect(v)
 
 					protectionProxies[v] = subproxy
 				end
 
 				return subproxy
 			end,
-			__newindex = function(_, k, v) ds.Log(function() return
-				"Assignment prevented: " .. us.ToString(t) .. " [ " .. us.ToString(k) .. " ] =  " .. us.ToString(v),
+			__newindex = function(_, k, v) w.Log(function() return
+				"Assignment prevented: " .. w.ToString(t) .. " [ " .. w.ToString(k) .. " ] =  " .. w.ToString(v),
 				"WidgetTools.utilities.Protect"
 			end) end,
 			__metatable = "Protected",
@@ -420,18 +411,18 @@ end
 
 --| Search
 
-function us.FindIndex(array, value)
+function w.FindIndex(array, value)
 	array = expose(array)
 
 	if type(array) ~= "table" then return nil end
 
 	for i = 1, #array do if array[i] == value then return i end end
-	for i = 1, #array do if us.FindKey(array[i], value) ~= nil then return i end end
+	for i = 1, #array do if w.FindKey(array[i], value) ~= nil then return i end end
 
 	return nil
 end
 
-function us.FindKey(t, value)
+function w.FindKey(t, value)
 	t = expose(t)
 
 	if type(t) ~= "table" then return nil end
@@ -439,7 +430,7 @@ function us.FindKey(t, value)
 	for k, v in pairs(t) do
 		if v == value then return protectionProxies[k] or k end
 
-		local match = us.FindKey(v, value)
+		local match = w.FindKey(v, value)
 
 		if match ~= nil then return protectionProxies[match] or match end
 	end
@@ -447,7 +438,7 @@ function us.FindKey(t, value)
 	return nil
 end
 
-function us.FindValue(t, key)
+function w.FindValue(t, key)
 	t = expose(t)
 
 	if type(t) ~= "table" then return nil end
@@ -455,7 +446,7 @@ function us.FindValue(t, key)
 	for k, v in pairs(t) do
 		if k == key then return protectionProxies[v] or v end
 
-		local match = us.FindValue(v, key)
+		local match = w.FindValue(v, key)
 
 		if match ~= nil then return protectionProxies[match] or match end
 	end
@@ -465,7 +456,7 @@ end
 
 --| Sort
 
-function us.Reorder(t, directives)
+function w.Reorder(t, directives)
 	if type(t) ~= "table" or #t < 2 or type(directives) ~= "table" then return t end
 
 	local d = {}
@@ -486,20 +477,20 @@ end
 
 --| Data management
 
-function us.Clone(object)
-	if type(object) ~= "table" or us.IsFrame(object) then return object end
+function w.Clone(object)
+	if type(object) ~= "table" or w.IsFrame(object) then return object end
 
 	local copy = {}
 
-	for k, v in pairs(expose(object)) do copy[k] = us.Clone(v) end
+	for k, v in pairs(expose(object)) do copy[k] = w.Clone(v) end
 
 	return copy
 end
 
-function us.Merge(target, source)
+function w.Merge(target, source)
 	if type(target) ~= "table" or type(source) ~= "table" then return target end
 
-	for _, v in pairs(source) do table.insert(target, us.Clone(v)) end
+	for _, v in pairs(source) do table.insert(target, w.Clone(v)) end
 
 	return target
 end
@@ -512,52 +503,52 @@ local function copy(target, source)
 	for k, v in pairs(target) do
 		local sv = source[k]
 
-		if sv ~= nil then if type(v) ~= "table" or us.IsFrame(v) or type(sv) ~= "table" or us.IsFrame(sv) then target[k] = sv else copy(v, sv) end end
+		if sv ~= nil then if type(v) ~= "table" or w.IsFrame(v) or type(sv) ~= "table" or w.IsFrame(sv) then target[k] = sv else copy(v, sv) end end
 	end
 
 	return target
 end
 
-function us.CopyValues(target, source)
-	return type(target) ~= "table" or us.IsFrame(target) or type(source) ~= "table" or us.IsFrame(source) and target or copy(target, source)
+function w.CopyValues(target, source)
+	return type(target) ~= "table" or w.IsFrame(target) or type(source) ~= "table" or w.IsFrame(source) and target or copy(target, source)
 end
 
-function us.Fill(target, source)
-	if type(source) ~= "table" or next(source) == nil or us.IsFrame(source) then return target end
+function w.Fill(target, source)
+	if type(source) ~= "table" or next(source) == nil or w.IsFrame(source) then return target end
 
 	target = type(target) == "table" and target or {}
 
 	for k, v in pairs(source) do
 		local tv = target[k]
 
-		if tv == nil then if v ~= nil and v ~= "" then target[k] = us.Clone(v) end
-		elseif type(tv) == "table" and not us.IsFrame(tv) and type(v) == "table" then us.Fill(tv, v) end
+		if tv == nil then if v ~= nil and v ~= "" then target[k] = w.Clone(v) end
+		elseif type(tv) == "table" and not w.IsFrame(tv) and type(v) == "table" then w.Fill(tv, v) end
 	end
 
 	return target
 end
 
-function us.Pull(target, source)
-	if type(target) ~= "table" or us.IsFrame(target) or type(source) ~= "table" or us.IsFrame(source) then return source end
+function w.Pull(target, source)
+	if type(target) ~= "table" or w.IsFrame(target) or type(source) ~= "table" or w.IsFrame(source) then return source end
 
 	for k, v in pairs(source) do
 		local tv = target[k]
 
-		if tv == nil then if v ~= nil and v ~= "" then target[k] = us.Clone(v) end
-		elseif type(tv) == "table" and type(v) == "table" then us.Pull(tv, v) else target[k] = us.Clone(v) end
+		if tv == nil then if v ~= nil and v ~= "" then target[k] = w.Clone(v) end
+		elseif type(tv) == "table" and type(v) == "table" then w.Pull(tv, v) else target[k] = w.Clone(v) end
 	end
 
 	return target
 end
 
-function us.Prune(target, validate)
-	if type(target) ~= "table" or us.IsFrame(target) then return target end
+function w.Prune(target, validate)
+	if type(target) ~= "table" or w.IsFrame(target) then return target end
 
 	validate = type(validate) == "function" and validate or nil
 
 	for k, v in pairs(target) do
 		if type(v) == "table" then
-			if next(v) == nil then target[k] = nil else us.Prune(v, validate) end
+			if next(v) == nil then target[k] = nil else w.Prune(v, validate) end
 		else
 			local remove = v == nil or v == ""
 
@@ -610,7 +601,7 @@ local function purge(target, sample, recoveredData, recoveredKey)
 
 	--| Check subtables
 
-	if targetType ~= "table" or sampleType ~= "table" or us.IsFrame(target) or us.IsFrame(sample) then return recoveredData end
+	if targetType ~= "table" or sampleType ~= "table" or w.IsFrame(target) or w.IsFrame(sample) then return recoveredData end
 	if next(target) == nil then return recoveredData end
 
 	for key, value in pairs(target) do
@@ -628,8 +619,8 @@ local function purge(target, sample, recoveredData, recoveredKey)
 	return recoveredData
 end
 
-function us.Filter(target, sample, recoveryMap, onRecovery)
-	if type(target) ~= "table" or us.IsFrame(target) then return target end
+function w.Filter(target, sample, recoveryMap, onRecovery)
+	if type(target) ~= "table" or w.IsFrame(target) then return target end
 
 	local recoveredData = purge(target, sample)
 
@@ -648,13 +639,13 @@ function us.Filter(target, sample, recoveryMap, onRecovery)
 	return target
 end
 
-function us.VerifyData(target, source)
+function w.VerifyData(target, source)
 	if type(target) ~= "table" or type(source) ~= "table" then return target end
 
 	for k, v in pairs(source) do
 		local tv = target[k]
 
-		if type(v) ~= type(tv) then target[k] = us.Clone(v) elseif type(tv) == "table" and type(v) == "table" then us.VerifyData(tv, v) end
+		if type(v) ~= type(tv) then target[k] = w.Clone(v) elseif type(tv) == "table" and type(v) == "table" then w.VerifyData(tv, v) end
 	end
 
 	for k in pairs(target) do if source[k] == nil then target[k] = nil end end
@@ -666,21 +657,21 @@ end
 
 local eventHandlers = {}
 
-function us.SetListener(parent, event, handler, registration)
-	if not us.IsFrame(parent) or not C_EventUtils.IsEventValid(event) or (handler ~= nil and type(handler) ~= "function") then return end
+function w.SetListener(parent, event, handler, registration)
+	if not w.IsFrame(parent) or not C_EventUtils.IsEventValid(event) or (handler ~= nil and type(handler) ~= "function") then return end
 
 	if not eventHandlers[parent] then eventHandlers[parent] = {} end
 
 	eventHandlers[parent][event] = handler
 
 	if registration ~= false then if handler then
-		if parent:GetScript("OnEvent") ~= us.CallListener then parent:SetScript("OnEvent", us.CallListener) end
+		if parent:GetScript("OnEvent") ~= w.CallListener then parent:SetScript("OnEvent", w.CallListener) end
 
 		parent:RegisterEvent(event)
 	else parent:UnregisterEvent(event) end end
 end
 
-function us.CallListener(parent, event, ...)
+function w.CallListener(parent, event, ...)
 	local f = eventHandlers[parent]
 
 	if not f then return end
@@ -694,7 +685,7 @@ end
 --[[ DATA ]]
 
 ---@type widgetToolsData
-WidgetToolsDB = us.VerifyData(type(WidgetToolsDB) == "table" and WidgetToolsDB or {}, {
+WidgetToolsDB = w.VerifyData(type(WidgetToolsDB) == "table" and WidgetToolsDB or {}, {
 	lite = false,
 	positioningAids = true,
 	-- customFonts = { "CUSTOM", }, --REPLACE with custom font management
@@ -715,18 +706,18 @@ local loadedDebugging = WidgetToolsDB.debugging
 --[[ DEBUGGING TOOLS ]]
 
 if WidgetToolsDB.debugging then
-	function ds.LogRaw(message, trace)
+	function w.LogRaw(message, trace)
 		message = tostring(message)
 		trace = (trace == nil and "(source not traced)" or tostring(trace))
 
-		table.insert(ds.history, date("%Y.%m.%d. %H:%M:%S\t", time()) .. trace .. "\t" .. message)
+		table.insert(w.history, date("%Y.%m.%d. %H:%M:%S\t", time()) .. trace .. "\t" .. message)
 
-		print("|T" .. rs.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
+		print("|T" .. w.textures.logo .. ":11|t |cFFFFAA00Debug Log:|r |cFFFFFF00" .. trace .. " • |r" .. message)
 	end
 
-	function ds.Log(passer) if type(passer) ~= "function" then return else ds.LogRaw(passer()) end end
+	function w.Log(passer) if type(passer) ~= "function" then return else w.LogRaw(passer()) end end
 
-	ds.LogRaw("Debug logging enabled.", "Widget Tools initialization")
+	w.LogRaw("Debug logging enabled.", "Widget Tools initialization")
 end
 
 ---Convert and format an input object to string to be dumped to the in-game chat
@@ -752,10 +743,10 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 
 	--Format the name and key
 	currentKey = currentKey and indentation .. "|cFFACD1EC" .. currentKey .. "|r" or nil
-	name = name and "|cFF69A6F8" .. tostring(name) .. "|r" or us.ToString(protectionProxies[object] or object)
+	name = name and "|cFF69A6F8" .. tostring(name) .. "|r" or w.ToString(protectionProxies[object] or object)
 
 	--Add the line to the output
-	if type(object) == "table" and (digFrames or not us.IsFrame(object)) then
+	if type(object) == "table" and (digFrames or not w.IsFrame(object)) then
 		local s = (currentKey and (currentKey .. " (") or "Dump (") .. name .. "):"
 
 		--Stop at the max depth or if the key is skipped
@@ -768,9 +759,9 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 		table.insert(outputTable, s .. (digTables == false and " {…}" or ""))
 
 		--Convert & format the subtable
-		for k, v in us.SortedPairs(object) do getDumpOutput(v, outputTable, nil, blockrule, depth, digTables, digFrames, k, currentLevel + 1) end
+		for k, v in w.SortedPairs(object) do getDumpOutput(v, outputTable, nil, blockrule, depth, digTables, digFrames, k, currentLevel + 1) end
 	elseif digTables == false then return else
-		local line = (currentKey and currentKey .. " = " or "Dump " .. name .. " value: ") .. (skip and "…" or us.ToString(protectionProxies[object] or object))
+		local line = (currentKey and currentKey .. " = " or "Dump " .. name .. " value: ") .. (skip and "…" or w.ToString(protectionProxies[object] or object))
 
 		table.insert(outputTable, line)
 
@@ -778,7 +769,7 @@ local function getDumpOutput(object, outputTable, name, blockrule, depth, digTab
 	end
 end
 
-function ds.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
+function w.Dump(object, name, blockrule, depth, digTables, digFrames, linesPerMessage)
 	object = expose(object)
 	local output = {}
 
@@ -804,7 +795,7 @@ end
 
 --| Resize Frame Attributes
 
-if WidgetToolsDB.frameAttributes.enabled then us.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", function()
+if WidgetToolsDB.frameAttributes.enabled then w.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", function()
 	eventFrame:UnregisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
 
 	if _G["TableAttributeDisplay"] then
@@ -816,14 +807,12 @@ end) end
 
 --[[ TOOLBOX REGISTRY ]]
 
-local ts = { initialization = {} } ---@type widgetToolsToolboxes
-
 --Readonly list of toolboxes registered under unique version keys with the list of addons registered for using each
 local protectedToolboxRegistry = {} ---@type table<string, widgetToolboxEntry>
 
 --| Registration
 
-function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readonly)
+function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonly)
 	if type(userAddon) ~= "string" or not C_AddOns.IsAddOnLoaded(userAddon) or not version then return end
 
 	version = tostring(version)
@@ -834,8 +823,8 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 	if protectedToolboxRegistry[version] then
 		table.insert(protectedToolboxRegistry[version].addons, userAddon)
 
-		ds.Log(function() return
-			"Registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. us.ToString(version) .. ".",
+		w.Log(function() return
+			"Registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. w.ToString(version) .. ".",
 			"WidgetTools.toolboxes.Register"
 		end)
 
@@ -847,12 +836,12 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 	--Protect and add the toolbox to the registry and register addon for use
 	if type(toolbox) == "table" then
 		protectedToolboxRegistry[version] = {
-			toolbox = readonly and us.Protect(toolbox) or toolbox,
+			toolbox = readonly and w.Protect(toolbox) or toolbox,
 			addons = { userAddon }
 		}
 
-		ds.Log(function() return
-			"Added Toolbox version " .. us.ToString(version) .. " to the registry and registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
+		w.Log(function() return
+			"Added Toolbox version " .. w.ToString(version) .. " to the registry and registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
 			"WidgetTools.toolboxes.Register"
 		end)
 
@@ -866,7 +855,7 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 	if type(toolboxAddon) ~= "string" then toolboxAddon = "WidgetToolbox_" .. version end
 
 	if not C_AddOns.DoesAddOnExist(toolboxAddon) then
-		ds.Log(function() return
+		w.Log(function() return
 			"Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.",
 			"WidgetTools.toolboxes.Register"
 		end)
@@ -876,19 +865,19 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 
 	--| Register callback
 
-	us.SetListener(eventFrame, "ADDON_LOADED", function(_, a)
+	w.SetListener(eventFrame, "ADDON_LOADED", function(_, a)
 		if a ~= toolboxAddon then return end
 
 		eventFrame:UnregisterEvent("ADDON_LOADED")
 
 		protectedToolboxRegistry[version] = {
-			toolbox = readonly and us.Protect(us.Clone(ts.initialization[version])) or us.Clone(ts.initialization[version]),
+			toolbox = readonly and w.Protect(w.Clone(w.initialization[version])) or w.Clone(w.initialization[version]),
 			addons = { userAddon }
 		}
-		ts.initialization[version] = nil
+		w.initialization[version] = nil
 
-		ds.Log(function() return
-			"New Toolbox version " .. us.ToString(version) .. " initialization finished by " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. ".",
+		w.Log(function() return
+			"New Toolbox version " .. w.ToString(version) .. " initialization finished by " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. ".",
 			toolboxAddon .. " ADDON_LOADED"
 		end)
 
@@ -897,13 +886,13 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 
 	--| Initialization
 
-	ts.initialization[version] = setmetatable({}, { __metatable = "Public" })
+	w.initialization[version] = setmetatable({}, { __metatable = "Public" })
 
-	ds.Log(function() return
-		"New Toolbox version " .. us.ToString(version) .. " initialization started by " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
+	w.Log(function() return
+		"New Toolbox version " .. w.ToString(version) .. " initialization started by " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
 		"WidgetTools.toolboxes.Register"
 	end)
-	ds.Log(function() return
+	w.Log(function() return
 		"Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.",
 		"WidgetTools.toolboxes.Register"
 	end)
@@ -912,24 +901,21 @@ function ts.Register(userAddon, version, callback, toolboxAddon, toolbox, readon
 end
 
 
---[[ GLOBAL TOOLS ]]
-
-WidgetTools = us.Protect({ resources = rs, utilities = us, debugging = ds, toolboxes = ts }) ---@type widgetTools
-
-
 --[[ INITIALIZATION ]]
 
-us.SetListener(eventFrame, "PLAYER_LOGIN", function()
+WidgetTools = w.Protect(w) ---@type widgetTools
+
+w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 	eventFrame:UnregisterEvent("PLAYER_LOGIN")
 
-	ds.LogRaw("Started loading UI.", "WidgetTools PLAYER_LOGIN")
+	w.LogRaw("Started loading UI.", "WidgetTools PLAYER_LOGIN")
 
 	--| Toolbox
 
 	local wt = ns[C_AddOns.GetAddOnMetadata(addon, "X-WidgetTools-AddToNamespace")] ---@type toolbox
 
 	if not wt then
-		ds.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
+		w.LogRaw("Required Toolbox not found, UI not loaded.", "WidgetTools PLAYER_LOGIN")
 
 		return
 	end
@@ -1098,7 +1084,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										TableAttributeDisplay.LinesScrollFrame:SetWidth(WidgetToolsDB.frameAttributes.width)
 									end
 
-									us.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", function()
+									w.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", function()
 										eventFrame:UnregisterEvent("FRAMESTACK_VISIBILITY_UPDATED")
 
 										if _G["TableAttributeDisplay"] then
@@ -1112,7 +1098,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										TableAttributeDisplay.LinesScrollFrame:SetWidth(430)
 									end
 
-									us.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", nil)
+									w.SetListener(eventFrame, "FRAMESTACK_VISIBILITY_UPDATED", nil)
 								end
 							end, },
 						},
@@ -1161,14 +1147,14 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 			--[ List Toolbox Versions ]
 
-			for version, entry in WidgetTools.utilities.SortedPairs(protectedToolboxRegistry) do
-				local title = entry.toolbox.name
-				if type(title) ~= "string" then title = strings.toolboxes.toolbox:gsub("#VERSION", strings.about.version:gsub("#VERSION", version)) end
+			for version, entry in w.SortedPairs(protectedToolboxRegistry) do
+				local name = entry.toolbox.name
+				if type(name) ~= "string" then name = strings.toolboxes.toolbox:gsub("#VERSION", strings.about.version:gsub("#VERSION", version)) end
 
 				wt.CreatePanel({
 					parentFrame = canvas,
 					name = "Toolbox" .. version:gsub("[^%w]", "_"),
-					title = title,
+					title = name,
 					arrange = {},
 					height = 32,
 					arrangement = {
@@ -1196,7 +1182,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 									parentFrame = canvas:GetParent():GetParent(),
 									name = name .. "FullChangelog",
 									append = false,
-									title = s.about_fullChangelog_label:gsub("#ADDON", title),
+									title = s.about_fullChangelog_label:gsub("#ADDON", name),
 									position = { anchor = "BOTTOMRIGHT", offset = { x = 4, y = -3 } },
 									keepInBounds = true,
 									width = 685,
@@ -1212,15 +1198,15 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										wt.CreateMultilineEditbox({
 											parentFrame = windowPanel,
 											name = "Box",
-											title = s.about_fullChangelog_label:gsub("#ADDON", title),
+											title = s.about_fullChangelog_label:gsub("#ADDON", name),
 											label = false,
 											tooltip = { lines = { { text = s.about_fullChangelog_tooltip, }, } },
 											arrange = {},
 											width = windowPanel:GetWidth() - 32,
 											height = windowPanel:GetHeight() - 58,
 											font = { normal = "GameFontDisable", },
-											color = rs.colors.grey[1],
-											value = us.FormatChangelog(expose(entry.toolbox.changelog)),
+											color = w.colors.grey[1],
+											value = w.FormatChangelog(expose(entry.toolbox.changelog)),
 											readOnly = true,
 											scrollSpeed = 0.2,
 										})
@@ -1293,7 +1279,7 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											},
 											width = 38,
 											height = 38,
-											path = data.logo or rs.textures.missing,
+											path = data.logo or w.textures.missing,
 										})
 
 										--| Toggle
@@ -1486,20 +1472,20 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 
 	--[[ CHAT CONTROL ]]
 
-	chatCommands = wt.CreateChatmanager({ rs.chat.keyword }, {
+	chatCommands = wt.CreateChatmanager({ w.chat.keyword }, {
 		commands = {
 			{
-				command = rs.chat.commands.about,
+				command = w.chat.commands.about,
 				description = strings.chat.about.description,
 				handler = function() aboutPage:Open() end,
 			},
 			{
-				command = rs.chat.commands.lite,
+				command = w.chat.commands.lite,
 				description = strings.chat.lite.description,
 				handler = function() liteToggle:SetValue(not WidgetToolsDB.lite, true) end,
 			},
 			{
-				command = rs.chat.commands.debug,
+				command = w.chat.commands.debug,
 				description = strings.chat.debug.description,
 				handler = function()
 					debugToggle:SetValue(not WidgetToolsDB.debugging, true)
@@ -1510,10 +1496,10 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		},
 		addon = addonPage,
 		colors = {
-			title = rs.colors.gold[1],
-			content = rs.colors.gold[2],
+			title = w.colors.gold[1],
+			content = w.colors.gold[2],
 			command = { r = 1, g = 1, b = 1, },
-			description = rs.colors.grey[1]
+			description = w.colors.grey[1]
 		},
 	}) ---@cast chatCommands -nil
 
@@ -1556,9 +1542,9 @@ us.SetListener(eventFrame, "PLAYER_LOGIN", function()
 		{
 			text = (WidgetToolsDB.lite and strings.compartment.lite or strings.compartment.open),
 			font = GameFontNormalSmall,
-			color = rs.colors.grey[1],
+			color = w.colors.grey[1],
 		},
 	} })
 
-	ds.LogRaw("Job's done.", "Widget Tools initialization")
+	w.LogRaw("Job's done.", "Widget Tools initialization")
 end)

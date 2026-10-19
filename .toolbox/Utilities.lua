@@ -1,12 +1,11 @@
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
+local wt = WidgetTools.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
 local s = wt.strings
 
-local rs = WidgetTools.resources
-local us = WidgetTools.utilities
-local ds = WidgetTools.debugging
+local w = WidgetTools
+local log = w.Log
 
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
@@ -47,7 +46,7 @@ s.about_fullChangelog_tooltip = s.about_fullChangelog_tooltip .. "\n\nThe change
 function wt.HarmonizeData(targetTable, tableToSample)
 	if type(targetTable) ~= "table" then return tableToSample end
 
-	return us.Pull(us.Filter(us.Prune(targetTable), tableToSample), tableToSample) --REPLACE with combined code
+	return w.Pull(w.Filter(w.Prune(targetTable), tableToSample), tableToSample) --REPLACE with combined code
 end
 
 
@@ -64,7 +63,7 @@ end
 function wt.PackPosition(anchor, relativeTo, relativePoint, offsetX, offsetY)
 	return {
 		anchor = type(anchor) == "string" and anchor or "TOPLEFT",
-		relativeTo = us.IsFrame(relativeTo) and relativeTo or nil,
+		relativeTo = w.IsFrame(relativeTo) and relativeTo or nil,
 		relativePoint = type(relativePoint) == "string" and relativePoint or nil,
 		offset = offsetX and offsetY and { x = type(offsetX) == "number" and offsetX or 0, y = type(offsetY) == "number" and offsetY or 0 } or nil
 	}
@@ -76,8 +75,8 @@ function wt.UnpackPosition(t)
 	t.anchor = type(t.anchor) == "string" and t.anchor or "TOPLEFT"
 
 	if t.relativeTo ~= "nil" then
-		if type(t.relativeTo) == "string" then t.relativeTo = us.ToFrame(t.relativeTo) end
-		if not us.IsFrame(t.relativeTo) or not (t.relativeTo or {}).GetPoint then t.relativeTo = nil end
+		if type(t.relativeTo) == "string" then t.relativeTo = w.ToFrame(t.relativeTo) end
+		if not w.IsFrame(t.relativeTo) or not (t.relativeTo or {}).GetPoint then t.relativeTo = nil end
 	end
 
 	if type(t.offset) ~= "table" then t.offset = {} else
@@ -94,23 +93,23 @@ end
 
 function wt.IsColor(t)
 	if type(t) ~= "table" then
-		ds.Log(function() return "Not a color table: " ..  us.TableToString(t), wt.title .. ".IsColor" end)
+		log(function() return "Not a color table: " ..  w.TableToString(t), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.r) ~= "number" or t.r < 0 or t.r > 1 then
-		ds.Log(function() return "Invalid red value: " .. us.ToString(t.r), wt.title .. ".IsColor" end)
+		log(function() return "Invalid red value: " .. w.ToString(t.r), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.g) ~= "number" or t.g < 0 or t.g > 1 then
-		ds.Log(function() return "Invalid green value: " .. us.ToString(t.g), wt.title .. ".IsColor" end)
+		log(function() return "Invalid green value: " .. w.ToString(t.g), wt.title .. ".IsColor" end)
 
 		return false
 	elseif type(t.b) ~= "number" or t.b < 0 or t.b > 1 then
-		ds.Log(function() return "Invalid blue value: " .. us.ToString(t.b), wt.title .. ".IsColor" end)
+		log(function() return "Invalid blue value: " .. w.ToString(t.b), wt.title .. ".IsColor" end)
 
 		return false
 	elseif t.a ~= nil and (type(t.a) ~= "number" or t.a < 0 or t.a > 1) then
-		ds.Log(function() return "Invalid alpha value: " .. us.ToString(t.a), wt.title .. ".IsColor" end)
+		log(function() return "Invalid alpha value: " .. w.ToString(t.a), wt.title .. ".IsColor" end)
 
 		return false
 	end
@@ -254,7 +253,7 @@ function wt.SetHyperlinkHandler(addon, linkType, handler)
 	---@param handlerID string
 	---@param payload string
 	local function callHandler(addonID, handlerID, payload)
-		local handlerFunction = us.FindValue(us.FindValue(hyperlinkHandlers, addonID), handlerID)
+		local handlerFunction = w.FindValue(w.FindValue(hyperlinkHandlers, addonID), handlerID)
 
 		if handlerFunction then handlerFunction(strsplit(":", payload)) end
 	end
@@ -289,7 +288,7 @@ function wt.RegisterScriptEvents(frame, events)
 end
 
 function wt.RegisterGlobalEvents(frame, events)
-	if type(events) == "table" then for event, handler in pairs(events) do if type(handler) == "function" then us.SetListener(frame, event, handler) end end end
+	if type(events) == "table" then for event, handler in pairs(events) do if type(handler) == "function" then w.SetListener(frame, event, handler) end end end
 end
 
 function wt.RegisterAttributes(frame, attributes)
@@ -437,7 +436,7 @@ end
 local positioningAid ---@type Frame|nil
 
 function wt.SetPosition(frame, position, unlink, userPlaced)
-	if not us.IsFrame(frame) or not frame.SetPoint then return end
+	if not w.IsFrame(frame) or not frame.SetPoint then return end
 
 	local anchor, relativeTo, relativePoint, offsetX, offsetY = wt.UnpackPosition(position)
 	relativeTo = relativeTo ~= "nil" and relativeTo or nil
@@ -445,7 +444,7 @@ function wt.SetPosition(frame, position, unlink, userPlaced)
 	--Set the position
 	if relativeTo and unlink then
 		if not positioningAid then
-			positioningAid = CreateFrame("Frame", rs.addon .. "PositioningAid", UIParent)
+			positioningAid = CreateFrame("Frame", w.addon .. "PositioningAid", UIParent)
 
 			positioningAid:Hide()
 		end
@@ -482,7 +481,7 @@ function wt.SetPosition(frame, position, unlink, userPlaced)
 end
 
 function wt.SetAnchor(frame, anchor)
-	if not us.IsFrame(frame) or type(anchor) ~= "string" then return end
+	if not w.IsFrame(frame) or type(anchor) ~= "string" then return end
 
 	local oldAnchor, relativeTo, relativePoint, offsetX, offsetY = frame:GetPoint()
 	local x, y = 0, 0
@@ -511,7 +510,7 @@ function wt.SetAnchor(frame, anchor)
 end
 
 function wt.ConvertToAbsolutePosition(frame, keepAnchor)
-	if not us.IsFrame(frame) or not frame.IsMovable then return end
+	if not w.IsFrame(frame) or not frame.IsMovable then return end
 
 	local movable = frame:IsMovable()
 	local oldAnchor = frame:GetPoint()
@@ -542,15 +541,15 @@ local arrangementWrapping = {} ---@type table<AnyFrameObject, boolean>
 local arrangementSkipping = {} ---@type table<AnyFrameObject[], boolean>
 
 function wt.SetArrangementDirective(frame, index, wrap, skip)
-	if not us.IsFrame(frame) or not frame:GetParent() then return end
+	if not w.IsFrame(frame) or not frame:GetParent() then return end
 
-	arrangementOrdering[frame] = type(index) == "number" and us.Round(index) or nil
+	arrangementOrdering[frame] = type(index) == "number" and w.Round(index) or nil
 	if wrap == nil then arrangementWrapping[frame] = nil else arrangementWrapping[frame] = wrap == true end
 	if skip == nil then arrangementSkipping[frame] = nil else arrangementSkipping[frame] = skip == true end
 end
 
 function wt.ArrangeContent(container, t)
-	if not us.IsFrame(container) then return end
+	if not w.IsFrame(container) then return end
 
 	t = type(t) == "table" and t or {}
 	t.margins = t.margins or {}
@@ -566,7 +565,7 @@ function wt.ArrangeContent(container, t)
 
 	--| Scaffold the arrangement based on the directives set
 
-	local frames = us.Reorder({ container:GetChildren() }, arrangementOrdering) ---@type Frame[]
+	local frames = w.Reorder({ container:GetChildren() }, arrangementOrdering) ---@type Frame[]
 	local arrangement = { {} }
 
 	for i = 1, #frames do if not arrangementSkipping[frames[i]] then
@@ -642,7 +641,7 @@ end
 --| Movability
 
 function wt.SetMovability(frame, movable, t)
-	if not us.IsFrame(frame) or not frame.SetMovable then return end
+	if not w.IsFrame(frame) or not frame.SetMovable then return end
 
 	movable = movable == true
 	t = type(t) == "table" and t or {}
@@ -679,7 +678,7 @@ function wt.SetMovability(frame, movable, t)
 				if not cursor or not frame:IsMovable() then return end
 
 				if not modifier then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") else
-					if us.isKeyDown[modifier]() then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") end
+					if w.isKeyDown[modifier]() then SetCursor("Interface/Cursor/ui-cursor-move.crosshair") end
 
 					frame:RegisterEvent("MODIFIER_STATE_CHANGED")
 				end
@@ -699,7 +698,7 @@ function wt.SetMovability(frame, movable, t)
 
 			triggers[i]:HookScript("OnMouseDown", function()
 				if not frame:IsMovable() or isMoving then return end
-				if modifier and not us.isKeyDown[modifier]() then return end
+				if modifier and not w.isKeyDown[modifier]() then return end
 
 				--Store position
 				position = wt.PackPosition(frame:GetPoint())
@@ -716,7 +715,7 @@ function wt.SetMovability(frame, movable, t)
 
 					--Check if the modifier key is pressed
 					if modifier then
-						if us.isKeyDown[modifier]() then return end
+						if w.isKeyDown[modifier]() then return end
 
 						--Cancel when the modifier key is released
 						frame:StopMovingOrSizing()
@@ -765,7 +764,7 @@ end
 --[ Visibility ]
 
 function wt.SetVisibility(frame, visible)
-	if not us.IsFrame(frame) then return end
+	if not w.IsFrame(frame) then return end
 
 	if visible then frame:Show() else frame:Hide() end
 end
@@ -773,7 +772,7 @@ end
 --[ Backdrop ]
 
 function wt.SetBackdrop(frame, backdrop, updates)
-	if not us.IsFrame(frame) or not frame.SetBackdrop then return end
+	if not w.IsFrame(frame) or not frame.SetBackdrop then return end
 
 	--[ Set Backdrop ]
 
@@ -845,13 +844,13 @@ function wt.SetBackdrop(frame, backdrop, updates)
 				--Fill defaults
 				if fill then
 					--Fill backdrop update table with the base backdrop values
-					backdropUpdate = backdrop and us.Fill(backdropUpdate, backdrop) or nil
+					backdropUpdate = backdrop and w.Fill(backdropUpdate, backdrop) or nil
 				else
 					--Fill backdrop update table with the current values
 					if frame.backdropInfo then
 						--Background
 						backdropUpdate.background = backdropUpdate.background or {}
-						backdropUpdate.background.texture = backdropUpdate.background.texture or us.Fill(backdropUpdate.background.texture, {
+						backdropUpdate.background.texture = backdropUpdate.background.texture or w.Fill(backdropUpdate.background.texture, {
 							path = frame.backdropInfo.bgFile,
 							size = frame.backdropInfo.tileSize,
 							tile = frame.backdropInfo.tile,
@@ -866,7 +865,7 @@ function wt.SetBackdrop(frame, backdrop, updates)
 
 						--Border
 						backdropUpdate.border = backdropUpdate.border or {}
-						backdropUpdate.border.texture = backdropUpdate.border.texture or us.Fill(backdropUpdate.border.texture, {
+						backdropUpdate.border.texture = backdropUpdate.border.texture or w.Fill(backdropUpdate.border.texture, {
 							path = frame.backdropInfo.edgeFile,
 							width = frame.backdropInfo.edgeSize,
 						})
@@ -908,7 +907,7 @@ function wt.AddDependencies(rules, setState)
 		if wt.IsType(f, "Datamanager") then
 			f:AddListener_loaded(function(_, success) if success then setter() end end)
 			f:AddListener_changed(setter)
-		elseif us.IsFrame(f) then
+		elseif w.IsFrame(f) then
 			local scriptType = dataObjectScriptType[f:GetObjectType()]
 
 			if scriptType then f:HookScript(scriptType, setter) end
@@ -929,7 +928,7 @@ function wt.CheckDependencies(rules)
 		local evaluate = type(rules[i].evaluate) == "function" and rules[i].evaluate or nil
 		local value
 
-		if wt.IsType(widget, "Datamanager") then value = widget:GetValue() elseif us.IsFrame(widget) then
+		if wt.IsType(widget, "Datamanager") then value = widget:GetValue() elseif w.IsFrame(widget) then
 			local getterKey = dataObjectValueGetterKeys[widget:GetObjectType()]
 
 			if getterKey then value = widget[getterKey](widget) end
@@ -963,11 +962,11 @@ function wt.CreateFont(name, t)
 	if type(t.font) == "table" then pcall(font.SetFont, font, t.font.path, t.font.size, t.font.style) end
 
 	--Set appearance
-	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(us.Fill(t.color, { r = 1, g = 1, b = 1 }))) end
+	if type(t.color) == "table" then font:SetTextColor(wt.UnpackColor(w.Fill(t.color, { r = 1, g = 1, b = 1 }))) end
 	if type(t.spacing) == "number" then font:SetSpacing(t.spacing) end
 	if type(t.shadow) == "table" then
 		font:SetShadowOffset(t.shadow.offset.x or 1, t.shadow.offset.y)
-		font:SetShadowColor(wt.UnpackColor(us.Fill(t.shadow.color, { r = 0, g = 0, b = 0 })))
+		font:SetShadowColor(wt.UnpackColor(w.Fill(t.shadow.color, { r = 0, g = 0, b = 0 })))
 	end
 
 	--Set text positioning
@@ -994,7 +993,7 @@ end
 
 function wt.CreateText(t)
 	t = type(t) == "table" and t or {}
-	t.parentFrame = us.IsFrame(t.parentFrame) and t.parentFrame or UIParent
+	t.parentFrame = w.IsFrame(t.parentFrame) and t.parentFrame or UIParent
 
 	local text = t.parentFrame:CreateFontString((t.parentFrame:GetName() or "") .. (t.name and t.name:gsub("%s+", "") or "Text"), t.layer, t.font and t.font or "GameFontNormal")
 
@@ -1021,7 +1020,7 @@ end
 function wt.CreateTitle(frame, t)
 	t = type(t) == "table" and t or {}
 
-	if not us.IsFrame(frame) then return end
+	if not w.IsFrame(frame) then return end
 
 	return wt.CreateText({
 		parentFrame = frame,
@@ -1046,7 +1045,7 @@ function wt.CreateDescription(title, t)
 
 	local parent = title:GetParent()
 
-	if not us.IsFrame(parent) then return end
+	if not w.IsFrame(parent) then return end
 
 	t.justify = type(t.justify) == "string" and t.justify or "LEFT"
 	local anchor = t.justify ~= "RIGHT" and "LEFT" or "RIGHT"
@@ -1055,7 +1054,7 @@ function wt.CreateDescription(title, t)
 	t.offset.x = type(t.offset.x) == "number" and t.offset.x or 0
 	t.offset.y = type(t.offset.y) == "number" and t.offset.y or 1
 	t.spacer = (type(t.spacer) == "number" and t.spacer or 5) * (t.justify ~= "LEFT" and -1 or 1)
-	t.color = type(t.color) == "table" and t.color or us.Fill({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
+	t.color = type(t.color) == "table" and t.color or w.Fill({ a = 0.55 }, HIGHLIGHT_FONT_COLOR)
 
 	local separator = wt.CreateText({
 		parentFrame = parent,
@@ -1094,7 +1093,7 @@ end
 --[[ TEXTURE ]]
 
 function wt.CreateTexture(frame, t, updates)
-	if not us.IsFrame(frame) then return end
+	if not w.IsFrame(frame) then return end
 
 	t = type(t) == "table" and t or {}
 
@@ -1169,7 +1168,7 @@ function wt.CreateTexture(frame, t, updates)
 			end
 
 			--Conditional: Evaluate the rule & fill texture update date with the base values
-			local data = us.Fill(value.rule(self, ...), t)
+			local data = w.Fill(value.rule(self, ...), t)
 
 			--Update the texture
 			setTexture(data)
@@ -1182,7 +1181,7 @@ end
 function wt.CreateLine(frame, t)
 	t = type(t) == "table" and t or {}
 
-	if not us.IsFrame(frame) then return end
+	if not w.IsFrame(frame) then return end
 
 	t.startPosition.offset = t.startPosition.offset or {}
 	t.endPosition.offset = t.endPosition.offset or {}
@@ -1231,7 +1230,7 @@ local defaultTooltip ---@type GameTooltip|nil
 local tooltipData = {} ---@type AnyTooltipData[]
 
 function wt.AddTooltip(frame, t, toggle, duplicate)
-	if not us.IsFrame(frame) then return nil end
+	if not w.IsFrame(frame) then return nil end
 
 	--| Register tooltip data
 
@@ -1272,13 +1271,13 @@ function wt.AddTooltip(frame, t, toggle, duplicate)
 end
 
 function wt.UpdateTooltip(frame, t)
-	if not us.IsFrame(frame) then return end
+	if not w.IsFrame(frame) then return end
 
 	--| Verify the tooltip data
 
 	if type(tooltipData[frame]) ~= "table" then return end
 
-	if type(t) ~= "table" then t = tooltipData[frame] else us.Pull(t, tooltipData[frame]) end
+	if type(t) ~= "table" then t = tooltipData[frame] else w.Pull(t, tooltipData[frame]) end
 
 	--| Position
 
@@ -1328,7 +1327,7 @@ function wt.UpdateTooltip(frame, t)
 end
 
 function wt.UpdateTooltipData(frame, t, linesUpdate)
-	if not us.IsFrame(frame) then return nil end
+	if not w.IsFrame(frame) then return nil end
 
 	t = type(t) == "table" and t or {}
 
@@ -1337,11 +1336,11 @@ function wt.UpdateTooltipData(frame, t, linesUpdate)
 	if type(tooltipData[frame]) ~= "table" then return nil end
 
 	--Tooltip frame
-	if us.IsFrame(t.tooltip) and t.tooltip:IsObjectType("GameTooltip") then tooltipData[frame].tooltip = t.tooltip
-	elseif not tooltipData[frame].tooltip or not (us.IsFrame(tooltipData[frame].tooltip) and tooltipData[frame].tooltip:IsObjectType("GameTooltip")) then
+	if w.IsFrame(t.tooltip) and t.tooltip:IsObjectType("GameTooltip") then tooltipData[frame].tooltip = t.tooltip
+	elseif not tooltipData[frame].tooltip or not (w.IsFrame(tooltipData[frame].tooltip) and tooltipData[frame].tooltip:IsObjectType("GameTooltip")) then
 		--Create the default reusable tooltip
 		if not defaultTooltip then
-			local name = "WidgetToolbox" .. C_AddOns.GetAddOnMetadata(rs.addon, "X-WidgetTools-ToolboxVersion"):gsub("[^%w]", "_") .. "GameTooltip"
+			local name = "WidgetToolbox" .. C_AddOns.GetAddOnMetadata(w.addon, "X-WidgetTools-ToolboxVersion"):gsub("[^%w]", "_") .. "GameTooltip"
 
 			defaultTooltip = CreateFrame("GameTooltip", name, nil, "GameTooltipTemplate")
 
@@ -1361,7 +1360,7 @@ function wt.UpdateTooltipData(frame, t, linesUpdate)
 	t.tooltip = nil
 
 	--Update textlines
-	if linesUpdate == true then us.Filter(tooltipData[frame].lines, t.lines)
+	if linesUpdate == true then w.Filter(tooltipData[frame].lines, t.lines)
 	elseif linesUpdate == false and type(t.lines) == "table" then
 		if type(tooltipData[frame].lines) ~= "table" then tooltipData[frame].lines = {} end
 
@@ -1370,7 +1369,7 @@ function wt.UpdateTooltipData(frame, t, linesUpdate)
 		t.lines = nil
 	end
 
-	tooltipData[frame] = us.Pull(tooltipData[frame], t)
+	tooltipData[frame] = w.Pull(tooltipData[frame], t)
 
 	--Position
 	tooltipData[frame].position = tooltipData[frame].position or {}
@@ -1389,7 +1388,7 @@ function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 	local tooltip = { lines = { { text = " ", }, } } ---@type tooltipData
 
 	if type(default) == "string" then table.insert(tooltip.lines, { text = crc(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
-	if utilityNote ~= false then table.insert(tooltip.lines, { text = s.value_note, font = GameFontNormalSmall, color = rs.colors.grey[1], }) end
+	if utilityNote ~= false then table.insert(tooltip.lines, { text = s.value_note, font = GameFontNormalSmall, color = w.colors.grey[1], }) end
 
 	for i = 1, #frames do wt.UpdateTooltipData(frames[i], tooltip, false) end
 end
@@ -1572,7 +1571,7 @@ function wt.CreateContextMenu(t)
 		local trigger = contextMenu_triggers[menu][i]
 		local frame = trigger.frame
 
-		if not frame or not us.IsFrame(frame) then
+		if not frame or not w.IsFrame(frame) then
 			frame = UIParent
 			trigger.frame = frame
 		end
@@ -1950,8 +1949,8 @@ function wt.HandleWidgetChanges(index, category, key)
 		local handler = settingsData.changeHandlers[category .. settingsData.rules[key][index].onChange[i]]
 
 		if type(handler) == "function" then handler()
-		else ds.Log(function() return
-			"Cannot call invalid or unset " .. key .. " handler of " .. us.ToString(settingsData.rules[key][index].onChange[i]),
+		else log(function() return
+			"Cannot call invalid or unset " .. key .. " handler of " .. w.ToString(settingsData.rules[key][index].onChange[i]),
 			wt.title .. ".HandleWidgetChanges"
 		end) end
 	end
