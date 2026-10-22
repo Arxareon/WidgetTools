@@ -10,33 +10,33 @@ local log = w.Log
 local cr = C_ColorUtil.WrapTextInColor
 local crc = C_ColorUtil.WrapTextInColorCode
 
---[ Base ]
+--[ Protoform Synthesis ]
 
-local bases = {} ---@type table<typename, construct> Shared behavioral object prototypes
-local baseProxies ---@type table<typename, { __index: construct, __metatable: typename }> Object type-unique prototype access metatable proxies
+local prototypes = {} ---@type table<typename, construct> Shared behavioral object prototypes
+local protoProxies ---@type table<typename, { __index: construct, __metatable: typename }> Object type-unique prototype access metatable proxies
 
-local progenitors, baseBuilders
+local progenitors, protoBuilders
 progenitors = {} ---@type table<typename, typename> Prototype ancestry markers
-baseBuilders = {} ---@type table<typename, fun(base: construct, typename: typename)> One-shot prototype initializers
+protoBuilders = {} ---@type table<typename, fun(base: construct, typename: typename)> One-shot prototype initializers
 
-local types ---@type table<typename, table<typename, true>> Prototype typename ancestry sets
+local typenames ---@type table<typename, table<typename, true>> Prototype typename ancestry sets
 
 ---Get or build the root construct prototype
 ---@return { __index: construct, __metatable: rootTypename }, construct
 local function getRoot()
 	local typename = "Construct" ---@type rootTypename
-	local root = bases[typename]
+	local root = prototypes[typename]
 
-	if root then return baseProxies[typename], root end
+	if root then return protoProxies[typename], root end
 
 	--| Types
 
-	types = { [typename] = { [typename] = true } }
+	typenames = { [typename] = { [typename] = true } }
 
 	--| Prototype
 
 	root = {}
-	bases[typename] = root
+	prototypes[typename] = root
 
 	--| Proxy
 
@@ -45,12 +45,12 @@ local function getRoot()
 		__metatable = typename,
 	}
 
-	baseProxies = { [typename] = proxy }
+	protoProxies = { [typename] = proxy }
 
-	--| Initialize
+	--| Initialization
 
-	baseBuilders[typename](root, typename)
-	baseBuilders[typename] = nil
+	protoBuilders[typename](root, typename)
+	protoBuilders[typename] = nil
 
 	log(function() return "Created the root " .. typename .. " base: " .. w.ToString(root), wt.title .. " getRoot" end)
 
@@ -61,9 +61,9 @@ end
 ---@param typename typename
 ---@return table, construct
 local function getBase(typename)
-	local base = bases[typename]
+	local base = prototypes[typename]
 
-	if base then return baseProxies[typename], base end
+	if base then return protoProxies[typename], base end
 
 	--| Prototype
 
@@ -77,22 +77,22 @@ local function getBase(typename)
 
 	--| Types
 
-	types[typename] = w.Fill({ [typename] = true }, types[progenitor])
+	typenames[typename] = w.Fill({ [typename] = true }, typenames[progenitor])
 
 	--| Initialization
 
-	local builder = baseBuilders and baseBuilders[typename]
+	local builder = protoBuilders and protoBuilders[typename]
 
 	if builder then
 		base = w.Fill({}, base)
 
-		bases[typename] = base
+		prototypes[typename] = base
 
 		builder(base, typename)
-		baseBuilders[typename] = nil
+		protoBuilders[typename] = nil
 
-		if not next(baseBuilders) then baseBuilders = nil end
-	else bases[typename] = base end
+		if not next(protoBuilders) then protoBuilders = nil end
+	else prototypes[typename] = base end
 
 	--| Proxy
 
@@ -101,7 +101,7 @@ local function getBase(typename)
 		__metatable = typename,
 	}
 
-	baseProxies[typename] = proxy
+	protoProxies[typename] = proxy
 
 	log(function() return "Created the main " .. typename .. " base: " .. w.ToString(base), wt.title .. " getBase" end)
 
@@ -112,8 +112,8 @@ end
 ---@param typename typename
 ---@param typenameMixin typename
 local function mergeBase(typename, typenameMixin)
-	local base = bases[typename]
-	local mixin = bases[typenameMixin]
+	local base = prototypes[typename]
+	local mixin = prototypes[typenameMixin]
 	local _
 
 	if not base then _, base = getBase(typename) end
@@ -121,7 +121,7 @@ local function mergeBase(typename, typenameMixin)
 
 	--| Types
 
-	w.Fill(types[typename], types[typenameMixin])
+	w.Fill(typenames[typename], typenames[typenameMixin])
 
 	--| Prototype
 
@@ -145,7 +145,7 @@ end
 local eventHandlers ---@type table<construct, table<eventTag, fun(self: construct, ...: any)[]>>
 local properties ---@type table<construct, table<any, any>>
 
-local construct_assigned ---@type table<typename, fun(self: construct, silent?: boolean, property: any, value: any)[]>?
+local construct_assigned ---@type table<typename, fun(self: construct, silent?: boolean, property: any, value: any)[]>? Internal event handler registry
 
 ---`AddListener_eventTag` builder utility
 ---@param construct construct
@@ -185,7 +185,7 @@ local function addListeners(construct, listeners, events)
 	end
 end
 
----Add an internal event handler
+---Internal event handler adder utility
 ---@param typename typename
 ---@param internalsList table<typename, fun(self: construct, silent?: boolean, ...: any)[]>
 ---@param handler fun(self: construct, silent?: boolean, ...: any)
@@ -228,12 +228,12 @@ local function addInternal_construct_assigned(typename, handler)
 end
 
 ---@param construct construct
-function baseBuilders.Construct(construct)
+function protoBuilders.Construct(construct)
 
 	--[ Types ]
 
-	function construct:GetTypes() return w.Clone(types[getmetatable(self)]) end
-	function construct:IsType(type) return types[getmetatable(self)][type] == true end
+	function construct:GetTypes() return w.Clone(typenames[getmetatable(self)]) end
+	function construct:IsType(type) return typenames[getmetatable(self)][type] == true end
 
 	--[ Events ]
 
@@ -308,7 +308,7 @@ function wt.CreateConstruct(t)
 	local propertyList = t.properties
 	if type(propertyList) == "table" then for property, value in pairs(propertyList) do construct:SetProperty(property, value) end end
 
-	log(function() return "Construct instance created: " .. w.ToString(construct), wt.title .. ".CreateConstruct" end)
+	log(function() return "New Construct instance created: " .. w.ToString(construct), wt.title .. ".CreateConstruct" end)
 
 	return construct
 end
@@ -326,9 +326,9 @@ local widget_dependencies ---@type table<widget, dependencyType[]>
 local widget_dataDependencies ---@type table<widget, table<dependencyType, true|function>>
 local widget_dependencyEvaluators ---@type table<widget, table<dependencyType, dependencyEvaluator>>
 
-local widget_parentEvent ---@type table<typename, fun(self: widget, silent?: boolean, parent: widget)[]>?
-local widget_childEvent ---@type table<typename, fun(self: widget, silent?: boolean, child: widget, removal: boolean?)[]>?
-local widget_enabledEvent ---@type table<typename, fun(self: widget, silent?: boolean, user: boolean)[]>?
+local widget_parentEvent ---@type table<typename, fun(self: widget, silent?: boolean, parent: widget)[]>? Internal event handler registry
+local widget_childEvent ---@type table<typename, fun(self: widget, silent?: boolean, child: widget, removal: boolean?)[]>? Internal event handler registry
+local widget_enabledEvent ---@type table<typename, fun(self: widget, silent?: boolean, user: boolean)[]>? Internal event handler registry
 
 ---Add widget "parent" internal listener
 ---@param typename typename
@@ -370,7 +370,7 @@ local dataObjectValueGetterKeys = {
 }
 
 ---@param widget widget
-function baseBuilders.Widget(widget)
+function protoBuilders.Widget(widget)
 
 	--[ Hierarchy ]
 
@@ -624,9 +624,9 @@ function baseBuilders.Widget(widget)
 end
 
 progenitors.Widget = "Construct" ---@type typename_construct
-function wt.CreateWidget(t, ancestor)
+function wt.CreateWidget(t)
 	local typename = "Widget" ---@type typename_widget
-	local widget = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast widget widget
+	local widget = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast widget widget
 
 	--[ Initialization ]
 
@@ -651,9 +651,9 @@ local list_type ---@type table<list, typename>
 local list_items ---@type table<list, widget[]?>
 local list_indexes ---@type table<widget, integer>
 
-local list_added ---@type table<typename, fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)[]>?
-local list_removed ---@type table<typename, fun(self: list, silent?: boolean, item: widget)[]>?
-local list_recounted ---@type table<typename, fun(self: list, silent?: boolean, count: integer)[]>?
+local list_added ---@type table<typename, fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)[]>? Internal event handler registry
+local list_removed ---@type table<typename, fun(self: list, silent?: boolean, item: widget)[]>? Internal event handler registry
+local list_recounted ---@type table<typename, fun(self: list, silent?: boolean, count: integer)[]>? Internal event handler registry
 
 ---Add list "added" internal listener
 ---@param typename typename
@@ -683,7 +683,7 @@ local function addInternal_list_recounted(typename, handler)
 end
 
 ---@param list list
-function baseBuilders.List(list)
+function protoBuilders.List(list)
 	list_type = {}
 	list_items = {}
 	list_indexes = {}
@@ -762,7 +762,7 @@ end
 progenitors.List = "Widget" ---@type typename_widget
 function wt.CreateList(type, count, t, ancestor)
 	local typename = "List" ---@type typename_list
-	local list = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor), getBase(typename)) ---@cast list list
+	local list = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast list list
 
 	--[ Initialization ]
 
@@ -774,6 +774,8 @@ function wt.CreateList(type, count, t, ancestor)
 
 	list:SetCount(count)
 
+	log(function() return progenitors[typename] .. " instance mutated into a List: " .. w.ToString(list), wt.title .. ".CreateList" end)
+
 	return list
 end
 
@@ -781,7 +783,7 @@ end
 --[[ CONTAINER ]]
 
 ---@param container container
-function baseBuilders.Container(container)
+function protoBuilders.Container(container)
 	--ADD container prototype initialization
 end
 
@@ -832,7 +834,7 @@ end
 progenitors.Container = "Widget" ---@type typename_widget
 function wt.CreateContainer(t, ancestor, lite)
 	local typename = "Container" ---@type typename_container
-	local container = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor)
+	local container = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
@@ -858,10 +860,10 @@ function wt.CreateContainer(t, ancestor, lite)
 	return container
 end
 
-progenitors.CustomContainer = "Container" ---@type typename_container
+progenitors.CustomContainer = "Widget" ---@type typename_widget
 function wt.CreateCustomContainer(t, ancestor, lite)
 	local typename = "CustomContainer" ---@type typename_customContainer
-	local container = wt.IsType(ancestor, progenitors[progenitors[typename]]) and ancestor or wt.CreateWidget(t, ancestor)
+	local container = wt.IsType(ancestor, progenitors[progenitors[typename]]) and ancestor or wt.CreateWidget(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return container end
 
@@ -949,7 +951,7 @@ local chatmanager_branding ---@type table<chatmanager, string>
 local chatmanager_onWelcome ---@type table<chatmanager, function>
 
 ---@param chatmanager chatmanager
-function baseBuilders.Chatmanager(chatmanager)
+function protoBuilders.Chatmanager(chatmanager)
 	if not chatmanager_keywords then chatmanager_keywords = {} end
 	if not chatmanager_commands then chatmanager_commands = {} end
 	if not chatmanager_colors then chatmanager_colors = {} end
@@ -1061,7 +1063,7 @@ end
 progenitors.Chatmanager = "Construct" ---@type typename_construct
 function wt.CreateChatmanager(keywords, t, ancestor)
 	local typename = "Chatmanager" ---@type typename_chatmanager
-	local chatmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast chatmanager chatmanager
+	local chatmanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast chatmanager chatmanager
 
 	--[ Initialization ]
 
@@ -1155,7 +1157,7 @@ local function addInternal_action_triggered(typename, handler)
 end
 
 ---@param action action
-function baseBuilders.Action(action)
+function protoBuilders.Action(action)
 	action_call = {}
 
 	local lockout_triggered = {} ---@type table<action, true>
@@ -1174,9 +1176,9 @@ function baseBuilders.Action(action)
 end
 
 progenitors.Action = "Widget" ---@type typename_widget
-function wt.CreateAction(t, ancestor)
+function wt.CreateAction(t)
 	local typename = "Action" ---@type typename_action
-	local action = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor), getBase(typename)) ---@cast action action
+	local action = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast action action
 
 	--[ Initialization ]
 
@@ -1325,7 +1327,7 @@ end
 progenitors.Button = "Action" ---@type typename_action
 function wt.CreateButton(t, ancestor, lite)
 	local typename = "Button" ---@type typename_button
-	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t, ancestor)
+	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
@@ -1360,7 +1362,7 @@ end
 progenitors.CustomButton = "Action" ---@type typename_action
 function wt.CreateCustomButton(t, ancestor, lite)
 	local typename = "Button" ---@type typename_button
-	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t, ancestor)
+	local button = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateAction(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return button end
 
@@ -1408,9 +1410,9 @@ local data_instantSave ---@type table<datamanager, boolean?>
 
 local datamanagement ---@type table<datamanager, settingsData>
 
-local datamanager_changed ---@type table<typename, fun(self: datamanager, silent?: boolean, value: any, user: boolean)[]>?
-local datamanager_loaded ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>?
-local datamanager_saved ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>?
+local datamanager_changed ---@type table<typename, fun(self: datamanager, silent?: boolean, value: any, user: boolean)[]>? Internal event handler registry
+local datamanager_loaded ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>? Internal event handler registry
+local datamanager_saved ---@type table<typename, fun(self: datamanager, silent?: boolean, success: boolean)[]>? Internal event handler registry
 
 ---Add datamanager "changed" internal listener
 ---@param typename typename
@@ -1440,7 +1442,7 @@ local function addInternal_datamanager_saved(typename, handler)
 end
 
 ---@param datamanager datamanager
-function baseBuilders.Datamanager(datamanager)
+function protoBuilders.Datamanager(datamanager)
 
 	--[ Value ]
 
@@ -1540,9 +1542,9 @@ function baseBuilders.Datamanager(datamanager)
 end
 
 progenitors.Datamanager = "Widget" ---@type typename_widget
-function wt.CreateDatamanager(t, ancestor)
+function wt.CreateDatamanager(t)
 	local typename = "Datamanager" ---@type typename_datamanager
-	local datamanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor), getBase(typename)) ---@cast datamanager datamanager
+	local datamanager = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast datamanager datamanager
 
 	--[ Initialization ]
 
@@ -1574,7 +1576,7 @@ end
 --[[ BINARY ]]
 
 ---@param binary binary
-function baseBuilders.Binary(binary)
+function protoBuilders.Binary(binary)
 
 	--[ Value ]
 
@@ -1589,9 +1591,9 @@ function baseBuilders.Binary(binary)
 end
 
 progenitors.Binary = "Datamanager" ---@type typename_datamanager
-function wt.CreateBinary(t, ancestor)
+function wt.CreateBinary(t)
 	local typename = "Binary" ---@type typename_binary
-	local binary = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast binary binary
+	local binary = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast binary binary
 
 	--[ Initialization ]
 
@@ -1923,7 +1925,7 @@ end
 progenitors.ClassicCheckbox = "Binary" ---@type typename_binary
 function wt.CreateClassicCheckbox(t, ancestor, lite)
 	local typename = "ClassicCheckbox" ---@type typename_classicCheckbox
-	local checkbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t, ancestor)
+	local checkbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return checkbox end
 
@@ -1986,7 +1988,7 @@ end
 progenitors.Radiobutton = "Binary" ---@type typename_binary
 function wt.CreateRadiobutton(t, ancestor, lite)
 	local typename = "Radiobutton" ---@type typename_radiobutton
-	local radiobutton = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t, ancestor)
+	local radiobutton = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateBinary(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return radiobutton end
 
@@ -2058,7 +2060,7 @@ end
 local selector_clearable ---@type table<selector, boolean>
 local selector_items ---@type table<selector, selectorItemData[]>
 
-local selector_updated ---@type table<typename, fun(self: selector, silent?: boolean)[]>?
+local selector_updated ---@type table<typename, fun(self: selector, silent?: boolean)[]>? Internal event handler registry
 
 ---Add selector "updated" internal listener
 ---@param typename typename
@@ -2093,7 +2095,7 @@ local itemsets = {
 }
 
 ---@param selector selector
-function baseBuilders.Selector(selector, typename)
+function protoBuilders.Selector(selector, typename)
 	local typenameMixin = "List" ---@type typename_list
 	mergeBase(typename, typenameMixin)
 
@@ -2135,7 +2137,7 @@ function baseBuilders.Selector(selector, typename)
 end
 
 ---@param selector anchorSelector
-function baseBuilders.AnchorSelector(selector, typename)
+function protoBuilders.AnchorSelector(selector, typename)
 	local values = {
 		"TOPLEFT",
 		"TOP",
@@ -2160,7 +2162,7 @@ function baseBuilders.AnchorSelector(selector, typename)
 end
 
 ---@param selector horizontalitySelector
-function baseBuilders.HorizontalitySelector(selector, typename)
+function protoBuilders.HorizontalitySelector(selector, typename)
 
 	--[ Value ]
 
@@ -2174,7 +2176,7 @@ function baseBuilders.HorizontalitySelector(selector, typename)
 end
 
 ---@param selector verticalitySelector
-function baseBuilders.VerticalitySelector(selector, typename)
+function protoBuilders.VerticalitySelector(selector, typename)
 
 	--[ Value ]
 
@@ -2188,7 +2190,7 @@ function baseBuilders.VerticalitySelector(selector, typename)
 end
 
 ---@param selector strataSelector
-function baseBuilders.StrataSelector(selector, typename)
+function protoBuilders.StrataSelector(selector, typename)
 
 	--[ Value ]
 
@@ -2202,7 +2204,7 @@ function baseBuilders.StrataSelector(selector, typename)
 end
 
 ---@param selector fontSelector
-function baseBuilders.FontSelector(selector, typename)
+function protoBuilders.FontSelector(selector, typename)
 
 	--[ Value ]
 
@@ -2216,7 +2218,7 @@ function baseBuilders.FontSelector(selector, typename)
 end
 
 ---@param multiselector multiselector
-function baseBuilders.Multiselector(multiselector, typename)
+function protoBuilders.Multiselector(multiselector, typename)
 	local typenameMixin = "List" ---@type typename_list
 	mergeBase(typename, typenameMixin)
 
@@ -2265,9 +2267,9 @@ function baseBuilders.Multiselector(multiselector, typename)
 end
 
 progenitors.Selector = "Datamanager" ---@type typename_datamanager
-function wt.CreateSelector(t, ancestor)
+function wt.CreateSelector(t)
 	local typename = "Selector" ---@type typename_selector
-	local selector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast selector selector
+	local selector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast selector selector
 
 	--[ Initialization ]
 
@@ -2292,7 +2294,7 @@ end
 progenitors.SpecialSelector = "Selector" ---@type typename_selector
 function wt.CreateSpecialSelector(itemset, t, ancestor)
 	local typename = "SpecialSelector" ---@type typename_specialSelector
-	local specialSelector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast specialSelector specialSelector
+	local specialSelector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast specialSelector specialSelector
 
 	--[ Initialization ]
 
@@ -2405,9 +2407,9 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 end
 
 progenitors.Multiselector = "Datamanager" ---@type typename_datamanager
-function wt.CreateMultiselector(t, ancestor)
+function wt.CreateMultiselector(t)
 	local typename = "Multiselector" ---@type typename_multiselector
-	local multiselector = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast multiselector multiselector
+	local multiselector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast multiselector multiselector
 
 	--[ Initialization ]
 
@@ -3720,7 +3722,7 @@ end
 local textual_color ---@type table<textual, color>
 
 ---@param textual textual
-function baseBuilders.Textual(textual)
+function protoBuilders.Textual(textual)
 
 	--[ Value ]
 
@@ -3736,9 +3738,9 @@ function baseBuilders.Textual(textual)
 end
 
 progenitors.Textual = "Datamanager" ---@type typename_datamanager
-function wt.CreateTextual(t, ancestor)
+function wt.CreateTextual(t)
 	local typename = "Textual" ---@type typename_textual
-	local textual = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast textual textual
+	local textual = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast textual textual
 
 	--[ Initialization ]
 
@@ -3923,7 +3925,7 @@ end
 progenitors.Editbox = "Textual" ---@type typename_textual
 function wt.CreateEditbox(t, ancestor, lite)
 	local typename = "Editbox" ---@type typename_editbox
-	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t, ancestor)
+	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return editbox end
 
@@ -3965,7 +3967,7 @@ end
 progenitors.CustomEditbox = "Textual" ---@type typename_textual
 function wt.CreateCustomEditbox(t, ancestor, lite)
 	local typename = "CustomEditbox" ---@type typename_customEditbox
-	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t, ancestor)
+	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return editbox end
 
@@ -4016,7 +4018,7 @@ end
 progenitors.MultilineEditbox = "Textual" ---@type typename_textual
 function wt.CreateMultilineEditbox(t, ancestor, lite)
 	local typename = "MultilineEditbox" ---@type typename_multilineEditbox
-	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t, ancestor)
+	local editbox = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateTextual(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return editbox end
 
@@ -4396,8 +4398,8 @@ local numeric_step ---@type table<numeric, number>
 local numeric_altStep ---@type table<numeric, number>
 local numeric_hardStep ---@type table<numeric, boolean>
 
-local numeric_minEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMin: number)[]>?
-local numeric_maxEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMax: number)[]>?
+local numeric_minEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMin: number)[]>? Internal event handler registry
+local numeric_maxEvent ---@type table<typename, fun(self: numeric, silent?: boolean, limitMax: number)[]>? Internal event handler registry
 
 ---Add numeric "min" internal listener
 ---@param typename typename
@@ -4418,7 +4420,7 @@ local function addInternal_numeric_maxEvent(typename, handler)
 end
 
 ---@param numeric numeric
-function baseBuilders.Numeric(numeric)
+function protoBuilders.Numeric(numeric)
 
 	--[ Value ]
 
@@ -4477,9 +4479,9 @@ function baseBuilders.Numeric(numeric)
 end
 
 progenitors.Numeric = "Datamanager" ---@type typename_datamanager
-function wt.CreateNumeric(t, ancestor)
+function wt.CreateNumeric(t)
 	local typename = "Numeric" ---@type typename_numeric
-	local numeric = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast numeric numeric
+	local numeric = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast numeric numeric
 
 	--[ Initialization ]
 
@@ -4507,7 +4509,7 @@ end
 progenitors.Slider = "Numeric" ---@type typename_numeric
 function wt.CreateSlider(t, ancestor, lite)
 	local typename = "Slider" ---@type typename_slider
-	local slider = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateNumeric(t, ancestor)
+	local slider = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return slider end
 
@@ -4816,7 +4818,7 @@ end
 progenitors.ClassicSlider = "Numeric" ---@type typename_numeric
 function wt.CreateClassicSlider(t, ancestor, lite)
 	local typename = "ClassicSlider" ---@type typename_classicSlider
-	local slider = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateNumeric(t, ancestor)
+	local slider = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateNumeric(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return slider end
 
@@ -5234,7 +5236,7 @@ local colormanager_active ---@type table<colormanager, boolean>
 local colormanager_onCancel ---@type table<colormanager, function>
 
 ---@param colormanager colormanager
-function baseBuilders.Colormanager(colormanager)
+function protoBuilders.Colormanager(colormanager)
 
 	--[ Value ]
 
@@ -5293,9 +5295,9 @@ function baseBuilders.Colormanager(colormanager)
 end
 
 progenitors.Colormanager = "Datamanager" ---@type typename_datamanager
-function wt.CreateColormanager(t, ancestor)
+function wt.CreateColormanager(t)
 	local typename = "Colormanager" ---@type typename_colormanager
-	local colormanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateDatamanager(t, ancestor), getBase(typename)) ---@cast colormanager colormanager
+	local colormanager = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast colormanager colormanager
 
 	--[ Initialization ]
 
@@ -5320,7 +5322,7 @@ end
 progenitors.Colorpicker = "Colormanager" ---@type typename_colormanager
 function wt.CreateColorpicker(t, ancestor, lite)
 	local typename = "Colorpicker" ---@type typename_colorpicker
-	local colorpicker = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateColormanager(t, ancestor)
+	local colorpicker = wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateColormanager(t)
 
 	if WidgetToolsDB.lite and lite ~= false then return colorpicker end
 
@@ -6439,11 +6441,11 @@ local datamanagementEntry ---
 local settingsmanager_autoLoad ---@type table<settingsmanager, true>
 local settingsmanager_autoSave ---@type table<settingsmanager, true>
 
-local settingsmanager_loaded ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
-local settingsmanager_saved ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
-local settingsmanager_applied ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
-local settingsmanager_reverted ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
-local settingsmanager_reset ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>?
+local settingsmanager_loaded ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
+local settingsmanager_saved ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
+local settingsmanager_applied ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
+local settingsmanager_reverted ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
+local settingsmanager_reset ---@type table<typename, fun(self: settingsmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
 
 ---Add settingsmanager "loaded" internal listener
 ---@param typename typename
@@ -6491,7 +6493,7 @@ local function addInternal_settingsmanager_reset(typename, handler)
 end
 
 ---@param settingsmanager settingsmanager
-function baseBuilders.Settingsmanager(settingsmanager)
+function protoBuilders.Settingsmanager(settingsmanager)
 
 	--[ Batched Datamanagement ]
 
@@ -6554,9 +6556,9 @@ function baseBuilders.Settingsmanager(settingsmanager)
 end
 
 progenitors.Settingsmanager = "Widget" ---@type typename_widget
-function wt.CreateSettingsmanager(t, ancestor)
+function wt.CreateSettingsmanager(t)
 	local typename = "Settingsmanager" ---@type typename_settingsmanager
-	local settingsmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateWidget(t, ancestor), getBase(typename)) ---@cast settingsmanager settingsmanager
+	local settingsmanager = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast settingsmanager settingsmanager
 
 	--[ Initialization ]
 
@@ -6944,12 +6946,12 @@ local profiles_valueChecker ---@type table<profilemanager, function>
 local profiles_onRecovery ---@type table<profilemanager, function>
 local profiles_recoveryMap ---@type table<profilemanager, table>
 
-local profilemanager_activated ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index?: integer, title?: string)[]>?
-local profilemanager_created ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean, index: integer, title: string)[]>?
-local profilemanager_renamed ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
-local profilemanager_deleted ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
-local profilemanager_reset ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>?
-local profilemanager_loaded ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean)[]>?
+local profilemanager_activated ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index?: integer, title?: string)[]>? Internal event handler registry
+local profilemanager_created ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean, index: integer, title: string)[]>? Internal event handler registry
+local profilemanager_renamed ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>? Internal event handler registry
+local profilemanager_deleted ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>? Internal event handler registry
+local profilemanager_reset ---@type table<typename, fun(self: profilemanager, silent?: boolean, success: boolean, user: boolean, index: any, title?: string)[]>? Internal event handler registry
+local profilemanager_loaded ---@type table<typename, fun(self: profilemanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
 
 ---Add profilemanager "activated" internal listener
 ---@param typename typename
@@ -7006,7 +7008,7 @@ local function addInternal_profilemanager_loaded(typename, handler)
 end
 
 ---@param profilemanager profilemanager
-function baseBuilders.Profilemanager(profilemanager)
+function protoBuilders.Profilemanager(profilemanager)
 
 	--[ Profile ]
 
@@ -7264,7 +7266,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t, anc
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
 	local typename = "Profilemanager" ---@type typename_profilemanager
-	local profilemanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast profilemanager profilemanager
+	local profilemanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast profilemanager profilemanager
 
 	--[ Initialization ]
 
@@ -7745,7 +7747,7 @@ local addonmanager_date ---@type table<addonmanager, string>
 local addonmanager_changelog ---@type table<addonmanager, string[][]|string>
 local addonmanager_changelogHistory ---@type table<addonmanager, string[][]|string>
 
-local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>?
+local addonmanager_changed ---@type table<typename, fun(self: addonmanager, silent?: boolean, user: boolean)[]>? Internal event handler registry
 
 ---Add addonmanager "changed" internal listener
 ---@param typename typename
@@ -7757,7 +7759,7 @@ local function addInternal_addonmanager_changed(typename, handler)
 end
 
 ---@param addonmanager addonmanager
-function baseBuilders.Addonmanager(addonmanager)
+function protoBuilders.Addonmanager(addonmanager)
 
 	--[ Metadata ]
 
@@ -7860,9 +7862,9 @@ function baseBuilders.Addonmanager(addonmanager)
 end
 
 progenitors.Addonmanager = "Construct" ---@type typename_construct
-function wt.CreateAddonmanager(t, ancestor)
+function wt.CreateAddonmanager(t)
 	local typename = "Addonmanager" ---@type typename_addonmanager
-	local addonmanager = setmetatable(wt.IsType(ancestor, progenitors[typename]) and ancestor or wt.CreateConstruct(t), getBase(typename)) ---@cast addonmanager addonmanager
+	local addonmanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast addonmanager addonmanager
 
 	--[ Initialization ]
 
