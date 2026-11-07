@@ -137,86 +137,6 @@ function w.Round(number, decimals)
 	return 0
 end
 
---[ Validation ]
-
---| Frame
-
----Check if a variable is a frame (or a backdrop object)
----@param o any
----@return IsFrame_return1, IsFrame_return2
-function w.IsFrame(o)
-
-	--| Returns
-
-	---`true`, if the object was recognized as a [`FrameScriptObject`](https://warcraft.wiki.gg/wiki/UIOBJECT_FrameScriptObject), `false` otherwise
-	---@alias IsFrame_return1 boolean
-
-	---The frame name if the object is named or the debug name if unnamed but recognized as a UI [Object](https://warcraft.wiki.gg/wiki/UIOBJECT_Object) with a parent
-	---@alias IsFrame_return2 string|nil
-
-	return false
-end
-
----Find a frame or region by its name (or a subregion if a key is included in the input string) and get a reference to it if it exists
----@param s ToFrame_param_s Name of the frame to find (and the key of its child region appended to it after a period character)
----@return ToFrame_return_frame frame Reference to the object | ***Default:*** `nil`
-function w.ToFrame(s)
-
-	--| Parameters
-
-	---Name of the frame to find (and the key of its child region appended to it after a period character)
-	---@alias ToFrame_param_s string
-
-	--| Returns
-
-	---Reference to the object | ***Default:*** `nil`
-	---@alias ToFrame_return_frame AnyFrameObject|nil
-
-		---@alias AnyFrameObject
-		---| Frame
-		---| Button
-		---| CheckButton
-		---| EditBox
-		---| Slider
-		---| Texture
-		---| FontString
-end
-
---| Font path
-
----Test the specified font path on the specified object by trying to set it to see if the font file is valid, exists and it's loaded by the client
----@param path TryFont_param_path Font file path to test
----@param object TryFont_param_object Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
---- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
----@param size TryFont_param_size Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
---- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
----@param flags TryFont_param_flags Font styling options | ***Default:*** `""` *(no styling):*
----@return TryFont_return `true`, if the provided path was valid and the font could be applied to the object, `false` otherwise
-function w.TryFont(path, object, size, flags)
-
-	--| Parameters
-
-	---Font file path to test
-	---@alias TryFont_param_path string
-
-	---Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
-	--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
-	---@alias TryFont_param_object (Font|FontString)?
-
-	---Font size to set | ***Default:*** `12`
-	---@alias TryFont_param_size number?
-
-	---Font styling options | ***Default:*** `""` *(no styling):*
-	---@alias TryFont_param_flags TBFFlags?
-
-	--| Returns
-
-	---`true`, if the provided path was valid and the font could be applied to the object, `false` otherwise
-	---@alias TryFont_return boolean
-
-	return false
-end
-
 --[ Formatting ]
 
 ---Format a number string with thousands separation and optional value rounding
@@ -338,8 +258,7 @@ function w.FormatChangelog(changelog, latest)
 	return ""
 end
 
-
---[ Table Management ]
+--[ Tables ]
 
 ---Protect a table by creating a deep proxy surrogate reference through which value access will be readonly via a protective metatable ruleset
 --- - ***Note:*** The protection will "infect" any and all subtables when they are indexed through a proxy, meaning the readonly protection will be extended at any depth, including new subtables added to the original table structure of `t` after it was protected.
@@ -610,6 +529,41 @@ function w.VerifyData(target, source)
 	---@alias VerifyData_return_target any
 end
 
+--[ Font ]
+
+---Test the specified font path on the specified object by trying to set it to see if the font file is valid, exists and it's loaded by the client
+---@param path TryFont_param_path Font file path to test
+---@param object TryFont_param_object Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+---@param size TryFont_param_size Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+---@param flags TryFont_param_flags Font styling options | ***Default:*** `""` *(no styling):*
+---@return TryFont_return `true`, if the provided path was valid and the font could be applied to the object, `false` otherwise
+function w.TryFont(path, object, size, flags)
+
+	--| Parameters
+
+	---Font file path to test
+	---@alias TryFont_param_path string
+
+	---Font object to test `path` on | ***Default:*** `_G["WidgetToolsFontPathTestDummy"]`
+	--- - ***Note:*** If `path` lead to a valid valid font file, it will be safely applied to `object`.
+	---@alias TryFont_param_object (Font|FontString)?
+
+	---Font size to set | ***Default:*** `12`
+	---@alias TryFont_param_size number?
+
+	---Font styling options | ***Default:*** `""` *(no styling):*
+	---@alias TryFont_param_flags TBFFlags?
+
+	--| Returns
+
+	---`true`, if the provided path was valid and the font could be applied to the object, `false` otherwise
+	---@alias TryFont_return boolean
+
+	return false
+end
+
 --[ Events ]
 
 ---Set, unset or replace a event handler
@@ -648,6 +602,119 @@ function w.CallListener(parent, event, ...)
 
 	---Global Blizzard or custom event tag to call the handler for
 	---@alias CallListener_param_event WowEvent|string
+end
+
+--[ Frames ]
+
+---Check if a variable is a frame (or a backdrop object)
+---@param o any
+---@return IsFrame_return1, IsFrame_return2
+function w.IsFrame(o)
+
+	--| Returns
+
+	---`true`, if the object was recognized as a [`FrameScriptObject`](https://warcraft.wiki.gg/wiki/UIOBJECT_FrameScriptObject), `false` otherwise
+	---@alias IsFrame_return1 boolean
+
+	---The frame name if the object is named or the debug name if unnamed but recognized as a UI [Object](https://warcraft.wiki.gg/wiki/UIOBJECT_Object) with a parent
+	---@alias IsFrame_return2 string|nil
+
+	return false
+end
+
+---Find a frame or region by its name (or a subregion if a key is included in the input string) and get a reference to it if it exists
+---@param s ToFrame_param_s Name of the frame to find (and the key of its child region appended to it after a period character)
+---@return ToFrame_return_frame frame Reference to the object | ***Default:*** `nil`
+function w.ToFrame(s)
+
+	--| Parameters
+
+	---Name of the frame to find (and the key of its child region appended to it after a period character)
+	---@alias ToFrame_param_s string
+
+	--| Returns
+
+	---Reference to the object | ***Default:*** `nil`
+	---@alias ToFrame_return_frame AnyFrameObject|nil
+
+		---@alias AnyFrameObject
+		---| Frame
+		---| Button
+		---| CheckButton
+		---| EditBox
+		---| Slider
+		---| Texture
+		---| FontString
+end
+
+--| Events & attributes
+
+---Register script event handlers for a frame or script object
+---@param frame RegisterScriptEvents_param_frame Reference to the script object to register the event handlers for
+---@param events RegisterScriptEvents_param_events Table of key, value pairs of script event tags and the handler functions called on trigger
+--- - ***Note:*** Use `WidgetTools.RegisterGlobalEvents(...)` to set [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for global events.
+--- - ***Note:*** Use `WidgetTools.RegisterAttributes(...)` to set [`"OnAttributeChanged"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for custom frame attribute change events.
+function w.RegisterScriptEvents(frame, events)
+
+	--| Parameters
+
+	---Reference to the script object to register the event handlers for
+	---@alias RegisterScriptEvents_param_frame AnyFrameObject|ScriptRegion
+
+	---Table of key, value pairs of script event tags and the handler functions called on trigger
+	--- - ***Note:*** Use `WidgetTools.RegisterGlobalEvents(...)` to set [`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for global events.
+	--- - ***Note:*** Use `WidgetTools.RegisterAttributes(...)` to set [`"OnAttributeChanged"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) handlers for custom frame attribute change events.
+	---@alias RegisterScriptEvents_param_events scriptHandlers
+end
+
+---Register [global event](https://warcraft.wiki.gg/wiki/Events) ([`"OnEvent"`](https://warcraft.wiki.gg/wiki/UIHANDLER_OnEvent) script event) handlers for a frame
+---@param frame RegisterGlobalEvents_param_frame Reference to the frame to register the event handlers for
+---@param events globalEventList Table of key, value pairs of [global event](https://warcraft.wiki.gg/wiki/Events) tags and event handlers to be registered for the frame
+--- - ***Note:*** Include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent unwanted repeated calls of the handler function.
+--- - ***Example:*** [`"ADDON_LOADED"`](https://warcraft.wiki.gg/wiki/Event:ADDON_LOADED) is fired for every single addon. To have the handler execute code only after one specific addon is loaded, check its second parameter, the loaded addon's namespace name. Unregister the event to prevent repeated calls for every addon loaded after the specific one.
+--- 	```
+--- 	function(self, addon)
+--- 		if addon ~= "addon" then return end --Replace "addon" with the namespace name of the specific addon to watch
+--- 		self:UnregisterEvent("ADDON_LOADED")
+--- 		--Do something
+--- 	end
+--- 	```
+function w.RegisterGlobalEvents(frame, events)
+
+	--| Parameters
+
+	---Reference to the frame to register the event handlers for
+	---@alias RegisterGlobalEvents_param_frame AnyFrameObject
+
+	---Table of key, value pairs of [global event](https://warcraft.wiki.gg/wiki/Events) tags and event handlers to be registered for the frame
+	--- - ***Note:*** Include [`Frame:UnregisterEvent(...)`](https://warcraft.wiki.gg/wiki/API_Frame_UnregisterEvent) to prevent unwanted repeated calls of the handler function.
+	--- - ***Example:*** [`"ADDON_LOADED"`](https://warcraft.wiki.gg/wiki/Event:ADDON_LOADED) is fired for every single addon. To have the handler execute code only after one specific addon is loaded, check its second parameter, the loaded addon's namespace name. Unregister the event to prevent repeated calls for every addon loaded after the specific one.
+	--- 	```
+	--- 	function(self, addon)
+	--- 		if addon ~= "addon" then return end --Replace "addon" with the namespace name of the specific addon to watch
+	--- 		self:UnregisterEvent("ADDON_LOADED")
+	--- 		--Do something
+	--- 	end
+	--- 	```
+	---@alias globalEventList table<WowEvent, fun(self: Frame, ...: any)>
+end
+
+---Register custom frame attributes and `"OnAttributeChanged"` script event handlers for a frame
+---@param frame RegisterAttributes_param_frame Reference to the frame to set custom attributes and register the event handlers for
+---@param attributes attributeList Table of key, value pairs of custom attribute names and tables of initial attribute values and `"OnAttributeChanged"` script event handlers called on trigger for each specific attribute
+function w.RegisterAttributes(frame, attributes)
+
+	--| Parameters
+
+	---Reference to the frame to set custom attributes and register the event handlers for
+	---@alias RegisterAttributes_param_frame AnyFrameObject
+
+	---Table of key, value pairs of custom attribute names and tables of initial attribute values and `"OnAttributeChanged"` script event handlers called on trigger for each specific attribute
+	---@alias attributeList table<string, attributeData>
+
+		---@class attributeData
+		---@field value any The initial value of this specific custom frame attribute
+		---@field handler fun(...: any) The function called when an `"OnAttributeChanged"` script event triggers for this specific custom frame attribute
 end
 
 

@@ -7,8 +7,8 @@ local s = wt.strings
 local w = WidgetTools
 local log = w.Log
 
-local cr = C_ColorUtil.WrapTextInColor
-local crc = C_ColorUtil.WrapTextInColorCode
+local c = C_ColorUtil.WrapTextInColor
+local cc = C_ColorUtil.WrapTextInColorCode
 
 
 --[[ RESOURCES ]]
@@ -279,28 +279,6 @@ end
 
 --[[ FRAME MANAGEMENT ]]
 
---[ Events ]
-
-function wt.RegisterScriptEvents(frame, events)
-	if type(events) == "table" then for event, handler in pairs(events) do if frame:HasScript(event) and type(handler) == "function" then
-		frame:HookScript(event, handler)
-	end end end
-end
-
-function wt.RegisterGlobalEvents(frame, events)
-	if type(events) == "table" then for event, handler in pairs(events) do if type(handler) == "function" then w.SetListener(frame, event, handler) end end end
-end
-
-function wt.RegisterAttributes(frame, attributes)
-	if type(attributes) == "table" then for attribute, data in pairs(attributes) do if type(attribute) == "string" and type(data) == "table" then
-		local handler = data.handler
-
-		if type(handler) == "function" then frame:HookScript("OnAttributeChanged", function(_, a, ...) if a == attribute then handler(...) end end) end
-
-		frame:SetAttribute(attribute, data.value)
-	end end end
-end
-
 --[ Constructors ]
 
 ---Set the parameters of a frame
@@ -331,9 +309,9 @@ local function setUpFrame(frame, t)
 
 	--| Events & attributes
 
-	wt.RegisterScriptEvents(frame, t.events)
-	wt.RegisterGlobalEvents(frame, t.onEvent)
-	wt.RegisterAttributes(frame, t.attributes)
+	w.RegisterScriptEvents(frame, t.events)
+	w.RegisterGlobalEvents(frame, t.onEvent)
+	w.RegisterAttributes(frame, t.attributes)
 
 	--[ Initialization ]
 
@@ -403,6 +381,12 @@ function wt.CreateScrollframe(t)
 		relativePoint = "RIGHT",
 		offset = { x = -4, y = 1 }
 	})
+
+	--| Events & attributes
+
+	w.RegisterScriptEvents(scrollframe, t.events)
+	w.RegisterGlobalEvents(scrollframe, t.onEvent)
+	w.RegisterAttributes(scrollframe, t.attributes)
 
 	--[ Scroll Child ]
 
@@ -529,7 +513,7 @@ function wt.ConvertToAbsolutePosition(frame, keepAnchor)
 	wt.SetAnchor(frame, oldAnchor)
 end
 
---| Arrangement ---REPLACE with widget functionality
+--| Arrangement ---REPLACE with Container functionality
 
 --List of container content element positioning arrangement ordering directives
 local arrangementOrdering = {} ---@type table<AnyFrameObject, integer>
@@ -645,6 +629,7 @@ function wt.SetMovability(frame, movable, t)
 
 	movable = movable == true
 	t = type(t) == "table" and t or {}
+
 	local triggers = type(t.triggers) == "table" and t.triggers or { frame }
 	local events = type(t.events) == "table" and t.events or {}
 	local modifier = type(t.modifier) == "string" and t.modifier or nil
@@ -807,7 +792,6 @@ function wt.SetBackdrop(frame, backdrop, updates)
 		if t.border.color then frame:SetBackdropBorderColor(wt.UnpackColor(t.border.color)) end
 	end
 
-	--Set the base backdrop
 	setBackdrop(backdrop)
 
 	--[ Backdrop Updates ]
@@ -815,40 +799,30 @@ function wt.SetBackdrop(frame, backdrop, updates)
 	if type(updates) == "table" then for i = 1, #updates do
 		if type(updates[i].triggers) ~= "table" or not next(updates[i].triggers) then updates[i].triggers = { frame } end
 
-		for key, value in pairs(updates[i].rules) do
+		for event, evaluate in pairs(updates[i].rules) do
 			local function updater(self, ...)
-				--Unconditional: Restore the base backdrop on event trigger
-				if type(value) ~= "function" then
+				if type(evaluate) ~= "function" then
 					setBackdrop(backdrop)
 
 					return
 				end
 
-				--Conditional: Evaluate the rule
-				local backdropUpdate, fill = value(frame, self, ...)
+				local backdropUpdate, fill = evaluate(frame, self, ...)
 
-				--Remove the backdrop
 				if type(backdropUpdate) ~= "table" then
 					setBackdrop(nil)
 
 					return
 				end
 
-				--Restore the base backdrop or do nothing on evaluation
 				if not next(backdropUpdate) then if fill then
 					setBackdrop(backdrop)
 
 					return
 				else return end end
 
-				--Fill defaults
-				if fill then
-					--Fill backdrop update table with the base backdrop values
-					backdropUpdate = backdrop and w.Fill(backdropUpdate, backdrop) or nil
-				else
-					--Fill backdrop update table with the current values
-					if frame.backdropInfo then
-						--Background
+				if fill then backdropUpdate = backdrop and w.Fill(backdropUpdate, backdrop) or nil
+				else if frame.backdropInfo then
 						backdropUpdate.background = backdropUpdate.background or {}
 						backdropUpdate.background.texture = backdropUpdate.background.texture or w.Fill(backdropUpdate.background.texture, {
 							path = frame.backdropInfo.bgFile,
@@ -863,7 +837,6 @@ function wt.SetBackdrop(frame, backdrop, updates)
 						})
 						backdropUpdate.background.color = backdropUpdate.background.color or wt.PackColor(frame:GetBackdropColor())
 
-						--Border
 						backdropUpdate.border = backdropUpdate.border or {}
 						backdropUpdate.border.texture = backdropUpdate.border.texture or w.Fill(backdropUpdate.border.texture, {
 							path = frame.backdropInfo.edgeFile,
@@ -873,11 +846,10 @@ function wt.SetBackdrop(frame, backdrop, updates)
 					else backdropUpdate = nil end
 				end
 
-				--Update the backdrop
 				setBackdrop(backdropUpdate)
 			end
 
-			for j = 1, #updates[i].triggers do if updates[i].triggers[j]:HasScript(key) then updates[i].triggers[j]:HookScript(key, updater) end end
+			for j = 1, #updates[i].triggers do if updates[i].triggers[j]:HasScript(event) then updates[i].triggers[j]:HookScript(event, updater) end end
 		end
 	end end
 end
@@ -1151,7 +1123,7 @@ function wt.CreateTexture(frame, t, updates)
 
 	--| Events
 
-	wt.RegisterScriptEvents(texture, t.events)
+	w.RegisterScriptEvents(texture, t.events)
 
 	--[ Updates ]
 
@@ -1387,7 +1359,7 @@ function wt.AddWidgetTooltipLines(frames, default, utilityNote)
 
 	local tooltip = { lines = { { text = " ", }, } } ---@type tooltipData
 
-	if type(default) == "string" then table.insert(tooltip.lines, { text = crc(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
+	if type(default) == "string" then table.insert(tooltip.lines, { text = cc(DEFAULT .. ": ", "FF66FF66") .. default, } ) end
 	if utilityNote ~= false then table.insert(tooltip.lines, { text = s.value_note, font = GameFontNormalSmall, color = w.colors.grey[1], }) end
 
 	for i = 1, #frames do wt.UpdateTooltipData(frames[i], tooltip, false) end

@@ -14,8 +14,8 @@ if not C_ColorUtil then
 	}
 end
 
-local cr = C_ColorUtil.WrapTextInColor
-local crc = C_ColorUtil.WrapTextInColorCode
+local c = C_ColorUtil.WrapTextInColor
+local cc = C_ColorUtil.WrapTextInColorCode
 
 local noop = function() end
 
@@ -158,12 +158,12 @@ local w = {
 		__metatable = "Protected",
 	}),
 	applyColorMarkup = {
-		V = function(s) return crc("• " .. s, "FFFFFFFF") end,
-		H = function(s) return crc(s, "FFFFFFFF") end,
-		N = function(s) return crc(s, "FF66EE66") end,
-		F = function(s) return crc(s, "FFEE4444") end,
-		C = function(s) return crc(s, "FF8888EE") end,
-		O = function(s) return crc(s, "FFEEEE66") end,
+		V = function(s) return cc("• " .. s, "FFFFFFFF") end,
+		H = function(s) return cc(s, "FFFFFFFF") end,
+		N = function(s) return cc(s, "FF66EE66") end,
+		F = function(s) return cc(s, "FFEE4444") end,
+		C = function(s) return cc(s, "FF8888EE") end,
+		O = function(s) return cc(s, "FFEEEE66") end,
 	},
 	Log = noop,
 	LogRaw = noop,
@@ -211,42 +211,6 @@ function w.Round(number, decimals)
 	return math.floor(number * multiplier + 0.5) / multiplier
 end
 
---[ Validation ]
-
---| Frame
-
-function w.IsFrame(o)
-	if type(o) ~= "table" then return false end
-
-	return o.GetObjectType and o.IsObjectType, o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or nil
-end
-
-function w.ToFrame(s)
-	local frame = nil
-
-	--Find the global reference
-	if type(s) == "string" then for name in s:gmatch("[^.]+") do frame = frame and frame[name] or _G[name] end end
-
-	return w.IsFrame(frame) and frame or nil
-end
-
---| Font path
-
-local fontTestDummy
-
-function w.TryFont(path, object, size, flags)
-	if type(path) ~= "string" then return false end
-
-	if type(object) ~= "table" or type(object.SetFont) ~= "function" then
-		if not fontTestDummy then fontTestDummy = CreateFont("WidgetToolsFontPathTestDummy") end
-		object = fontTestDummy
-	end
-
-	if not pcall(object.SetFont, object, path, size or 12, flags or "") then return false end
-
-	return object:GetFont() == path
-end
-
 --[ Formatting ]
 
 function w.Thousands(value, decimals, round, trim)
@@ -270,17 +234,17 @@ function w.ToString(object)
 		local f, s = w.IsFrame(object)
 
 		if f then
-			if type(s) == "string" then return crc(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
-			return crc(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
+			if type(s) == "string" then return cc(s, "FFDD99FF"), "Frame" end --Frame reference (purple)
+			return cc(tostring(object), "FFFF4444"), "FrameScriptObject" --Unidentifiable UI object reference (red)
 		end
 
-		return crc(tostring(object), "FFFF9999"), t --table reference (pink)
+		return cc(tostring(object), "FFFF9999"), t --table reference (pink)
 	end
-	if t == "boolean" then return crc(tostring(object), object and "FFAAAAFF" or "FFFFAA66"), t end --boolean value (true: blue, false: orange)
-	if t == "number" then return crc(tostring(object), "FFDDDD55"), t end --number value (yellow)
-	if t == "string" then return crc("\"" .. object .. "\"", "FF55DD55"), t end --string value (green)
+	if t == "boolean" then return cc(tostring(object), object and "FFAAAAFF" or "FFFFAA66"), t end --boolean value (true: blue, false: orange)
+	if t == "number" then return cc(tostring(object), "FFDDDD55"), t end --number value (yellow)
+	if t == "string" then return cc("\"" .. object .. "\"", "FF55DD55"), t end --string value (green)
 
-	return crc(tostring(object), "FFFF4444"), "any" --Miscellaneous value (red)
+	return cc(tostring(object), "FFFF4444"), "any" --Miscellaneous value (red)
 end
 
 ---Format a table as a string with colored values appropriate to their type
@@ -300,8 +264,8 @@ local function formatTableString(table, compact, space, newLine, indentation)
 		--Key
 		tableString = tableString .. newLine .. (compact and "" or indentation) .. (
 			type(key) == "string" and (
-				key:match("^%a%w*$") and crc(key, "FFFFFFFF") or "[" .. crc("\"" .. key .. "\"", "FFFFFFFF") .. "]"
-			) or "[" .. crc(tostring(key), "FFFFFFFF") .. "]"
+				key:match("^%a%w*$") and cc(key, "FFFFFFFF") or "[" .. cc("\"" .. key .. "\"", "FFFFFFFF") .. "]"
+			) or "[" .. cc(tostring(key), "FFFFFFFF") .. "]"
 		) .. space .. "="
 
 		--Value
@@ -314,7 +278,7 @@ local function formatTableString(table, compact, space, newLine, indentation)
 		tableString = tableString .. ","
 	end
 
-	return crc((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
+	return cc((tableString:sub(1, -2)) .. newLine .. indentation:sub(1, -5) .. "}", "FF999999") --base color (grey)
 end
 
 function w.TableToString(table, compact)
@@ -653,6 +617,23 @@ function w.VerifyData(target, source)
 	return target
 end
 
+--[ Font ]
+
+local fontTestDummy
+
+function w.TryFont(path, object, size, flags)
+	if type(path) ~= "string" then return false end
+
+	if type(object) ~= "table" or type(object.SetFont) ~= "function" then
+		if not fontTestDummy then fontTestDummy = CreateFont("WidgetToolsFontPathTestDummy") end
+		object = fontTestDummy
+	end
+
+	if not pcall(object.SetFont, object, path, size or 12, flags or "") then return false end
+
+	return object:GetFont() == path
+end
+
 --[ Events ]
 
 local eventHandlers = {}
@@ -679,6 +660,49 @@ function w.CallListener(parent, event, ...)
 	local h = f[event]
 
 	return h and h(parent, ...)
+end
+
+--[ Frames ]
+
+function w.IsFrame(o)
+	if type(o) ~= "table" then return false end
+
+	return o.GetObjectType and o.IsObjectType, o.GetName and o:GetName() or o.GetParent and o:GetParent() and o.GetDebugName and o:GetDebugName() or nil
+end
+
+function w.ToFrame(s)
+	local frame = nil
+
+	--Find the global reference
+	if type(s) == "string" then for name in s:gmatch("[^.]+") do frame = frame and frame[name] or _G[name] end end
+
+	return w.IsFrame(frame) and frame or nil
+end
+
+--| Events & attributes
+
+function w.RegisterScriptEvents(frame, events)
+	if type(events) ~= "table" or not w.IsFrame(frame) then return end
+
+	for event, handler in pairs(events) do if frame:HasScript(event) and type(handler) == "function" then frame:HookScript(event, handler) end end
+end
+
+function w.RegisterGlobalEvents(frame, events)
+	if type(events) ~= "table" or not w.IsFrame(frame) then return end
+
+	for event, handler in pairs(events) do if type(handler) == "function" then w.SetListener(frame, event, handler) end end
+end
+
+function w.RegisterAttributes(frame, attributes)
+	if type(attributes) ~= "table" or not w.IsFrame(frame) then return end
+
+	for attribute, data in pairs(attributes) do if type(attribute) == "string" and type(data) == "table" then
+		local handler = data.handler
+
+		if type(handler) == "function" then frame:HookScript("OnAttributeChanged", function(_, a, ...) if a == attribute then handler(...) end end) end
+
+		frame:SetAttribute(attribute, data.value)
+	end end
 end
 
 
@@ -824,7 +848,7 @@ function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonl
 		table.insert(protectedToolboxRegistry[version].addons, userAddon)
 
 		w.Log(function() return
-			"Registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. w.ToString(version) .. ".",
+			"Registered " .. c(userAddon, LIGHTBLUE_FONT_COLOR) .. " for using Toolbox version " .. w.ToString(version) .. ".",
 			"WidgetTools.toolboxes.Register"
 		end)
 
@@ -841,7 +865,7 @@ function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonl
 		}
 
 		w.Log(function() return
-			"Added Toolbox version " .. w.ToString(version) .. " to the registry and registered " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
+			"Added Toolbox version " .. w.ToString(version) .. " to the registry and registered " .. c(userAddon, LIGHTBLUE_FONT_COLOR) .. " for use.",
 			"WidgetTools.toolboxes.Register"
 		end)
 
@@ -856,7 +880,7 @@ function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonl
 
 	if not C_AddOns.DoesAddOnExist(toolboxAddon) then
 		w.Log(function() return
-			"Toolbox initializer " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.",
+			"Toolbox initializer " .. c(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon does not exist.",
 			"WidgetTools.toolboxes.Register"
 		end)
 
@@ -877,7 +901,7 @@ function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonl
 		w.initialization[version] = nil
 
 		w.Log(function() return
-			"New Toolbox version " .. w.ToString(version) .. " initialization finished by " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. ".",
+			"New Toolbox version " .. w.ToString(version) .. " initialization finished by " .. c(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. ".",
 			toolboxAddon .. " ADDON_LOADED"
 		end)
 
@@ -889,11 +913,11 @@ function w.Register(userAddon, version, callback, toolboxAddon, toolbox, readonl
 	w.initialization[version] = setmetatable({}, { __metatable = "Public" })
 
 	w.Log(function() return
-		"New Toolbox version " .. w.ToString(version) .. " initialization started by " .. cr(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
+		"New Toolbox version " .. w.ToString(version) .. " initialization started by " .. c(userAddon, LIGHTBLUE_FONT_COLOR) .. ".",
 		"WidgetTools.toolboxes.Register"
 	end)
 	w.Log(function() return
-		"Loading " .. cr(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.",
+		"Loading " .. c(toolboxAddon, LIGHTBLUE_FONT_COLOR) .. " addon.",
 		"WidgetTools.toolboxes.Register"
 	end)
 
@@ -988,7 +1012,7 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 						parentFrame = panel,
 						name = "LiteMode",
 						title = strings.specifications.general.lite.label,
-						tooltip = { lines = { { text = strings.specifications.general.lite.tooltip:gsub("#COMMAND", crc("/wt lite", "FFFFFFFF")), }, } },
+						tooltip = { lines = { { text = strings.specifications.general.lite.tooltip:gsub("#COMMAND", cc("/wt lite", "FFFFFFFF")), }, } },
 						arrange = {},
 						getData = function() return WidgetToolsDB.lite end,
 						saveData = function(state) WidgetToolsDB.lite = state end,
@@ -1297,7 +1321,7 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 										local toggle = wt.CreateCheckbox({
 											parentFrame = addonPanel,
 											name = "Toggle",
-											title = cr(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. strings.about.toggle.label .. ")",
+											title = c(C_AddOns.GetAddOnMetadata(a, "Title"), HIGHLIGHT_FONT_COLOR) .. " (" .. strings.about.toggle.label .. ")",
 											tooltip = { lines = { { text = strings.about.toggle.tooltip, }, } },
 											arrange = {},
 											width = 300,
@@ -1306,7 +1330,7 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 											saveData = function(state) toggleAddon(state) end,
 											instantSave = false,
 											listeners = { saved = { { handler = function(self) if not self:GetValue() then wt.CreateReloadNotice() end end, }, }, },
-											events = { OnClick = function(_, state) toggleAddon(state) end, },
+											events = { OnClick = function(self) toggleAddon(self:GetChecked()) end, },
 											showDefault = false,
 											utilityMenu = false,
 											dataManagement = {
@@ -1354,7 +1378,7 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 													offset = { x = 5 }
 												},
 												width = 140,
-												text = data.version .. (data.day and data.month and data.year and crc(" ( " .. s.about_date .. ": " .. cr(s.date:gsub(
+												text = data.version .. (data.day and data.month and data.year and cc(" ( " .. s.about_date .. ": " .. c(s.date:gsub(
 													"#DAY", data.day
 												):gsub(
 													"#MONTH", data.month
@@ -1526,9 +1550,9 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 			rightClickMenu = false,
 		}):Open() end end,
 	}, { lines = {
-		{ text = strings.about.version:gsub("#VERSION", crc(C_AddOns.GetAddOnMetadata(addon, "Version") or "?", "FFFFFFFF")), },
+		{ text = strings.about.version:gsub("#VERSION", cc(C_AddOns.GetAddOnMetadata(addon, "Version") or "?", "FFFFFFFF")), },
 		{ text = strings.about.date:gsub(
-			"#DATE", crc(s.date:gsub(
+			"#DATE", cc(s.date:gsub(
 				"#DAY", C_AddOns.GetAddOnMetadata(addon, "X-Day") or "?"
 			):gsub(
 				"#MONTH", C_AddOns.GetAddOnMetadata(addon, "X-Month") or "?"
@@ -1536,8 +1560,8 @@ w.SetListener(eventFrame, "PLAYER_LOGIN", function()
 				"#YEAR", C_AddOns.GetAddOnMetadata(addon, "X-Year") or "?"
 			), "FFFFFFFF")
 		), },
-		{ text = strings.about.author:gsub("#AUTHOR", crc(C_AddOns.GetAddOnMetadata(addon, "Author") or "?", "FFFFFFFF")), },
-		{ text = strings.about.license:gsub("#LICENSE", crc(C_AddOns.GetAddOnMetadata(addon, "X-License") or "?", "FFFFFFFF")), },
+		{ text = strings.about.author:gsub("#AUTHOR", cc(C_AddOns.GetAddOnMetadata(addon, "Author") or "?", "FFFFFFFF")), },
+		{ text = strings.about.license:gsub("#LICENSE", cc(C_AddOns.GetAddOnMetadata(addon, "X-License") or "?", "FFFFFFFF")), },
 		{ text = " ", },
 		{
 			text = (WidgetToolsDB.lite and strings.compartment.lite or strings.compartment.open),

@@ -1,4 +1,4 @@
-local wt = WidgetTools.toolboxes.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
+local wt = WidgetTools.initialization[C_AddOns.GetAddOnMetadata(..., "Version")] ---@type toolbox
 
 if not wt then return end
 
@@ -160,7 +160,7 @@ wt.strings = {
 	profiles_rename_tooltip = "Renomear o perfil ativo.",
 	profiles_rename_description = "Renomear #PROFILE para:",
 	profiles_delete_tooltip = "Excluir o perfil ativo.",
-	profiles_delete_warning = "Tem certeza que deseja remover o perfil de configurações #PROFILE #ADDON ativo e excluir permanentemente todos os dados armazenados nele?"
+	profiles_delete_warning = "Tem certeza que deseja remover o perfil de configurações #PROFILE #ADDON ativo e excluir permanentemente todos os dados armazenados nele?",
 	profiles_reset_warning = "Tem certeza que deseja sobrescrever o perfil de configurações #PROFILE #ADDON ativo com os valores padrão?",
 
 	backup_title = "Backup",

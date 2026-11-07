@@ -7,8 +7,8 @@ local s = wt.strings
 local w = WidgetTools
 local log = w.Log
 
-local cr = C_ColorUtil.WrapTextInColor
-local crc = C_ColorUtil.WrapTextInColorCode
+local c = C_ColorUtil.WrapTextInColor
+local cc = C_ColorUtil.WrapTextInColorCode
 
 --[ Protoform Synthesis ]
 
@@ -132,6 +132,8 @@ end
 
 --[ Utilities ]
 
+local initializers = {} ---@type table<typename, fun(self: construct, t: table, ...: any)>
+
 wt.clipboard = {}
 
 function wt.IsType(object, typename)
@@ -200,19 +202,23 @@ end
 ---Event dispatcher utility
 ---@param construct construct
 ---@param lockout table<construct, true>
----@param internals? table<typename, fun(self: construct, silent?: boolean, ...: any)[]>
+---@param internalsList? table<typename, fun(self: construct, silent?: boolean, ...: any)[]>
 ---@param silent? boolean
----@param handlerList? table<construct, fun(self: construct, ...: any)[]>
+---@param handlerList table<construct, fun(self: construct, ...: any)[]>
 ---@param ... any
-local function invoke(construct, lockout, internals, silent, handlerList, ...)
-	local internal = internals and internals[getmetatable(construct)]
-	local handlers = handlerList and not silent and handlerList[construct]
+local function invoke(construct, lockout, internalsList, silent, handlerList, ...)
+	local handlers = not silent and handlerList[construct]
 
-	if lockout[construct] or (not internal and not handlers) then return end
+	if lockout[construct] or (not internalsList and not handlers) then return end
 
 	lockout[construct] = true
 
-	if internal then for i = 1, #internal do internal[i](construct, silent, ...) end end
+	if internalsList then
+		local typenameList = typenames[getmetatable(construct)]
+
+		for typename, internals in pairs(internalsList) do if typenameList[typename] then for i = 1, #internals do internals[i](construct, silent, ...) end end end
+	end
+
 	if handlers then for i = 1, #handlers do handlers[i](construct, ...) end end
 
 	lockout[construct] = nil
@@ -288,29 +294,249 @@ function protoBuilders.Construct(construct)
 	end
 end
 
-function wt.CreateConstruct(t)
-	local construct = setmetatable({}, getRoot()) ---@type construct
+---Initialize a Construct instance
+---@param self construct
+---@param t construct_options
+function initializers.Construct(self, t)
 
-	--[ Initialization ]
-
-	t = type(t) == "table" and t or {}
+	--[ Events ]
 
 	local listeners = t.listeners
-	addListeners(construct, listeners, { "assigned", })
+
+	addListeners(self, listeners, { "assigned", })
 
 	--Add custom events
 	if type(listeners) == "table" and type(listeners[1]) == "table" then for k, v in pairs(listeners[1]) do
-		construct:AddEvent(k)
+		self:AddEvent(k)
 
-		if type(v) == "table" then for i = 1, #v do if type(v[i]) == "table" then construct:AddListener(k, v[i].handler, v[i].callIndex) end end end
+		if type(v) == "table" then for i = 1, #v do if type(v[i]) == "table" then self:AddListener(k, v[i].handler, v[i].callIndex) end end end
 	end end
 
-	local propertyList = t.properties
-	if type(propertyList) == "table" then for property, value in pairs(propertyList) do construct:SetProperty(property, value) end end
+	--[ Properties ]
 
-	log(function() return "New Construct instance created: " .. w.ToString(construct), wt.title .. ".CreateConstruct" end)
+	local propertyList = t.properties
+
+	if type(propertyList) == "table" then for property, value in pairs(propertyList) do self:SetProperty(property, value) end end
+end
+
+function wt.CreateConstruct(t)
+	local construct = setmetatable({}, getRoot()) ---@type construct
+
+	initializers.Construct(construct, type(t) == "table" and t or {})
+
+	log(function() return "Construct instance initialized: " .. w.ToString(construct), wt.title .. ".CreateConstruct" end)
 
 	return construct
+end
+
+
+--[[ CHAT COMMANDS ]]
+
+local chatmanager_keywords ---@type table<chatmanager, string[]>
+local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
+local chatmanager_colors ---@type table<chatmanager, table>
+local chatmanager_title ---@type table<chatmanager, string>
+local chatmanager_icon ---@type table<chatmanager, string>
+local chatmanager_branding ---@type table<chatmanager, string>
+
+local chatmanager_onWelcome ---@type table<chatmanager, function>
+
+---@param chatmanager chatmanager
+function protoBuilders.Chatmanager(chatmanager)
+	if not chatmanager_keywords then chatmanager_keywords = {} end
+	if not chatmanager_commands then chatmanager_commands = {} end
+	if not chatmanager_colors then chatmanager_colors = {} end
+	if not chatmanager_title then chatmanager_title = {} end
+	if not chatmanager_icon then chatmanager_icon = {} end
+	if not chatmanager_branding then chatmanager_branding = {} end
+
+	function chatmanager:SetCommands(commands)
+		if type(commands) ~= "table" then commands = {} else
+			for i = 1, commands do
+				local command = commands[i]
+
+				if type(command.onSuccess) ~= "function" then command.onError = nil end
+				if type(command.onError) ~= "function" then command.onError = nil end
+				if type(command.onHelp) ~= "function" then command.onError = nil end
+			end
+		end
+
+		chatmanager_commands[self] = commands
+	end
+
+	function chatmanager:Print(message, title, titleColor, contentColor)
+		local colors = chatmanager_colors[self]
+
+		title = type(title) == "string" and title or chatmanager_branding[self]
+		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
+		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
+
+		if type(message) == "string" then print(c(title, titleColor) .. c(message, contentColor)) end
+	end
+
+	function chatmanager:Welcome()
+		local keywords = chatmanager_keywords[self]
+		local colors = chatmanager_colors[self]
+		local keyword = c(keywords[1], colors.command)
+
+		if #keywords > 1 then
+			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. c(keywords[i], colors.command) end end
+			keyword = s.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", c(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
+		end
+
+		print(c(chatmanager_icon[self] .. s.chat_welcome_thanks:gsub("#ADDON", c(chatmanager_title[self], colors.title)), colors.content))
+		print(c(s.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
+
+		if chatmanager_onWelcome[self] then chatmanager_onWelcome[self]() end
+	end
+
+	function chatmanager:Help()
+		local keywords = chatmanager_keywords[self]
+		local commands = chatmanager_commands[self]
+		local colors = chatmanager_colors[self]
+
+		print(c(s.chat_help_list:gsub("#ADDON", c(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
+
+		for i = 1, #commands do
+			local command = commands[i]
+
+			if not command.hidden then
+				local description = command.description
+				if type(description) == "function" then description = description() end
+				description = type(description) == "string" and c(" • " .. description, colors.description) or ""
+
+				print(c("    " .. keywords[1] .. " ".. command.command, colors.command) .. description)
+			end
+
+			if command.onHelp then command.onHelp() end
+		end
+	end
+
+	function chatmanager:Trigger(c, ...)
+		local commands = chatmanager_commands[self]
+
+		for i = 1, #commands do
+			local command = commands[i]
+
+			if c == command.command then
+				local handler = command.handler
+
+				if type(handler) == "function" then
+					local results = { handler(self, ...) }
+
+					if results[1] == true then
+						local success = command.success
+						local message = type(success) == "function" and success(unpack(results, 2)) or success
+
+						if type(message) == "string" then chatmanager:Print(message) end
+
+						if command.onSuccess then command.onSuccess(self, unpack(results, 2)) end
+					elseif results[1] == false then
+						local error = command.error
+						local message = type(error) == "function" and error(unpack(results, 2)) or error
+
+						if type(message) == "string" then chatmanager:Print(message) end
+
+						if command.onError then command.onError(self, unpack(results, 2)) end
+					end
+				end
+
+				if command.help then chatmanager:Help() end
+
+				return true
+			end
+		end
+
+		return false
+	end
+end
+
+---Initialize a Chatmanager instance
+---@param self chatmanager
+---@param t chatmanager_options
+---@param keywords any
+function initializers.Chatmanager(self, t, keywords)
+	self:SetCommands(t.commands)
+
+	if type(chatmanager_onWelcome[self]) == "function" then chatmanager_onWelcome[self] = t.onWelcome end
+
+	--| Color palette
+
+	local colors = t.colors or {}
+
+	chatmanager_colors[self] = {
+		title = wt.IsColor(colors.title) or YELLOW_FONT_COLOR,
+		content = wt.IsColor(colors.content) or WHITE_FONT_COLOR,
+		command = wt.IsColor(colors.command) or LIGHTBLUE_FONT_COLOR,
+		description = wt.IsColor(colors.description) or LIGHTGRAY_FONT_COLOR,
+	}
+
+	--| Addon branding
+
+	local title, icon
+	local addon = t.addon
+
+	if wt.IsType(addon, "Addonmanager") then ---@cast addon addonmanager
+		title = addon:GetTitle()
+		icon = addon:GetLogo()
+		addon = addon:GetName()
+	else
+		local addon_type = type(addon)
+
+		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
+			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
+			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
+			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
+		end
+	end
+
+	if not addon then
+		addon = tostring(self)
+		title = addon
+	end
+
+	chatmanager_title[self] = title
+	chatmanager_icon[self] = icon and (wt.Texture(icon, 11, 11) .. " ") or ""
+	chatmanager_branding[self] = icon .. title .. ": "
+
+	--| Keywords
+
+	if type(keywords) == "table" then
+		local slash = "SLASH_" .. addon
+
+		for i = 1, #keywords do
+			local keyword = "/" .. keywords[i]
+
+			keywords[i] = keyword
+			_G[slash .. i] = keyword
+		end
+
+		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
+
+		SlashCmdList[addon] = function(line)
+			local payload = { strsplit(" ", line) }
+
+			if not self:Trigger(unpack(payload)) then
+				if defaultHandler then defaultHandler(self, unpack(payload)) end
+
+				self:Help()
+			end
+		end
+	end
+end
+
+progenitors.Chatmanager = "Construct" ---@type typename_construct
+function wt.CreateChatmanager(keywords, t)
+	local typename = "Chatmanager" ---@type typename_chatmanager
+	local chatmanager = setmetatable({}, getBase(typename)) ---@cast chatmanager chatmanager
+
+	--[ Initialization ]
+
+	initializers.Chatmanager(chatmanager, type(t) == "table" and t or {}, keywords)
+
+	log(function() return typename .. " instance initialized: " .. w.ToString(chatmanager), wt.title .. ".CreateChatmanager" end)
+
+	return chatmanager
 end
 
 
@@ -623,23 +849,28 @@ function protoBuilders.Widget(widget)
 	end
 end
 
+---Initialize a Widget instance
+---@param self widget
+---@param t widget_options
+function initializers.Widget(self, t)
+	initializers.Construct(self, t)
+
+	addListeners(self, t.listeners, { "enabled", })
+
+	if t.parent then self:SetParent(t.parent, t.independent, t.childIndex) end
+
+	self:SetDependencies(t.dependencies)
+	self:SetEnabled(t.disabled ~= true)
+end
+
 progenitors.Widget = "Construct" ---@type typename_construct
 function wt.CreateWidget(t)
 	local typename = "Widget" ---@type typename_widget
-	local widget = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast widget widget
+	local widget = setmetatable({}, getBase(typename)) ---@cast widget widget
 
-	--[ Initialization ]
+	initializers.Widget(widget, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(widget, t.listeners, { "enabled", })
-
-	if t.parent then widget:SetParent(t.parent, t.independent, t.childIndex) end
-
-	widget:SetDependencies(t.dependencies)
-	widget:SetEnabled(t.disabled ~= true)
-
-	log(function() return progenitors[typename] .. " instance mutated into a Widget: " .. w.ToString(widget), wt.title .. ".CreateWidget" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(widget), wt.title .. ".CreateWidget" end)
 
 	return widget
 end
@@ -759,22 +990,29 @@ function protoBuilders.List(list)
 	end
 end
 
+---Initialize a List instance
+---@param self list
+---@param t list_options
+---@param typenameItem typename
+---@param count integer?
+function initializers.List(self, t, typenameItem, count)
+	initializers.Widget(self, t)
+
+	addListeners(self, t.listeners, { "added", "removed", "updated" })
+
+	list_type[self] = typenameItem
+
+	self:SetCount(count)
+end
+
 progenitors.List = "Widget" ---@type typename_widget
-function wt.CreateList(type, count, t, ancestor)
+function wt.CreateList(typenameItem, count, t)
 	local typename = "List" ---@type typename_list
-	local list = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast list list
+	local list = setmetatable({}, getBase(typename)) ---@cast list list
 
-	--[ Initialization ]
+	initializers.List(list, type(t) == "table" and t or {}, typenameItem, count)
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(list, t.listeners, { "added", "removed", "updated" })
-
-	list_type[list] = type
-
-	list:SetCount(count)
-
-	log(function() return progenitors[typename] .. " instance mutated into a List: " .. w.ToString(list), wt.title .. ".CreateList" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(list), wt.title .. ".CreateList" end)
 
 	return list
 end
@@ -816,9 +1054,9 @@ local function setUpContainer(container, frame, t)
 
 	--| Events & attributes
 
-	wt.RegisterScriptEvents(frame, t.events)
-	wt.RegisterGlobalEvents(frame, t.onEvent)
-	wt.RegisterAttributes(frame, t.attributes)
+	w.RegisterScriptEvents(frame, t.events)
+	w.RegisterGlobalEvents(frame, t.onEvent)
+	w.RegisterAttributes(frame, t.attributes)
 
 	--[ Initialization ]
 
@@ -855,7 +1093,7 @@ function wt.CreateContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	log(function() return progenitors[typename] .. " instance mutated into a Container: " .. w.ToString(container), wt.title .. ".CreateContainer" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(container), wt.title .. ".CreateContainer" end)
 
 	return container
 end
@@ -884,7 +1122,7 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 	setUpContainer(container, frame, t)
 
-	log(function() return progenitors[typename] .. " instance mutated into a CustomContainer: " .. w.ToString(container), wt.title .. ".CreateCustomContainer" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(container), wt.title .. ".CreateCustomContainer" end)
 
 	return container
 end
@@ -933,211 +1171,9 @@ function wt.CreatePanel(t, ancestor, lite)
 		})
 	})
 
-	log(function() return progenitors[typename] .. " instance mutated into a Panel: " .. w.ToString(panel), wt.title .. ".CreatePanel" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(panel), wt.title .. ".CreatePanel" end)
 
 	return panel
-end
-
-
---[[ CHAT COMMANDS ]]
-
-local chatmanager_keywords ---@type table<chatmanager, string[]>
-local chatmanager_commands ---@type table<chatmanager, chatCommandData[]>
-local chatmanager_colors ---@type table<chatmanager, table>
-local chatmanager_title ---@type table<chatmanager, string>
-local chatmanager_icon ---@type table<chatmanager, string>
-local chatmanager_branding ---@type table<chatmanager, string>
-
-local chatmanager_onWelcome ---@type table<chatmanager, function>
-
----@param chatmanager chatmanager
-function protoBuilders.Chatmanager(chatmanager)
-	if not chatmanager_keywords then chatmanager_keywords = {} end
-	if not chatmanager_commands then chatmanager_commands = {} end
-	if not chatmanager_colors then chatmanager_colors = {} end
-	if not chatmanager_title then chatmanager_title = {} end
-	if not chatmanager_icon then chatmanager_icon = {} end
-	if not chatmanager_branding then chatmanager_branding = {} end
-
-	function chatmanager:SetCommands(commands)
-		if type(commands) ~= "table" then commands = {} else
-			for i = 1, commands do
-				local command = commands[i]
-
-				if type(command.onSuccess) ~= "function" then command.onError = nil end
-				if type(command.onError) ~= "function" then command.onError = nil end
-				if type(command.onHelp) ~= "function" then command.onError = nil end
-			end
-		end
-
-		chatmanager_commands[self] = commands
-	end
-
-	function chatmanager:Print(message, title, titleColor, contentColor)
-		local colors = chatmanager_colors[self]
-
-		title = type(title) == "string" and title or chatmanager_branding[self]
-		titleColor = wt.IsColor(titleColor) or colors[type(titleColor) == "string" and titleColor or "title"]
-		contentColor = wt.IsColor(contentColor) or colors[type(contentColor) == "string" and contentColor or "content"]
-
-		if type(message) == "string" then print(cr(title, titleColor) .. cr(message, contentColor)) end
-	end
-
-	function chatmanager:Welcome()
-		local keywords = chatmanager_keywords[self]
-		local colors = chatmanager_colors[self]
-		local keyword = cr(keywords[1], colors.command)
-
-		if #keywords > 1 then
-			if #keywords > 2 then for i = 2, #keywords - 1 do keyword = " " .. keyword .. "," .. cr(keywords[i], colors.command) end end
-			keyword = s.chat_welcome_keywords:gsub("#KEYWORD_ALTERNATE", cr(keywords[#keywords], colors.command)):gsub("#KEYWORD", keyword)
-		end
-
-		print(cr(chatmanager_icon[self] .. s.chat_welcome_thanks:gsub("#ADDON", cr(chatmanager_title[self], colors.title)), colors.content))
-		print(cr(s.chat_welcome_hint:gsub("#KEYWORD", keyword), colors.description))
-
-		if chatmanager_onWelcome[self] then chatmanager_onWelcome[self]() end
-	end
-
-	function chatmanager:Help()
-		local keywords = chatmanager_keywords[self]
-		local commands = chatmanager_commands[self]
-		local colors = chatmanager_colors[self]
-
-		print(cr(s.chat_help_list:gsub("#ADDON", cr(chatmanager_icon[self] .. chatmanager_title[self], colors.title)), colors.content))
-
-		for i = 1, #commands do
-			local command = commands[i]
-
-			if not command.hidden then
-				local description = command.description
-				if type(description) == "function" then description = description() end
-				description = type(description) == "string" and cr(" • " .. description, colors.description) or ""
-
-				print(cr("    " .. keywords[1] .. " ".. command.command, colors.command) .. description)
-			end
-
-			if command.onHelp then command.onHelp() end
-		end
-	end
-
-	function chatmanager:Trigger(c, ...)
-		local commands = chatmanager_commands[self]
-
-		for i = 1, #commands do
-			local command = commands[i]
-
-			if c == command.command then
-				local handler = command.handler
-
-				if type(handler) == "function" then
-					local results = { handler(self, ...) }
-
-					if results[1] == true then
-						local success = command.success
-						local message = type(success) == "function" and success(unpack(results, 2)) or success
-
-						if type(message) == "string" then chatmanager:Print(message) end
-
-						if command.onSuccess then command.onSuccess(self, unpack(results, 2)) end
-					elseif results[1] == false then
-						local error = command.error
-						local message = type(error) == "function" and error(unpack(results, 2)) or error
-
-						if type(message) == "string" then chatmanager:Print(message) end
-
-						if command.onError then command.onError(self, unpack(results, 2)) end
-					end
-				end
-
-				if command.help then chatmanager:Help() end
-
-				return true
-			end
-		end
-
-		return false
-	end
-end
-
-progenitors.Chatmanager = "Construct" ---@type typename_construct
-function wt.CreateChatmanager(keywords, t, ancestor)
-	local typename = "Chatmanager" ---@type typename_chatmanager
-	local chatmanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast chatmanager chatmanager
-
-	--[ Initialization ]
-
-	t = type(t) == "table" and t or {}
-
-	chatmanager:SetCommands(t.commands)
-
-	if type(chatmanager_onWelcome[chatmanager]) == "function" then chatmanager_onWelcome[chatmanager] = t.onWelcome end
-
-	--| Color palette
-
-	local colors = t.colors or {}
-
-	chatmanager_colors[chatmanager] = {
-		title = wt.IsColor(colors.title) or YELLOW_FONT_COLOR,
-		content = wt.IsColor(colors.content) or WHITE_FONT_COLOR,
-		command = wt.IsColor(colors.command) or LIGHTBLUE_FONT_COLOR,
-		description = wt.IsColor(colors.description) or LIGHTGRAY_FONT_COLOR,
-	}
-
-	--| Addon branding
-
-	local title, icon
-	local addon = t.addon
-
-	if wt.IsType(addon, "Addonmanager") then ---@cast addon addonmanager
-		title = addon:GetTitle()
-		icon = addon:GetLogo()
-		addon = addon:GetName()
-	else
-		local addon_type = type(addon)
-
-		if (addon_type == "string" or addon_type == "number") and C_AddOns.IsAddOnLoaded(addon) then
-			title = wt.Clear(select(2, C_AddOns.GetAddOnInfo(addon))):gsub("^%s*(.-)%s*$", "%1")
-			icon = C_AddOns.GetAddOnMetadata(addon, "IconTexture")
-			addon = (addon_type ~= "string" and C_AddOns.GetAddOnName(addon) or addon):upper()
-		end
-	end
-
-	if not addon then
-		addon = tostring(chatmanager)
-		title = addon
-	end
-
-	chatmanager_title[chatmanager] = title
-	chatmanager_icon[chatmanager] = icon and (wt.Texture(icon, 11, 11) .. " ") or ""
-	chatmanager_branding[chatmanager] = icon .. title .. ": "
-
-	--| Keywords
-
-	if type(keywords) == "table" then
-		local slash = "SLASH_" .. addon
-
-		for i = 1, #keywords do
-			local keyword = "/" .. keywords[i]
-
-			keywords[i] = keyword
-			_G[slash .. i] = keyword
-		end
-
-		local defaultHandler = type(t.defaultHandler) == "function" and t.defaultHandler or nil
-
-		SlashCmdList[addon] = function(line)
-			local payload = { strsplit(" ", line) }
-
-			if not chatmanager:Trigger(unpack(payload)) then
-				if defaultHandler then defaultHandler(chatmanager, unpack(payload)) end
-
-				chatmanager:Help()
-			end
-		end
-	end
-
-	return chatmanager
 end
 
 
@@ -1175,20 +1211,25 @@ function protoBuilders.Action(action)
 	function action:SetAction(call) if type(call) == "function" then action_call[self] = call end end
 end
 
+---Initialize an Action instance
+---@param self action
+---@param t action_options
+function initializers.Action(self, t)
+	initializers.Widget(self, t)
+
+	addListeners(self, t.listeners, { "triggered", })
+
+	self:SetAction(t.action)
+end
+
 progenitors.Action = "Widget" ---@type typename_widget
 function wt.CreateAction(t)
 	local typename = "Action" ---@type typename_action
-	local action = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast action action
+	local action = setmetatable({}, getBase(typename)) ---@cast action action
 
-	--[ Initialization ]
+	initializers.Action(action, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(action, t.listeners, { "triggered", })
-
-	action:SetAction(t.action)
-
-	log(function() return progenitors[typename] .. " instance mutated into an Action: " .. w.ToString(action), wt.title .. ".CreateAction" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(action), wt.title .. ".CreateAction" end)
 
 	return action
 end
@@ -1273,13 +1314,11 @@ local function setUpButton(button, template, t, name, useHighlight)
 		button:Trigger(true)
 	end)
 
-	--[ Events ] --REPLACE script events
+	--| Events & attributes
 
-	--Register script event handlers
-	if t.events then for event, listener in pairs(t.events) do
-		if event == "attribute" then template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == listener.name then listener.handler(...) end end)
-		else template:HookScript(event, listener) end
-	end end
+	w.RegisterScriptEvents(template, t.events)
+	w.RegisterGlobalEvents(template, t.onEvent)
+	w.RegisterAttributes(template, t.attributes)
 
 	--[ Highlight Frame ]
 
@@ -1313,14 +1352,14 @@ local function setUpButton(button, template, t, name, useHighlight)
 		if label and useHighlight then label:SetFontObject(fontNormal) end
 	end end)
 
-	highlight:HookScript("OnMouseDown", function(_, b) if template:IsEnabled() and b == "LeftButton" then
+	highlight:HookScript("OnMouseDown", function(_, mouseButton) if template:IsEnabled() and mouseButton == "LeftButton" then
 		template:SetButtonState("PUSHED")
 	end end)
 
-	highlight:HookScript("OnMouseUp", function(_, b, isInside) if template:IsEnabled() then
+	highlight:HookScript("OnMouseUp", function(_, mouseButton, isInside) if template:IsEnabled() then
 		template:SetButtonState("NORMAL")
 
-		if isInside and b == "LeftButton" then template:Click(b) end
+		if isInside and mouseButton == "LeftButton" then template:Click(mouseButton) end
 	end end)
 end
 
@@ -1354,7 +1393,7 @@ function wt.CreateButton(t, ancestor, lite)
 
 	setUpButton(button, template, t, name)
 
-	log(function() return progenitors[typename] .. " instance mutated into a Button: " .. w.ToString(button), wt.title .. ".CreateButton" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(button), wt.title .. ".CreateButton" end)
 
 	return button
 end
@@ -1392,13 +1431,15 @@ function wt.CreateCustomButton(t, ancestor, lite)
 
 	wt.SetBackdrop(template, t.backdrop, t.backdropUpdates)
 
-	log(function() return progenitors[typename] .. " instance mutated into a CustomButton: " .. w.ToString(button), wt.title .. ".CreateCustomButton" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(button), wt.title .. ".CreateCustomButton" end)
 
 	return button
 end
 
 
 --[[ DATAMANAGER ]]
+
+local data_verify
 
 local data_value ---@type table<datamanager, any>
 local data_default ---@type table<datamanager, any>
@@ -1541,33 +1582,38 @@ function protoBuilders.Datamanager(datamanager)
 	--ADD datamanagement
 end
 
-progenitors.Datamanager = "Widget" ---@type typename_widget
-function wt.CreateDatamanager(t)
-	local typename = "Datamanager" ---@type typename_datamanager
-	local datamanager = setmetatable(wt.CreateWidget(t), getBase(typename)) ---@cast datamanager datamanager
+---Initialize a Datamanager instance
+---@param self datamanager
+---@param t datamanager_options
+function initializers.Datamanager(self, t)
+	initializers.Widget(self, t)
 
-	--[ Initialization ]
+	addListeners(self, t.listeners, { "loaded", "saved", "changed", })
 
-	t = type(t) == "table" and t or {}
+	self:Load(t.reader)
+	self:Save(t.writer)
 
-	addListeners(datamanager, t.listeners, { "loaded", "saved", "changed", })
+	self:SetInstantSave(t.instantSave)
 
-	datamanager:Load(t.reader)
-	datamanager:Save(t.writer)
-
-	datamanager:SetInstantSave(t.instantSave)
-
-	datamanager:SetDefault(t.default)
-	datamanager:SetValue(t.value)
-	datamanager:Snapshot()
+	self:SetDefault(t.default)
+	self:SetValue(t.value)
+	self:Snapshot()
 
 	--| Datamanagement
 
-	datamanagement[datamanager] = t.dataManagement or nil
+	datamanagement[self] = t.dataManagement or nil
 
-	if datamanagement[datamanager] then wt.AddSettingsDataManagementEntry(datamanager, datamanagement[datamanager]) end --TODO update
+	if datamanagement[self] then wt.AddSettingsDataManagementEntry(self, datamanagement[self]) end --TODO update
+end
 
-	log(function() return progenitors[typename] .. " instance mutated into a Datamanager: " .. w.ToString(datamanager), wt.title .. ".CreateDatamanager" end)
+progenitors.Datamanager = "Widget" ---@type typename_widget
+function wt.CreateDatamanager(t)
+	local typename = "Datamanager" ---@type typename_datamanager
+	local datamanager = setmetatable({}, getBase(typename)) ---@cast datamanager datamanager
+
+	initializers.Datamanager(datamanager, type(t) == "table" and t or {})
+
+	log(function() return typename .. " instance initialized: " .. w.ToString(datamanager), wt.title .. ".CreateDatamanager" end)
 
 	return datamanager
 end
@@ -1584,7 +1630,7 @@ function protoBuilders.Binary(binary)
 	function binary:Format(state)
 		if type(state) ~= "boolean" then state = binary:GetValue() end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
+		return cc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
 	function binary:Flip(handleChanges, user, silent) binary:SetValue(not binary:GetValue(), handleChanges, user, silent) end
@@ -1593,17 +1639,11 @@ end
 progenitors.Binary = "Datamanager" ---@type typename_datamanager
 function wt.CreateBinary(t)
 	local typename = "Binary" ---@type typename_binary
-	local binary = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast binary binary
+	local binary = setmetatable({}, getBase(typename)) ---@cast binary binary
 
-	--[ Initialization ]
+	initializers.Datamanager(binary, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	binary:SetDefault(t.default)
-	binary:SetValue(t.value)
-	binary:Snapshot()
-
-	log(function() return progenitors[typename] .. " instance mutated into a Binary: " .. w.ToString(binary), wt.title .. ".CreateBinary" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(binary), wt.title .. ".CreateBinary" end)
 
 	return binary
 end
@@ -1686,14 +1726,11 @@ function wt.CreateCheckbox(t, ancestor, lite)
 
 	template:GetPushedTexture():SetVertexColor(.6, .6, .6, 1)
 
-	--[ Events ] --REPLACE script events
+	--| Events & attributes
 
-	--Register script event handlers
-	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnClick" then template:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
-		else template:HookScript(key, value) end
-	end end
+	w.RegisterScriptEvents(template, t.events)
+	w.RegisterGlobalEvents(template, t.onEvent)
+	w.RegisterAttributes(template, t.attributes)
 
 	--[ Value Update ]
 
@@ -1737,14 +1774,14 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		template:SetButtonState("NORMAL")
 	end end)
 
-	frame:HookScript("OnMouseDown", function(_, button) if template:IsEnabled() and button == "LeftButton" or (button == "RightButton") then
+	frame:HookScript("OnMouseDown", function(_, mouseButton) if template:IsEnabled() and mouseButton == "LeftButton" or (mouseButton == "RightButton") then
 		template:SetButtonState("PUSHED")
 	end end)
 
-	frame:HookScript("OnMouseUp", function(_, button, isInside) if template:IsEnabled() then
+	frame:HookScript("OnMouseUp", function(_, mouseButton, isInside) if template:IsEnabled() then
 		template:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" then template:Click(button) end
+		if isInside and mouseButton == "LeftButton" then template:Click(mouseButton) end
 	end end)
 
 	--| Tooltip
@@ -1791,7 +1828,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 		end
 	}) end
 
-	log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. w.ToString(checkbox), wt.title .. ".CreateCheckbox" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(checkbox), wt.title .. ".CreateCheckbox" end)
 
 	return checkbox
 end
@@ -1845,14 +1882,11 @@ local function setUpClassicToggle(toggle, template, frame, height, typeTag, labe
 		toggle.label:SetText(title)
 	else label:Hide() end
 
-	--[ Events ] --REPLACE script events
+	--| Events & attributes
 
-	--Register script event handlers
-	if t.events then for key, value in pairs(t.events) do
-		if key == "attribute" then template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnClick" then template:SetScript("OnClick", function(self, button, down) value(self, self:GetChecked(), button, down) end)
-		else template:HookScript(key, value) end
-	end end
+	w.RegisterScriptEvents(template, t.events)
+	w.RegisterGlobalEvents(template, t.onEvent)
+	w.RegisterAttributes(template, t.attributes)
 
 	--[ Value Update ]
 
@@ -1970,17 +2004,17 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 		template:SetButtonState("NORMAL")
 	end end)
 
-	frame:HookScript("OnMouseDown", function(_, button) if template:IsEnabled() and button == "LeftButton" or button == "RightButton" then
+	frame:HookScript("OnMouseDown", function(_, mouseButton) if template:IsEnabled() and mouseButton == "LeftButton" or mouseButton == "RightButton" then
 		template:SetButtonState("PUSHED")
 	end end)
 
-	frame:HookScript("OnMouseUp", function(_, button, isInside) if template:IsEnabled() then
+	frame:HookScript("OnMouseUp", function(_, mouseButton, isInside) if template:IsEnabled() then
 		template:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" or button == "RightButton" then template:Click(button) end
+		if isInside and mouseButton == "LeftButton" or mouseButton == "RightButton" then template:Click(mouseButton) end
 	end end)
 
-	log(function() return progenitors[typename] .. " instance mutated into a Checkbox: " .. w.ToString(checkbox), wt.title .. ".CreateClassicCheckbox" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(checkbox), wt.title .. ".CreateClassicCheckbox" end)
 
 	return checkbox
 end
@@ -2015,12 +2049,12 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 
 	local clearable = t.clearable
 
-	template:HookScript("OnClick", function(_, button)
-		if button == "LeftButton" then
+	template:HookScript("OnClick", function(_, mouseButton)
+		if mouseButton == "LeftButton" then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
 
 			radiobutton:SetValue(true, true)
-		elseif clearable and button == "RightButton" then
+		elseif clearable and mouseButton == "RightButton" then
 			PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 
 			radiobutton:SetValue(false, true)
@@ -2039,17 +2073,17 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 		template:SetButtonState("NORMAL")
 	end end)
 
-	frame:HookScript("OnMouseDown", function(_, button) if template:IsEnabled() and button == "LeftButton" or (clearable and button == "RightButton") then
+	frame:HookScript("OnMouseDown", function(_, mouseButton) if template:IsEnabled() and mouseButton == "LeftButton" or (clearable and mouseButton == "RightButton") then
 		template:SetButtonState("PUSHED")
 	end end)
 
-	frame:HookScript("OnMouseUp", function(_, button, isInside) if template:IsEnabled() then
+	frame:HookScript("OnMouseUp", function(_, mouseButton, isInside) if template:IsEnabled() then
 		template:SetButtonState("NORMAL")
 
-		if isInside and button == "LeftButton" or (clearable and button == "RightButton") then template:Click(button) end
+		if isInside and mouseButton == "LeftButton" or (clearable and mouseButton == "RightButton") then template:Click(mouseButton) end
 	end end)
 
-	log(function() return progenitors[typename] .. " instance mutated into a Radiobutton: " .. w.ToString(radiobutton), wt.title .. ".CreateRadiobutton" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(radiobutton), wt.title .. ".CreateRadiobutton" end)
 
 	return radiobutton
 end
@@ -2260,7 +2294,7 @@ function protoBuilders.Multiselector(multiselector, typename)
 	function selector:Format(state)
 		if type(state) ~= "boolean" then state = data_value[self] end
 
-		return crc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
+		return cc((state and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), state and "FFAAAAFF" or "FFFFAA66")
 	end
 
 	--ADD multiselector init
@@ -2269,7 +2303,7 @@ end
 progenitors.Selector = "Datamanager" ---@type typename_datamanager
 function wt.CreateSelector(t)
 	local typename = "Selector" ---@type typename_selector
-	local selector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast selector selector
+	local selector = setmetatable({}, getBase(typename)) ---@cast selector selector
 
 	--[ Initialization ]
 
@@ -2286,7 +2320,7 @@ function wt.CreateSelector(t)
 
 	selector_clearable[selector] = t.clearable
 
-	log(function() return progenitors[typename] .. " instance mutated into a Selector: " .. w.ToString(selector), wt.title .. ".CreateSelector" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(selector), wt.title .. ".CreateSelector" end)
 
 	return selector
 end
@@ -2294,7 +2328,7 @@ end
 progenitors.SpecialSelector = "Selector" ---@type typename_selector
 function wt.CreateSpecialSelector(itemset, t, ancestor)
 	local typename = "SpecialSelector" ---@type typename_specialSelector
-	local specialSelector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast specialSelector specialSelector
+	local specialSelector = setmetatable({}, getBase(typename)) ---@cast specialSelector specialSelector
 
 	--[ Initialization ]
 
@@ -2401,7 +2435,7 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 	--Set starting value
 	specialSelector.setValue(value, false, true)
 
-	log(function() return progenitors[typename] .. " instance mutated into a SpecialSelector: " .. w.ToString(specialSelector), wt.title .. ".CreateSpecialSelector" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(specialSelector), wt.title .. ".CreateSpecialSelector" end)
 
 	return specialSelector
 end
@@ -2409,7 +2443,7 @@ end
 progenitors.Multiselector = "Datamanager" ---@type typename_datamanager
 function wt.CreateMultiselector(t)
 	local typename = "Multiselector" ---@type typename_multiselector
-	local multiselector = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast multiselector multiselector
+	local multiselector = setmetatable({}, getBase(typename)) ---@cast multiselector multiselector
 
 	--[ Initialization ]
 
@@ -2605,7 +2639,7 @@ function wt.CreateMultiselector(t)
 	--Set starting value
 	multiselector.setValue(value, false, true)
 
-	log(function() return progenitors[typename] .. " instance mutated into a Multiselector: " .. w.ToString(multiselector), wt.title .. ".CreateMultiselector" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(multiselector), wt.title .. ".CreateMultiselector" end)
 
 	return multiselector
 end
@@ -2662,9 +2696,9 @@ local function setUpSelector(selector, t, name, title)
 
 	--| Events & attributes
 
-	wt.RegisterScriptEvents(frame, t.events)
-	wt.RegisterGlobalEvents(frame, t.onEvent)
-	wt.RegisterAttributes(frame, t.attributes)
+	w.RegisterScriptEvents(frame, t.events)
+	w.RegisterGlobalEvents(frame, t.onEvent)
+	w.RegisterAttributes(frame, t.attributes)
 
 	--| State
 
@@ -2777,9 +2811,9 @@ function wt.CreateRadiogroup(t, selector)
 				},
 				width = (width and columns == 1) and width or nil,
 				clearable = clearable,
-				events = { OnClick = function(_, _, button)
-					if button == "LeftButton" then radiogroup:SetValue(index, true)
-					elseif clearable and button == "RightButton" and not data_value[radiogroup] then radiogroup:SetValue(nil, true) end
+				events = { OnClick = function(_, mouseButton)
+					if mouseButton == "LeftButton" then radiogroup:SetValue(index, true)
+					elseif clearable and mouseButton == "RightButton" and not data_value[radiogroup] then radiogroup:SetValue(nil, true) end
 				end, },
 				showDefault = false,
 				utilityMenu = false,
@@ -2816,7 +2850,7 @@ function wt.CreateRadiogroup(t, selector)
 		local defaultValue
 		if t.showDefault ~= false then
 			local default = data_default[radiogroup]
-			defaultValue = crc(default and t.items[default].title or tostring(default), "FFFFFFFF")
+			defaultValue = cc(default and t.items[default].title or tostring(default), "FFFFFFFF")
 		end
 
 		local frames = { radiogroup.frame }
@@ -2913,9 +2947,9 @@ function wt.CreateDropdownRadiogroup(t, selector)
 
 	--| Events & attributes
 
-	wt.RegisterScriptEvents(holder, t.events)
-	wt.RegisterGlobalEvents(holder, t.onEvent)
-	wt.RegisterAttributes(holder, t.attributes)
+	w.RegisterScriptEvents(holder, t.events)
+	w.RegisterGlobalEvents(holder, t.onEvent)
+	w.RegisterAttributes(holder, t.attributes)
 
 	--[ Dropdown Menu ]
 
@@ -3037,8 +3071,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 						border = { color = { r = 0.42, g = 0.42, b = 0.42, a = 0.9 } }
 					} or {}
 				end,
-				OnMouseUp = function(frame, _, button)
-					if not frame:IsEnabled() or button == "LeftButton" then return {} end
+				OnMouseUp = function(frame, _, mouseButton)
+					if not frame:IsEnabled() or mouseButton == "LeftButton" then return {} end
 
 					return (open and {
 						background = { color = { r = 0.06, g = 0.06, b = 0.06, a = 0.9 } },
@@ -3064,8 +3098,8 @@ function wt.CreateDropdownRadiogroup(t, selector)
 				end, },
 			},
 		},
-		events = clearable and t.utilityMenu == false and { OnMouseUp = function(_, button, isInside)
-			if button == "RightButton" and isInside and dropdown.toggle.template:IsEnabled() then dropdown:SetText(nil, true) end
+		events = clearable and t.utilityMenu == false and { OnMouseUp = function(self, mouseButton, isInside)
+			if mouseButton == "RightButton" and isInside and self:IsEnabled() then dropdown:SetText(nil, true) end
 		end, } or nil,
 		dependencies = t.dependencies
 	})
@@ -3330,7 +3364,7 @@ function wt.CreateDropdownRadiogroup(t, selector)
 		local defaultValue
 		if t.showDefault ~= false then
 			local default = data_default[dropdown]
-			defaultValue = crc(default and t.items[default].title or tostring(default), "FFFFFFFF")
+			defaultValue = cc(default and t.items[default].title or tostring(default), "FFFFFFFF")
 		end
 
 		wt.AddWidgetTooltipLines({ holder, dropdown.toggle.template, dropdown.previous.template, dropdown.next.template }, defaultValue, t.utilityMenu)
@@ -3439,7 +3473,7 @@ function wt.CreateAnchorRadiogroup(itemset, t, selector)
 
 	if type(t.tooltip) == "table" then
 		local defaultValue
-		if showDefault then defaultValue = crc(data_default[specialRadiogroup], "FFFFFFFF") end
+		if showDefault then defaultValue = cc(data_default[specialRadiogroup], "FFFFFFFF") end
 
 		local frames = { specialRadiogroup.frame }
 		for i = 1, #specialRadiogroup.items do table.insert(frames, specialRadiogroup.items[i].frame) end
@@ -3515,7 +3549,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, selector)
 
 	if type(t.tooltip) == "table" then
 		local defaultValue
-		if showDefault then defaultValue = crc(data_default[specialRadiogroup], "FFFFFFFF") end
+		if showDefault then defaultValue = cc(data_default[specialRadiogroup], "FFFFFFFF") end
 
 		local frames = { specialRadiogroup.frame }
 		for i = 1, #specialRadiogroup.items do table.insert(frames, specialRadiogroup.items[i].frame) end
@@ -3673,7 +3707,7 @@ function wt.CreateCheckgroup(t, selector)
 			local default = data_default[checkgroup]
 
 			for i = 1, #t.items do
-				defaultValue = defaultValue .. "\n" .. crc(t.items[i].title, "FFFFFFFF") .. crc(": ", "FF999999") .. crc(
+				defaultValue = defaultValue .. "\n" .. cc(t.items[i].title, "FFFFFFFF") .. cc(": ", "FF999999") .. cc(
 					(default[i] and VIDEO_OPTIONS_ENABLED or VIDEO_OPTIONS_DISABLED), default[i] and "FFAAAAFF" or "FFFFAA66"
 				)
 			end
@@ -3733,26 +3767,27 @@ function protoBuilders.Textual(textual)
 		value = value and textual:Verify(value) or data_value[self]
 		local color = textual_color[self]
 
-		return color and cr(value, color) or value
+		return color and c(value, color) or value
 	end
+end
+
+---Initialize a Textual instance
+---@param self textual
+---@param t textual_options
+function initializers.Textual(self, t)
+	initializers.Datamanager(self, t)
+
+	if wt.IsColor(t.color) then textual_color[self] = t.color end
 end
 
 progenitors.Textual = "Datamanager" ---@type typename_datamanager
 function wt.CreateTextual(t)
 	local typename = "Textual" ---@type typename_textual
-	local textual = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast textual textual
+	local textual = setmetatable({}, getBase(typename)) ---@cast textual textual
 
-	--[ Initialization ]
+	initializers.Textual(textual, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	textual:SetDefault(t.default)
-	textual:SetValue(t.value)
-	textual:Snapshot()
-
-	if wt.IsColor(t.color) then textual_color = t.color end
-
-	log(function() return progenitors[typename] .. " instance mutated into a Textual: " .. w.ToString(textual), wt.title .. ".CreateTextual" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(textual), wt.title .. ".CreateTextual" end)
 
 	return textual
 end
@@ -3791,13 +3826,17 @@ local function setUpEditbox(editbox, t)
 
 	if t.charLimit then editbox.template:SetMaxLetters(t.charLimit) end
 
+	--| Events & attributes
+
+	w.RegisterScriptEvents(template, t.events)
+	w.RegisterGlobalEvents(template, t.onEvent)
+	w.RegisterAttributes(template, t.attributes)
+
 	--[ Events ] --REPLACE script events
 
 	--Register script event handlers
 	if t.events then for key, value in pairs(t.events) do
 		if key == "attribute" then editbox.template:HookScript("OnAttributeChanged", function(_, attribute, ...) if attribute == value.name then value.handler(...) end end)
-		elseif key == "OnChar" then editbox.template:SetScript("OnChar", function(self, char) value(self, char, self:GetText()) end)
-		elseif key == "OnTextChanged" then editbox.template:SetScript("OnTextChanged", function(self, user) value(self, self:GetText(), user) end)
 		elseif key == "OnEnterPressed" then editbox.template:SetScript("OnEnterPressed", function(self) value(self, self:GetText()) end)
 		else editbox.template:HookScript(key, value) end
 	end end
@@ -3897,7 +3936,7 @@ local function setUpSinglelineEditbox(editbox, title, t)
 		})
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(data_default[editbox], "FF55DD55") end
+		if t.showDefault ~= false then defaultValue = cc(data_default[editbox], "FF55DD55") end
 
 		wt.AddWidgetTooltipLines({ editbox.frame, editbox.template }, defaultValue, t.utilityMenu)
 	end
@@ -4128,7 +4167,7 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 
 		if t.readOnly ~= true then
 			local defaultValue
-			if t.showDefault ~= false then defaultValue = crc(data_default[editbox], "FF55DD55") end
+			if t.showDefault ~= false then defaultValue = cc(data_default[editbox], "FF55DD55") end
 
 			wt.AddWidgetTooltipLines({ editbox.scrollframe, editbox.template }, defaultValue, t.utilityMenu)
 		end
@@ -4230,21 +4269,21 @@ function wt.CreateCopybox(t) --FIX lite
 		color = t.color,
 		justify = { h = t.justify, },
 		events = {
-			OnTextChanged = function(self, _, user)
+			OnTextChanged = function(self, user)
 				if not user then return end
 
-				self:SetText(cr(text, t.colorOnMouse))
+				self:SetText(c(text, t.colorOnMouse))
 				self:SetCursorPosition(0)
 				self:HighlightText()
 			end,
 			OnEnter = function(self)
-				self:SetText(cr(text, t.colorOnMouse))
+				self:SetText(c(text, t.colorOnMouse))
 				self:SetCursorPosition(0)
 				self:HighlightText()
 				self:SetFocus()
 			end,
 			OnLeave = function(self)
-				self:SetText(cr(text, t.color))
+				self:SetText(c(text, t.color))
 				self:SetCursorPosition(0)
 				self:ClearHighlightText()
 				self:ClearFocus()
@@ -4436,7 +4475,7 @@ function protoBuilders.Numeric(numeric)
 
 		return Clamp(value, limitMin, numeric_limitMax[self])
 	end
-	function numeric:Format(value) return crc(tostring(value), "FFDDDD55") end
+	function numeric:Format(value) return cc(tostring(value), "FFDDDD55") end
 
 	function numeric:Decrease(alt, user, silent) self:SetValue(data_value[self] - (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
 	function numeric:Increase(alt, user, silent) self:SetValue(data_value[self] + (alt and numeric_altStep[self] or numeric_step[self]), user, silent) end
@@ -4478,28 +4517,31 @@ function protoBuilders.Numeric(numeric)
 	function numeric:GetAltStep() return numeric_altStep[self] end
 end
 
+---Initialize a Numeric instance
+---@param self numeric
+---@param t numeric_options
+function initializers.Numeric(self, t)
+	numeric_limitMin[self] = type(t.min) == "number" and t.min or 0
+	numeric_limitMax[self] = type(t.max) == "number" and t.max or 100
+	numeric_step[self] = max(type(t.step) == "number" and t.step or ((numeric_limitMin[self] - numeric_limitMax[self]) / 10), 0)
+	numeric_altStep[self] = type(t.altStep) == "number" and max(t.altStep, 0) or nil
+	numeric_hardStep[self] = t.hardStep ~= false
+
+	if not t.default then t.default = numeric_limitMin[self] end
+
+	initializers.Datamanager(self, t)
+
+	addListeners(self, t.listeners, { "min", "max", })
+end
+
 progenitors.Numeric = "Datamanager" ---@type typename_datamanager
 function wt.CreateNumeric(t)
 	local typename = "Numeric" ---@type typename_numeric
-	local numeric = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast numeric numeric
+	local numeric = setmetatable({}, getBase(typename)) ---@cast numeric numeric
 
-	--[ Initialization ]
+	initializers.Numeric(numeric, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(numeric, t.listeners, { "min", "max", })
-
-	numeric_limitMin[numeric] = type(t.min) == "number" and t.min or 0
-	numeric_limitMax[numeric] = type(t.max) == "number" and t.max or 100
-	numeric_step[numeric] = max(type(t.step) == "number" and t.step or ((numeric_limitMin[numeric] - numeric_limitMax[numeric]) / 10), 0)
-	numeric_altStep[numeric] = type(t.altStep) == "number" and max(t.altStep, 0) or nil
-	numeric_hardStep[numeric] = t.hardStep ~= false
-
-	numeric:SetDefault(t.default or numeric_limitMin[numeric])
-	numeric:SetValue(t.value)
-	numeric:Snapshot()
-
-	log(function() return progenitors[typename] .. " instance mutated into a Numeric: " .. w.ToString(numeric), wt.title .. ".CreateNumeric" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(numeric), wt.title .. ".CreateNumeric" end)
 
 	return numeric
 end
@@ -4672,7 +4714,7 @@ function wt.CreateSlider(t, ancestor, lite)
 				OnLeave = "",
 			}, }, },
 			events = {
-				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
+				OnChar = function(valuebox) valuebox:SetText(valuebox:GetText():gsub(matchPattern, replacePattern)) end,
 				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
 				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(w.Round(template.Slider:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
@@ -4740,7 +4782,7 @@ function wt.CreateSlider(t, ancestor, lite)
 		}, { triggers = { frame } })
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(tostring(data_default[slider]), "FFDDDD55") end
+		if t.showDefault ~= false then defaultValue = cc(tostring(data_default[slider]), "FFDDDD55") end
 
 		wt.AddWidgetTooltipLines({ frame, template.Slider, template.Back, template.Forward, slider.valuebox.template }, defaultValue, t.utilityMenu)
 	end
@@ -5113,13 +5155,13 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 				}
 			},
 			backdropUpdates = { { rules = {
-				OnEnter = function(valuebox) return valuebox:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
+				OnEnter = function(self) return self:IsEnabled() and { border = { color = { r = 0.8, g = 0.8, b = 0.8, a = 0.9 } } } or {} end,
 				OnLeave = "",
 			}, }, },
 			events = {
-				OnChar = function(valuebox, _, text) valuebox:SetText(text:gsub(matchPattern, replacePattern)) end,
-				OnEnterPressed = function(valuebox) slider:SetValue(valuebox:GetNumber(), true) end,
-				OnEscapePressed = function(valuebox) valuebox:SetText(tostring(w.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
+				OnChar = function(self) self:SetText(self:GetText():gsub(matchPattern, replacePattern)) end,
+				OnEnterPressed = function(self) slider:SetValue(self:GetNumber(), true) end,
+				OnEscapePressed = function(self) self:SetText(tostring(w.Round(template:GetValue(), decimals)):gsub(matchPattern, replacePattern)) end,
 			},
 			value = tostring(data_value[slider]):gsub(matchPattern, replacePattern),
 			showDefault = false,
@@ -5174,7 +5216,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 		}, { triggers = { frame } })
 
 		local defaultValue
-		if t.showDefault ~= false then defaultValue = crc(tostring(data_default[slider]), "FFDDDD55") end
+		if t.showDefault ~= false then defaultValue = cc(tostring(data_default[slider]), "FFDDDD55") end
 
 		wt.AddWidgetTooltipLines({ template }, defaultValue, t.utilityMenu)
 	end
@@ -5294,25 +5336,26 @@ function protoBuilders.Colormanager(colormanager)
 	colormanager:AddListener_enabled(function(self) if colormanager_active[self] then colorUpdate() end end, 1)
 end
 
+---Initialize a Colormanager instance
+---@param self colormanager
+---@param t colormanager_options
+function initializers.Colormanager(self, t)
+	initializers.Datamanager(self, t)
+
+	colormanager_active[self] = false
+	if type(t.onCancel) == "function" then colormanager_onCancel[self] = t.onCancel end
+
+	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[self] = false end)
+end
+
 progenitors.Colormanager = "Datamanager" ---@type typename_datamanager
 function wt.CreateColormanager(t)
 	local typename = "Colormanager" ---@type typename_colormanager
-	local colormanager = setmetatable(wt.CreateDatamanager(t), getBase(typename)) ---@cast colormanager colormanager
+	local colormanager = setmetatable({}, getBase(typename)) ---@cast colormanager colormanager
 
-	--[ Initialization ]
+	initializers.Colormanager(colormanager, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	colormanager:SetDefault(t.default)
-	colormanager:SetValue(t.value)
-	colormanager:Snapshot()
-
-	colormanager_active[colormanager] = false
-	if type(t.onCancel) == "function" then colormanager_onCancel[colormanager] = t.onCancel end
-
-	ColorPickerFrame:HookScript("OnHide", function() colormanager_active[colormanager] = false end)
-
-	log(function() return progenitors[typename] .. " instance mutated into a Colormanager: " .. w.ToString(colormanager), wt.title .. ".CreateColormanager" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(colormanager), wt.title .. ".CreateColormanager" end)
 
 	return colormanager
 end
@@ -5368,9 +5411,9 @@ function wt.CreateColorpicker(t, ancestor, lite)
 
 	--| Events & attributes
 
-	wt.RegisterScriptEvents(frame, t.events)
-	wt.RegisterGlobalEvents(frame, t.onEvent)
-	wt.RegisterAttributes(frame, t.attributes)
+	w.RegisterScriptEvents(frame, t.events)
+	w.RegisterGlobalEvents(frame, t.onEvent)
+	w.RegisterAttributes(frame, t.attributes)
 
 	--| Color wheel toggle button
 
@@ -5473,7 +5516,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 		title = s.color_hex_label,
 		label = false,
 		tooltip = { lines = { {
-			text = s.color_hex_tooltip .. "\n\n" .. crc(s.example .. ": ", "FF66FF66") .. crc(
+			text = s.color_hex_tooltip .. "\n\n" .. cc(s.example .. ": ", "FF66FF66") .. cc(
 				"#2266BB" .. (t.value.a and "AA" or ""), "FFFFFFFF"
 			),
 		}, } },
@@ -5508,8 +5551,8 @@ function wt.CreateColorpicker(t, ancestor, lite)
 			OnLeave = "",
 		}, }, },
 		events = {
-			OnChar = function(f, _, text) f:SetText(text:gsub("^(#?)([%x]*).*", "%1%2"), false) end,
-			OnEnterPressed = function(_, text) colorpicker:SetValue(wt.PackColor(wt.HexToColor(text)), true) end,
+			OnChar = function(self) self:SetText(self:GetText():gsub("^(#?)([%x]*).*", "%1%2"), false) end,
+			OnEnterPressed = function(self) colorpicker:SetValue(wt.PackColor(wt.HexToColor(self:GetText())), true) end,
 			OnEscapePressed = function(self) self:SetText(wt.ColorToHex(data_value[colorpicker])) end,
 		},
 		showDefault = false,
@@ -5537,7 +5580,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 			local r, g, b = wt.UnpackColor(default)
 
 			local texture = "|TInterface/ChatFrame/ChatFrameBackground:12:12:0:0:16:16:0:16:0:16:" .. (r * 255) .. ":" .. (g * 255) .. ":" .. (b * 255) .. "|t "
-			defaultValue = texture .. crc(wt.ColorToHex(default), "FFFFFFFF")
+			defaultValue = texture .. cc(wt.ColorToHex(default), "FFFFFFFF")
 		end
 
 		wt.AddWidgetTooltipLines({ frame, colorpicker.button.template, colorpicker.hexBox.template }, defaultValue, t.utilityMenu)
@@ -5891,7 +5934,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					--| Widgets
 
 					local savePopup = wt.RegisterPopupDialog(addon .. "_SAVE_PRESET", {
-						text = s.presets_save_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						text = s.presets_save_warning:gsub("#CUSTOM", c(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = s.override,
 						onAccept = panel.SaveCustomPreset,
 					})
@@ -5911,7 +5954,7 @@ function wt.CreatePositionOptions(addon, frame, getData, defaultData, settingsDa
 					})
 
 					local resetPopup = wt.RegisterPopupDialog(addon .. "_RESET_PRESET_" .. panelFrame:GetName(), {
-						text = s.presets_reset_warning:gsub("#CUSTOM", cr(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
+						text = s.presets_reset_warning:gsub("#CUSTOM", c(panel.presets[t.presets.custom.index].title, NORMAL_FONT_COLOR)),
 						accept = s.override,
 						onAccept = panel.ResetCustomPreset,
 					})
@@ -6247,7 +6290,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 						title = fonts[i].name,
 						lines = {
 							{ text = fonts[i].path:match(w.addon) and s.font_path_otf or s.font_path_base },
-							{ text = "\n" .. s.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+							{ text = "\n" .. s.font_path_file:gsub("#PATH", cc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
 						}
 					}
 				end
@@ -6269,10 +6312,10 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t) --FIX li
 							lines = {
 								{ text = s.font_path_custom, },
 								{ text = "\n" .. s.font_path_replace:gsub( --TODO update the tooltip when full custom font management support is added
-									"#FONTS_DIRECTORY", cr("[WoW]\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
+									"#FONTS_DIRECTORY", c("[WoW]\\Fonts\\", { r = 0.185, g = 0.72, b = 0.84 })
 								):gsub("#FILE_CUSTOM", "CUSTOM.ttf") },
 								{ text = "\n" .. s.font_path_reminder, color = { r = 0.89, g = 0.65, b = 0.40 }, }, --TODO update the tooltip when full custom font management support is added
-								{ text = "\n" .. s.font_path_file:gsub("#PATH", crc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
+								{ text = "\n" .. s.font_path_file:gsub("#PATH", cc(fonts[i].path, "FFFFFFFF")), color = { r = 0.4, g = 1, b = 0.4 }, },
 							}
 						}
 					end
@@ -6580,7 +6623,7 @@ function wt.CreateSettingsmanager(t)
 		end
 	end
 
-	log(function() return progenitors[typename] .. " instance mutated into a Settingsmanager: " .. w.ToString(settingsmanager), wt.title .. ".CreateSettingsmanager" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(settingsmanager), wt.title .. ".CreateSettingsmanager" end)
 
 	return settingsmanager
 end
@@ -6636,7 +6679,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 
 	--Override defaults warning and add all defaults option to dialog
 	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
-		text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
+		text = s.settings_warning:gsub("#CATEGORY", c(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", c(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category:Defaults(true) end,
@@ -6654,8 +6697,8 @@ function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --F
 
 		--Override defaults warning and add all defaults option to dialog
 		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
-			text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
-				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
+			text = s.settings_warning:gsub("#CATEGORY", c(parentTitle, NORMAL_FONT_COLOR)):gsub(
+				"#PAGE", c(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
@@ -6713,9 +6756,9 @@ function wt.CreateSettingsPage(t, settingsmanager)
 
 	function page:Open()
 		if WidgetToolsDB.lite or not page.category then
-			print(cr(wt.Texture(w.textures.logo, 9) .. " " .. w.title, w.colors.gold[1]) .. " " .. cr(w.strings.chat.lite.reminder:gsub(
-				"#HINT", cr(w.strings.chat.lite.hint:gsub(
-					"#COMMAND", cr("/" .. w.chat.keyword .. " " .. w.chat.commands.lite, { r = 1, g = 1, b = 1, })
+			print(c(wt.Texture(w.textures.logo, 9) .. " " .. w.title, w.colors.gold[1]) .. " " .. c(w.strings.chat.lite.reminder:gsub(
+				"#HINT", c(w.strings.chat.lite.hint:gsub(
+					"#COMMAND", c("/" .. w.chat.keyword .. " " .. w.chat.commands.lite, { r = 1, g = 1, b = 1, })
 				), w.colors.grey[1])
 			), w.colors.gold[2]))
 
@@ -6800,7 +6843,7 @@ function wt.CreateSettingsPage(t, settingsmanager)
 		--| Defaults button
 
 		resetWarning = wt.RegisterPopupDialog(addon .. "_" .. (t.name or "") .. "DEFAULT", {
-			text = s.settings_warningSingle:gsub("#PAGE", cr(title, NORMAL_FONT_COLOR)),
+			text = s.settings_warningSingle:gsub("#PAGE", c(title, NORMAL_FONT_COLOR)),
 			accept = ACCEPT,
 			onAccept = function() page:Reset(true) end,
 		})
@@ -6897,7 +6940,7 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 	--Override defaults warning and add all defaults option to dialog
 	wt.UpdatePopupDialog(parent:GetResetPopupKey(), {
-		text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", cr(parentTitle, NORMAL_FONT_COLOR)),
+		text = s.settings_warning:gsub("#CATEGORY", c(parentTitle, NORMAL_FONT_COLOR)):gsub("#PAGE", c(parentTitle, NORMAL_FONT_COLOR)),
 		accept = ALL_SETTINGS,
 		alt = CURRENT_SETTINGS,
 		onAccept = function() category:Defaults(true) end,
@@ -6916,8 +6959,8 @@ function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 
 		--Override defaults warning and add all defaults option to dialog
 		wt.UpdatePopupDialog(pages[i]:GetResetPopupKey(), {
-			text = s.settings_warning:gsub("#CATEGORY", cr(parentTitle, NORMAL_FONT_COLOR)):gsub(
-				"#PAGE", cr(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
+			text = s.settings_warning:gsub("#CATEGORY", c(parentTitle, NORMAL_FONT_COLOR)):gsub(
+				"#PAGE", c(pages[i].title and pages[i].title:GetText() or "", NORMAL_FONT_COLOR)
 			),
 			accept = ALL_SETTINGS,
 			alt = CURRENT_SETTINGS,
@@ -7145,7 +7188,7 @@ function protoBuilders.Profilemanager(profilemanager)
 		end
 
 		if unsafe then delete() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_deletePopup[self], {
-			text = s.profiles_delete_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+			text = s.profiles_delete_warning:gsub("#PROFILE", c(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
 			onAccept = function() delete() end,
 		})) end
 
@@ -7169,7 +7212,7 @@ function protoBuilders.Profilemanager(profilemanager)
 		end
 
 		if unsafe then reset() else StaticPopup_Show(wt.UpdatePopupDialog(profiles_resetPopup[self], {
-			text = s.profiles_reset_warning:gsub("#PROFILE", cr(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
+			text = s.profiles_reset_warning:gsub("#PROFILE", c(title, NORMAL_FONT_COLOR)):gsub("#ADDON", profiles_category[self]),
 			onAccept = reset,
 		})) end
 
@@ -7261,43 +7304,51 @@ function protoBuilders.Profilemanager(profilemanager)
 	end
 end
 
+---Initialize a Profilemanager instance
+---@param self profilemanager
+---@param t profilemanager_options
+---@param accountData table|profileStorage
+---@param characterData table|characterProfileData
+---@param defaultData table
+function initializers.Profilemanager(self, t, accountData, characterData, defaultData)
+	initializers.Construct(self, t)
+
+	addListeners(self, t.listeners, { "activated", "created", "renamed", "deleted", "reset", "loaded", })
+
+	self.data = {}
+	self.firstLoad = type(accountData.profiles) ~= "table"
+	self.newCharacter = type(characterData.activeProfile) ~= "number"
+
+	profiles_accountData[self] = accountData
+	profiles_characterData[self] = characterData
+	profiles_defaultData[self] = defaultData
+
+	t.category = type(t.category) == "string" and t.category or ""
+	local category = t.category:len() > 0 and t.category or "Addon"
+	profiles_category[self] = category
+
+	profiles_valueChecker[self] = t.valueChecker
+	profiles_onRecovery[self] = t.onRecovery
+	profiles_recoveryMap[self] = t.recoveryMap
+
+	profiles_deletePopup[self] = wt.RegisterPopupDialog(category .. "_DELETE_PROFILE", { accept = DELETE, })
+	profiles_resetPopup[self] = wt.RegisterPopupDialog(category .. "RESET_PROFILE")
+
+	profiles_activeIndex[self] = 1
+
+	self:Load(nil, nil, false, true)
+end
+
 progenitors.Profilemanager = "Construct" ---@type typename_construct
 function wt.CreateProfilemanager(accountData, characterData, defaultData, t, ancestor)
 	if type(accountData) ~= "table" or type(characterData) ~= "table" or type(defaultData) ~= "table" then return nil end
 
 	local typename = "Profilemanager" ---@type typename_profilemanager
-	local profilemanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast profilemanager profilemanager
+	local profilemanager = setmetatable({}, getBase(typename)) ---@cast profilemanager profilemanager
 
-	--[ Initialization ]
+	initializers.Profilemanager(profilemanager, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(profilemanager, t.listeners, { "activated", "created", "renamed", "deleted", "reset", "loaded", })
-
-	profilemanager.data = {}
-	profilemanager.firstLoad = type(accountData.profiles) ~= "table"
-	profilemanager.newCharacter = type(characterData.activeProfile) ~= "number"
-
-	profiles_accountData[profilemanager] = accountData
-	profiles_characterData[profilemanager] = characterData
-	profiles_defaultData[profilemanager] = defaultData
-
-	t.category = type(t.category) == "string" and t.category or ""
-	local category = t.category:len() > 0 and t.category or "Addon"
-	profiles_category[profilemanager] = category
-
-	profiles_valueChecker[profilemanager] = t.valueChecker
-	profiles_onRecovery[profilemanager] = t.onRecovery
-	profiles_recoveryMap[profilemanager] = t.recoveryMap
-
-	profiles_deletePopup[profilemanager] = wt.RegisterPopupDialog(category .. "_DELETE_PROFILE", { accept = DELETE, })
-	profiles_resetPopup[profilemanager] = wt.RegisterPopupDialog(category .. "RESET_PROFILE")
-
-	profiles_activeIndex[profilemanager] = 1
-
-	profilemanager:Load(nil, nil, false, true)
-
-	log(function() return progenitors[typename] .. " instance mutated into a Profilemanager: " .. w.ToString(profilemanager), wt.title .. ".CreateProfilemanager" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(profilemanager), wt.title .. ".CreateProfilemanager" end)
 
 	return profilemanager
 end
@@ -7407,7 +7458,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								local title = accountData.profiles[characterData.activeProfile].title
 
 								wt.CreatePopupInputbox({
-									title = s.profiles_rename_description:gsub("#PROFILE", crc(title, "FFFFFFFF")),
+									title = s.profiles_rename_description:gsub("#PROFILE", cc(title, "FFFFFFFF")),
 									position = {
 										anchor = "TOPRIGHT",
 										offset = { x = -92, y = -21 },
@@ -7544,7 +7595,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 								onChange = { RefreshBackupBox = refresh },
 							},
 							listeners = { loaded = { { handler = function() profilesPage.backupAll.compact.template:SetChecked(settingsData.compactBackup) end, }, }, },
-							events = { OnClick = function(_, state) profilesPage.backupAll.compact.template:SetChecked(state) end },
+							events = { OnClick = function(self) profilesPage.backupAll.compact.template:SetChecked(self:GetChecked()) end },
 							showDefault = false,
 							utilityMenu = false,
 						}),
@@ -7861,20 +7912,25 @@ function protoBuilders.Addonmanager(addonmanager)
 	end
 end
 
+---Initialize an Addonmanager instance
+---@param self addonmanager
+---@param t addonmanager_options
+function initializers.Addonmanager(self, t)
+	initializers.Construct(self, t)
+
+	addListeners(self, t.listeners, { "changed", })
+
+	self:SetAddon(t.addon, t.changelog)
+end
+
 progenitors.Addonmanager = "Construct" ---@type typename_construct
 function wt.CreateAddonmanager(t)
 	local typename = "Addonmanager" ---@type typename_addonmanager
-	local addonmanager = setmetatable(wt.CreateConstruct(t), getBase(typename)) ---@cast addonmanager addonmanager
+	local addonmanager = setmetatable({}, getBase(typename)) ---@cast addonmanager addonmanager
 
-	--[ Initialization ]
+	initializers.Addonmanager(addonmanager, type(t) == "table" and t or {})
 
-	t = type(t) == "table" and t or {}
-
-	addListeners(addonmanager, t.listeners, { "changed", })
-
-	addonmanager:SetAddon(t.addon, t.changelog)
-
-	log(function() return progenitors[typename] .. " instance mutated into a Addonmanager: " .. w.ToString(addonmanager), wt.title .. ".CreateAddonmanager" end)
+	log(function() return typename .. " instance initialized: " .. w.ToString(addonmanager), wt.title .. ".CreateAddonmanager" end)
 
 	return addonmanager
 end
@@ -7951,7 +8007,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 								offset = { x = 5 }
 							},
 							width = 140,
-							text = data.version .. data.date and (crc(" ( " .. s.about_date .. ": " .. cr(data.date, NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
+							text = data.version .. data.date and (cc(" ( " .. s.about_date .. ": " .. c(data.date, NORMAL_FONT_COLOR) .. ")", "FFFFFFFF") or ""),
 							font = "GameFontNormalSmall",
 							justify = { h = "LEFT", },
 							wrap = false,
@@ -8128,7 +8184,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 						parentFrame = panel,
 						name = "ChangelogBox",
 						title = s.about_changelog_label,
-						tooltip = { lines = { { text = s.about_changelog_tooltip:gsub("#VERSION", crc(data.version or "?", "FFFFFFFF")), }, } },
+						tooltip = { lines = { { text = s.about_changelog_tooltip:gsub("#VERSION", cc(data.version or "?", "FFFFFFFF")), }, } },
 						arrange = {},
 						width = panel:GetWidth() - 225,
 						height = panel:GetHeight() - 25,
