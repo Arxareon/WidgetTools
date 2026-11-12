@@ -109,10 +109,14 @@ wt.strings = {
 	points_center = "가운데",
 	points_top_left = "왼쪽 상단",
 	points_top_right = "오른쪽 상단",
-	points_top_center = "가운데 상단",
+	points_top_center = "상단 중앙",
 	points_bottom_left = "왼쪽 하단",
 	points_bottom_right = "오른쪽 하단",
-	points_bottom_center = "가운데 하단",
+	points_bottom_center = "하단 중앙",
+
+	justify_top = "위쪽",
+	justify_middle = "가운데",
+	justify_bottom = "아래쪽",
 
 	strata_lowest = "최하단 배경",
 	strata_lower = "중간 배경",

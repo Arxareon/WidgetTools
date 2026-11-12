@@ -114,6 +114,10 @@ wt.strings = {
 	points_bottom_right = "Снизу справа",
 	points_bottom_center = "Снизу по центру",
 
+	justify_top = "Сверху",
+	justify_middle = "Посередине",
+	justify_bottom = "Снизу",
+
 	strata_lowest = "Низкий фон",
 	strata_lower = "Средний фон",
 	strata_low = "Высокий фон",

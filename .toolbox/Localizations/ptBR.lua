@@ -114,6 +114,10 @@ wt.strings = {
 	points_bottom_right = "Inferior direito",
 	points_bottom_center = "Inferior central",
 
+	justify_top = "Superior",
+	justify_middle = "Meio",
+	justify_bottom = "Inferior",
+
 	strata_lowest = "Plano de Fundo Baixo",
 	strata_lower = "Plano de Fundo Médio",
 	strata_low = "Plano de Fundo Alto",

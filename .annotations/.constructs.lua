@@ -1,6 +1,6 @@
 --NOTE: Annotations are for development purposes only, providing live documentation via Lua Language Server. This file does not need to be loaded by the game client.
 
----@meta constructs
+----@meta constructs ---TODO REINSTATE
 
 
 --[[ TOOLBOX ]]
@@ -44,18 +44,18 @@ function wt.IsType(object, typename)
 		---| typename_radiobutton
 		---| typename_checkbox
 		---| typename_classicCheckbox
-		---| typename_selectorBinary
+		---| typename_selectionBinary
+		---| typename_selectionmanager
 		---| typename_selector
-		---| typename_radiogroup
-		---| typename_dropdownRadiogroup
-		---| typename_anchorSelector
-		---| typename_horizontalitySelector
-		---| typename_verticalitySelector
-		---| typename_strataSelector
-		---| typename_fontSelector
+		---| typename_dropdownSelector
+		---| typename_anchorSelectionmanager
+		---| typename_horizontalitySelectionmanager
+		---| typename_verticalitySelectionmanager
+		---| typename_strataSelectionmanager
+		---| typename_fontSelectionmanager
 		---| typename_specialRadiogroup
+		---| typename_multiselectionmanager
 		---| typename_multiselector
-		---| typename_checkgroup
 		---| typename_textual
 		---| typename_editbox
 		---| typename_customEditbox
@@ -1742,25 +1742,25 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 end
 
 
---[[ SELECTOR ]]
+--[[ SELECTION ]]
 
----Create a non-GUI selector datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
----@param t? selector_options Optional parameters
----@return selector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateSelector(t)
+---Create a non-GUI selection datamanager widget instance (managing a set of binary datamanager child widgets) with integer (selection index) data management logic
+---@param t? selectionmanager_options Optional parameters
+---@return selectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateSelectionmanager(t)
 
 	--| Items
 
-	---@class selectorBinary : binary
+	---@class selectionBinary : binary
 	local i = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_selectorBinary]: true }
-		function _:GetTypes() return {} end
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_binary]: true, [typename_selectionBinary]: true }
+		function i:GetTypes() return {} end
 
-			---@alias typename_selectorBinary "SelectorBinary"
+			---@alias typename_selectionBinary "SelectionBinary"
 
 	--| Parameters
 
@@ -1775,127 +1775,126 @@ function wt.CreateSelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class selector_options : datamanager_options, selector_options_base
-	---@field items? integer Number of binary datamanager children of the selector group to set up, representing all selectable options
-	---@field listeners? selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@class selectionmanager_options : list_options, datamanager_options, selectionmanager_options_base
+	---@field items? string[]|integer List of names of all selectable options, or their count for sets of unnamed items | ***Default:*** `0`
+	---@field listeners? selectionmanager_listeners|list_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): selected: integer|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selected` integer|nil | ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun() Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selected`? integer</p>
 	---@field value? integer The index of the item to be set as selected during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid or 1 if `t.clearable` is `false`
 	---@field default? integer Default value of the widget | ***Default:*** `1 or nil` *(no selection)* if `t.clearable` is `true`
 
-		---@class selector_options_base
-		---@field clearable? boolean If `true`, the value of the selector input should be clearable and allowed to be set to nil | ***Default:*** `false`
+		---@class selectionmanager_options_base
+		---@field clearable? boolean If `true`, the value of the selection should be clearable and allowed to be set to nil | ***Default:*** `false`
 
-		---@class selector_listeners : datamanager_listeners
-		---@field [1]? table<string, selector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? selector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selector:SetEnabled(...)` was called
-		---@field loaded? selector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? selector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? selector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `selector:SetSelected(...)` was called or an option was clicked or cleared
-		---@field updated? selector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `selector:UpdateItems(...)` was called
-		---@field added? selector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `selector:UpdateItems(...)`
+		---@class selectionmanager_listeners : datamanager_listeners
+		---@field [1]? table<string, selectionmanager_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? selectionmanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selectionmanager:SetEnabled(...)` was called
+		---@field loaded? selectionmanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? selectionmanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? selectionmanager_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `selectionmanager:SetSelected(...)` was called or an option was clicked or cleared
+		---@field updated? selectionmanager_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `selectionmanager:UpdateItems(...)` was called
+		---@field added? selectionmanager_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selectionmanager via `selectionmanager:UpdateItems(...)`
 
-			---@class selector_listener_loaded : indexedEventHandler
-			---@field handler selector_handler_loaded Handler function to register for call
+			---@class selectionmanager_listener_loaded : indexedEventHandler
+			---@field handler selectionmanager_handler_loaded Handler function to register for call
 
-				---@alias selector_handler_loaded
-				---| fun(self: selector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---@alias selectionmanager_handler_loaded
+				---| fun(self: selectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
-			---@class selector_listener_saved : indexedEventHandler
-			---@field handler selector_handler_saved Handler function to register for call
+			---@class selectionmanager_listener_saved : indexedEventHandler
+			---@field handler selectonmanager_handler_saved Handler function to register for call
 
-				---@alias selector_handler_saved
-				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---@alias selectonmanager_handler_saved
+				---| fun(self: selectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
-			---@class selector_listener_changed : indexedEventHandler
-			---@field handler selector_handler_changed Handler function to register for call
+			---@class selectionmanager_listener_changed : indexedEventHandler
+			---@field handler selectonmanager_handler_changed Handler function to register for call
 
-				---@alias selector_handler_changed
-				---| fun(self: selector, selected?: integer, user: boolean) Called when an "changed" event is invoked after `selector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias selectonmanager_handler_changed
+				---| fun(self: selectionmanager, selected?: integer, user: boolean) Called when an "changed" event is invoked after `selectionmanager:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class selector_listener_updated : indexedEventHandler
-			---@field handler selector_handler_updated Handler function to register for call
+			---@class selectionmanager_listener_updated : indexedEventHandler
+			---@field handler selectonmanager_handler_updated Handler function to register for call
 
-				---@alias selector_handler_updated
-				---| fun(self: selector) Called when an "updated" event is invoked after `selector:UpdateItems(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p>
+				---@alias selectonmanager_handler_updated
+				---| fun(self: selectionmanager) Called when an "updated" event is invoked after `selectionmanager:UpdateItems(...)` was called<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p>
 
-			---@class selector_listener_added : indexedEventHandler
-			---@field handler selector_handler_updated Handler function to register for call
+			---@class selectionmanager_listener_added : indexedEventHandler
+			---@field handler selectonmanager_handler_updated Handler function to register for call
 
-				---@alias selector_handler_added
-				---| fun(self: selector, binary: binary|selectorBinary) Called when a new binary item is added to the selector via `selector:UpdateItems(...)`<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+				---@alias selectonmanager_handler_added
+				---| fun(self: selectionmanager, binary: binary|selectionBinary) Called when a new binary item is added to the selectionmanager via `selectionmanager:UpdateItems(...)`<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `binary` binary|selectionBinary ― Reference to the binary widget added to the selectionmanager</p>
 
-			---@class selector_listener_enabled : indexedEventHandler
-			---@field handler selector_handler_enabled Handler function to register for call
+			---@class selectionmanager_listener_enabled : indexedEventHandler
+			---@field handler selectonmanager_handler_enabled Handler function to register for call
 
-				---@alias selector_handler_enabled
-				---| fun(self: selector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `selector:SetEnabled(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias selectonmanager_handler_enabled
+				---| fun(self: selectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `selectionmanager:SetEnabled(...)` was called<p>@*param* `self` selectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class selector_listener : indexedEventHandler
-			---@field handler selector_handler Handler function to register for call
+			---@class selectionmanager_listener : indexedEventHandler
+			---@field handler selectonmanager_handler Handler function to register for call
 
-				---@alias selector_handler
-				---| fun(self: selector, ...: any) Called when a custom event is invoked<p>@*param* `self` selector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias selectonmanager_handler
+				---| fun(self: selectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` selectionmanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class selector : datamanager, list
+	---@class selectionmanager : datamanager, list
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_selector "Selector"
+			---@alias typename_selectionmanager "Selectionmanager"
 
 		--[ Events ]
 
-		---@class selector_invoke : datamanager_invoke
+		---@class selectionmanager_invoke : datamanager_invoke
 		---@field updated function Invoke a "updated" event to notify registered listeners and call handlers
-		---@field added fun(binary: binary|selectorBinary) Invoke an "added" event to notify registered listeners and call handlers
+		---@field added fun(binary: binary|selectionBinary) Invoke an "added" event to notify registered listeners and call handlers
 
-		---@class selector_addListener : datamanager_addListener
-		---@field [string] fun(handler: selector_handler, callIndex?: integer) Register a listener for a custom widget event
+		---@class selectionmanager_addListener : datamanager_addListener
+		---@field [string] fun(handler: selectonmanager_handler, callIndex?: integer) Register a listener for a custom widget event
 		local addListener = {}
 
 			---Register a listener for a "loaded" widget event
-			---@param handler selector_handler_loaded Handler function to call on trigger
+			---@param handler selectionmanager_handler_loaded Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_loaded(handler, callIndex) end
 
 			---Register a listener for a "saved" widget event
-			---@param handler selector_handler_saved Handler function to call on trigger
+			---@param handler selectonmanager_handler_saved Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_saved(handler, callIndex) end
 
 			---Register a listener for a "changed" widget event
-			---@param handler selector_handler_changed Handler function to call on trigger
+			---@param handler selectonmanager_handler_changed Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
-			---@param handler selector_handler_updated Handler function to call on trigger
+			---@param handler selectonmanager_handler_updated Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_updated(handler, callIndex) end
 
 			---Register a listener for a "added" widget event
-			---@param handler selector_handler_added Handler function to call on trigger
+			---@param handler selectonmanager_handler_added Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_added(handler, callIndex) end
 
 			---Register a listener for an "enabled" widget event
-			---@param handler selector_handler_enabled Handler function to call on trigger
+			---@param handler selectonmanager_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_enabled(handler, callIndex) end
 
 		--[ Items ]
 
-		---Update the list of items currently set for the selector widget, updating its parameters and binary datamanagers
-		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
-		--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be set as selected instead. If one or more items from the last indexes were removed, the new last item will be selected, correct the selection if needed.
-		---@param items selectorItemData[] Ordered set of item data used to set up binary datamanager children of the selector group, representing all selectable options
+		---Update the list of items currently set for the selectionmanager
+		--- - ***Note:*** The item that falls at the currently selected index will be set as selected, which may not be the same item as before the update. If at least one item was removed from the end of the list, the item at the last index will be set as selected instead. Make sure to correct the selection after the update if needed.
+		---@param items string[]|integer List of names of all selectable options, or their count for sets of unnamed items | ***Default:*** `0`
 		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 		function _:UpdateItems(items, silent) end
 
@@ -1946,10 +1945,10 @@ function wt.CreateSelector(t)
 	return _
 end
 
----Create a non-GUI anchor selector datamanager widget instance (managing a set of binary datamanager child widgets) with anchor point data management logic
+---Create a non-GUI anchor selection datamanager widget instance (managing a set of binary datamanager child widgets) with anchor point data management logic
 ---@param t? anchorSelector_options Optional parameters
----@return anchorSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateAnchorSelector(t)
+---@return anchorSelectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateAnchorSelectionmanager(t)
 
 	--| Parameters
 
@@ -1964,7 +1963,7 @@ function wt.CreateAnchorSelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class anchorSelector_options : datamanager_options, selector_options_base
+	---@class anchorSelector_options : datamanager_options, selectionmanager_options_base
 	---@field listeners? anchorSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|anchorSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: anchorSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
@@ -1989,44 +1988,44 @@ function wt.CreateAnchorSelector(t)
 			---@field handler anchorSelector_handler_loaded Handler function to register for call
 
 				---@alias anchorSelector_handler_loaded
-				---| fun(self: anchorSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: anchorSelectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` anchorSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class anchorSelector_listener_saved : indexedEventHandler
 			---@field handler anchorSelector_handler_saved Handler function to register for call
 
 				---@alias anchorSelector_handler_saved
-				---| fun(self: anchorSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: anchorSelectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` anchorSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class anchorSelector_listener_changed : indexedEventHandler
 			---@field handler anchorSelector_handler_changed Handler function to register for call
 
 				---@alias anchorSelector_handler_changed
-				---| fun(self: anchorSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `anchorSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: anchorSelectionmanager, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `anchorSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` anchorSelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class anchorSelector_listener_enabled : indexedEventHandler
 			---@field handler anchorSelector_handler_enabled Handler function to register for call
 
 				---@alias anchorSelector_handler_enabled
-				---| fun(self: anchorSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `anchorSelector:SetEnabled(...)` was called<p>@*param* `self` anchorSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: anchorSelectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `anchorSelector:SetEnabled(...)` was called<p>@*param* `self` anchorSelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class anchorSelector_listener : indexedEventHandler
 			---@field handler anchorSelector_handler Handler function to register for call
 
 				---@alias anchorSelector_handler
-				---| fun(self: anchorSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` anchorSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: anchorSelectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` anchorSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class anchorSelector : selector
+	---@class anchorSelectionmanager : selectionmanager
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_anchorSelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_anchorSelectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_anchorSelector "AnchorSelector"
+			---@alias typename_anchorSelectionmanager "AnchorSelectionmanager"
 
 		--[ Events ]
 
@@ -2095,10 +2094,10 @@ function wt.CreateAnchorSelector(t)
 	return _
 end
 
----Create a non-GUI verticality selector datamanager widget instance (managing a set of binary datamanager child widgets) with vertical text justification data management logic
+---Create a non-GUI verticality selection datamanager widget instance (managing a set of binary datamanager child widgets) with vertical text justification data management logic
 ---@param t? verticalitySelector_options Optional parameters
----@return verticalitySelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateVerticalitySelector(t)
+---@return verticalitySelectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateVerticalitySelectionmanager(t)
 
 	--| Parameters
 
@@ -2113,7 +2112,7 @@ function wt.CreateVerticalitySelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class verticalitySelector_options : datamanager_options, selector_options_base
+	---@class verticalitySelector_options : datamanager_options, selectionmanager_options_base
 	---@field listeners? verticalitySelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|verticalitySelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: verticalitySelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
@@ -2138,45 +2137,45 @@ function wt.CreateVerticalitySelector(t)
 			---@field handler verticalitySelector_handler_loaded Handler function to register for call
 
 				---@alias verticalitySelector_handler_loaded
-				---| fun(self: verticalitySelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: verticalitySelectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` verticalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class verticalitySelector_listener_saved : indexedEventHandler
 			---@field handler verticalitySelector_handler_saved Handler function to register for call
 
 				---@alias verticalitySelector_handler_saved
-				---| fun(self: verticalitySelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: verticalitySelectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` verticalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class verticalitySelector_listener_changed : indexedEventHandler
 			---@field handler verticalitySelector_handler_changed Handler function to register for call
 
 				---@alias verticalitySelector_handler_changed
-				---| fun(self: verticalitySelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `verticalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: verticalitySelectionmanager, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `verticalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` verticalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class verticalitySelector_listener_enabled : indexedEventHandler
 			---@field handler verticalitySelector_handler_enabled Handler function to register for call
 
 				---@alias verticalitySelector_handler_enabled
-				---| fun(self: verticalitySelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `verticalitySelector:SetEnabled(...)` was called<p>@*param* `self` verticalitySelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: verticalitySelectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `verticalitySelector:SetEnabled(...)` was called<p>@*param* `self` verticalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class verticalitySelector_listener : indexedEventHandler
 			---@field handler verticalitySelector_handler Handler function to register for call
 
 				---@alias verticalitySelector_handler
-				---| fun(self: verticalitySelector, ...: any) Called when a custom event is invoked<p>@*param* `self` verticalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: verticalitySelectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` verticalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class verticalitySelector : datamanager
-	---@field items selectorBinary[]
+	---@class verticalitySelectionmanager : datamanager
+	---@field items selectionBinary[]
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_verticalitySelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_verticalitySelectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_verticalitySelector "VerticalitySelector"
+			---@alias typename_verticalitySelectionmanager "VerticalitySelectionmanager"
 
 		--[ Events ]
 
@@ -2245,10 +2244,10 @@ function wt.CreateVerticalitySelector(t)
 	return _
 end
 
----Create a non-GUI horizontality selector datamanager widget instance (managing a set of binary datamanager child widgets) with horizontal text justification data management logic
+---Create a non-GUI horizontality selection datamanager widget instance (managing a set of binary datamanager child widgets) with horizontal text justification data management logic
 ---@param t? horizontalitySelector_options Optional parameters
----@return horizontalitySelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateHorizontalitySelector(t)
+---@return horizontalitySelectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateHorizontalitySelectionmanager(t)
 
 	--| Parameters
 
@@ -2263,7 +2262,7 @@ function wt.CreateHorizontalitySelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class horizontalitySelector_options : datamanager_options, selector_options_base
+	---@class horizontalitySelector_options : datamanager_options, selectionmanager_options_base
 	---@field listeners? horizontalitySelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|horizontalitySelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: horizontalitySelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
@@ -2288,45 +2287,45 @@ function wt.CreateHorizontalitySelector(t)
 			---@field handler horizontalitySelector_handler_loaded Handler function to register for call
 
 				---@alias horizontalitySelector_handler_loaded
-				---| fun(self: horizontalitySelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: horizontalitySelectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` horizontalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class horizontalitySelector_listener_saved : indexedEventHandler
 			---@field handler horizontalitySelector_handler_saved Handler function to register for call
 
 				---@alias horizontalitySelector_handler_saved
-				---| fun(self: horizontalitySelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: horizontalitySelectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` horizontalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class horizontalitySelector_listener_changed : indexedEventHandler
 			---@field handler horizontalitySelector_handler_changed Handler function to register for call
 
 				---@alias horizontalitySelector_handler_changed
-				---| fun(self: horizontalitySelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `horizontalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: horizontalitySelectionmanager, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `horizontalitySelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` horizontalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class horizontalitySelector_listener_enabled : indexedEventHandler
 			---@field handler horizontalitySelector_handler_enabled Handler function to register for call
 
 				---@alias horizontalitySelector_handler_enabled
-				---| fun(self: horizontalitySelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `horizontalitySelector:SetEnabled(...)` was called<p>@*param* `self` horizontalitySelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: horizontalitySelectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `horizontalitySelector:SetEnabled(...)` was called<p>@*param* `self` horizontalitySelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class horizontalitySelector_listener : indexedEventHandler
 			---@field handler horizontalitySelector_handler Handler function to register for call
 
 				---@alias horizontalitySelector_handler
-				---| fun(self: horizontalitySelector, ...: any) Called when a custom event is invoked<p>@*param* `self` horizontalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: horizontalitySelectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` horizontalitySelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class horizontalitySelector : datamanager
-	---@field items selectorBinary[]
+	---@class horizontalitySelectionmanager : datamanager
+	---@field items selectionBinary[]
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_horizontalitySelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_horizontalitySelectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_horizontalitySelector "HorizontalitySelector"
+			---@alias typename_horizontalitySelectionmanager "HorizontalitySelectionmanager"
 
 		--[ Events ]
 
@@ -2395,10 +2394,10 @@ function wt.CreateHorizontalitySelector(t)
 	return _
 end
 
----Create a non-GUI strata selector datamanager widget instance (managing a set of binary datamanager child widgets) with frame strata data management logic
+---Create a non-GUI strata selection datamanager widget instance (managing a set of binary datamanager child widgets) with frame strata data management logic
 ---@param t? strataSelector_options Optional parameters
----@return strataSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateStrataSelector(t)
+---@return strataSelectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateStrataSelectionmanager(t)
 
 	--| Parameters
 
@@ -2413,7 +2412,7 @@ function wt.CreateStrataSelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class strataSelector_options : datamanager_options, selector_options_base
+	---@class strataSelector_options : datamanager_options, selectionmanager_options_base
 	---@field listeners? strataSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|strataSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: strataSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
@@ -2438,45 +2437,45 @@ function wt.CreateStrataSelector(t)
 			---@field handler strataSelector_handler_loaded Handler function to register for call
 
 				---@alias strataSelector_handler_loaded
-				---| fun(self: strataSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: strataSelectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` strataSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class strataSelector_listener_saved : indexedEventHandler
 			---@field handler strataSelector_handler_saved Handler function to register for call
 
 				---@alias strataSelector_handler_saved
-				---| fun(self: strataSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: strataSelectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` strataSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class strataSelector_listener_changed : indexedEventHandler
 			---@field handler strataSelector_handler_changed Handler function to register for call
 
 				---@alias strataSelector_handler_changed
-				---| fun(self: strataSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `strataSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: strataSelectionmanager, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `strataSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` strataSelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class strataSelector_listener_enabled : indexedEventHandler
 			---@field handler strataSelector_handler_enabled Handler function to register for call
 
 				---@alias strataSelector_handler_enabled
-				---| fun(self: strataSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `strataSelector:SetEnabled(...)` was called<p>@*param* `self` strataSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: strataSelectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `strataSelector:SetEnabled(...)` was called<p>@*param* `self` strataSelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class strataSelector_listener : indexedEventHandler
 			---@field handler strataSelector_handler Handler function to register for call
 
 				---@alias strataSelector_handler
-				---| fun(self: strataSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` strataSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: strataSelectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` strataSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class strataSelector : datamanager
-	---@field items selectorBinary[]
+	---@class strataSelectionmanager : datamanager
+	---@field items selectionBinary[]
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_strataSelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_strataSelectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_strataSelector "StrataSelector"
+			---@alias typename_strataSelectionmanager "StrataSelectionmanager"
 
 		--[ Events ]
 
@@ -2545,10 +2544,10 @@ function wt.CreateStrataSelector(t)
 	return _
 end
 
----Create a non-GUI font selector datamanager widget instance (managing a set of binary datamanager child widgets) with font path data management logic
+---Create a non-GUI font selection datamanager widget instance (managing a set of binary datamanager child widgets) with font path data management logic
 ---@param t? fontSelector_options Optional parameters
----@return fontSelector selector Reference to the new selector widget, utility functions and more wrapped in a widget table
-function wt.CreateFontSelector(t)
+---@return fontSelectionmanager selectionmanager Reference to the new selectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateFontSelectionmanager(t)
 
 	--| Parameters
 
@@ -2563,7 +2562,7 @@ function wt.CreateFontSelector(t)
 		local function writer(data) end ---@cast writer +?
 
 	---Optional parameters
-	---@class fontSelector_options : datamanager_options, selector_options_base
+	---@class fontSelector_options : datamanager_options, selectionmanager_options_base
 	---@field listeners? fontSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 	---@field getData? fun(): value: integer|fontSelectorValueTypes|nil Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `value` integer|AnchorPoint|JustifyH|JustifyV|FrameStrata|nil — The index or the value of the item to be set as selected ***Default:*** `nil` *(no selection)*</p>
 	---@field saveData? fun(value?: fontSelectorValueTypes) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `value`? AnchorPoint|JustifyH|JustifyV|FrameStrata</p>
@@ -2588,45 +2587,45 @@ function wt.CreateFontSelector(t)
 			---@field handler fontSelector_handler_loaded Handler function to register for call
 
 				---@alias fontSelector_handler_loaded
-				---| fun(self: fontSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: fontSelectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` fontSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class fontSelector_listener_saved : indexedEventHandler
 			---@field handler fontSelector_handler_saved Handler function to register for call
 
 				---@alias fontSelector_handler_saved
-				---| fun(self: fontSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: fontSelectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` fontSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class fontSelector_listener_changed : indexedEventHandler
 			---@field handler fontSelector_handler_changed Handler function to register for call
 
 				---@alias fontSelector_handler_changed
-				---| fun(self: fontSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `fontSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: fontSelectionmanager, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `fontSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` fontSelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class fontSelector_listener_enabled : indexedEventHandler
 			---@field handler fontSelector_handler_enabled Handler function to register for call
 
 				---@alias fontSelector_handler_enabled
-				---| fun(self: fontSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `fontSelector:SetEnabled(...)` was called<p>@*param* `self` fontSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: fontSelectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `fontSelector:SetEnabled(...)` was called<p>@*param* `self` fontSelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class fontSelector_listener : indexedEventHandler
 			---@field handler fontSelector_handler Handler function to register for call
 
 				---@alias fontSelector_handler
-				---| fun(self: fontSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` fontSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---| fun(self: fontSelectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` fontSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class fontSelector : datamanager
-	---@field items selectorBinary[]
+	---@class fontSelectionmanager : datamanager
+	---@field items selectionBinary[]
 	local _ = {}
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_fontSelector]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_fontSelectionmanager]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_fontSelector "FontSelector"
+			---@alias typename_fontSelectionmanager "FontSelectionmanager"
 
 		--[ Events ]
 
@@ -2695,348 +2694,147 @@ function wt.CreateFontSelector(t)
 	return _
 end
 
----Create a non-GUI multiselector datamanager widget instance (managing a set of binary datamanager child widgets) with boolean mask data management logic
----@param t? multiselector_options Optional parameters
----@return multiselector multiselector Reference to the new multiselector widget, utility functions and more wrapped in a widget table
-function wt.CreateMultiselector(t)
-
-	--| Parameters
-
-		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
-		---***
-		---@return boolean data
-		local function reader() return false end ---@cast reader +?
-
-		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
-		---***
-		---@param data? boolean
-		local function writer(data) end ---@cast writer +?
-
-	---Optional parameters
-	---@class multiselector_options : datamanager_options
-	---@field items? (selectorItemData|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
-	---@field limits? limitValues Parameters to specify the limits of the number of selectable items
-	---@field listeners? multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
-	---@field getData? fun(): selections: boolean[] Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selections` boolean[] | ***Default:*** *no selected items: `false[]`*</p>
-	---@field saveData? fun(selections?: boolean[]) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selections`? boolean[] | ***Default:*** *no selected items: `false[]`*</p>
-	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
-	---@field default? boolean[] Default value of the widget | ***Default:*** *no selected items: `false[]`*
-	t = { reader = reader, writer = writer, }
-
-		---@class limitValues
-		---@field min? integer The minimal number of items that need to be selected at all times | ***Default:*** `1`
-		---@field max? integer The maximal number of items that can be selected at once | ***Default:*** `#t.items` *(all items)*
-
-		---@class multiselector_listeners : datamanager_listeners
-		---@field [1]? table<string, multiselector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field enabled? multiselector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called
-		---@field loaded? multiselector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? multiselector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? multiselector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `multiselector:SetSelected(...)` was called or an option was clicked or cleared
-		---@field updated? multiselector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `multiselector:UpdateItems(...)` was called
-		---@field added? multiselector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `multiselector:UpdateItems(...)`
-		---@field limited? multiselector_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
-
-			---@class multiselector_listener_loaded : indexedEventHandler
-			---@field handler multiselector_handler_loaded Handler function to register for call
-
-				---@alias multiselector_handler_loaded
-				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
-
-			---@class multiselector_listener_saved : indexedEventHandler
-			---@field handler multiselector_handler_saved Handler function to register for call
-
-				---@alias multiselector_handler_saved
-				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
-
-			---@class multiselector_listener_changed : indexedEventHandler
-			---@field handler multiselector_handler_changed Handler function to register for call
-
-				---@alias multiselector_handler_changed
-				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `multiselector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class multiselector_listener_updated : indexedEventHandler
-			---@field handler multiselector_handler_updated Handler function to register for call
-
-				---@alias multiselector_handler_updated
-				---| fun(self: multiselector) Called when an "updated" event is invoked after `multiselector:UpdateItems(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p>
-
-			---@class multiselector_listener_added : indexedEventHandler
-			---@field handler multiselector_handler_added Handler function to register for call
-
-				---@alias multiselector_handler_added
-				---| fun(self: multiselector, binary: binary|selectorBinary) Called when a new binary item is added to the selector via `multiselector:UpdateItems(...)`<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
-
-			---@class multiselector_listener_limited : indexedEventHandler
-			---@field handler multiselector_handler_limited Handler function to register for call
-
-				---@alias multiselector_handler_limited
-				---| fun(self: multiselector, min: boolean, max: boolean) Called when a "limited" event is invoked after a limit update occurs<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `min` boolean ― `true` if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― `true` if the number of selected items is equal to higher than the specified upper limit</p>
-
-			---@class multiselector_listener_enabled : indexedEventHandler
-			---@field handler multiselector_handler_enabled Handler function to register for call
-
-				---@alias multiselector_handler_enabled
-				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
-
-			---@class multiselector_listener : indexedEventHandler
-			---@field handler multiselector_handler Handler function to register for call
-
-				---@alias multiselector_handler
-				---| fun(self: multiselector, ...: any) Called when a custom event is invoked<p>@*param* `self` multiselector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
-
-	--| Returns
-
-	---@class multiselector : datamanager
-	---@field items selectorBinary[]
-	local _ = {}
-
-		--[ Types ]
-
-		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, }
-		function _:GetTypes() return {} end
-
-			---@alias typename_multiselector "Multiselector"
-
-		--[ Events ]
-
-		---@class multiselector_invoke : datamanager_invoke
-		---@field updated function Invoke a "updated" event to notify registered listeners and call handlers
-		---@field added fun(binary: binary|selectorBinary) Invoke an "added" event to notify registered listeners and call handlers
-		---@field limited fun(count: integer) Invoke a "limited" event to notify registered listeners and call handlers
-
-		---@class multiselector_addListener : datamanager_addListener
-		---@field [string] fun(handler: multiselector_handler, callIndex?: integer) Register a listener for a custom widget event
-		local addListener = {}
-
-			---Register a listener for a "loaded" widget event
-			---@param handler multiselector_handler_loaded Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_loaded(handler, callIndex) end
-
-			---Register a listener for a "saved" widget event
-			---@param handler multiselector_handler_saved Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_saved(handler, callIndex) end
-
-			---Register a listener for a "changed" widget event
-			---@param handler multiselector_handler_changed Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_changed(handler, callIndex) end
-
-			---Register a listener for a "updated" widget event
-			---@param handler multiselector_handler_updated Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_updated(handler, callIndex) end
-
-			---Register a listener for a "added" widget event
-			---@param handler multiselector_handler_added Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_added(handler, callIndex) end
-
-			---Register a listener for a "limited" widget event
-			---@param handler multiselector_handler_limited Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_limited(handler, callIndex) end
-
-			---Register a listener for an "enabled" widget event
-			---@param handler multiselector_handler_enabled Handler function to call on trigger
-			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
-			function _:AddListener_enabled(handler, callIndex) end
-
-		--[ Items ]
-
-		---Update the list of items currently set for the selector widget, updating its parameters and binary widgets
-		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
-		--- - ***Note:*** The currently selected item may not be the same after item were removed. In that case, the new item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Use `selector:SetSelected(...)` to correct the selection if needed!
-		---@param newItems (selectorItemData|binary|selectorBinary)[] Table containing subtables with data used to update the binary widgets, or already existing binary widgets
-		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
-		function _.updateItems(newItems, silent) end
-
-		--[ Data ]
-
-		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
-		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *current value*
-		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
-		function _:SaveData(data, silent) end
-
-		---Get the currently stored data via the specified reader utility
-		---@return boolean[]|nil
-		function _:GetData() end
-
-		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
-		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *current value*
-		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
-		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
-		function _:SetData(data, handleChanges, silent) end
-
-		---Get the currently set default value
-		---@return boolean[] default
-		function _:GetDefault() return {} end
-
-		---Set the default value
-		---@param selections? boolean[] | ***Default:*** *no selected items: `false[]`*
-		function _:SetDefault(selections) end
-
-		---Returns the list of all items and their current states
-		---@return boolean[] selections Indexed list of item states
-		function _:GetValue() return {} end
-
-		---Set the specified items as selected
-		---@param selections? boolean[] Indexed list of item states | ***Default:*** *no selected items: `false[]`*
-		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If `false`, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
-		function _:SetValue(selections, user, silent) end
-
-		---Set the specified item as selected
-		---@param index integer Index of the item | ***Range:*** (`1`, `#selector.items`)
-		---@param selected? boolean If `true`, set the item at this index as selected | ***Default:*** `false`
-		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
-		---@param silent? boolean If `false`, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
-		function _:SetSelected(index, selected, user, silent) end
-
-	return _
-end
-
---[ Toggle Button Group ]
+--[ Selector ]
 
 ---Create a radio button selector GUI frame instance to pick one out of multiple options with enhanced widget functionality
----@param t? radiogroup_options Optional parameters
----@param ancestor? selector Reference to an already existing selector instance to turn into a radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return radiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
-function wt.CreateRadiogroup(t, ancestor)
+---@param t? selector_options Optional parameters
+---@param ancestor? selectionmanager Reference to an already existing selectionmanager instance to turn into a selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
+---@return selector|selectionmanager # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
+function wt.CreateSelector(t, ancestor, lite)
 
 	--| Parameters
 
 	---Optional parameters
-	---@class radiogroup_options : selector_options, selectorFrame_options, radiogroup_options_base
+	---@class selector_options : selectionmanager_options, selectorFrame_options, selector_options_base
 	---@field width? nonNegativeNumber The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 180 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
-	---@field items? selectorItemData[] Ordered set of item data used to set up radio button children of the selector group and the container frame, representing all selectable options
+	---@field items? string[]|integer List of names of all selectable options to be shown as the label of the toggle button representing the item within the selector container frame (if `t.labels` is `true`) or their count for sets of unnamed items | ***Default:*** `0`
+	---@field tooltips? itemTooltipTextData[] List of textlines to be added to the tooltip of the item displayed when mousing over the toggle button
 	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
-	---@field listeners? radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field listeners? selector_listeners|selectionmanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class selectorFrame_options : labeledChildFrame, tooltipDescribableWidget, arrangeableFrame, positionableFrame, visibleFrame, eventFrame
 		---@field name? frameName ***Default:*** `"Selector"`
 
-		---@class radiogroup_options_base : tooltipDescribableSettingsWidget
-		---@field clearable? boolean If `true`, the selector input should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
+		---@class selector_options_base : tooltipDescribableSettingsWidget
+		---@field clearable? boolean If `true`, the selection should be clearable by right clicking on its radio buttons, setting the selected value to nil | ***Default:*** `false`
 
-		---@class selectorItemData
-		---@field title? string Text to be shown as on the label of the toggle button representing the item within the selector container frame (if `t.labels` is `true`)
-		---@field tooltip? itemTooltipTextData List of textlines to be added to the tooltip of the item displayed when mousing over the toggle button
+		---@class itemTooltipTextData : tooltipTextData
+		---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** <code>t.items[<i>index</i>].title</code>
 
-			---@class itemTooltipTextData : tooltipTextData
-			---@field title? string Text to be displayed in the title line of the tooltip | ***Default:*** <code>t.items[<i>index</i>].title</code>
+		---@class selector_listeners : selectionmanager_listeners
+		---@field [1]? table<string, selector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field loaded? selector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? selector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? selector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `selector:SetSelected(...)` was called or an option was clicked or cleared
+		---@field updated? selector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `selector:UpdateItems(...)` was called
+		---@field added? selector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `selector:UpdateItems(...)`
+		---@field enabled? selector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `selector:SetEnabled(...)` was called
 
-		---@class radiogroup_listeners : selector_listeners
-		---@field [1]? table<string, radiogroup_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field loaded? radiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? radiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? radiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `radiogroup:SetSelected(...)` was called or an option was clicked or cleared
-		---@field updated? radiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `radiogroup:UpdateItems(...)` was called
-		---@field added? radiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the radiogroup via `radiogroup:UpdateItems(...)`
-		---@field enabled? radiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `radiogroup:SetEnabled(...)` was called
+			---@class selector_listener_loaded : indexedEventHandler
+			---@field handler selector_handler_loaded Handler function to register for call
 
-			---@class radiogroup_listener_loaded : indexedEventHandler
-			---@field handler radiogroup_handler_loaded Handler function to register for call
+				---@alias selector_handler_loaded
+				---| fun(self: selector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
-				---@alias radiogroup_handler_loaded
-				---| fun(self: radiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+			---@class selector_listener_saved : indexedEventHandler
+			---@field handler selector_handler_saved Handler function to register for call
 
-			---@class radiogroup_listener_saved : indexedEventHandler
-			---@field handler radiogroup_handler_saved Handler function to register for call
+				---@alias selector_handler_saved
+				---| fun(self: selector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
-				---@alias radiogroup_handler_saved
-				---| fun(self: radiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+			---@class selector_listener_changed : indexedEventHandler
+			---@field handler rselector_handler_changed Handler function to register for call
 
-			---@class radiogroup_listener_changed : indexedEventHandler
-			---@field handler radiogroup_handler_changed Handler function to register for call
+				---@alias rselector_handler_changed
+				---| fun(self: selector, selected?: integer, user: boolean) Called when an "changed" event is invoked after `selector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-				---@alias radiogroup_handler_changed
-				---| fun(self: radiogroup, selected?: integer, user: boolean) Called when an "changed" event is invoked after `radiogroup:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+			---@class selector_listener_updated : indexedEventHandler
+			---@field handler selector_handler_updated Handler function to register for call
 
-			---@class radiogroup_listener_updated : indexedEventHandler
-			---@field handler radiogroup_handler_updated Handler function to register for call
+				---@alias selector_handler_updated
+				---| fun(self: selector) Called when an "updated" event is invoked after `selector:UpdateItems(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p>
 
-				---@alias radiogroup_handler_updated
-				---| fun(self: radiogroup) Called when an "updated" event is invoked after `radiogroup:UpdateItems(...)` was called<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p>
+			---@class selector_listener_added : indexedEventHandler
+			---@field handler selector_handler_updated Handler function to register for call
 
-			---@class radiogroup_listener_added : indexedEventHandler
-			---@field handler radiogroup_handler_updated Handler function to register for call
+				---@alias selector_handler_added
+				---| fun(self: selector, binary: binary|selectionBinary) Called when a new binary item is added to the selector via `selector:UpdateItems(...)`<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
 
-				---@alias radiogroup_handler_added
-				---| fun(self: radiogroup, binary: binary|selectorBinary) Called when a new binary item is added to the radiogroup via `radiogroup:UpdateItems(...)`<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the radiogroup</p>
+			---@class selector_listener_enabled : indexedEventHandler
+			---@field handler selector_handler_enabled Handler function to register for call
 
-			---@class radiogroup_listener_enabled : indexedEventHandler
-			---@field handler radiogroup_handler_enabled Handler function to register for call
+				---@alias selector_handler_enabled
+				---| fun(self: selector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `selector:SetEnabled(...)` was called<p>@*param* `self` selector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-				---@alias radiogroup_handler_enabled
-				---| fun(self: radiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `radiogroup:SetEnabled(...)` was called<p>@*param* `self` radiogroup ― Reference to the radiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+			---@class selector_listener : indexedEventHandler
+			---@field handler selector_handler Handler function to register for call
 
-			---@class radiogroup_listener : indexedEventHandler
-			---@field handler radiogroup_handler Handler function to register for call
-
-				---@alias radiogroup_handler
-				---| fun(self: radiogroup, ...: any) Called when a custom event is invoked<p>@*param* `self` radiogroup ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias selector_handler
+				---| fun(self: selector, ...: any) Called when a custom event is invoked<p>@*param* `self` selector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class radiogroup : selector, guiFrame
+	---@class selector : selectionmanager, guiFrame
 	---@field label FontString|nil
 	---@field items selectorRadiobutton[] The list of radio button widgets linked together in this selector
-	---@field addListener radiogroup_addListener Hook a handler function as a listener for a widget event
+	---@field addListener selector_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		---Update the list of items currently set for the selector widget, updating its parameters and radio button widgets
+		---Update the list of items currently set for the selector
+		--- - ***Note:*** The item that falls at the currently selected index will be set as selected, which may not be the same item as before the update. If at least one item was removed from the end of the list, the item at the last index will be set as selected instead. Make sure to correct the selection after the update if needed.
 		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed after the automatic rearrangement done by the container component did not produce the desired result.
-		--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be set as selected instead. If one or more items from the last indexes were removed, the new last item will be selected, correct the selection if needed.
-		---@param items selectorItemData_radioButton[] Ordered set of item data used to set up radio button children of the selector group and the conteiner frame, representing all selectable options
+		--- - ***Note:*** Make sure to also update the item tooltips via `selector:UpdateItemTooltips(...)`.
+		---@param items? string[]|integer List of names of all selectable options to be shown as the label of the toggle button representing the item within the selector container frame (if `t.labels` is `true`) or their count for sets of unnamed items | ***Default:*** `0`
 		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 		function _:UpdateItems(items, silent) end
+
+		---Update the tooltips of the selector items
+		---@param tooltips? itemTooltipTextData[] List of textlines to be added to the tooltip of the item displayed when mousing over the toggle button
+		function _:UpdateItemTooltips(tooltips) end
 
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selectionmanager]: true, [typename_selector]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_radiogroup "Radiogroup"
+			---@alias typename_selector "Selector"
 
 		--[ Events ]
 
-		---@class radiogroup_addListener : selector_addListener
-		---@field [string] fun(handler: radiogroup_handler, callIndex?: integer) Register a listener for a custom widget event
+		---@class selector_addListener : selectionmanager_addListener
+		---@field [string] fun(handler: selector_handler, callIndex?: integer) Register a listener for a custom widget event
 		local addListener = {}
 
 			---Register a listener for a "loaded" widget event
-			---@param handler radiogroup_handler_loaded Handler function to call on trigger
+			---@param handler selector_handler_loaded Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_loaded(handler, callIndex) end
 
 			---Register a listener for a "saved" widget event
-			---@param handler radiogroup_handler_saved Handler function to call on trigger
+			---@param handler selector_handler_saved Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_saved(handler, callIndex) end
 
 			---Register a listener for a "changed" widget event
-			---@param handler radiogroup_handler_changed Handler function to call on trigger
+			---@param handler rselector_handler_changed Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
-			---@param handler radiogroup_handler_updated Handler function to call on trigger
+			---@param handler selector_handler_updated Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_updated(handler, callIndex) end
 
 			---Register a listener for a "added" widget event
-			---@param handler radiogroup_handler_added Handler function to call on trigger
+			---@param handler selector_handler_added Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_added(handler, callIndex) end
 
 			---Register a listener for an "enabled" widget event
-			---@param handler radiogroup_handler_enabled Handler function to call on trigger
+			---@param handler selector_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_enabled(handler, callIndex) end
 
@@ -3044,88 +2842,89 @@ function wt.CreateRadiogroup(t, ancestor)
 end
 
 ---Create a dropdown radio button selector GUI frame instance to pick one out of multiple options with enhanced widget functionality
----@param t? dropdownRadiogroup_options Optional parameters
----@param ancestor? selector Reference to an already existing selector instance to turn into a dropdown radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return dropdownRadiogroup|selector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
-function wt.CreateDropdownRadiogroup(t, ancestor)
+---@param t? dropdownSelector_options Optional parameters
+---@param ancestor? selectionmanager Reference to an already existing selectionmanager instance to turn into a dropdown selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
+---@return dropdownSelector|selectionmanager # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, a toggle [Button](https://warcraft.wiki.gg/wiki/UIOBJECT_Button), utility functions and more wrapped in a widget table
+function wt.CreateDropdownSelector(t, ancestor, lite)
 
 	--| Parameters
 
 	---Optional parameters
-	---@class dropdownRadiogroup_options : radiogroup_options, widgetWidthValue, tooltipDescribableSettingsWidget
+	---@class dropdownSelector_options : selector_options, widgetWidthValue, tooltipDescribableSettingsWidget
 	---@field name? frameName ***Default:*** `"Dropdown"`
 	---@field width? nonNegativeNumber The width of the dropdown frame containing the toggle and (optionally) cycle buttons and the label (if `t.label` is `true`) | ***Default:*** `180`
 	---@field scrollThreshold? integer Number of items to show before changing the dropdown menu to be scrollable | ***Default:*** 15<ul><li>***Note:*** Scrollability does not change when the number of items change after the initial setup.</li></ul>
 	---@field text? string The default text to display on the dropdown when no item is selected | ***Default:*** `""`
-	---@field clearable? boolean If `true`, the selector input should be clearable by right clicking on its radio buttons, or, if `t.utilityMenu` is `false`, the dropdown toggle button itself (if `true`, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
+	---@field clearable? boolean If `true`, the selection should be clearable by right clicking on its radio buttons, or, if `t.utilityMenu` is `false`, the dropdown toggle button itself (if `true`, a clear selection option is added to the utility menu instead), setting the selected value to nil | ***Default:*** `false`
 	---@field autoClose? boolean Close the dropdown menu after an item is selected by the user | ***Default:*** `true`
 	---@field cycleButtons? boolean Add previous & next item buttons next to the dropdown | ***Default:*** `true`
-	---@field listeners? dropdownRadiogroup_listeners|radiogroup_listeners|selector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field listeners? dropdownSelector_listeners|selector_listeners|selectionmanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class widgetWidthValue
 		---@field width? nonNegativeNumber ***Default:*** `180`
 
-		---@class dropdownRadiogroup_listeners : radiogroup_listeners
-		---@field [1]? table<string, dropdownRadiogroup_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field loaded? dropdownRadiogroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? dropdownRadiogroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? dropdownRadiogroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `dropdownRadiogroup:SetSelected(...)` was called or an option was clicked or cleared
-		---@field updated? dropdownRadiogroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `dropdownRadiogroup:UpdateItems(...)` was called
-		---@field added? dropdownRadiogroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the dropdownRadiogroup via `dropdownRadiogroup:UpdateItems(...)`
-		---@field enabled? dropdownRadiogroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `dropdownRadiogroup:SetEnabled(...)` was called
+		---@class dropdownSelector_listeners : selector_listeners
+		---@field [1]? table<string, dropdownSelector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field loaded? dropdownSelector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? dropdownSelector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? dropdownSelector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `dropdownSelector:SetSelected(...)` was called or an option was clicked or cleared
+		---@field updated? dropdownSelector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `dropdownSelector:UpdateItems(...)` was called
+		---@field added? dropdownSelector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the dropdownSelector via `dropdownSelector:UpdateItems(...)`
+		---@field enabled? dropdownSelector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `dropdownSelector:SetEnabled(...)` was called
 
-			---@class dropdownRadiogroup_listener_loaded : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_loaded Handler function to register for call
+			---@class dropdownSelector_listener_loaded : indexedEventHandler
+			---@field handler dropdownSelector_handler_loaded Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_loaded
-				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---@alias dropdownSelector_handler_loaded
+				---| fun(self: dropdownSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
-			---@class dropdownRadiogroup_listener_saved : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_saved Handler function to register for call
+			---@class dropdownSelector_listener_saved : indexedEventHandler
+			---@field handler dropdownSelector_handler_saved Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_saved
-				---| fun(self: dropdownRadiogroup, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---@alias dropdownSelector_handler_saved
+				---| fun(self: dropdownSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
-			---@class dropdownRadiogroup_listener_changed : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_changed Handler function to register for call
+			---@class dropdownSelector_listener_changed : indexedEventHandler
+			---@field handler dropdownSelector_handler_changed Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_changed
-				---| fun(self: dropdownRadiogroup, selected?: integer, user: boolean) Called when an "selected" event is invoked after `dropdownRadiogroup:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias dropdownSelector_handler_changed
+				---| fun(self: dropdownSelector, selected?: integer, user: boolean) Called when an "selected" event is invoked after `dropdownSelector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p><p>@*param* `selected` integer ― The index of the currently selected item</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class dropdownRadiogroup_listener_updated : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_updated Handler function to register for call
+			---@class dropdownSelector_listener_updated : indexedEventHandler
+			---@field handler dropdownSelector_handler_updated Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_updated
-				---| fun(self: dropdownRadiogroup) Called when an "updated" event is invoked after `dropdownRadiogroup:UpdateItems(...)` was called<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p>
+				---@alias dropdownSelector_handler_updated
+				---| fun(self: dropdownSelector) Called when an "updated" event is invoked after `dropdownSelector:UpdateItems(...)` was called<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p>
 
-			---@class dropdownRadiogroup_listener_added : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_updated Handler function to register for call
+			---@class dropdownSelector_listener_added : indexedEventHandler
+			---@field handler dropdownSelector_handler_updated Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_added
-				---| fun(self: dropdownRadiogroup, binary: binary|selectorBinary) Called when a new binary item is added to the dropdownRadiogroup via `dropdownRadiogroup:UpdateItems(...)`<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the dropdownRadiogroup</p>
+				---@alias dropdownSelector_handler_added
+				---| fun(self: dropdownSelector, binary: binary|selectionBinary) Called when a new binary item is added to the dropdownSelector via `dropdownSelector:UpdateItems(...)`<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the dropdownSelector</p>
 
-			---@class dropdownRadiogroup_listener_enabled : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler_enabled Handler function to register for call
+			---@class dropdownSelector_listener_enabled : indexedEventHandler
+			---@field handler dropdownSelector_handler_enabled Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler_enabled
-				---| fun(self: dropdownRadiogroup, state: boolean, user: boolean) Called when an "enabled" event is invoked after `dropdownRadiogroup:SetEnabled(...)` was called<p>@*param* `self` dropdownRadiogroup ― Reference to the dropdownRadiogroup widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias dropdownSelector_handler_enabled
+				---| fun(self: dropdownSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `dropdownSelector:SetEnabled(...)` was called<p>@*param* `self` dropdownSelector ― Reference to the dropdownSelector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class dropdownRadiogroup_listener : indexedEventHandler
-			---@field handler dropdownRadiogroup_handler Handler function to register for call
+			---@class dropdownSelector_listener : indexedEventHandler
+			---@field handler dropdownSelector_handler Handler function to register for call
 
-				---@alias dropdownRadiogroup_handler
-				---| fun(self: dropdownRadiogroup, ...: any) Called when a custom event is invoked<p>@*param* `self` dropdownRadiogroup ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias dropdownSelector_handler
+				---| fun(self: dropdownSelector, ...: any) Called when a custom event is invoked<p>@*param* `self` dropdownSelector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class dropdownRadiogroup : radiogroup
+	---@class dropdownSelector : selector
 	---@field holder Frame Main holder frame for the dropdown toggle, buttons and title
-	---@field menu panel Panel container holding the dropdown selector widget
+	---@field menu panel Panel container holding the dropdown selectionmanager widget
 	---@field content Frame
 	---@field toggle customButton
 	---@field previous customButton
 	---@field next customButton
-	---@field addListener dropdownRadiogroup_addListener Hook a handler function as a listener for a widget event
+	---@field addListener dropdownSelector_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
 		---Set the text displayed on the label of the toggle button
@@ -3141,44 +2940,44 @@ function wt.CreateDropdownRadiogroup(t, ancestor)
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selector]: true, [typename_radiogroup]: true, [typename_dropdownRadiogroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_selectionmanager]: true, [typename_selector]: true, [typename_dropdownSelector]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_dropdownRadiogroup "DropdownRadiogroup"
+			---@alias typename_dropdownSelector "DropdownSelector"
 
 		--[ Events ]
 
-		---@class dropdownRadiogroup_addListener : radiogroup_addListener
-		---@field [string] fun(handler: dropdownRadiogroup_handler, callIndex?: integer) Register a listener for a custom widget event
+		---@class dropdownSelector_addListener : selector_addListener
+		---@field [string] fun(handler: dropdownSelector_handler, callIndex?: integer) Register a listener for a custom widget event
 		local addListener = {}
 
 			---Register a listener for a "loaded" widget event
-			---@param handler dropdownRadiogroup_handler_loaded Handler function to call on trigger
+			---@param handler dropdownSelector_handler_loaded Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_loaded(handler, callIndex) end
 
 			---Register a listener for a "saved" widget event
-			---@param handler dropdownRadiogroup_handler_saved Handler function to call on trigger
+			---@param handler dropdownSelector_handler_saved Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_saved(handler, callIndex) end
 
 			---Register a listener for a "changed" widget event
-			---@param handler dropdownRadiogroup_handler_changed Handler function to call on trigger
+			---@param handler dropdownSelector_handler_changed Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
-			---@param handler dropdownRadiogroup_handler_updated Handler function to call on trigger
+			---@param handler dropdownSelector_handler_updated Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_updated(handler, callIndex) end
 
 			---Register a listener for a "added" widget event
-			---@param handler dropdownRadiogroup_handler_added Handler function to call on trigger
+			---@param handler dropdownSelector_handler_added Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_added(handler, callIndex) end
 
 			---Register a listener for an "enabled" widget event
-			---@param handler dropdownRadiogroup_handler_enabled Handler function to call on trigger
+			---@param handler dropdownSelector_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_enabled(handler, callIndex) end
 
@@ -3189,9 +2988,10 @@ end
 ---@param itemset CreateSpecialRadiogroup_param_itemset Specify what type of selector should be created
 --- - ***Note:*** Value is overwritten by `ancestor:GetItemset()` if a valid `selector` is provided.
 ---@param t? specialRadiogroup_options Optional parameters
----@param ancestor? specialSelector Reference to an already existing special selector instance to turn into a special radio button group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param ancestor? specialSelector Reference to an already existing special selector instance to turn into a special radio button selector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
 ---@return specialSelector|specialRadiogroup # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
-function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
+function wt.CreateSpecialRadiogroup(itemset, t, ancestor, lite)
 
 	--| Parameters
 
@@ -3200,7 +3000,7 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 	---@alias CreateSpecialRadiogroup_param_itemset SpecialSelectorItemset?
 
 	---Optional parameters
-	---@class specialRadiogroup_options : specialSelector_options, selectorFrame_options, radiogroup_options_base
+	---@class specialRadiogroup_options : specialSelector_options, selectorFrame_options, selector_options_base
 	---@field listeners? specialRadiogroup_listeners|specialSelector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class specialRadiogroup_listeners : specialSelector_listeners
@@ -3214,25 +3014,25 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 			---@field handler specialRadiogroup_handler_loaded Handler function to register for call
 
 				---@alias specialRadiogroup_handler_loaded
-				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` specialSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
 			---@class specialRadiogroup_listener_saved : indexedEventHandler
 			---@field handler specialRadiogroup_handler_saved Handler function to register for call
 
 				---@alias specialRadiogroup_handler_saved
-				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---| fun(self: specialSelector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` specialSelector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
 			---@class specialRadiogroup_listener_changed : indexedEventHandler
 			---@field handler specialRadiogroup_handler_changed Handler function to register for call
 
 				---@alias specialRadiogroup_handler_changed
-				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `specialRadiogroup:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: specialSelector, selected?: FramePoint|JustifyHorizontal|JustifyVertical|FrameStrata, user: boolean) Called when an "changed" event is invoked after `specialRadiogroup:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` specialSelector ― Reference to the selectionmanager widget</p><p>@*param* `selected` AnchorPoint|JustifyH|JustifyV|FrameStrata ― The currently selected value</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialRadiogroup_listener_enabled : indexedEventHandler
 			---@field handler specialRadiogroup_handler_enabled Handler function to register for call
 
 				---@alias specialRadiogroup_handler_enabled
-				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialRadiogroup:SetEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---| fun(self: specialSelector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `specialRadiogroup:SetEnabled(...)` was called<p>@*param* `self` specialSelector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
 			---@class specialRadiogroup_listener : indexedEventHandler
 			---@field handler specialRadiogroup_handler Handler function to register for call
@@ -3285,92 +3085,302 @@ function wt.CreateSpecialRadiogroup(itemset, t, ancestor)
 	return _
 end
 
----Create a checkbox selector GUI frame instance to pick multiple options out of a list with enhanced widget functionality
----@param t? checkgroup_options Optional parameters
----@param ancestor? multiselector Reference to an already existing multiselector instance to turn into a checkbox group container instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
----@return checkgroup|multiselector # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
-function wt.CreateCheckgroup(t, ancestor)
+
+--[[ MULTISELECTION ]]
+
+---Create a non-GUI multiselection datamanager widget instance (managing a set of binary datamanager child widgets) with boolean mask data management logic
+---@param t? multiselectionmanager_options Optional parameters
+---@return multiselectionmanager multiselectionmanager Reference to the new multiselectionmanager widget, utility functions and more wrapped in a widget table
+function wt.CreateMultiselectionmanager(t)
+
+	--| Parameters
+
+		---Utility called to read the data from storage (and convert, evaluate or modify it as needed)
+		---***
+		---@return boolean data
+		local function reader() return false end ---@cast reader +?
+
+		---Utility called to write the data to storage (and convert, evaluate or modify it as needed)
+		---***
+		---@param data? boolean
+		local function writer(data) end ---@cast writer +?
+
+	---Optional parameters
+	---@class multiselectionmanager_options : datamanager_options
+	---@field items? (selectionItemData|binary)[] Table containing subtables with data used to create item widgets, or already existing binary datamanagers
+	---@field limits? limitValues Parameters to specify the limits of the number of selectable items
+	---@field listeners? multiselectionmanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field getData? fun(): selections: boolean[] Utility called to read the data from storage (and convert, evaluate or modify it as needed)<p>@*return* `selections` boolean[] | ***Default:*** *no selected items: `false[]`*</p>
+	---@field saveData? fun(selections?: boolean[]) Utility called to write the data to storage (and convert, evaluate or modify it as needed)<p>@*param* `selections`? boolean[] | ***Default:*** *no selected items: `false[]`*</p>
+	---@field value? boolean[] Ordered list of item states to set during initialization | ***Default:*** `t.data.read()` or `t.default` if invalid
+	---@field default? boolean[] Default value of the widget | ***Default:*** *no selected items: `false[]`*
+	t = { reader = reader, writer = writer, }
+
+		---@class limitValues
+		---@field min? integer The minimal number of items that need to be selected at all times | ***Default:*** `1`
+		---@field max? integer The maximal number of items that can be selected at once | ***Default:*** `#t.items` *(all items)*
+
+		---@class multiselectionmanager_listeners : datamanager_listeners
+		---@field [1]? table<string, multiselectionmanager_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field enabled? multiselectionmanager_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multiselectionmanager:SetEnabled(...)` was called
+		---@field loaded? multiselectionmanager_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? multiselectionmanager_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? multiselectionmanager_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `multiselectionmanager:SetSelected(...)` was called or an option was clicked or cleared
+		---@field updated? multiselectionmanager_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `multiselectionmanager:UpdateItems(...)` was called
+		---@field added? multiselectionmanager_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selectionmanager via `multiselectionmanager:UpdateItems(...)`
+		---@field limited? multiselectionmanager_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
+
+			---@class multiselectionmanager_listener_loaded : indexedEventHandler
+			---@field handler multiselectionmanager_handler_loaded Handler function to register for call
+
+				---@alias multiselectionmanager_handler_loaded
+				---| fun(self: multiselectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselectionmanager ― Reference to the multiselectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+
+			---@class multiselectionmanager_listener_saved : indexedEventHandler
+			---@field handler multiselectionmanager_handler_saved Handler function to register for call
+
+				---@alias multiselectionmanager_handler_saved
+				---| fun(self: multiselectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselectionmanager ― Reference to the multiselectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+
+			---@class multiselectionmanager_listener_changed : indexedEventHandler
+			---@field handler multiselectionmanager_handler_changed Handler function to register for call
+
+				---@alias multiselectionmanager_handler_changed
+				---| fun(self: multiselectionmanager, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `multiselectionmanager:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` multiselectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class multiselectionmanager_listener_updated : indexedEventHandler
+			---@field handler multiselectionmanager_handler_updated Handler function to register for call
+
+				---@alias multiselectionmanager_handler_updated
+				---| fun(self: multiselectionmanager) Called when an "updated" event is invoked after `multiselectionmanager:UpdateItems(...)` was called<p>@*param* `self` multiselectionmanager ― Reference to the selectionmanager widget</p>
+
+			---@class multiselectionmanager_listener_added : indexedEventHandler
+			---@field handler multiselectionmanager_handler_added Handler function to register for call
+
+				---@alias multiselectionmanager_handler_added
+				---| fun(self: multiselectionmanager, binary: binary|selectionBinary) Called when a new binary item is added to the selectionmanager via `multiselectionmanager:UpdateItems(...)`<p>@*param* `self` multiselectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+
+			---@class multiselectionmanager_listener_limited : indexedEventHandler
+			---@field handler multiselectionmanager_handler_limited Handler function to register for call
+
+				---@alias multiselectionmanager_handler_limited
+				---| fun(self: multiselectionmanager, min: boolean, max: boolean) Called when a "limited" event is invoked after a limit update occurs<p>@*param* `self` multiselectionmanager ― Reference to the selectionmanager widget</p><p>@*param* `min` boolean ― `true` if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― `true` if the number of selected items is equal to higher than the specified upper limit</p>
+
+			---@class multiselectionmanager_listener_enabled : indexedEventHandler
+			---@field handler multiselectionmanager_handler_enabled Handler function to register for call
+
+				---@alias multiselectionmanager_handler_enabled
+				---| fun(self: multiselectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multiselectionmanager:SetEnabled(...)` was called<p>@*param* `self` multiselectionmanager ― Reference to the multiselectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+
+			---@class multiselectionmanager_listener : indexedEventHandler
+			---@field handler multiselectionmanager_handler Handler function to register for call
+
+				---@alias multiselectionmanager_handler
+				---| fun(self: multiselectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` multiselectionmanager ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+
+	--| Returns
+
+	---@class multiselectionmanager : datamanager
+	---@field items selectionBinary[]
+	local _ = {}
+
+		--[ Types ]
+
+		---Returns the type list of this widget
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselectionmanager]: true, }
+		function _:GetTypes() return {} end
+
+			---@alias typename_multiselectionmanager "Multiselectionmanager"
+
+		--[ Events ]
+
+		---@class multiselectionmanager_invoke : datamanager_invoke
+		---@field updated function Invoke a "updated" event to notify registered listeners and call handlers
+		---@field added fun(binary: binary|selectionBinary) Invoke an "added" event to notify registered listeners and call handlers
+		---@field limited fun(count: integer) Invoke a "limited" event to notify registered listeners and call handlers
+
+		---@class multiselectionmanager_addListener : datamanager_addListener
+		---@field [string] fun(handler: multiselectionmanager_handler, callIndex?: integer) Register a listener for a custom widget event
+		local addListener = {}
+
+			---Register a listener for a "loaded" widget event
+			---@param handler multiselectionmanager_handler_loaded Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_loaded(handler, callIndex) end
+
+			---Register a listener for a "saved" widget event
+			---@param handler multiselectionmanager_handler_saved Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_saved(handler, callIndex) end
+
+			---Register a listener for a "changed" widget event
+			---@param handler multiselectionmanager_handler_changed Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_changed(handler, callIndex) end
+
+			---Register a listener for a "updated" widget event
+			---@param handler multiselectionmanager_handler_updated Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_updated(handler, callIndex) end
+
+			---Register a listener for a "added" widget event
+			---@param handler multiselectionmanager_handler_added Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_added(handler, callIndex) end
+
+			---Register a listener for a "limited" widget event
+			---@param handler multiselectionmanager_handler_limited Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_limited(handler, callIndex) end
+
+			---Register a listener for an "enabled" widget event
+			---@param handler multiselectionmanager_handler_enabled Handler function to call on trigger
+			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
+			function _:AddListener_enabled(handler, callIndex) end
+
+		--[ Items ]
+
+		---Update the list of items currently set for the selectionmanager widget, updating its parameters and binary widgets
+		--- - ***Note:*** The size of the selectionmanager widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed!
+		--- - ***Note:*** The currently selected item may not be the same after item were removed. In that case, the new item at the same index will be selected instead. If one or more items from the last indexes were removed, the new last item at the reduced count index will be selected. Use `selectionmanager:SetSelected(...)` to correct the selection if needed!
+		---@param newItems (selectionItemData|binary|selectionBinary)[] Table containing subtables with data used to update the binary widgets, or already existing binary widgets
+		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
+		function _.updateItems(newItems, silent) end
+
+		--[ Data ]
+
+		---Verify and save the provided data or the current value of the widget to storage via the specified writer utility
+		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param silent? boolean If `false`, invoke a "loaded" event and call registered listeners | ***Default:*** `false`
+		function _:SaveData(data, silent) end
+
+		---Get the currently stored data via the specified reader utility
+		---@return boolean[]|nil
+		function _:GetData() end
+
+		---Verify and save the provided data to storage via the specified writer utility then load it to the widget via `t.loadData()`
+		---@param data? wrappedBooleanArray If set, save the value wrapped in this table | ***Default:*** *current value*
+		---@param handleChanges? boolean If `true`, call the specified `t.onChange` handlers | ***Default:*** `true`
+		---@param silent? boolean If `false`, invoke "loaded" and "saved" events and call registered listeners | ***Default:*** `false`
+		function _:SetData(data, handleChanges, silent) end
+
+		---Get the currently set default value
+		---@return boolean[] default
+		function _:GetDefault() return {} end
+
+		---Set the default value
+		---@param selections? boolean[] | ***Default:*** *no selected items: `false[]`*
+		function _:SetDefault(selections) end
+
+		---Returns the list of all items and their current states
+		---@return boolean[] selections Indexed list of item states
+		function _:GetValue() return {} end
+
+		---Set the specified items as selected
+		---@param selections? boolean[] Indexed list of item states | ***Default:*** *no selected items: `false[]`*
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
+		function _:SetValue(selections, user, silent) end
+
+		---Set the specified item as selected
+		---@param index integer Index of the item | ***Range:*** (`1`, `#selector.items`)
+		---@param selected? boolean If `true`, set the item at this index as selected | ***Default:*** `false`
+		---@param user? boolean If `true`, mark the call as being the result of a user interaction | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke "selected" and "limited" events and call registered listeners | ***Default:*** `false`
+		function _:SetSelected(index, selected, user, silent) end
+
+	return _
+end
+
+--[ Multiselector ]
+
+---Create a multiple choice checkbox selector GUI frame instance to pick any amount out of a list of options with enhanced widget functionality
+---@param t? multiselector_options Optional parameters
+---@param ancestor? multiselectionmanager Reference to an already existing multiselectionmanager instance to turn into a multiselector instead of creating a new instance to mutate (reusing its own already set parameters retaining their current values)
+---@param lite? liteFlag If `false`, overrule Lite Mode and use full GUI functionality even when `WidgetToolsDB.lite` is `true` | ***Default:*** `true`
+---@return multiselector|multiselectionmanager # References to the new [Frame](https://warcraft.wiki.gg/wiki/UIOBJECT_Frame), an array of its child [CheckButton](https://warcraft.wiki.gg/wiki/UIOBJECT_CheckButton) widget items, utility functions and more wrapped in a widget table
+function wt.CreateMultiselector(t, ancestor, lite)
 
 	--| Parameters
 
 	---Optional parameters
-	---@class checkgroup_options : multiselector_options, selectorFrame_options, tooltipDescribableSettingsWidget
+	---@class multiselector_options : multiselectionmanager_options, selectorFrame_options, tooltipDescribableSettingsWidget
 	---@field width? nonNegativeNumber The height is dynamically set to fit all items (and the title if set), the width may be specified | ***Default:*** *dynamically set to fit all columns of items* or `t.label` and 160 or 0 *(whichever is greater)*<ul><li>***Note:*** The width of each individual item will be set to `t.width` if `t.columns` is 1 and `t.width` is specified.</li></ul>
-	---@field items? selectorItemData[] Ordered set of item data used to set up checkbox children of the selector group and the conteiner frame, representing all selectable options
+	---@field items? selectionItemData[] Ordered set of item data used to set up checkbox children of the selectionmanager and the container frame, representing all selectable options
 	---@field labels? boolean Whether or not to add the labels to the right of each newly created widget item | ***Default:*** `true`
 	---@field columns? integer Arrange the newly created widget items in a grid with the specified number of columns instead of a vertical list | ***Default:*** `1`
-	---@field listeners? checkgroup_listeners|multiselector_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
+	---@field listeners? multiselector_listeners|multiselectionmanager_listeners|datamanager_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
-		---@class checkgroup_listeners : multiselector_listeners
-		---@field [1]? table<string, checkgroup_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
-		---@field loaded? checkgroup_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
-		---@field saved? checkgroup_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
-		---@field changed? checkgroup_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `checkgroup:SetSelected(...)` was called or an option was clicked or cleared
-		---@field updated? checkgroup_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `checkgroup:UpdateItems(...)` was called
-		---@field added? checkgroup_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selector via `checkgroup:UpdateItems(...)`
-		---@field min? checkgroup_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
-		---@field enabled? checkgroup_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `checkgroup:SetEnabled(...)` was called
+		---@class multiselector_listeners : multiselectionmanager_listeners
+		---@field [1]? table<string, multiselector_listener[]> Table of key, value pairs of unique event identifier tags to register as custom widget events and ordered lists of handler functions to register for call when the event they are assigned to is invoked
+		---@field loaded? multiselector_listener_loaded[] Ordered list of functions to call when an "loaded" event is invoked after the data of this widget has been loaded from storage
+		---@field saved? multiselector_listener_saved[] Ordered list of functions to call when an "saved" event is invoked after the data of this widget has been saved to storage
+		---@field changed? multiselector_listener_changed[] Ordered list of functions to call when an "changed" event is invoked after `multiselector:SetSelected(...)` was called or an option was clicked or cleared
+		---@field updated? multiselector_listener_updated[] Ordered list of functions to call when an "updated" event is invoked after `multiselector:UpdateItems(...)` was called
+		---@field added? multiselector_listener_added[] Ordered list of functions to call when an "added" event is invoked when a new binary item is added to the selectionmanager via `multiselector:UpdateItems(...)`
+		---@field min? multiselector_listener_limited[] Ordered list of functions to call when a "limited" event is invoked after a lower limit update occurs
+		---@field enabled? multiselector_listener_enabled[] Ordered list of functions to call when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called
 
-			---@class checkgroup_listener_loaded : indexedEventHandler
-			---@field handler checkgroup_handler_loaded Handler function to register for call
+			---@class multiselector_listener_loaded : indexedEventHandler
+			---@field handler multiselector_handler_loaded Handler function to register for call
 
-				---@alias checkgroup_handler_loaded
-				---| fun(self: multiselector, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
+				---@alias multiselector_handler_loaded
+				---| fun(self: multiselectionmanager, success: boolean) Called when an "loaded" event is invoked after the data of this widget has been loaded from storage<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was returned by `t.data.read()` and it was loaded to the widget</p>
 
-			---@class checkgroup_listener_saved : indexedEventHandler
-			---@field handler checkgroup_handler_saved Handler function to register for call
+			---@class multiselector_listener_saved : indexedEventHandler
+			---@field handler multiselector_handler_saved Handler function to register for call
 
-				---@alias checkgroup_handler_saved
-				---| fun(self: multiselector, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
+				---@alias multiselector_handler_saved
+				---| fun(self: multiselectionmanager, success: boolean) Called when an "saved" event is invoked after the data of this widget has been saved to storage<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `success` boolean ― `true` if data was committed successfully via `t.data.write(...)`</p>
 
-			---@class checkgroup_listener_changed : indexedEventHandler
-			---@field handler checkgroup_handler_changed Handler function to register for call
+			---@class multiselector_listener_changed : indexedEventHandler
+			---@field handler multiselector_handler_changed Handler function to register for call
 
-				---@alias checkgroup_handler_changed
-				---| fun(self: multiselector, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `checkgroup:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias multiselector_handler_changed
+				---| fun(self: multiselectionmanager, selections: boolean[], user: boolean) Called when an "changed" event is invoked after `multiselector:SetSelected(...)` was called or an option was clicked or cleared<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `selections` boolean[] ― Indexed list of the current item states</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class checkgroup_listener_updated : indexedEventHandler
-			---@field handler checkgroup_handler_updated Handler function to register for call
+			---@class multiselector_listener_updated : indexedEventHandler
+			---@field handler multiselector_handler_updated Handler function to register for call
 
-				---@alias checkgroup_handler_updated
-				---| fun(self: multiselector) Called when an "updated" event is invoked after `checkgroup:UpdateItems(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p>
+				---@alias multiselector_handler_updated
+				---| fun(self: multiselectionmanager) Called when an "updated" event is invoked after `multiselector:UpdateItems(...)` was called<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p>
 
-			---@class checkgroup_listener_added : indexedEventHandler
-			---@field handler checkgroup_handler_added Handler function to register for call
+			---@class multiselector_listener_added : indexedEventHandler
+			---@field handler multiselector_handler_added Handler function to register for call
 
-				---@alias checkgroup_handler_added
-				---| fun(self: multiselector, binary: binary|selectorBinary) Called when a new binary item is added to the selector via `checkgroup:UpdateItems(...)`<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
+				---@alias multiselector_handler_added
+				---| fun(self: multiselectionmanager, binary: binary|selectionBinary) Called when a new binary item is added to the selectionmanager via `multiselector:UpdateItems(...)`<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `binary` binary|selectorBinary ― Reference to the binary widget added to the selector</p>
 
-			---@class checkgroup_listener_limited : indexedEventHandler
-			---@field handler checkgroup_handler_limited Handler function to register for call
+			---@class multiselector_listener_limited : indexedEventHandler
+			---@field handler multiselector_handler_limited Handler function to register for call
 
-				---@alias checkgroup_handler_limited
-				---| fun(self: multiselector, min: boolean, max: boolean, passed: boolean) Called when a "limited" event is invoked after a limit update occurs<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `min` boolean ― `true` if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― `true` if the number of selected items is equal to higher than the specified upper limit</p><p>@*param* `passed` boolean ― `true` if the number of selected items is below or over the specified lower or upper limit</p>
+				---@alias multiselector_handler_limited
+				---| fun(self: multiselectionmanager, min: boolean, max: boolean, passed: boolean) Called when a "limited" event is invoked after a limit update occurs<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `min` boolean ― `true` if the number of selected items is equal to lower than the specified lower limit</p><p>@*param* `max` boolean ― `true` if the number of selected items is equal to higher than the specified upper limit</p><p>@*param* `passed` boolean ― `true` if the number of selected items is below or over the specified lower or upper limit</p>
 
-			---@class checkgroup_listener_enabled : indexedEventHandler
-			---@field handler checkgroup_handler_enabled Handler function to register for call
+			---@class multiselector_listener_enabled : indexedEventHandler
+			---@field handler multiselector_handler_enabled Handler function to register for call
 
-				---@alias checkgroup_handler_enabled
-				---| fun(self: multiselector, state: boolean, user: boolean) Called when an "enabled" event is invoked after `checkgroup:SetEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selector widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
+				---@alias multiselector_handler_enabled
+				---| fun(self: multiselectionmanager, state: boolean, user: boolean) Called when an "enabled" event is invoked after `multiselector:SetEnabled(...)` was called<p>@*param* `self` multiselector ― Reference to the selectionmanager widget</p><p>@*param* `state` boolean ― `true` if the widget is enabled</p><p>@*param* `user` boolean ― `true` if the event was flagged as invoked by an action taken by the user</p>
 
-			---@class checkgroup_listener : indexedEventHandler
-			---@field handler checkgroup_handler Handler function to register for call
+			---@class multiselector_listener : indexedEventHandler
+			---@field handler multiselector_handler Handler function to register for call
 
-				---@alias checkgroup_handler
-				---| fun(self: multiselector, ...: any) Called when a custom event is invoked<p>@*param* `self` multiselector ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
+				---@alias multiselector_handler
+				---| fun(self: multiselectionmanager, ...: any) Called when a custom event is invoked<p>@*param* `self` multiselect ― Reference to the widget table</p><p>@*param* `...` any — Any leftover arguments</p>
 
 	--| Returns
 
-	---@class checkgroup : multiselector, guiFrame
+	---@class multiselector : multiselectionmanager, guiFrame
 	---@field label FontString|nil
 	---@field items selectorCheckbox[] The list of checkbox widgets linked together in this selector
 	---@field addListener checkgroup_addListener Hook a handler function as a listener for a widget event
 	local _ = {}
 
-		---Update the list of items currently set for the selector widget, updating its parameters and checkbox widgets
-		--- - ***Note:*** The size of the selector widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed after the automatic rearrangement done by the container component did not produce the desired result.
+		---Update the list of items currently set for the selectionmanager widget, updating its parameters and checkbox widgets
+		--- - ***Note:*** The size of the selectionmanager widget may change if the number of provided items differs from the number of currently set items. Make sure to rearrange and/or resize other relevant frames potentially impacted by this if needed after the automatic rearrangement done by the container component did not produce the desired result.
 		--- - ***Note:*** The currently selected item may not be the same after an item was removed. In that case, the item at the same index will be set as selected instead. If one or more items from the last indexes were removed, the new last item will be selected, correct the selections if needed.
-		---@param items selectorItemData_checkbox[] Ordered set of item data used to set up checkbox children of the selector group and the conteiner frame, representing all selectable options
+		---@param items selectorItemData_checkbox[] Ordered set of item data used to set up checkbox children of the selectionmanager and the container frame, representing all selectable options
 		---@param silent? boolean If `false`, invoke "updated" or "added" events and call registered listeners | ***Default:*** `false`
 		function _:UpdateItems(items, silent) end
 
@@ -3378,49 +3388,49 @@ function wt.CreateCheckgroup(t, ancestor)
 		--[ Types ]
 
 		---Returns the type list of this widget
-		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselector]: true, [typename_checkgroup]: true, }
+		---@return { [typename_construct]: true, [typename_widget]: true, [typename_datamanager]: true, [typename_multiselectionmanager]: true, [typename_multiselector]: true, }
 		function _:GetTypes() return {} end
 
-			---@alias typename_checkgroup "Checkgroup"
+			---@alias typename_multiselector "Multiselector"
 
 		--[ Events ]
 
-		---@class checkgroup_addListener : multiselector_addListener
-		---@field [string] fun(handler: checkgroup_handler, callIndex?: integer) Register a listener for a custom widget event
+		---@class checkgroup_addListener : multiselectionmanager_addListener
+		---@field [string] fun(handler: multiselector_handler, callIndex?: integer) Register a listener for a custom widget event
 		local addListener = {}
 
 			---Register a listener for a "loaded" widget event
-			---@param handler checkgroup_handler_loaded Handler function to call on trigger
+			---@param handler multiselector_handler_loaded Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_loaded(handler, callIndex) end
 
 			---Register a listener for a "saved" widget event
-			---@param handler checkgroup_handler_saved Handler function to call on trigger
+			---@param handler multiselector_handler_saved Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_saved(handler, callIndex) end
 
 			---Register a listener for a "changed" widget event
-			---@param handler checkgroup_handler_changed Handler function to call on trigger
+			---@param handler multiselector_handler_changed Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_changed(handler, callIndex) end
 
 			---Register a listener for a "updated" widget event
-			---@param handler checkgroup_handler_updated Handler function to call on trigger
+			---@param handler multiselector_handler_updated Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_updated(handler, callIndex) end
 
 			---Register a listener for a "added" widget event
-			---@param handler checkgroup_handler_added Handler function to call on trigger
+			---@param handler multiselector_handler_added Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_added(handler, callIndex) end
 
 			---Register a listener for a "limited" widget event
-			---@param handler checkgroup_handler_limited Handler function to call on trigger
+			---@param handler multiselector_handler_limited Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_limited(handler, callIndex) end
 
 			---Register a listener for an "enabled" widget event
-			---@param handler checkgroup_handler_enabled Handler function to call on trigger
+			---@param handler multiselector_handler_enabled Handler function to call on trigger
 			---@param callIndex? eventHandlerCallIndex Set when to call the event handler in the execution order | ***Default:*** *last position*
 			function _:AddListener_enabled(handler, callIndex) end
 
@@ -4950,7 +4960,7 @@ function wt.CreateFontOptions(addon, textline, getData, defaultData, t)
 	local _ = {}
 
 		---@class fontPanelWidgets
-		---@field path selector|dropdownRadiogroup
+		---@field path selectionmanager|dropdownSelector
 		---@field size numeric|numericSlider
 		---@field alignment specialSelector|specialRadiogroup
 		---@field colors (colormanager|colorpicker)[]|nil
@@ -5721,7 +5731,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 	local _ = {}
 
 		---@class profilesPageWidgets
-		---@field activate selector|dropdownRadiogroup
+		---@field activate selectionmanager|dropdownSelector
 		---@field create action|actionButton
 		---@field duplicate action|actionButton
 		---@field rename action|actionButton

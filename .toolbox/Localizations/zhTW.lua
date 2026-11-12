@@ -109,10 +109,14 @@ wt.strings = {
 	points_center = "中",
 	points_top_left = "左上",
 	points_top_right = "右上",
-	points_top_center = "上方中央",
+	points_top_center = "上中",
 	points_bottom_left = "左下",
 	points_bottom_right = "右下",
-	points_bottom_center = "下方中央",
+	points_bottom_center = "下中",
+
+	justify_top = "上方",
+	justify_middle = "中間",
+	justify_bottom = "下方",
 
 	strata_lowest = "最低背景",
 	strata_lower = "中等背景",
