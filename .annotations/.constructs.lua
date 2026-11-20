@@ -96,6 +96,7 @@ function wt.CreateConstruct(t)
 	--| Parameters
 
 	---@class construct_options
+	---@field name? string Name to attach to this instance<ul><li>***Note:*** The name is not required to be a unique, use the object instance table reference itself as a unique session ID if needed instead.</li></ul>
 	---@field listeners? construct_listeners Table of key, value pairs of custom event tags and functions to assign as event handlers to call on trigger
 	---@field properties? table<any, any> Default list of custom instance properties, unique property key and value pairs to assign
 
@@ -409,16 +410,17 @@ end
 --[[ LIST ]]
 
 ---Create a non-GUI list widget instance managing an ordered array of member items, assigning, creating, deactivating & reactivating child widgets of a specific type
----@param typenameItem typename Typename string to filter the children of this widget by to determine whether to assign them as list items
----@param count? integer Number of items to have in the list | ***Default:*** *no limit*
 ---@param t? list_options Optional parameters
 ---@return list list Reference to the new list instance, utility functions and more wrapped in a widget table
-function wt.CreateList(typenameItem, count, t)
+function wt.CreateList(t)
 
 	--| Parameters
 
 	---Optional parameters
 	---@class list_options : widget_options
+	---@field typename? typename Typename string to filter the children of this widget by to determine whether to assign them as list items
+	---@field count? integer Number of items to have in the list | ***Default:*** *no limit*
+	---@field options? table<integer, table> Set of optional parameters to set specific items up with
 	---@field listeners? list_listeners|widget_listeners Table of key, value pairs of custom widget event tags and functions to assign as event handlers to call on trigger
 
 		---@class list_listeners : widget_listeners
@@ -463,10 +465,24 @@ function wt.CreateList(typenameItem, count, t)
 	---@class list : widget
 	local _ = {}
 
-		---Set the number of items and update the list, adding new, removing unneeded or reusing existing inactive child widgets matching the filtered type of this list
-		---@param count? integer Number of items to have in the list | ***Default:*** *no limit*
+		---Update the item list by redefining the filtered typename
+		---@param typename typename Typename string to filter the children of this widget by to determine whether to assign them as list items
+		---@param lock boolean? If `true`, remove the ability to redefine this list again | ***Default:*** `false`
 		---@param silent? boolean If `false`, invoke "updated" and "added" events and call registered listeners | ***Default:*** `false`
-		function _:SetCount(count, silent) end
+		---@return boolean # `true` on successful, `false` if the recount was prevented by the list being locked
+		function _:Redefine(typename, lock, silent) return false end
+
+		---Update the item list, adding new, removing unneeded or reusing existing inactive child widgets
+		---@param count? integer Number of items to have in the list | ***Default:*** *no limit*
+		---@param lock boolean? If `true`, remove the ability to recount this list again | ***Default:*** `false`
+		---@param silent? boolean If `false`, invoke "updated" and "added" events and call registered listeners | ***Default:*** `false`
+		---@return boolean # `true` on successful, `false` if the recount was prevented by the list being locked
+		function _:Recount(count, lock, silent) return false end
+
+		---Update the list of properties used to set up the list items with
+		---@param properties? table<integer, table> Set of optional parameters to set specific items up with | ***Default:*** *current set of properties*
+		---@param silent? boolean If `false`, invoke "updated" and "added" events and call registered listeners | ***Default:*** `false`
+		function _:Update(properties, silent) end
 
 		--[ Types ]
 

@@ -142,8 +142,10 @@ end
 
 --[[ CONSTRUCT ]]
 
-local eventHandlers ---@type table<construct, table<eventTag, fun(self: construct, ...: any)[]>>
-local properties ---@type table<construct, table<any, any>>
+local construct_name ---@type table<construct, string?> --TODO implement
+
+local construct_handlers ---@type table<construct, table<eventTag, fun(self: construct, ...: any)[]>>
+local construct_properties ---@type table<construct, table<any, any>>
 
 local construct_assigned ---@type table<typename, fun(self: construct, silent?: boolean, property: any, value: any)[]>? Internal event handler registry
 
@@ -242,21 +244,21 @@ function protoBuilders.Construct(construct)
 
 	--[ Events ]
 
-	eventHandlers = {}
+	construct_handlers = {}
 
 	function construct:AddEvent(event)
-		local handlers = eventHandlers[self]
+		local handlers = construct_handlers[self]
 
 		if not handlers then
 			handlers = {}
-			eventHandlers[self] = handlers
+			construct_handlers[self] = handlers
 		end
 
 		if not handlers[event] then handlers[event] = {} end
 	end
 
 	function construct:AddListener(event, handler, index)
-		local handlers = eventHandlers[self][event]
+		local handlers = construct_handlers[self][event]
 
 		if not handlers or type(handler) ~= "function" then return end
 
@@ -264,7 +266,7 @@ function protoBuilders.Construct(construct)
 	end
 
 	function construct:Invoke(event, ...)
-		local handlers = eventHandlers[self][event]
+		local handlers = construct_handlers[self][event]
 
 		for i = 1, #handlers do handlers[i](self, ...) end
 	end
@@ -276,18 +278,18 @@ function protoBuilders.Construct(construct)
 	assignAddListener(construct, "assigned", handlers_assigned)
 
 	function construct:GetProperty(property)
-		local bucket = properties[self]
+		local bucket = construct_properties[self]
 
 		if bucket then return bucket[property] end
 	end
 	function construct:SetProperty(property, value, silent)
-		local bucket = properties[self]
+		local bucket = construct_properties[self]
 
 		if bucket then
 			bucket[property] = value
 
-			if not next(bucket) then properties[self] = nil end
-		elseif value ~= nil then properties[self] = { [property] = value } end
+			if not next(bucket) then construct_properties[self] = nil end
+		elseif value ~= nil then construct_properties[self] = { [property] = value } end
 
 		invoke(self, lockout_assigned, construct_assigned, silent, handlers_assigned, property, value)
 	end
@@ -321,7 +323,7 @@ end
 function wt.CreateConstruct(t)
 	local construct = setmetatable({}, getRoot()) ---@type construct
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(construct, t)
 
@@ -532,7 +534,7 @@ function wt.CreateChatmanager(keywords, t)
 	local typename = "Chatmanager" ---@type typename_chatmanager
 	local chatmanager = setmetatable({}, getBase(typename)) ---@cast chatmanager chatmanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(chatmanager, t)
 	initializeChatmanager(chatmanager, t, keywords)
@@ -872,7 +874,7 @@ function wt.CreateWidget(t)
 	local typename = "Widget" ---@type typename_widget
 	local widget = setmetatable({}, getBase(typename)) ---@cast widget widget
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(widget, t)
 	initializeWidget(widget, t)
@@ -886,8 +888,9 @@ end
 --[[ LIST ]]
 
 local list_type ---@type table<list, typename>
-local list_items ---@type table<list, widget[]?>
 local list_limited ---@type table<list, true?>
+local list_properties ---@type table<list, table<integer, table>?>
+local list_items ---@type table<list, widget[]?>
 local list_indexes ---@type table<widget, integer>
 
 local list_added ---@type table<typename, fun(self: list, silent?: boolean, item: widget, index: integer, new: boolean)[]>? Internal event handler registry
@@ -925,6 +928,7 @@ end
 ---@param list list
 function protoBuilders.List(list)
 	list_type = {}
+	list_properties = {}
 	list_items = {}
 	list_indexes = {}
 
@@ -938,7 +942,23 @@ function protoBuilders.List(list)
 	assignAddListener(list, "removed", handlers_removed)
 	assignAddListener(list, "recounted", handlers_recounted)
 
-	function list:SetCount(count, silent)
+	function list:Redefine(typename, lock, silent)
+		if type(typename) == "string" then list_type[self] = typename end
+
+		invoke(self, lockout_recounted, list_recounted, silent, handlers_recounted, count) --REPLACE with redefined event
+
+		if lock then self.Redefine = function() return false end end
+
+		return true
+	end
+
+	function list:Recount(count, lock, silent)
+		local typename = list_type[self]
+
+		if not typename then return end
+
+		local items = list_items[self]
+
 		if type(count) ~= "number" then
 			count = #widget_children[self]
 
@@ -949,13 +969,12 @@ function protoBuilders.List(list)
 			list_limited[self] = true
 		end
 
-		local items = list_items[self]
-
 		if #items == count then return end
+
+		local properties = list_properties[self]
 
 		--Add items
 		if count > 0 then
-			local type = list_type[self]
 			local index = 1
 			local children = widget_children[self]
 
@@ -963,9 +982,11 @@ function protoBuilders.List(list)
 			for i = 1, #children do
 				local child = children[i]
 
-				if wt.IsType(child, type) then
+				if wt.IsType(child, typename) then
 					items[index] = child
 					list_indexes[child] = index
+
+					--ADD update the properties of child with properties[index] (add updater API utilities to enable that)
 
 					invoke(self, lockout_added, list_added, silent, handlers_added, child, index, false)
 
@@ -975,9 +996,12 @@ function protoBuilders.List(list)
 				end
 			end
 
+			local defaultProperties = { parent = self, }
+
 			--Create new children
 			while index <= count do
-				local item = wt["Create" .. type]({ parent = self, })
+				local itemProperties = properties and properties[index]
+				local item = wt["Create" .. typename](itemProperties and w.Pull(itemProperties, defaultProperties) or defaultProperties)
 
 				items[index] = item
 				list_indexes[item] = index
@@ -997,37 +1021,48 @@ function protoBuilders.List(list)
 		end
 
 		invoke(self, lockout_recounted, list_recounted, silent, handlers_recounted, count)
+
+		if lock then self.Recount = function() return false end end
+
+		return true
+	end
+
+	function list:Update(properties, silent)
+		if type(properties) == "table" then list_properties[self] = properties else properties = list_properties[self] end
+
+		if not properties then return end
+
+		--ADD update the properties of all children with properties[index] (add updater API utilities to enable that)
+
+		invoke(self, lockout_recounted, list_recounted, silent, handlers_recounted, count) --REPLACE with updated event
 	end
 
 	addInternal_widget_childEvent("List", function(self--[[ @cast self list ]], silent, _, removal)
-		if removal then self:SetCount(list_limited[self] and #list_items[self] or nil, silent) elseif not list_limited[self] then self:SetCount(nil, silent) end
+		if removal or not list_limited[self] then self:Update(nil, list_limited[self] and #list_items[self] or nil, nil, silent) end
 	end)
 end
 
 ---Initialize the List layer of an instance
 ---@param self list
 ---@param t list_options
----@param typenameItem typename
----@param count integer?
-local function initializeList(self, t, typenameItem, count)
+local function initializeList(self, t)
 	addListeners(self, t.listeners, { "added", "removed", "recounted" })
 
-	list_type[self] = typenameItem
 	list_items[self] = {}
 
-	self:SetCount(count)
+	self:Update(t.typename, t.count, t.options)
 end
 
 progenitors.List = "Widget" ---@type typename_widget
-function wt.CreateList(typenameItem, count, t)
+function wt.CreateList(t)
 	local typename = "List" ---@type typename_list
 	local list = setmetatable({}, getBase(typename)) ---@cast list list
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(list, t)
 	initializeWidget(list, t)
-	initializeList(list, t, typenameItem, count)
+	initializeList(list, t)
 
 	log(function() return typename .. " instance initialized: " .. w.ToString(list), wt.title .. ".CreateList" end)
 
@@ -1098,7 +1133,7 @@ function wt.CreateContainer(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Container" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -1127,7 +1162,7 @@ function wt.CreateCustomContainer(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Container" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -1158,7 +1193,7 @@ function wt.CreatePanel(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	--| Title & description
 
@@ -1244,7 +1279,7 @@ function wt.CreateAction(t)
 	local typename = "Action" ---@type typename_action
 	local action = setmetatable({}, getBase(typename)) ---@cast action action
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(action, t)
 	initializeWidget(action, t)
@@ -1395,7 +1430,7 @@ function wt.CreateButton(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Button" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -1430,7 +1465,7 @@ function wt.CreateCustomButton(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Button" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -1631,7 +1666,7 @@ function wt.CreateDatamanager(t)
 	local typename = "Datamanager" ---@type typename_datamanager
 	local datamanager = setmetatable({}, getBase(typename)) ---@cast datamanager datamanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(datamanager, t)
 	initializeWidget(datamanager, t)
@@ -1666,7 +1701,7 @@ function wt.CreateBinary(t)
 	local typename = "Binary" ---@type typename_binary
 	local binary = setmetatable({}, getBase(typename)) ---@cast binary binary
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(binary, t)
 	initializeWidget(binary, t)
@@ -1690,7 +1725,7 @@ function wt.CreateCheckbox(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Checkbox" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -1996,7 +2031,7 @@ function wt.CreateClassicCheckbox(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Checkbox" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -2059,7 +2094,7 @@ function wt.CreateRadiobutton(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = "Radio" end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -2121,18 +2156,6 @@ end
 --[[ SELECTION ]]
 
 local selection_clearable ---@type table<selectionmanager, boolean>
-local selection_items ---@type table<selectionmanager, integer|string[]>
-
-local selection_updated ---@type table<typename, fun(self: selectionmanager, silent?: boolean)[]>? Internal event handler registry
-
----Add selectionmanager "updated" internal listener
----@param typename typename
----@param handler fun(self: selectionmanager, silent?: boolean)
-local function addInternal_selection_updated(typename, handler)
-	if not selection_updated then selection_updated = {} end
-
-	addInternal(typename, selection_updated, handler)
-end
 
 ---Build the Selectionmanager prototype
 ---@param selectionmanager selectionmanager
@@ -2146,41 +2169,20 @@ function protoBuilders.Selectionmanager(selectionmanager, typename)
 	local typenameItem = "SelectionBinary" ---@type typename_selectionBinary
 	progenitors[typenameItem] = "Binary" ---@type typename_binary
 
-	local lockout_updated = {} ---@type table<action, true>
-	local handlers_updated = {} ---@type table<action, selectionmanager_listener_updated[]>
-	assignAddListener(selectionmanager, "updated", handlers_updated)
+	addInternal_list_added(typename, function(self, silent) self--[[ @as datamanager ]]:SetValue(data_value[self], nil,nil, silent) end)
 
-	function selectionmanager:UpdateItems(items, silent)
-		local itemsType = type(items)
+	addInternal_list_removed(typename, function(self, silent, item)
+		(item--[[ @as selectionBinary ]]):SetValue(false, false, silent)
+		self--[[ @as datamanager ]]:SetValue(data_value[self], nil, nil, silent)
+	end)
 
-		if itemsType ~= "table" or itemsType ~= "number" then return end
-
-		local count = 0
-
-		if itemsType == "table" then
-			count = #items
-
-			selection_items[self] = w.Clone(items)
-		else
-			count = math.abs(math.floor(items))
-
-			selection_items[self] = count
-		end
-
-		if #list_items[self] ~= count then self:SetCount(count, silent) end
-
-		invoke(self, lockout_updated, selection_updated, silent, handlers_updated)
-	end
-
-	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @as selectionBinary ]]):SetValue(false, false, silent) end)
-
-	addInternal_datamanager_changed(typename, function(self, silent, value, user)
+	addInternal_datamanager_changed(typename, function(self, silent, value, user) --CHECK invoke transaction loop lock effectiveness
 		local items = list_items[self] ---@type selectionBinary[]
 
 		for i = 1, #items do items[i]:SetValue(i == value, user, silent) end
 	end)
 
-	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user)
+	addInternal_datamanager_changed(typenameItem, function(item, silent, value, user) --CHECK invoke transaction loop lock effectiveness
 		local parent = widget_parent[item] ---@cast parent selectionmanager
 		local index = list_indexes[item]
 
@@ -2197,10 +2199,12 @@ function protoBuilders.Selectionmanager(selectionmanager, typename)
 		return value and value or not selection_clearable[self] and value or nil
 	end
 	function selectionmanager:Format(value)
-		local items = selection_items[self]
+		local properties = list_properties[self]
 		local index = selectionmanager:Verify(value)
+		properties = properties and properties[index]
+		local name = properties and properties.name --TODO finish pattern
 
-		if type(items) == "table" then return items[index] end
+		if type(name) == "string" then return name end
 
 		return w.ToString(index)
 	end
@@ -2214,9 +2218,7 @@ local function initializeSelectionmanager(self, t)
 
 	addListeners(self, t.listeners, { "updated" })
 
-	initializeList(self, t, typenameItem)
-
-	self:UpdateItems(t.items)
+	initializeList(self, t)
 
 	selection_clearable[self] = t.clearable
 end
@@ -2226,7 +2228,7 @@ function wt.CreateSelectionmanager(t)
 	local typename = "Selectionmanager" ---@type typename_selectionmanager
 	local selectionmanager = setmetatable({}, getBase(typename)) ---@cast selectionmanager selectionmanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(selectionmanager, t)
 	initializeWidget(selectionmanager, t)
@@ -2246,7 +2248,7 @@ function wt.CreateSpecialSelector(itemset, t, ancestor)
 
 	--[ Initialization ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	--[ Items ]
 
@@ -2620,7 +2622,7 @@ local function setUpSelector(selector, t, name, title)
 end
 
 function wt.CreateSelector(t, ancestor, lite)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typenameBase = "Selectionmanager" ---@type typename_selectionmanager
 	local typenameBaseAlternate = "SpecialSelector" ---@type typename_specialSelector
@@ -2654,7 +2656,7 @@ function wt.CreateSelector(t, ancestor, lite)
 			if type(onSelect) == "function" then selectorItems[i].onSelect = onSelect end
 		end
 
-		if #list_items[self] ~= count then self:SetCount(count, silent) end
+		if #list_items[self] ~= count then self:Update(count, silent) end
 
 		invoke(self, lockout_updated, selection_updated, silent, handlers_updated)
 
@@ -2798,7 +2800,7 @@ function wt.CreateSelector(t, ancestor, lite)
 end
 
 function wt.CreateDropdownSelector(t, ancestor, lite)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typename = "DropdownSelector" ---@type typename_dropdownSelector
 	local typenameBase = "Selectionmanager" ---@type typename_selectionmanager
@@ -3340,7 +3342,7 @@ function wt.CreateDropdownSelector(t, ancestor, lite)
 end
 
 function wt.CreateAnchorRadiogroup(itemset, t, ancestor, lite)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typename = "SpecialRadiogroup" ---@type typename_specialRadiogroup
 	local typenameBase = "SpecialSelector" ---@type typename_specialSelector
@@ -3416,7 +3418,7 @@ function wt.CreateAnchorRadiogroup(itemset, t, ancestor, lite)
 end
 
 function wt.CreateSpecialRadiogroup(itemset, t, ancestor, lite)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typename = "SpecialRadiogroup" ---@type typename_specialRadiogroup
 	local typenameBase = "SpecialSelector" ---@type typename_specialSelector
@@ -3509,7 +3511,7 @@ function protoBuilders.Multiselectionmanager(multiselectionmanager, typename)
 	addInternal_list_recounted(typename, function(self, silent)
 		local count = #selection_items[self]
 
-		if #list_items[self] ~= count then self:SetCount(count, silent) end
+		if #list_items[self] ~= count then self:Update(count, silent) end
 	end)
 
 	addInternal_list_removed(typename, function(_, silent, item) (item--[[ @asselectionBinaryy ]]):SetValue(false, false, silent) end)
@@ -3552,7 +3554,7 @@ function wt.CreateMultiselectionmanager(t)
 
 	--[ Initialization ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	addListeners(multiselector, t.listeners, { "updated", "added", "limited", })
 
@@ -3752,7 +3754,7 @@ end
 --[ Multiselector ]
 
 function wt.CreateMultiselector(t, ancestor, lite)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typename = "Multiselector" ---@type typename_multiselector
 	local typenameBase = "Multiselectionmanager" ---@type typename_multiselectionmanager
@@ -3951,7 +3953,7 @@ function wt.CreateTextual(t)
 	local typename = "Textual" ---@type typename_textual
 	local textual = setmetatable({}, getBase(typename)) ---@cast textual textual
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(textual, t)
 	initializeWidget(textual, t)
@@ -4143,7 +4145,7 @@ function wt.CreateEditbox(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4185,7 +4187,7 @@ function wt.CreateCustomEditbox(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4236,7 +4238,7 @@ function wt.CreateMultilineEditbox(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -4377,7 +4379,7 @@ end
 --[ Copybox ]
 
 function wt.CreateCopybox(t) --FIX lite
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local typename = "Copybox" ---@type typename_copybox
 
@@ -4477,7 +4479,7 @@ end
 local customPopupInputBoxFrame
 
 function wt.CreatePopupInputbox(t) --FIX lite
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	t.position = type(t.position) == "table" and t.position or {
 		anchor = "TOP",
@@ -4709,7 +4711,7 @@ function wt.CreateNumeric(t)
 	local typename = "Numeric" ---@type typename_numeric
 	local numeric = setmetatable({}, getBase(typename)) ---@cast numeric numeric
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(numeric, t)
 	initializeWidget(numeric, t)
@@ -4734,7 +4736,7 @@ function wt.CreateSlider(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -5043,7 +5045,7 @@ function wt.CreateClassicSlider(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -5527,7 +5529,7 @@ function wt.CreateColormanager(t)
 	local typename = "Colormanager" ---@type typename_colormanager
 	local colormanager = setmetatable({}, getBase(typename)) ---@cast colormanager colormanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(colormanager, t)
 	initializeWidget(colormanager, t)
@@ -5552,7 +5554,7 @@ function wt.CreateColorpicker(t, ancestor, lite)
 
 	--[ Frame ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	if type(t.name) ~= "string" then t.name = typename end
 	local name = (t.append ~= false and t.parentFrame and t.parentFrame ~= UIParent and t.parentFrame:GetName() or "") .. t.name:gsub("%s+", "")
@@ -6785,7 +6787,7 @@ function wt.CreateSettingsmanager(t)
 
 	--[ Initialization ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	addListeners(settingsmanager, t.listeners, { "loaded", "saved", "applied", "reverted", "reset", })
 
@@ -6811,7 +6813,7 @@ end
 function wt.CreateSettingsCategory(addon, parent, pages, t, settingsmanager) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsType(parent) ~= "SettingsPage" and not parent.category then return nil end
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	---@type settingsCategory
 	local category = { pages = {} }
@@ -6893,7 +6895,7 @@ end
 --[ Settings Page ]
 
 function wt.CreateSettingsPage(t, settingsmanager)
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	t.name = t.name and t.name:gsub("%s+", "")
 
@@ -7103,7 +7105,7 @@ end
 function wt.CreateSettingsCategory(addon, parent, pages, t) --FIX lite
 	if not addon or not C_AddOns.IsAddOnLoaded(addon) or wt.IsType(parent) ~= "SettingsPage" and not parent.category then return nil end
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	---@type settingsCategory
 	local category = { pages = {} }
@@ -7525,7 +7527,7 @@ function wt.CreateProfilemanager(accountData, characterData, defaultData, t)
 	local typename = "Profilemanager" ---@type typename_profilemanager
 	local profilemanager = setmetatable({}, getBase(typename)) ---@cast profilemanager profilemanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(profilemanager, t)
 	initializeProfilemanager(profilemanager, t, accountData, characterData, defaultData)
@@ -7552,7 +7554,7 @@ function wt.CreateProfilesPage(accountData, characterData, defaultData, settings
 
 	--[ Settings Page ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	local onDefault = type(t.onDefault) == "function" and t.onDefault or nil
 
@@ -8109,7 +8111,7 @@ function wt.CreateAddonmanager(t)
 	local typename = "Addonmanager" ---@type typename_addonmanager
 	local addonmanager = setmetatable({}, getBase(typename)) ---@cast addonmanager addonmanager
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	initializeConstruct(addonmanager, t)
 	initializeAddonmanager(addonmanager, t)
@@ -8140,7 +8142,7 @@ function wt.CreateAddonPage(t, addonmanager, lite)
 
 	--[ Settings Page ]
 
-	t = type(t) == "table" and t or {}
+	if type(t) ~= "table" then t = {}  end
 
 	addonPage.settings = wt.CreateSettingsPage({
 		register = t.register,
